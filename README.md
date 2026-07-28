@@ -13,7 +13,7 @@
 Kukla2D is a local-first, browser-based editor for rigging and animating 2D characters. It combines an approachable workflow with mesh deformation, skeletal animation, constraints, physics, and game-ready export.
 
 >[!WARNING]
-> ***Version 0.9.0-beta** — Kukla2D's core editing workflow, project save/load, and primary export formats are functional and suitable for regular use. Some features remain experimental, and minor bugs or performance issues may still occur.*
+> ***Version 0.9.2-beta** — Kukla2D's core editing workflow, project save/load, and primary export formats are functional and suitable for regular use. Some features remain experimental, and minor bugs or performance issues may still occur.*
 
 ## Highlights
 
@@ -39,9 +39,15 @@ Requirements: Node.js `>=24.18.0 <25` and npm `>=11.17.0 <12`.
 ```bash
 git clone https://github.com/wwolanski/Kukla2D.git
 cd Kukla2D
-npm ci
-npm run dev
+nvm install
+nvm use
+corepack npm ci
+corepack npm run dev
 ```
+
+`.nvmrc` selects the required Node.js version. `corepack npm` uses the exact
+npm version pinned in `packageManager` (`npm@11.17.0`), so do not use
+`npm install --global npm@11.17.0` for this project.
 
 ## Quality gates
 

@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
-const expectedVersion = '0.9.0-beta';
+const expectedVersion = pkg.version;
 
 function collectVersionReferences(dir) {
   const refs = [];
@@ -26,16 +26,12 @@ function collectVersionReferences(dir) {
 }
 
 describe('version consistency', () => {
-  it('package.json version is 0.9.0-beta', () => {
-    expect(pkg.version).toBe(expectedVersion);
-  });
-
-  it('package-lock.json version is 0.9.0-beta', () => {
+  it('package-lock.json version matches package.json', () => {
     const lock = JSON.parse(fs.readFileSync('./package-lock.json', 'utf-8'));
     expect(lock.version).toBe(expectedVersion);
   });
 
-  it('__APP_VERSION__ define is defined in tests', () => {
+  it('__APP_VERSION__ matches package.json', () => {
     expect(__APP_VERSION__).toBe(expectedVersion);
   });
 
