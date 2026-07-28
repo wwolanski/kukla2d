@@ -41,6 +41,8 @@ export function LayerPanel({ onImportClick, onImportFiles, onLoadExampleProject 
           onCreateFolder={library.onCreateFolder}
           onRenameFolder={library.onRenameFolder}
           onRenameAsset={library.onRenameAsset}
+          onRemoveFolder={library.onRemoveFolder}
+          onRemoveAsset={library.onRemoveAsset}
           onDragStartAsset={library.onDragStartAsset}
           onDragStartFolder={library.onDragStartFolder}
           onDragOverRow={library.onDragOverRow}

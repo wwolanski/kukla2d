@@ -1,12 +1,20 @@
-import { Check, FileImage } from 'lucide-react';
+import { Check, FileImage, Pencil, Trash2 } from 'lucide-react';
 import { useRef } from 'react';
+
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 
 import { useInlineRename } from '../../application/useInlineRename.js';
 import { formatFileSize } from '../shared/formatFileSize.js';
 import { InlineRenameInput } from '../shared/InlineRenameInput.jsx';
 import { AssetAvatar } from '../shared/LayerPanelPrimitives.jsx';
 
-export function LibraryAssetRow({ asset, isSelected, dragSession, depth, onSelect, onRename, onDragStart, onDragOver, onDrop }) {
+export function LibraryAssetRow({ asset, isSelected, dragSession, depth, onSelect, onRename, onRemove, onDragStart, onDragOver, onDrop }) {
   const rowRef = useRef(null);
   const isDragOver = dragSession?.targetId === asset.id && dragSession?.sourceId !== asset.id;
 
@@ -28,6 +36,8 @@ export function LibraryAssetRow({ asset, isSelected, dragSession, depth, onSelec
   };
 
   return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
     <div
       ref={rowRef}
       draggable
@@ -78,5 +88,21 @@ export function LibraryAssetRow({ asset, isSelected, dragSession, depth, onSelec
         {formatFileSize(asset.size)}
       </span>
     </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-56">
+        <ContextMenuItem onSelect={() => requestAnimationFrame(startEdit)}>
+          <Pencil className="mr-2 h-4 w-4 opacity-70" />
+          Rename
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem
+          className="text-destructive focus:text-destructive"
+          onSelect={() => onRemove?.(asset.id)}
+        >
+          <Trash2 className="mr-2 h-4 w-4 opacity-70" />
+          Remove from library
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

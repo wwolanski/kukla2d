@@ -6,6 +6,16 @@ import { useImportSettingsStore } from '@/store/importSettingsStore';
 import { loadExampleProjectFile } from '@/features/projects';
 
 import { BorderBeam } from '@/components/ui/border-beam';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
@@ -23,6 +33,8 @@ export function LibraryTab({
   onCreateFolder,
   onRenameFolder,
   onRenameAsset,
+  onRemoveFolder,
+  onRemoveAsset,
   onDragStartAsset,
   onDragStartFolder,
   onDragOverRow,
@@ -38,6 +50,7 @@ export function LibraryTab({
   const isEmpty = tree.length === 0;
   const [isLoadingExample, setIsLoadingExample] = useState(false);
   const [exampleError, setExampleError] = useState('');
+  const [removalTarget, setRemovalTarget] = useState(null);
   const autoAddToCanvas = useImportSettingsStore(state => state.autoAddToCanvas);
   const setAutoAddToCanvas = useImportSettingsStore(state => state.setAutoAddToCanvas);
 
@@ -54,6 +67,16 @@ export function LibraryTab({
     }
   };
 
+  const handleConfirmRemoval = () => {
+    const target = removalTarget;
+    if (!target) return;
+    setRemovalTarget(null);
+    globalThis.setTimeout(() => {
+      if (target.kind === 'asset') onRemoveAsset?.(target.id);
+      else onRemoveFolder?.(target.id);
+    }, 0);
+  };
+
   function renderRows(rows, depth = 0) {
     return rows.map(row => {
       if (row.kind === 'folder') {
@@ -67,6 +90,7 @@ export function LibraryTab({
               depth={depth}
               onToggleExpand={onToggleFolderExpand}
               onRename={onRenameFolder}
+              onRemove={() => requestAnimationFrame(() => setRemovalTarget({ kind: 'folder', id: row.id, name: row.name }))}
               onDragStart={onDragStartFolder}
               onDragOver={onDragOverRow}
               onDrop={onDropRow}
@@ -87,6 +111,7 @@ export function LibraryTab({
           depth={depth}
           onSelect={onSelect}
           onRename={onRenameAsset}
+          onRemove={() => requestAnimationFrame(() => setRemovalTarget({ kind: 'asset', id: row.id, name: row.name }))}
           onDragStart={onDragStartAsset}
           onDragOver={onDragOverRow}
           onDrop={onDropRow}
@@ -201,6 +226,28 @@ export function LibraryTab({
           )}
         </div>
       </ScrollArea>
+
+      <AlertDialog open={Boolean(removalTarget)} onOpenChange={(open) => { if (!open) setRemovalTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from library?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {removalTarget?.kind === 'folder'
+                ? `This will permanently delete “${removalTarget.name}”, its subfolders, and its assets. Any instances of those assets will also be removed from the canvas. This action cannot be undone.`
+                : `This will permanently delete “${removalTarget?.name}” from Library. Any instances of this asset will also be removed from the canvas. This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRemoval}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove from library
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
