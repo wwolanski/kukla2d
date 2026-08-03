@@ -55,7 +55,7 @@ export function useCanvasAssetImport({
   notifyError,
 }: CanvasAssetImportArgs): {
   importPng: (file: File) => Promise<void>;
-  processPsdFile: (file: File) => Promise<void>;
+  processPsdFile: (file: File, libraryOnly?: boolean) => Promise<void>;
 } {
   const imageDataMapRef = useRef<Map<string, ImageData> | null>(null);
   if (!imageDataMapRef.current) imageDataMapRef.current = textureCache.__internal.imageDataByPartId;
@@ -121,8 +121,15 @@ export function useCanvasAssetImport({
     image.src = url;
   }), [centerView, markDirty, projectRef, resourceOwnerRef, sceneGatewayRef, updateProject]);
 
-  const finalizePsdImport = useCallback((width: number, height: number, layers: PsdLayer[], partIds: PartAssetId[], fileName: string) => {
-    const autoAddToCanvas = useImportSettingsStore.getState().autoAddToCanvas;
+  const finalizePsdImport = useCallback((
+    width: number,
+    height: number,
+    layers: PsdLayer[],
+    partIds: PartAssetId[],
+    fileName: string,
+    libraryOnly = false,
+  ) => {
+    const autoAddToCanvas = !libraryOnly && useImportSettingsStore.getState().autoAddToCanvas;
     updateProject((projectDraft, versionControl) => {
       if (autoAddToCanvas) {
         projectDraft.canvas.width = width;
@@ -206,11 +213,20 @@ export function useCanvasAssetImport({
     if (autoAddToCanvas) centerView(width, height);
   }, [centerView, markDirty, resourceOwnerRef, sceneGatewayRef, updateProject]);
 
-  const processPsdFile = useCallback(async (file: File): Promise<void> => {
+  const processPsdFile = useCallback(async (file: File, libraryOnly = false): Promise<void> => {
     try {
       const { importPsd } = await import('@/io/psd');
       const parsed = await importPsd(await file.arrayBuffer());
-      if (parsed.layers.length > 0) finalizePsdImport(parsed.width, parsed.height, parsed.layers, parsed.layers.map(createPartAssetId), file.name);
+      if (parsed.layers.length > 0) {
+        finalizePsdImport(
+          parsed.width,
+          parsed.height,
+          parsed.layers,
+          parsed.layers.map(createPartAssetId),
+          file.name,
+          libraryOnly,
+        );
+      }
     } catch (error) {
       console.error('[PSD Import]', error);
       notifyError('PSD import failed', error);

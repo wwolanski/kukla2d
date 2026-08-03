@@ -330,7 +330,14 @@ export function applyBoneLinkedNodeOverrides(
       const value = existing[key];
       if (typeof value === 'number') source[key] = value;
     }
-    const transformed = decomposeAffineMatrix(posedLocal, source);
+    // Pose evaluation needs the canonical matrix angle. The authored branch
+    // (for example an imported -720deg staging transform) is preserved by
+    // direct transform edits, but must not leak into interpolated animation
+    // output where -45deg and -405deg represent the same frame.
+    const transformed = decomposeAffineMatrix(posedLocal, {
+      pivotX: source.pivotX ?? 0,
+      pivotY: source.pivotY ?? 0,
+    });
 
     next.set(node.id, {
       ...existing,

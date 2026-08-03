@@ -103,6 +103,8 @@ export default function CanvasViewport({
         confirmWipeOpen={confirmWipeOpen}
         setConfirmWipeOpen={setConfirmWipeOpen}
         handleConfirmWipe={importHooks.handleConfirmWipe}
+        handleImportPsdToLibrary={importHooks.handleImportPsdToLibrary}
+        canImportPendingPsdToLibrary={pendingFile?.name.toLowerCase().endsWith('.psd') ?? false}
         confirmDeleteOpen={confirmDeleteOpen}
         setConfirmDeleteOpen={setConfirmDeleteOpen}
         deleteIntent={viewport.deleteIntent}

@@ -227,6 +227,13 @@ describe('isNodeAssignedToBone', () => {
     const bone = { id: 'b2', nodeId: 'b2-src' };
     expect(isNodeAssignedToBone(node, bone)).toBe(false);
   });
+
+  it('does not match absent optional legacy references', () => {
+    const node = { id: 'part-without-mesh', boneId: 'actual-bone' };
+    const unrelated = { id: 'unrelated-bone' };
+
+    expect(isNodeAssignedToBone(node, unrelated)).toBe(false);
+  });
 });
 
 describe('getAssignedBoneForNode', () => {
@@ -236,6 +243,14 @@ describe('getAssignedBoneForNode', () => {
       bones: [makeBone('b1')],
     };
     expect(getAssignedBoneForNode(project, 'p1')?.id).toBe('b1');
+  });
+
+  it('does not let a bone without legacy nodeId shadow the direct owner', () => {
+    const project = {
+      nodes: [{ id: 'p1', boneId: 'b2' }],
+      bones: [makeBone('b1'), makeBone('b2')],
+    };
+    expect(getAssignedBoneForNode(project, 'p1')?.id).toBe('b2');
   });
 
   it('returns null when node has no assignment', () => {

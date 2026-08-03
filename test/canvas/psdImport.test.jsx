@@ -152,6 +152,57 @@ describe('PSD import', () => {
     ]);
   });
 
+  it('offers PSD import to Library from replacement flow without wiping project', async () => {
+    const layers = [
+      { name: 'replacement-face', x: 0, y: 0, width: 2, height: 2, imageData: imageData(2, 2), opacity: 1, visible: true },
+    ];
+    psdMock.importPsd.mockResolvedValue({ width: 2048, height: 2048, layers });
+
+    const existingNode = { id: 'existing', type: 'part', name: 'Existing' };
+    const project = {
+      canvas: { width: 800, height: 600, presetId: 'custom', fitSource: null },
+      textures: [],
+      nodes: [existingNode],
+      libraryFolders: [],
+      assetPlacements: [],
+    };
+    const version = { textureVersion: 0 };
+    const resetProject = vi.fn();
+    const setConfirmWipeOpen = vi.fn();
+    const setPendingFile = vi.fn();
+    const updateProject = vi.fn(recipe => recipe(project, version));
+    const file = { name: 'replacements.psd', arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)) };
+    const { result } = renderHook(() => useCanvasImport({
+      projectRef: { current: project },
+      canvasRef: { current: null },
+      editorRef: { current: null },
+      updateProject,
+      resetProject,
+      centerView: vi.fn(),
+      sceneGatewayRef: { current: null },
+      textureCache: { __internal: { imageDataByPartId: new Map() } },
+      markDirty: vi.fn(),
+      setConfirmWipeOpen,
+      pendingFile: file,
+      setPendingFile,
+      animRef: { current: null },
+      sendWorkflowEvent: vi.fn(),
+      resourceOwnerRef: { current: null },
+    }));
+
+    await act(async () => {
+      await result.current.handleImportPsdToLibrary();
+    });
+
+    expect(resetProject).not.toHaveBeenCalled();
+    expect(project.canvas).toEqual({ width: 800, height: 600, presetId: 'custom', fitSource: null });
+    expect(project.nodes).toEqual([existingNode]);
+    expect(project.textures).toHaveLength(1);
+    expect(project.assetPlacements).toHaveLength(1);
+    expect(setPendingFile).toHaveBeenCalledWith(null);
+    expect(setConfirmWipeOpen).toHaveBeenCalledWith(false);
+  });
+
   it('imports PNG to Library without creating a canvas node when auto-add is disabled', async () => {
     useImportSettingsStore.setState({ autoAddToCanvas: false });
     const OriginalImage = globalThis.Image;

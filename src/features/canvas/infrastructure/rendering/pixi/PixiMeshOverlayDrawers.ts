@@ -1,4 +1,8 @@
 import type { CanvasOverlayFrame } from '@/features/canvas/domain/canvasOverlayFrame.js';
+import {
+  clampIkTargetRadius,
+  IK_TARGET_DEFAULT_RADIUS,
+} from '@/features/canvas/domain/ikOverlaySizing.js';
 import type { WarpLatticeFrame } from '@/features/canvas/domain/warpLatticeFrame.js';
 import { weightToColor } from '@/features/canvas/domain/weightColorRamp.js';
 
@@ -63,9 +67,13 @@ export function drawIkConstraints(graphics: Graphics, frame: IkOverlay | null, z
   if (!frame) return;
   const invZoom = zoom > 0 ? 1 / zoom : 1;
   for (const target of frame.targets ?? []) {
-    const radius = (target.selected ? 12 : target.hovered ? 10.5 : 9) * invZoom;
+    const baseRadius = clampIkTargetRadius(target.radius ?? IK_TARGET_DEFAULT_RADIUS);
+    // IK graphics live inside the zoomed viewport, so keep their world size
+    // unscaled here and let the viewport apply zoom naturally.
+    const radius = clampIkTargetRadius(baseRadius + (target.selected ? 3 : target.hovered ? 1.5 : 0));
+    const emphasisRadius = clampIkTargetRadius(radius + 4);
     const color = target.color ?? 0x22d3ee;
-    if (target.selected || target.hovered) graphics.circle(target.x, target.y, radius + 4 * invZoom)
+    if (target.selected || target.hovered) graphics.circle(target.x, target.y, emphasisRadius)
       .stroke({ width: 3 * invZoom, color: 0xffffff, alpha: target.selected ? 0.9 : 0.55 });
     graphics.circle(target.x, target.y, radius).stroke({ width: 1.75 * invZoom, color, alpha: target.assigned ? 0.95 : 0.65 });
     graphics.moveTo(target.x - radius * 1.5, target.y).lineTo(target.x + radius * 1.5, target.y);

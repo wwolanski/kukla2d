@@ -1,11 +1,20 @@
+import { FolderX, Pencil } from 'lucide-react';
 import { useRef } from 'react';
+
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 
 import { useInlineRename } from '../../application/useInlineRename.js';
 import { computeDropPosition } from '../../domain/dragSession.js';
 import { InlineRenameInput } from '../shared/InlineRenameInput.jsx';
 import { ChevronIcon } from '../shared/LayerPanelPrimitives.jsx';
 
-export function LibraryFolderRow({ folder, isExpanded, dragSession, depth, onToggleExpand, onRename, onDragStart, onDragOver, onDrop }) {
+export function LibraryFolderRow({ folder, isExpanded, dragSession, depth, onToggleExpand, onRename, onRemove, onDragStart, onDragOver, onDrop }) {
   const rowRef = useRef(null);
   const isDragOver = dragSession?.targetId === folder.id && dragSession?.sourceId !== folder.id;
   const dropPosition = isDragOver ? dragSession.dropPosition : null;
@@ -30,6 +39,8 @@ export function LibraryFolderRow({ folder, isExpanded, dragSession, depth, onTog
   };
 
   return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
     <div
       ref={rowRef}
       draggable
@@ -78,5 +89,21 @@ export function LibraryFolderRow({ folder, isExpanded, dragSession, depth, onTog
         <span className="absolute inset-0 rounded border-2 border-primary/40 pointer-events-none" />
       )}
     </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-56">
+        <ContextMenuItem onSelect={() => requestAnimationFrame(startEdit)}>
+          <Pencil className="mr-2 h-4 w-4 opacity-70" />
+          Rename
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem
+          className="text-destructive focus:text-destructive"
+          onSelect={() => onRemove?.(folder.id)}
+        >
+          <FolderX className="mr-2 h-4 w-4 opacity-70" />
+          Remove from library
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

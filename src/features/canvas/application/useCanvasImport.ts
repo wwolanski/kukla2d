@@ -43,12 +43,13 @@ interface CanvasImportArgs {
 
 export interface CanvasImportController {
   importPng: (file: File) => Promise<void>;
-  processPsdFile: (file: File) => Promise<void>;
+  processPsdFile: (file: File, libraryOnly?: boolean) => Promise<void>;
   importPsdFile: (file: File) => Promise<void>;
   importStretchFile: (file: File) => Promise<void>;
   handleSave: () => Promise<void>;
   handleLoadProject: (file: File) => Promise<{ success: true } | { success: false; error: unknown }>;
   handleConfirmWipe: () => Promise<void>;
+  handleImportPsdToLibrary: () => Promise<void>;
   handleReset: () => void;
   importFiles: (fileList: FileList | readonly File[] | null) => Promise<void>;
   onDrop: (event: DragEvent<HTMLElement>) => void;
@@ -129,6 +130,13 @@ export function useCanvasImport(args: CanvasImportArgs): CanvasImportController 
     }
     setConfirmWipeOpen(false);
   }, [animRef, handleLoadProject, pendingFile, processPsdFile, resetProject, setConfirmWipeOpen, setPendingFile]);
+  const handleImportPsdToLibrary = useCallback(async (): Promise<void> => {
+    if (pendingFile?.name.toLowerCase().endsWith('.psd')) {
+      await processPsdFile(pendingFile, true);
+    }
+    setPendingFile(null);
+    setConfirmWipeOpen(false);
+  }, [pendingFile, processPsdFile, setConfirmWipeOpen, setPendingFile]);
   const { importFiles, onDrop: routeDrop, handleFileChange } = useCanvasFileRouting({
     importPng,
     importPsdFile,
@@ -143,6 +151,6 @@ export function useCanvasImport(args: CanvasImportArgs): CanvasImportController 
   const onDrop = useCallback((event: DragEvent<HTMLElement>): void => { void routeDrop(event); }, [routeDrop]);
   return {
     importPng, processPsdFile, importPsdFile, importStretchFile, handleSave,
-    handleLoadProject, handleConfirmWipe, handleReset, importFiles, onDrop, handleFileChange,
+    handleLoadProject, handleConfirmWipe, handleImportPsdToLibrary, handleReset, importFiles, onDrop, handleFileChange,
   };
 }

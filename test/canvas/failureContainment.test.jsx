@@ -116,6 +116,6 @@ describe('CanvasFailureFallback component', () => {
       <CanvasFailureFallback failure={failure} onRetry={vi.fn()} />,
     );
 
-    expect(container.textContent).toContain('Kukla2D 0.9.0-beta');
+    expect(container.textContent).toContain(`Kukla2D ${__APP_VERSION__}`);
   });
 });

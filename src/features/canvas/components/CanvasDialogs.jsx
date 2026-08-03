@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 
 export default function CanvasDialogs({
-  confirmWipeOpen, setConfirmWipeOpen, handleConfirmWipe,
+  confirmWipeOpen, setConfirmWipeOpen, handleConfirmWipe, handleImportPsdToLibrary, canImportPendingPsdToLibrary,
   confirmDeleteOpen, setConfirmDeleteOpen, deleteIntent, handleConfirmDelete,
 }) {
   const deleteDescription = deleteIntent
@@ -34,11 +34,16 @@ export default function CanvasDialogs({
             <AlertDialogDescription>
               Importing a new project or PSD will permanently delete all existing layers,
               meshes, and animations in your current project. This action
-              cannot be undone.
+              cannot be undone.{canImportPendingPsdToLibrary && ' Or add PSD layers to Library without changing the current project.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
+            {canImportPendingPsdToLibrary && (
+              <Button type="button" variant="outline" onClick={handleImportPsdToLibrary}>
+                Add to Library
+              </Button>
+            )}
             <AlertDialogAction onClick={handleConfirmWipe} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Wipe & Load
             </AlertDialogAction>

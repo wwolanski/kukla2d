@@ -6,6 +6,7 @@ import type {
   NodeId,
   Vertex,
   VertexInfluence,
+  Transform,
 } from '@kukla2d/contracts';
 
 import type { Matrix3 } from '@/domain/transforms';
@@ -18,6 +19,11 @@ import type { Container, FederatedPointerEvent } from 'pixi.js';
 type TransformPatch = Partial<Pick<CanvasDraftPoseValue, 'x' | 'y' | 'rotation' | 'scaleX' | 'scaleY' | 'pivotX' | 'pivotY'>>;
 type EffectiveValues = Record<string, object>;
 type BoneSnapshot = Record<string, Partial<BoneSetup>>;
+interface LinkedScaleSnapshot {
+  boneId: BoneId;
+  boneSetup: BoneSetup;
+  nodeTransforms: Record<string, Transform>;
+}
 interface AnimationGestureState { isAnimMode: boolean; gestureId: string | null | undefined; }
 interface LinkedTransformState extends AnimationGestureState {
   nodeId: NodeId;
@@ -32,7 +38,7 @@ export type DragState =
   | (LinkedTransformState & { type: 'move'; startClientX: number; startClientY: number; startWorldX: number; startWorldY: number; startX: number; startY: number; lastDx: number; lastDy: number })
   | (LinkedTransformState & { type: 'rotate'; startRotation: number; pivotWorldX: number; pivotWorldY: number; startAngle: number | null; lastDelta: number })
   | { type: 'pivot'; nodeId: NodeId; startClientX: number; startClientY: number; startPivotX: number; startPivotY: number; startX: number; startY: number; iswm: Matrix3; lastPatch: TransformPatch | null }
-  | (LinkedTransformState & { type: 'resize'; iswm: Matrix3; pivotX: number; pivotY: number; cornerLocalX: number; cornerLocalY: number; startScaleX: number; startScaleY: number; lastScaleX: number; lastScaleY: number })
+  | (LinkedTransformState & { type: 'resize'; iswm: Matrix3; startWorldMatrix: Matrix3; fixedWorldX: number; fixedWorldY: number; pivotX: number; pivotY: number; cornerLocalX: number; cornerLocalY: number; fixedLocalX: number; fixedLocalY: number; startX: number; startY: number; startRotation: number; startScaleX: number; startScaleY: number; lastScaleX: number; lastScaleY: number; linkedScaleSnapshot?: LinkedScaleSnapshot })
   | (AnimationGestureState & { type: 'boneMove'; boneId: BoneId; boneIds: BoneId[]; startBones: BoneSnapshot; setupEffectiveValues: EffectiveValues; startClientX: number; startClientY: number; startWorldX: number; startWorldY: number; useDraftPose: boolean; lastDx: number; lastDy: number; setupPoseCleared?: boolean })
   | (AnimationGestureState & { type: 'boneRotate'; boneId: BoneId; boneIds: BoneId[]; startBones: BoneSnapshot; setupEffectiveValues: EffectiveValues; pivotX: number; pivotY: number; startAngle: number | null; useDraftPose: boolean; lastDelta: number; setupPoseCleared?: boolean })
   | (AnimationGestureState & { type: 'boneLength'; boneId: BoneId; boneIds: BoneId[]; startLengths: Record<string, number>; setupEffectiveValues: EffectiveValues; pivotX: number; pivotY: number; startLength: number; axisX: number; axisY: number; startClientX: number; startClientY: number; startWorldX: number; startWorldY: number; useDraftPose: boolean; lastLength?: number; setupPoseCleared?: boolean })

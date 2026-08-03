@@ -15,8 +15,15 @@ export type BoneAssignmentAction =
 export function isNodeAssignedToBone(node: AssignableNode | null | undefined, bone: Bone | null | undefined): boolean {
   if (!node || !bone) return false;
   if (node.boneId === bone.id) return true;
-  if (node.id === bone.nodeId) return true;
-  if (node.mesh?.jointBoneId === bone.id || node.mesh?.jointBoneId === bone.nodeId) return true;
+  // Optional legacy references must be present before comparing them. Without
+  // these guards, `undefined === undefined` made every mesh-less part match
+  // every modern bone that did not have a legacy nodeId.
+  if (bone.nodeId != null && node.id === bone.nodeId) return true;
+  const jointBoneId = node.mesh?.jointBoneId;
+  if (jointBoneId != null && (
+    jointBoneId === bone.id
+    || (bone.nodeId != null && jointBoneId === bone.nodeId)
+  )) return true;
   return node.mesh?.influences?.some(vertex => vertex.some(inf => inf.boneId === bone.id)) ?? false;
 }
 
@@ -27,8 +34,12 @@ export function isNodeAssignedToBone(node: AssignableNode | null | undefined, bo
 export function isNodeDirectlyAssignedToBone(node: AssignableNode | null | undefined, bone: Bone | null | undefined): boolean {
   if (!node || !bone) return false;
   if (node.boneId) return node.boneId === bone.id;
-  if (node.id === bone.nodeId) return true;
-  return node.mesh?.jointBoneId === bone.id || node.mesh?.jointBoneId === bone.nodeId;
+  if (bone.nodeId != null && node.id === bone.nodeId) return true;
+  const jointBoneId = node.mesh?.jointBoneId;
+  return jointBoneId != null && (
+    jointBoneId === bone.id
+    || (bone.nodeId != null && jointBoneId === bone.nodeId)
+  );
 }
 
 export function doesBoneInfluenceNode(node: AssignableNode | null | undefined, boneId: BoneId | null | undefined): boolean {

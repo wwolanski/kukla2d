@@ -164,6 +164,7 @@ export function TimelinePanel() {
   const {
     clipboard,
     poseClipboard,
+    canCopyPose,
     copyKeyframe,
     pasteKeyframes,
     copyPose,
@@ -176,8 +177,6 @@ export function TimelinePanel() {
     animation: ctrl.activeClip,
     activeAnimationId: ctrl.activeClip?.id ?? null,
     currentTimeMs: ctrl.currentTime,
-    loopKeyframes: ctrl.loopKeyframes,
-    endFrame: ctrl.endFrame,
     upsertKeyframes: ctrl.upsertKeyframes,
     addMarkerIntent: ctrl.addMarker,
     deleteKeyframes: ctrl.deleteKeyframes,
@@ -185,9 +184,7 @@ export function TimelinePanel() {
     selectedKeyframes,
     setSelectedKeyframes,
     sel: ctrl.selection,
-    targetState: ctrl.targetState,
     currentFrame: ctrl.currentFrame,
-    fps: ctrl.fps,
   });
 
   const handleMarkerConfirm = useCallback((label) => {
@@ -318,6 +315,7 @@ export function TimelinePanel() {
         onRequestMarker={() => setMarkerDialogOpen(true)}
         addAudioTrack={ctrl.addAudioTrack}
         copyPose={copyPose}
+        canCopyPose={canCopyPose}
         pastePose={pastePose}
         poseClipboard={poseClipboard}
         currentFrame={ctrl.currentFrame}

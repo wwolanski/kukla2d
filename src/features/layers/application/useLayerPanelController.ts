@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import type { PartNode, Texture } from '@kukla2d/contracts';
+import type { PartNode, ProjectDocument, Texture } from '@kukla2d/contracts';
 
 import { useEditorStore } from '@/store/editorStore';
 import { useProjectStore } from '@/store/projectStore';
 
 import { HOVER_SOURCE_PANEL, resolveVisibleHoverHit } from '@/domain/hoverPolicy.js';
+import { deletePartNodes } from '@/domain/deleteCommands.js';
 import { writeLibraryAssetDrag } from '@/domain/libraryAssetDrag.js';
 import { buildUniqueTextureNameMap, createUniqueName } from '@/domain/libraryAssetNames.js';
 
@@ -36,6 +37,37 @@ interface LayerPanelControllerOptions {
 type LibraryDragSource =
   | { kind: 'asset'; id: string }
   | { kind: 'folder'; id: string };
+
+function removeLibraryAssets(projectDraft: ProjectDocument, assetIds: ReadonlySet<string>) {
+  if (assetIds.size === 0) return;
+
+  const nodeIds = projectDraft.nodes
+    .filter(node => assetIds.has(node.id)
+      || (node.type === 'part' && node.textureId && assetIds.has(node.textureId)))
+    .map(node => node.id);
+  deletePartNodes(projectDraft, nodeIds);
+
+  projectDraft.textures = projectDraft.textures.filter(texture => !assetIds.has(texture.id));
+  projectDraft.assetPlacements = (projectDraft.assetPlacements ?? [])
+    .filter(placement => !assetIds.has(placement.assetId));
+
+  const attachmentIds = new Set(
+    (projectDraft.attachments ?? [])
+      .filter(attachment => attachment.assetId && assetIds.has(attachment.assetId))
+      .map(attachment => attachment.id),
+  );
+  projectDraft.attachments = (projectDraft.attachments ?? [])
+    .filter(attachment => !attachmentIds.has(attachment.id));
+  projectDraft.skins = (projectDraft.skins ?? []).map(skin => ({
+    ...skin,
+    entries: skin.entries.filter(entry => !attachmentIds.has(entry.attachmentId)),
+  }));
+  for (const slot of projectDraft.slots ?? []) {
+    if (slot.setupAttachmentId && attachmentIds.has(slot.setupAttachmentId)) {
+      slot.setupAttachmentId = null;
+    }
+  }
+}
 
 function useLayerPanelControllerImpl(options: LayerPanelControllerOptions = {}) {
   const { onImportClick, onImportFiles } = options;
@@ -317,6 +349,38 @@ function useLayerPanelControllerImpl(options: LayerPanelControllerOptions = {}) 
     });
   }, [updateProject]);
 
+  const onRemoveLibraryAsset = useCallback((assetId: string) => {
+    updateProject((projectDraft) => {
+      removeLibraryAssets(projectDraft, new Set([assetId]));
+    });
+    setSelection([]);
+  }, [setSelection, updateProject]);
+
+  const onRemoveLibraryFolder = useCallback((folderId: string) => {
+    updateProject((projectDraft) => {
+      const folderIds = new Set([folderId]);
+      let foundDescendant = true;
+      while (foundDescendant) {
+        foundDescendant = false;
+        for (const folder of projectDraft.libraryFolders ?? []) {
+          if (folder.parentId && folderIds.has(folder.parentId) && !folderIds.has(folder.id)) {
+            folderIds.add(folder.id);
+            foundDescendant = true;
+          }
+        }
+      }
+      const assetIds = new Set(
+        (projectDraft.assetPlacements ?? [])
+          .filter(placement => placement.folderId && folderIds.has(placement.folderId))
+          .map(placement => placement.assetId),
+      );
+      removeLibraryAssets(projectDraft, assetIds);
+      projectDraft.libraryFolders = (projectDraft.libraryFolders ?? [])
+        .filter(folder => !folderIds.has(folder.id));
+    });
+    setSelection([]);
+  }, [setSelection, updateProject]);
+
   const {
     session: libraryDragSession,
     onDragStart: onLibraryDragStart,
@@ -407,6 +471,8 @@ function useLayerPanelControllerImpl(options: LayerPanelControllerOptions = {}) 
       onCreateFolder,
       onRenameFolder,
       onRenameAsset: onRenameLibraryAsset,
+      onRemoveFolder: onRemoveLibraryFolder,
+      onRemoveAsset: onRemoveLibraryAsset,
       onDragStartAsset: handleLibraryDragStartAsset,
       onDragStartFolder: handleLibraryDragStartFolder,
       onDragOverRow: handleLibraryDragOverRow,

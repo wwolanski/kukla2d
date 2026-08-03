@@ -19,6 +19,7 @@ export function TransportBar({
   onRequestMarker,
   addAudioTrack,
   copyPose,
+  canCopyPose,
   pastePose,
   poseClipboard,
   currentFrame,
@@ -195,7 +196,7 @@ export function TransportBar({
         Marker
       </button>
       <button
-        disabled={!hasAnimation}
+        disabled={!hasAnimation || !canCopyPose}
         onClick={() => {
           const result = copyPose();
           if (result?.changed) {
@@ -203,7 +204,9 @@ export function TransportBar({
           }
         }}
         className="text-[10px] px-2 py-1 rounded border border-border hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30"
-        title="Copy current pose from selected nodes/bones"
+        title={canCopyPose
+          ? 'Copy all keyframes at current frame'
+          : 'No keyframes at current frame'}
       >
         Copy Pose
       </button>

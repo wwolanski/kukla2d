@@ -25,6 +25,7 @@ type RigProject = Pick<ProjectDocument, 'bones' | 'nodes'>;
 interface TranslationOptions { excludeNodeId?: NodeId | null }
 interface BoneLengthOptions { scaleLinkedNodes?: boolean }
 interface LinkedTranslationInput { boneId?: BoneId | null; nodeId?: NodeId | null; dx: number; dy: number }
+interface LinkedScaleOptions { pivotWorld?: { x: number; y: number } }
 
 const MIN_BONE_LENGTH = 10;
 
@@ -425,7 +426,7 @@ export function rotateLinkedNodeGroup(project: RigProject | null | undefined, no
  * Scale a linked node group. Horizontal scale changes bone length; both axes
  * propagate to all images linked to that bone.
  */
-export function scaleLinkedNodeGroup(project: RigProject | null | undefined, nodeId: NodeId, factorX: number, factorY: number): void {
+export function scaleLinkedNodeGroup(project: RigProject | null | undefined, nodeId: NodeId, factorX: number, factorY: number, options: LinkedScaleOptions = {}): void {
   if (!project || !nodeId || !Number.isFinite(factorX) || !Number.isFinite(factorY)) return;
   if (factorX === 0 || factorY === 0) return;
   const node = getNodeList(project).find(n => n.id === nodeId);
@@ -453,8 +454,11 @@ export function scaleLinkedNodeGroup(project: RigProject | null | undefined, nod
   const sourceTransform = ensureTransform(node);
   const localPivotX = sourceTransform.pivotX ?? 0;
   const localPivotY = sourceTransform.pivotY ?? 0;
-  const pivotX = sourceWorld[0] * localPivotX + sourceWorld[3] * localPivotY + sourceWorld[6];
-  const pivotY = sourceWorld[1] * localPivotX + sourceWorld[4] * localPivotY + sourceWorld[7];
+  const sourcePivotX = sourceWorld[0] * localPivotX + sourceWorld[3] * localPivotY + sourceWorld[6];
+  const sourcePivotY = sourceWorld[1] * localPivotX + sourceWorld[4] * localPivotY + sourceWorld[7];
+  const pivotWorld = options.pivotWorld;
+  const pivotX = Number.isFinite(pivotWorld?.x) ? pivotWorld!.x : sourcePivotX;
+  const pivotY = Number.isFinite(pivotWorld?.y) ? pivotWorld!.y : sourcePivotY;
   const axisLength = Math.hypot(sourceWorld[0], sourceWorld[1]) || 1;
   const cos = sourceWorld[0] / axisLength;
   const sin = sourceWorld[1] / axisLength;

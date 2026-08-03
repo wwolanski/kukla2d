@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, type Dispatch, type SetStateAction } from 'react';
 
-import { toAnimationTargetId, type Animation, type AnimationId, type AnimationTargetId, type Track } from '@kukla2d/contracts';
+import { type Animation, type AnimationId, type AnimationTargetId, type Track } from '@kukla2d/contracts';
 
 import type { ProjectActions } from '@/store/project/projectStoreTypes';
 
@@ -8,17 +8,15 @@ import type {
   AnimationEasing,
   AnimationKeyframeInput,
 } from '@/domain/animationCommandTypes';
-import { computePoseOverrides } from '@/domain/animationEngine';
+import { isTimelineVisibleKeyframe } from '@/domain/keyframeProvenance';
+
+import { uid } from '@/lib/uid.js';
 
 import {
   collectTrackKeyframeAddresses,
   keyframeAddressToString,
   parseKeyframeAddressSet,
 } from './keyframeAddress.js';
-
-
-import type { TimelineTargetState } from './useTimelineController.js';
-import type { Dispatch, SetStateAction } from 'react';
 
 interface KeyframeClipboard {
   properties: Record<string, unknown>;
@@ -27,20 +25,22 @@ interface KeyframeClipboard {
 
 interface PoseClipboardEntry {
   id: AnimationTargetId;
-  targetType: 'node' | 'bone';
-  values: Record<string, number>;
+  channels: Record<string, {
+    value: unknown;
+    easing: AnimationEasing;
+    role: 'authored' | 'derived';
+  }>;
 }
 
 interface PoseClipboard {
   entries: PoseClipboardEntry[];
+  sourceFrame: number;
 }
 
 interface KeyframeActionsOptions {
   animation: Animation | null;
   activeAnimationId: AnimationId | null;
   currentTimeMs: number;
-  loopKeyframes: boolean;
-  endFrame: number;
   upsertKeyframes: ProjectActions['upsertAnimationKeyframes'];
   addMarkerIntent: ProjectActions['addAnimationMarker'];
   deleteKeyframes: ProjectActions['deleteAnimationKeyframes'];
@@ -48,9 +48,7 @@ interface KeyframeActionsOptions {
   selectedKeyframes: Set<string>;
   setSelectedKeyframes: Dispatch<SetStateAction<Set<string>>>;
   sel: readonly AnimationTargetId[];
-  targetState: TimelineTargetState;
   currentFrame: number;
-  fps: number;
 }
 
 function trackTargetId(track: Track): AnimationTargetId { return track.targetId; }
@@ -73,16 +71,39 @@ function getAddressesAtTime(
   ).map((address) => keyframeAddressToString(address));
 }
 
-function numericValue(value: unknown, fallback: number): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+function collectPoseClipboardEntriesAtTime(
+  animation: Animation | null,
+  timeMs: number,
+): PoseClipboardEntry[] {
+  if (!animation) return [];
+  const byTarget = new Map<AnimationTargetId, PoseClipboardEntry>();
+
+  for (const track of animation.tracks) {
+    const targetId = trackTargetId(track);
+    const keyframe = track.keyframes.find((candidate) => candidate.time === timeMs);
+    if (!keyframe) continue;
+    const entry = byTarget.get(targetId) ?? { id: targetId, channels: {} };
+    entry.channels[track.property] = {
+      value: keyframe.value,
+      easing: keyframe.easing ?? 'linear',
+      role: isTimelineVisibleKeyframe(keyframe) ? 'authored' : 'derived',
+    };
+    byTarget.set(targetId, entry);
+  }
+
+  return Array.from(byTarget.values());
+}
+
+function hasAuthoredPoseChannel(entries: readonly PoseClipboardEntry[]): boolean {
+  return entries.some((entry) => (
+    Object.values(entry.channels).some((channel) => channel.role === 'authored')
+  ));
 }
 
 function useKeyframeActionsImpl({
   animation,
   activeAnimationId,
   currentTimeMs,
-  loopKeyframes,
-  endFrame,
   upsertKeyframes,
   addMarkerIntent,
   deleteKeyframes,
@@ -90,15 +111,16 @@ function useKeyframeActionsImpl({
   selectedKeyframes,
   setSelectedKeyframes,
   sel,
-  targetState,
   currentFrame,
-  fps,
 }: KeyframeActionsOptions) {
   const [clipboard, setClipboard] = useState<KeyframeClipboard | null>(null);
   const [poseClipboard, setPoseClipboard] = useState<PoseClipboard | null>(null);
   const playbackRef = useRef({ currentTimeMs, currentFrame });
   playbackRef.current.currentTimeMs = currentTimeMs;
   playbackRef.current.currentFrame = currentFrame;
+  const canCopyPose = hasAuthoredPoseChannel(
+    collectPoseClipboardEntriesAtTime(animation, currentTimeMs),
+  );
 
   const copyKeyframe = useCallback((nodeId: AnimationTargetId, timeMs: number) => {
     if (!animation) return;
@@ -139,60 +161,34 @@ function useKeyframeActionsImpl({
 
   const copyPose = useCallback(() => {
     if (!animation) return { changed: false };
-    const endMs = (endFrame / fps) * 1000;
-    const overrides = computePoseOverrides(animation, playbackRef.current.currentTimeMs, loopKeyframes, endMs);
-    const ids = sel.length > 0 ? sel : Array.from(overrides.keys());
-    const entries: PoseClipboardEntry[] = [];
-    for (const id of ids) {
-      const node = targetState.nodesById.get(id);
-      const bone = targetState.bonesById.get(id);
-      const ov = overrides.get(id) ?? {};
-      if (node) {
-        entries.push({
-          id: toAnimationTargetId(id),
-          targetType: 'node',
-          values: {
-            x: numericValue(ov.x, node.transform.x),
-            y: numericValue(ov.y, node.transform.y),
-            rotation: numericValue(ov.rotation, node.transform.rotation),
-            scaleX: numericValue(ov.scaleX, node.transform.scaleX),
-            scaleY: numericValue(ov.scaleY, node.transform.scaleY),
-            opacity: numericValue(ov.opacity, node.opacity),
-          },
-        });
-      } else if (bone) {
-        entries.push({
-          id: toAnimationTargetId(id),
-          targetType: 'bone',
-          values: {
-            x: numericValue(ov.x, bone.setup.x),
-            y: numericValue(ov.y, bone.setup.y),
-            rotation: numericValue(ov.rotation, bone.setup.rotation),
-            scaleX: numericValue(ov.scaleX, bone.setup.scaleX),
-            scaleY: numericValue(ov.scaleY, bone.setup.scaleY),
-          },
-        });
-      }
-    }
-    if (entries.length) {
-      setPoseClipboard({ entries });
-      return { changed: true, sourceFrame: playbackRef.current.currentFrame };
+    const entries = collectPoseClipboardEntriesAtTime(animation, playbackRef.current.currentTimeMs);
+    if (hasAuthoredPoseChannel(entries)) {
+      const sourceFrame = playbackRef.current.currentFrame;
+      setPoseClipboard({ entries, sourceFrame });
+      return { changed: true, sourceFrame };
     }
     return { changed: false };
-  }, [animation, loopKeyframes, endFrame, fps, sel, targetState]);
+  }, [animation]);
 
   const pastePose = useCallback((mirror = false) => {
     if (!poseClipboard || !animation || !activeAnimationId) return { changed: false };
-    const targetIds = sel.length > 0 ? sel : poseClipboard.entries.map(e => e.id);
-    const keyframes = targetIds.flatMap((targetId, index) => {
-      const entry = poseClipboard.entries[index] ?? poseClipboard.entries[0];
-      if (!entry) return [];
-      return Object.entries(entry.values).map(([property, raw]) => ({
-        targetId,
+    const gestureId = `pose-copy-${uid()}`;
+    const keyframes = poseClipboard.entries.flatMap((entry) => {
+      return Object.entries(entry.channels).map(([property, channel]) => ({
+        targetId: entry.id,
         property,
         timeMs: playbackRef.current.currentTimeMs,
-        value: mirror && (property === 'x' || property === 'rotation') ? -raw : raw,
-        easing: 'linear',
+        value: mirror
+          && (property === 'x' || property === 'rotation')
+          && typeof channel.value === 'number'
+          ? -channel.value
+          : channel.value,
+        easing: channel.easing,
+        authoring: {
+          gestureId,
+          role: channel.role,
+          source: 'timeline.copy-pose',
+        },
       }));
     });
     upsertKeyframes({
@@ -200,8 +196,8 @@ function useKeyframeActionsImpl({
       keyframes,
     });
     const frame = playbackRef.current.currentFrame;
-    return { changed: keyframes.length > 0, sourceFrame: frame, targetFrame: frame };
-  }, [poseClipboard, animation, sel, upsertKeyframes, activeAnimationId]);
+    return { changed: keyframes.length > 0, sourceFrame: poseClipboard.sourceFrame, targetFrame: frame };
+  }, [poseClipboard, animation, upsertKeyframes, activeAnimationId]);
 
   const addMarker = useCallback((labelOrEvent: unknown) => {
     if (!animation) return;
@@ -280,6 +276,7 @@ function useKeyframeActionsImpl({
   return {
     clipboard,
     poseClipboard,
+    canCopyPose,
     copyKeyframe,
     pasteKeyframes,
     copyPose,

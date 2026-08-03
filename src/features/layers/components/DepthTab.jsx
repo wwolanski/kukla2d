@@ -80,7 +80,7 @@ export function DepthTab({
                     onSelect={() => onDelete(node.id)}
                   >
                     <Trash2 className="w-4 h-4 mr-2 opacity-70" />
-                    Delete
+                    Remove from canvas
                   </ContextMenuItem>
                 </ContextMenuContent>
               </ContextMenu>

@@ -53,7 +53,7 @@ describe('RootErrorBoundary', () => {
     expect(container.querySelector('[data-root-error-boundary]')).not.toBeNull();
     expect(container.textContent).toContain('Application error');
     expect(container.textContent).toContain('Something went wrong');
-    expect(container.textContent).toContain('Kukla2D 0.9.0-beta');
+    expect(container.textContent).toContain(`Kukla2D ${__APP_VERSION__}`);
 
     spy.mockRestore();
   });

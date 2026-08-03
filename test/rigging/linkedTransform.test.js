@@ -255,6 +255,42 @@ describe('setBoneLength', () => {
 });
 
 describe('linked node rotation and scale', () => {
+  it('does not scale unrelated mesh-less parts when modern bones omit nodeId', () => {
+    const project = {
+      nodes: [
+        { id: 'a', type: 'part', boneId: 'b1', transform: { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1, pivotX: 0, pivotY: 0 } },
+        { id: 'b', type: 'part', boneId: 'b2', transform: { x: 100, y: 0, rotation: 0, scaleX: 1, scaleY: 1, pivotX: 0, pivotY: 0 } },
+      ],
+      bones: [
+        { id: 'b1', setup: { x: 0, y: 0, rotation: 0, length: 100 } },
+        { id: 'b2', setup: { x: 100, y: 0, rotation: 0, length: 100 } },
+      ],
+    };
+
+    scaleLinkedNodeGroup(project, 'b', 2, 2);
+
+    expect(project.nodes[0].transform).toEqual({ x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1, pivotX: 0, pivotY: 0 });
+    expect(project.nodes[1].transform.scaleX).toBeCloseTo(2);
+    expect(project.bones[0].setup.length).toBe(100);
+    expect(project.bones[1].setup.length).toBeCloseTo(200);
+  });
+
+  it('scales a linked group around an explicit world pivot', () => {
+    const project = makeProject();
+    assignNodeToBone(project.nodes[1], 'root');
+    setBoneLinkLocked(project.nodes[1], true);
+    project.nodes[1].transform = { x: 100, y: 100, rotation: 0, scaleX: 1, scaleY: 1, pivotX: 0, pivotY: 0 };
+    project.bones[0].setup.x = 100;
+    project.bones[0].setup.y = 100;
+
+    scaleLinkedNodeGroup(project, 'part-1', 2, 2, { pivotWorld: { x: 200, y: 200 } });
+
+    expect(project.nodes[1].transform.x).toBeCloseTo(0);
+    expect(project.nodes[1].transform.y).toBeCloseTo(0);
+    expect(project.nodes[1].transform.scaleX).toBeCloseTo(2);
+    expect(project.nodes[1].transform.scaleY).toBeCloseTo(2);
+  });
+
   it('rotates image in place and its assigned bone by same delta', () => {
     const project = makeProject();
     assignNodeToBone(project.nodes[1], 'root');
