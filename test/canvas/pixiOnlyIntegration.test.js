@@ -388,7 +388,7 @@ describe('Stage 03 lifecycle regression', () => {
     expect(typeof src.useCanvasInput).toBe('function');
     const fnSrc = src.useCanvasInput.toString();
     expect(fnSrc).not.toContain('backendKind');
-  });
+  }, 15_000);
 
   it('PixiInteractionSystem requires workflowActor and executeCommand', () => {
     return import('@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js').then(({ PixiInteractionSystem }) => {

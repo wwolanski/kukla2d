@@ -5,6 +5,9 @@
  * Used by Pixi input system.
  */
 
+import { mat3Mul } from '@/domain/transforms.js';
+import type { Matrix3 } from '@/domain/transforms.js';
+
 /**
  * Compute move delta in world-space from a client-space drag.
  *
@@ -17,6 +20,61 @@ interface RotationDeltaInput { startAngle: number; currentPoint: Point; pivotPoi
 interface PivotTransformInput {
   startPivotX: number; startPivotY: number; startX: number; startY: number;
   localDeltaX: number; localDeltaY: number; rotation: number; scaleX: number; scaleY: number;
+}
+export interface ResizeTransformInput {
+  fixedLocalX: number; fixedLocalY: number; pivotX: number; pivotY: number;
+  startX: number; startY: number; startRotation: number;
+  startScaleX: number; startScaleY: number;
+}
+
+export const MIN_ABS_RESIZE_SCALE = 1e-4;
+export const MAX_ABS_RESIZE_SCALE = 1e4;
+
+export function safeResizeScale(value: number, fallback: number): number {
+  if (!Number.isFinite(value)) return fallback;
+  const bounded = Math.max(-MAX_ABS_RESIZE_SCALE, Math.min(MAX_ABS_RESIZE_SCALE, value));
+  if (Math.abs(bounded) >= MIN_ABS_RESIZE_SCALE) return bounded;
+  const sign = bounded < 0 ? -1 : (fallback < 0 ? -1 : 1);
+  return sign * MIN_ABS_RESIZE_SCALE;
+}
+
+export function safeScaleRatio(value: number, start: number): number {
+  if (!Number.isFinite(value) || !Number.isFinite(start) || Math.abs(start) < MIN_ABS_RESIZE_SCALE) return 1;
+  return value / start;
+}
+
+export function scaleAroundWorldPoint(matrix: Matrix3, factorX: number, factorY: number, pivotX: number, pivotY: number): Matrix3 {
+  const axisLength = Math.hypot(matrix[0], matrix[1]) || 1;
+  const cos = matrix[0] / axisLength;
+  const sin = matrix[1] / axisLength;
+  const m0 = cos * cos * factorX + sin * sin * factorY;
+  const m1 = cos * sin * (factorX - factorY);
+  const m3 = m1;
+  const m4 = sin * sin * factorX + cos * cos * factorY;
+  const around = new Float32Array([
+    m0, m1, 0,
+    m3, m4, 0,
+    pivotX - m0 * pivotX - m3 * pivotY,
+    pivotY - m1 * pivotX - m4 * pivotY,
+    1,
+  ]);
+  return mat3Mul(around, matrix);
+}
+
+export function resizeTransformPatch(input: ResizeTransformInput, scaleX: number, scaleY: number): { x: number; y: number; scaleX: number; scaleY: number } {
+  const radians = (input.startRotation * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  const localX = input.fixedLocalX - input.pivotX;
+  const localY = input.fixedLocalY - input.pivotY;
+  const deltaScaleX = input.startScaleX - scaleX;
+  const deltaScaleY = input.startScaleY - scaleY;
+  return {
+    x: input.startX + cos * deltaScaleX * localX - sin * deltaScaleY * localY,
+    y: input.startY + sin * deltaScaleX * localX + cos * deltaScaleY * localY,
+    scaleX,
+    scaleY,
+  };
 }
 
 export function computeMoveDelta({ startClientX, startClientY, currentClientX, currentClientY, zoom }: MoveDeltaInput): { dx: number; dy: number } {

@@ -1,10 +1,6 @@
 import { useMemo, useCallback } from 'react';
 
-import type {
-  Bone,
-  Node,
-  ProjectDocument,
-} from '@kukla2d/contracts';
+import type { ProjectDocument } from '@kukla2d/contracts';
 
 import { useAnimationStore } from '@/store/animationStore';
 import { useEditorStore } from '@/store/editorStore';
@@ -20,11 +16,6 @@ import type { TimelineTargetDescriptor } from './buildTimelineTrackRows.js';
 import type { TimelineCommandApi } from './createTimelineCommandApi.js';
 
 const BONE_PREFIX = '\u{1F9B4} ';
-
-export interface TimelineTargetState {
-  nodesById: ReadonlyMap<string, Node>;
-  bonesById: ReadonlyMap<string, Bone>;
-}
 
 function buildTargetDescriptors(project: ProjectDocument): TimelineTargetDescriptor[] {
   const nodes = project.nodes.map((node) => ({
@@ -44,13 +35,6 @@ function buildTargetDescriptors(project: ProjectDocument): TimelineTargetDescrip
   }));
 
   return [...nodes, ...bones, ...constraints];
-}
-
-function buildTargetState(project: ProjectDocument): TimelineTargetState {
-  return {
-    nodesById: new Map<string, Node>(project.nodes.map((node) => [node.id, node])),
-    bonesById: new Map<string, Bone>(project.bones.map((bone) => [bone.id, bone])),
-  };
 }
 
 function useTimelineControllerImpl() {
@@ -96,8 +80,6 @@ function useTimelineControllerImpl() {
   const totalFrames = Math.max(resolvedEndFrame - resolvedStartFrame, 1);
 
   const targetDescriptors = useMemo(() => buildTargetDescriptors(project), [project]);
-  const targetState = useMemo(() => buildTargetState(project), [project]);
-
   const trackRows = useMemo(
     () => buildTimelineTrackRows(activeClip, targetDescriptors),
     [activeClip, targetDescriptors],
@@ -239,7 +221,6 @@ function useTimelineControllerImpl() {
     trackRows,
     hasAnimation,
     targetDescriptors,
-    targetState,
     commands,
     ensureAnimation,
     createClip,

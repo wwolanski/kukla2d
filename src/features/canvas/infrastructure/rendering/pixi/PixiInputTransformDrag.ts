@@ -1,7 +1,15 @@
 import { makeLocalMatrix, mat3Inverse, mat3Mul } from '@/domain/transforms';
 import type { Matrix3 } from '@/domain/transforms';
 
-import { computeMoveDelta, computeRotationDelta, computePivotTransformPatch } from '@/features/canvas/domain/dragMath.js';
+import {
+  computeMoveDelta,
+  computeRotationDelta,
+  computePivotTransformPatch,
+  resizeTransformPatch,
+  safeResizeScale,
+  safeScaleRatio,
+  scaleAroundWorldPoint,
+} from '@/features/canvas/domain/dragMath.js';
 import { resolveLinkedNodeAuthoredTransform } from '@/features/canvas/domain/linkedNodeAuthoring.js';
 import {
   rotateLinkedBoneSelection,
@@ -13,7 +21,6 @@ import {
 } from '@/features/rigging';
 
 import { clearSetupPoseTargets, previewPosePartial } from './PixiPosePreview.js';
-
 
 import type { DragState, PixiInteractionSystem, PointerInput } from './PixiInteractionSystem.js';
 

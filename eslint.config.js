@@ -48,6 +48,7 @@ export default [
       'coverage/**',
       'dist/**',
       'external_repos/**',
+      '_context/**',
       'node_modules/**',
       'playwright-report/**',
       'test-results/**',

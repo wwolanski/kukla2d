@@ -5,6 +5,16 @@ import { useImportSettingsStore } from '@/store/importSettingsStore';
 
 import { loadExampleProjectFile } from '@/features/projects';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { BorderBeam } from '@/components/ui/border-beam';
 import {
   AlertDialog,
