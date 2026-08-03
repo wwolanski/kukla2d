@@ -26,6 +26,55 @@ type BoneRotateDrag = Extract<DragState, { type: 'boneRotate' }>;
 type BoneLengthDrag = Extract<DragState, { type: 'boneLength' }>;
 
 const DEFAULT_TRANSFORM = { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1, pivotX: 0, pivotY: 0 };
+const MIN_ABS_RESIZE_SCALE = 1e-4;
+const MAX_ABS_RESIZE_SCALE = 1e4;
+
+function safeResizeScale(value: number, fallback: number): number {
+  if (!Number.isFinite(value)) return fallback;
+  const bounded = Math.max(-MAX_ABS_RESIZE_SCALE, Math.min(MAX_ABS_RESIZE_SCALE, value));
+  if (Math.abs(bounded) >= MIN_ABS_RESIZE_SCALE) return bounded;
+  const sign = bounded < 0 ? -1 : (fallback < 0 ? -1 : 1);
+  return sign * MIN_ABS_RESIZE_SCALE;
+}
+
+function safeScaleRatio(value: number, start: number): number {
+  if (!Number.isFinite(value) || !Number.isFinite(start) || Math.abs(start) < MIN_ABS_RESIZE_SCALE) return 1;
+  return value / start;
+}
+
+function scaleAroundWorldPoint(matrix: Matrix3, factorX: number, factorY: number, pivotX: number, pivotY: number): Matrix3 {
+  const axisLength = Math.hypot(matrix[0], matrix[1]) || 1;
+  const cos = matrix[0] / axisLength;
+  const sin = matrix[1] / axisLength;
+  const m0 = cos * cos * factorX + sin * sin * factorY;
+  const m1 = cos * sin * (factorX - factorY);
+  const m3 = m1;
+  const m4 = sin * sin * factorX + cos * cos * factorY;
+  const around = new Float32Array([
+    m0, m1, 0,
+    m3, m4, 0,
+    pivotX - m0 * pivotX - m3 * pivotY,
+    pivotY - m1 * pivotX - m4 * pivotY,
+    1,
+  ]);
+  return mat3Mul(around, matrix);
+}
+
+function resizeTransformPatch(drag: ResizeDrag, scaleX: number, scaleY: number): { x: number; y: number; scaleX: number; scaleY: number } {
+  const radians = (drag.startRotation * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  const localX = drag.fixedLocalX - drag.pivotX;
+  const localY = drag.fixedLocalY - drag.pivotY;
+  const deltaScaleX = drag.startScaleX - scaleX;
+  const deltaScaleY = drag.startScaleY - scaleY;
+  return {
+    x: drag.startX + cos * deltaScaleX * localX - sin * deltaScaleY * localY,
+    y: drag.startY + sin * deltaScaleX * localX + cos * deltaScaleY * localY,
+    scaleX,
+    scaleY,
+  };
+}
 
 function resolveLinkedAnimPatch(adapter: PixiInteractionSystem, drag: MoveDrag | RotateDrag | ResizeDrag, desiredWorldMatrix: Matrix3) {
   const project = adapter.projectRef.current;
@@ -57,54 +106,67 @@ function handleResizeDrag(adapter: PixiInteractionSystem, e: PointerInput, drag:
   const { iswm } = drag;
   const localX = iswm[0] * world.x + iswm[3] * world.y + iswm[6];
   const localY = iswm[1] * world.x + iswm[4] * world.y + iswm[7];
-  const denomX = drag.cornerLocalX - drag.pivotX;
-  const denomY = drag.cornerLocalY - drag.pivotY;
+  const denomX = drag.cornerLocalX - drag.fixedLocalX;
+  const denomY = drag.cornerLocalY - drag.fixedLocalY;
   let scaleX = Math.abs(denomX) > 1e-6
-    ? drag.startScaleX * (localX - drag.pivotX) / denomX
+    ? drag.startScaleX * (localX - drag.fixedLocalX) / denomX
     : drag.startScaleX;
   let scaleY = Math.abs(denomY) > 1e-6
-    ? drag.startScaleY * (localY - drag.pivotY) / denomY
+    ? drag.startScaleY * (localY - drag.fixedLocalY) / denomY
     : drag.startScaleY;
   if (e.shiftKey) {
-    const factor = Math.abs(scaleX / drag.startScaleX) > Math.abs(scaleY / drag.startScaleY)
-      ? scaleX / drag.startScaleX : scaleY / drag.startScaleY;
+    const ratioX = safeScaleRatio(scaleX, drag.startScaleX);
+    const ratioY = safeScaleRatio(scaleY, drag.startScaleY);
+    const factor = Math.abs(ratioX) > Math.abs(ratioY) ? ratioX : ratioY;
     scaleX = drag.startScaleX * factor;
     scaleY = drag.startScaleY * factor;
   }
-  drag.lastPatch = { scaleX, scaleY };
+  scaleX = safeResizeScale(scaleX, drag.startScaleX);
+  scaleY = safeResizeScale(scaleY, drag.startScaleY);
+  const factorX = safeScaleRatio(scaleX, drag.startScaleX);
+  const factorY = safeScaleRatio(scaleY, drag.startScaleY);
+  const patch = resizeTransformPatch(drag, scaleX, scaleY);
+  drag.lastPatch = patch;
   if (drag.linkedAnim) {
-    const project = adapter.projectRef.current;
-    const node = project.nodes.find(n => n.id === drag.nodeId);
-    if (!node) return true;
-    const boneSetup = drag.linkedBone?.setup ?? {};
-    const boneOverrides = drag.linkedBone ?? {};
-    const boneDelta = mat3Mul(makeLocalMatrix(boneOverrides), mat3Inverse(makeLocalMatrix(boneSetup)));
-    const srcScaleX = (node.transform?.scaleX ?? 1) * (drag.startScaleX > 0 ? scaleX / drag.startScaleX : 1);
-    const srcScaleY = (node.transform?.scaleY ?? 1) * (drag.startScaleY > 0 ? scaleY / drag.startScaleY : 1);
-    const resolved = resolveLinkedAnimPatch(adapter, drag, (() => {
-      const nodeLocal = makeLocalMatrix({ x: node.transform?.x ?? 0, y: node.transform?.y ?? 0, rotation: node.transform?.rotation ?? 0, scaleX: srcScaleX, scaleY: srcScaleY, pivotX: node.transform?.pivotX ?? 0, pivotY: node.transform?.pivotY ?? 0 });
-      const parentWorld = node.parent && drag.linkedPreLinkedWorldMatrices
-        ? (drag.linkedPreLinkedWorldMatrices.get(node.parent) ?? null)
-        : null;
-      const parentInv = parentWorld ? mat3Inverse(parentWorld) : null;
-      const srcWorld = parentInv ? mat3Mul(parentInv, nodeLocal) : nodeLocal;
-      return mat3Mul(boneDelta, srcWorld);
-    })());
+    const resolved = resolveLinkedAnimPatch(adapter, drag, scaleAroundWorldPoint(
+      drag.startWorldMatrix,
+      factorX,
+      factorY,
+      drag.fixedWorldX,
+      drag.fixedWorldY,
+    ));
     if (!resolved?.valid) return true;
     previewPosePartial(adapter, drag.nodeId, resolved.transform);
   } else if (drag.isAnimMode) {
-    previewPosePartial(adapter, drag.nodeId, drag.lastPatch);
+    previewPosePartial(adapter, drag.nodeId, patch);
   } else if (drag.isLinked) {
-    const factorX = Math.abs(drag.lastScaleX) > 1e-9 ? scaleX / drag.lastScaleX : 1;
-    const factorY = Math.abs(drag.lastScaleY) > 1e-9 ? scaleY / drag.lastScaleY : 1;
+    const snapshot = drag.linkedScaleSnapshot;
+    const factorX = snapshot
+      ? safeScaleRatio(scaleX, drag.startScaleX)
+      : safeScaleRatio(scaleX, drag.lastScaleX);
+    const factorY = snapshot
+      ? safeScaleRatio(scaleY, drag.startScaleY)
+      : safeScaleRatio(scaleY, drag.lastScaleY);
     drag.lastScaleX = scaleX;
     drag.lastScaleY = scaleY;
     drag.lastPatch = null;
     adapter._executeCommand({
       type: 'updateProject',
-      payload: { mutator: project => scaleLinkedNodeGroup(project, drag.nodeId, factorX, factorY) },
+      payload: { mutator: project => {
+        if (snapshot) {
+          const bone = project.bones.find(candidate => candidate.id === snapshot.boneId);
+          if (bone) Object.assign(bone.setup, snapshot.boneSetup);
+          for (const [nodeId, transform] of Object.entries(snapshot.nodeTransforms)) {
+            const node = project.nodes.find(candidate => candidate.id === nodeId);
+            if (node) Object.assign(node.transform, transform);
+          }
+        }
+        scaleLinkedNodeGroup(project, drag.nodeId, factorX, factorY, {
+          pivotWorld: { x: drag.fixedWorldX, y: drag.fixedWorldY },
+        });
+      } },
     });
-  } else adapter._setPreviewPose(drag.nodeId, drag.lastPatch);
+  } else adapter._setPreviewPose(drag.nodeId, patch);
   adapter.markDirty();
   return true;
 }

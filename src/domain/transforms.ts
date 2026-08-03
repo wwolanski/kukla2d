@@ -89,11 +89,19 @@ export function decomposeAffineMatrix(m: mat3, fallback: Partial<Transform> = {}
   const pivotX = fallback.pivotX ?? 0;
   const pivotY = fallback.pivotY ?? 0;
   const scaleX = Math.hypot(m[0], m[1]);
+  const principalRotation = Math.atan2(m[1], m[0]) * (180 / Math.PI);
+  const fallbackRotation = fallback.rotation;
+  // A matrix cannot distinguish 0deg from +/-360deg. Keep the angle on the
+  // branch nearest to the authored value so imported rotations such as -720
+  // do not jump by several full turns after the first resize/rotate gesture.
+  const rotation = typeof fallbackRotation === 'number' && Number.isFinite(fallbackRotation)
+    ? principalRotation + 360 * Math.round((fallbackRotation - principalRotation) / 360)
+    : principalRotation;
 
   return {
     x: m[6] - pivotX + m[0] * pivotX + m[3] * pivotY,
     y: m[7] - pivotY + m[1] * pivotX + m[4] * pivotY,
-    rotation: Math.atan2(m[1], m[0]) * (180 / Math.PI),
+    rotation,
     scaleX,
     scaleY: (m[0] * m[4] - m[1] * m[3]) / (scaleX || 1),
     pivotX,

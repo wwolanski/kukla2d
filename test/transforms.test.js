@@ -36,6 +36,14 @@ describe('decomposeAffineMatrix', () => {
     const result = decomposeAffineMatrix(makeLocalMatrix(source), source)
     expectClose(makeLocalMatrix(result), makeLocalMatrix(source))
   })
+
+  it('keeps the authored full-turn branch when decomposing', () => {
+    const source = {
+      x: 14, y: 25, rotation: -720, scaleX: 2, scaleY: 3, pivotX: 0, pivotY: 0,
+    }
+    const result = decomposeAffineMatrix(makeLocalMatrix(source), source)
+    expect(result.rotation).toBeCloseTo(-720)
+  })
 })
 
 describe('mat3Mul', () => {
