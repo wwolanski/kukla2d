@@ -5,7 +5,6 @@ import { useImportSettingsStore } from '@/store/importSettingsStore';
 
 import { loadExampleProjectFile } from '@/features/projects';
 
-import { BorderBeam } from '@/components/ui/border-beam';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { BorderBeam } from '@/components/ui/border-beam';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';

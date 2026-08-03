@@ -6,8 +6,8 @@ import type { PartNode, ProjectDocument, Texture } from '@kukla2d/contracts';
 import { useEditorStore } from '@/store/editorStore';
 import { useProjectStore } from '@/store/projectStore';
 
-import { HOVER_SOURCE_PANEL, resolveVisibleHoverHit } from '@/domain/hoverPolicy.js';
 import { deletePartNodes } from '@/domain/deleteCommands.js';
+import { HOVER_SOURCE_PANEL, resolveVisibleHoverHit } from '@/domain/hoverPolicy.js';
 import { writeLibraryAssetDrag } from '@/domain/libraryAssetDrag.js';
 import { buildUniqueTextureNameMap, createUniqueName } from '@/domain/libraryAssetNames.js';
 
