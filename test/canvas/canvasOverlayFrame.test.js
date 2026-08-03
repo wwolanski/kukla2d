@@ -201,6 +201,58 @@ describe('buildCanvasOverlayFrame', () => {
     });
   });
 
+  it('scales IK target radius with its assigned bone and keeps unassigned targets at default size', () => {
+    const frame = buildCanvasOverlayFrame({
+      project: {
+        nodes: [],
+        constraints: [
+          { id: 'ik-unassigned', type: 'ik', targetX: 10, targetY: 20 },
+          { id: 'ik-assigned', type: 'ik', assignedBoneId: 'bone-1', targetX: 30, targetY: 40 },
+        ],
+      },
+      editorState: {},
+      framePose: {
+        effectiveNodes: [],
+        effectiveBones: [{
+          id: 'bone-1',
+          setup: { length: 40, scaleX: 1 },
+        }],
+        worldMatrices: new Map(),
+      },
+    });
+
+    expect(frame.ikOverlay.targets).toMatchObject([
+      { id: 'ik-unassigned', radius: 9 },
+      { id: 'ik-assigned', radius: 4.5 },
+    ]);
+  });
+
+  it('clamps IK target radius for extremely small and large bones', () => {
+    const frame = buildCanvasOverlayFrame({
+      project: {
+        nodes: [],
+        constraints: [
+          { id: 'ik-small', type: 'ik', assignedBoneId: 'small', targetX: 10, targetY: 20 },
+          { id: 'ik-large', type: 'ik', assignedBoneId: 'large', targetX: 30, targetY: 40 },
+        ],
+      },
+      editorState: {},
+      framePose: {
+        effectiveNodes: [],
+        effectiveBones: [
+          { id: 'small', setup: { length: 1, scaleX: 1 } },
+          { id: 'large', setup: { length: 1000, scaleX: 1 } },
+        ],
+        worldMatrices: new Map(),
+      },
+    });
+
+    expect(frame.ikOverlay.targets).toMatchObject([
+      { id: 'ik-small', radius: 4 },
+      { id: 'ik-large', radius: 16 },
+    ]);
+  });
+
   it('shows the IK link only while hovering an inactive affected bone', () => {
     const constraint = {
       id: 'ik-1',

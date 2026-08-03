@@ -6,6 +6,7 @@ import { computeWorldMatrices } from '@/domain/transforms';
 import type { Matrix3 } from '@/domain/transforms';
 
 import { buildFramePose } from './framePose.js';
+import { getIkTargetRadius } from './ikOverlaySizing.js';
 import { computeMeshWeightStats } from './meshWeighting.js';
 import { getBoneSegment } from './picking.js';
 
@@ -177,6 +178,7 @@ function applyConstraintPose(constraint: Constraint, overrides: Record<string, u
 function buildIkOverlay({ project, editorState, effectiveBones, poseOverrides }: IkOverlayInput) {
   const constraints = (project.constraints ?? [])
     .map(constraint => applyConstraintPose(constraint, poseOverrides?.get(constraint.id)));
+  const boneMap = new Map<string, Bone>(effectiveBones.map(bone => [bone.id, bone]));
   const targets = constraints.flatMap(constraint => {
     if (typeof constraint.targetX !== 'number' || !Number.isFinite(constraint.targetX)
       || typeof constraint.targetY !== 'number' || !Number.isFinite(constraint.targetY)) return [];
@@ -187,6 +189,7 @@ function buildIkOverlay({ project, editorState, effectiveBones, poseOverrides }:
       y: constraint.targetY,
       color: constraint.color ?? 0x22d3ee,
       assigned: !!constraint.assignedBoneId,
+      radius: getIkTargetRadius(constraint.assignedBoneId ? boneMap.get(constraint.assignedBoneId) : null),
       selected: editorState?.selection?.includes(constraint.id) ?? false,
       hovered: editorState.hoverHit === `constraint:${constraint.id}`,
     }];
@@ -204,7 +207,6 @@ function buildIkOverlay({ project, editorState, effectiveBones, poseOverrides }:
       : typeof editorState.hoverHit === 'string' && editorState.hoverHit.startsWith('bone:')
         ? editorState.hoverHit.slice(5)
         : null;
-    const boneMap = new Map<string, Bone>(effectiveBones.map(bone => [bone.id, bone]));
     const bone = hoverBoneId ? boneMap.get(hoverBoneId) : undefined;
     if (constraint && bone && typeof constraint.targetX === 'number' && typeof constraint.targetY === 'number') {
       const segment = getBoneSegment(bone, boneMap);
@@ -222,7 +224,6 @@ function buildIkOverlay({ project, editorState, effectiveBones, poseOverrides }:
     && editorState.hoverHit.startsWith('constraint:')) {
     const constraintId = editorState.hoverHit.slice('constraint:'.length);
     const constraint = constraints.find(item => item.id === constraintId);
-    const boneMap = new Map<string, Bone>(effectiveBones.map(bone => [bone.id, bone]));
     const bone = constraint?.assignedBoneId ? boneMap.get(constraint.assignedBoneId) : undefined;
     if (constraint && bone && typeof constraint.targetX === 'number' && typeof constraint.targetY === 'number') {
       const segment = getBoneSegment(bone, boneMap);
@@ -248,7 +249,6 @@ function buildIkOverlay({ project, editorState, effectiveBones, poseOverrides }:
         && Number.isFinite(item.targetX)
         && Number.isFinite(item.targetY))
       : null;
-    const boneMap = new Map<string, Bone>(effectiveBones.map(bone => [bone.id, bone]));
     const bone = boneMap.get(boneId);
     if (constraint && bone && typeof constraint.targetX === 'number' && typeof constraint.targetY === 'number') {
       const segment = getBoneSegment(bone, boneMap);
