@@ -33,55 +33,6 @@ type BoneRotateDrag = Extract<DragState, { type: 'boneRotate' }>;
 type BoneLengthDrag = Extract<DragState, { type: 'boneLength' }>;
 
 const DEFAULT_TRANSFORM = { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1, pivotX: 0, pivotY: 0 };
-const MIN_ABS_RESIZE_SCALE = 1e-4;
-const MAX_ABS_RESIZE_SCALE = 1e4;
-
-function safeResizeScale(value: number, fallback: number): number {
-  if (!Number.isFinite(value)) return fallback;
-  const bounded = Math.max(-MAX_ABS_RESIZE_SCALE, Math.min(MAX_ABS_RESIZE_SCALE, value));
-  if (Math.abs(bounded) >= MIN_ABS_RESIZE_SCALE) return bounded;
-  const sign = bounded < 0 ? -1 : (fallback < 0 ? -1 : 1);
-  return sign * MIN_ABS_RESIZE_SCALE;
-}
-
-function safeScaleRatio(value: number, start: number): number {
-  if (!Number.isFinite(value) || !Number.isFinite(start) || Math.abs(start) < MIN_ABS_RESIZE_SCALE) return 1;
-  return value / start;
-}
-
-function scaleAroundWorldPoint(matrix: Matrix3, factorX: number, factorY: number, pivotX: number, pivotY: number): Matrix3 {
-  const axisLength = Math.hypot(matrix[0], matrix[1]) || 1;
-  const cos = matrix[0] / axisLength;
-  const sin = matrix[1] / axisLength;
-  const m0 = cos * cos * factorX + sin * sin * factorY;
-  const m1 = cos * sin * (factorX - factorY);
-  const m3 = m1;
-  const m4 = sin * sin * factorX + cos * cos * factorY;
-  const around = new Float32Array([
-    m0, m1, 0,
-    m3, m4, 0,
-    pivotX - m0 * pivotX - m3 * pivotY,
-    pivotY - m1 * pivotX - m4 * pivotY,
-    1,
-  ]);
-  return mat3Mul(around, matrix);
-}
-
-function resizeTransformPatch(drag: ResizeDrag, scaleX: number, scaleY: number): { x: number; y: number; scaleX: number; scaleY: number } {
-  const radians = (drag.startRotation * Math.PI) / 180;
-  const cos = Math.cos(radians);
-  const sin = Math.sin(radians);
-  const localX = drag.fixedLocalX - drag.pivotX;
-  const localY = drag.fixedLocalY - drag.pivotY;
-  const deltaScaleX = drag.startScaleX - scaleX;
-  const deltaScaleY = drag.startScaleY - scaleY;
-  return {
-    x: drag.startX + cos * deltaScaleX * localX - sin * deltaScaleY * localY,
-    y: drag.startY + sin * deltaScaleX * localX + cos * deltaScaleY * localY,
-    scaleX,
-    scaleY,
-  };
-}
 
 function resolveLinkedAnimPatch(adapter: PixiInteractionSystem, drag: MoveDrag | RotateDrag | ResizeDrag, desiredWorldMatrix: Matrix3) {
   const project = adapter.projectRef.current;
