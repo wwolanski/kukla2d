@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/github/package-json/v/wwolanski/Kukla2D?style=flat" alt="version">
 </p>
 
-<h3 align="center">🌐 &nbsp;<a href="https://wwolanski.github.io/Kukla2D">TRY IT LIVE</a>&nbsp; 🚀</h3>
+<h3 align="center">🌐 &nbsp;<a href="https://wwolanski.github.io/kukla2d">TRY IT LIVE</a>&nbsp; 🚀</h3>
 
 
 Kukla2D is a local-first, browser-based editor for rigging and animating 2D characters. It combines an approachable workflow with mesh deformation, skeletal animation, constraints, physics, and game-ready export.
