@@ -261,6 +261,7 @@ export function createGoldenProject() {
     assetPlacements: [
       { assetId: 'face', folderId: 'f1' },
     ],
+    modularSprites: [],
     controlHandles: [],
     animationModifiers: [],
   };

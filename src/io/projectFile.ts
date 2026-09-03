@@ -243,6 +243,7 @@ export async function saveProject(project: ProjectDocument): Promise<Blob> {
     physicsRules: portable.physicsRules,
     libraryFolders: portable.libraryFolders,
     assetPlacements: portable.assetPlacements,
+    modularSprites: portable.modularSprites,
     controlHandles: portable.controlHandles,
     animationModifiers: portable.animationModifiers,
   };
