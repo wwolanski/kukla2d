@@ -8,8 +8,8 @@ import { useLayerPanelController } from '../application/useLayerPanelController.
 
 const LibraryTab = lazy(() => import('./LibraryTab.jsx').then(m => ({ default: m.LibraryTab })));
 
-export function LayerPanel({ onImportClick, onImportFiles, onLoadExampleProject }) {
-  const { shared, tabs, library, depth, bones } = useLayerPanelController({ onImportClick, onImportFiles });
+export function LayerPanel({ onImportClick, onImportFiles, onImportModularSprite, onEditModularSprite, onLoadExampleProject }) {
+  const { shared, tabs, library, depth, bones } = useLayerPanelController({ onImportClick, onImportFiles, onImportModularSprite, onEditModularSprite });
   const [replaceTexturesOpen, setReplaceTexturesOpen] = useState(false);
 
   return (
@@ -52,7 +52,9 @@ export function LayerPanel({ onImportClick, onImportFiles, onLoadExampleProject 
           onDragLeave={library.onDragLeave}
           onDropBackground={library.onDropBackground}
           onSelect={library.onSelect}
-          onImportClick={library.onImportClick}
+	          onImportClick={library.onImportClick}
+	          onImportModularSprite={library.onImportModularSprite}
+	          onEditModularSprite={library.onEditModularSprite}
           onLoadExampleProject={onLoadExampleProject}
           />
         </Suspense>

@@ -14,7 +14,7 @@ import { formatFileSize } from '../shared/formatFileSize.js';
 import { InlineRenameInput } from '../shared/InlineRenameInput.jsx';
 import { AssetAvatar } from '../shared/LayerPanelPrimitives.jsx';
 
-export function LibraryAssetRow({ asset, isSelected, dragSession, depth, onSelect, onRename, onRemove, onDragStart, onDragOver, onDrop }) {
+export function LibraryAssetRow({ asset, isSelected, dragSession, depth, onSelect, onRename, onRemove, onEditModularSprite, onDragStart, onDragOver, onDrop }) {
   const rowRef = useRef(null);
   const isDragOver = dragSession?.targetId === asset.id && dragSession?.sourceId !== asset.id;
 
@@ -40,7 +40,7 @@ export function LibraryAssetRow({ asset, isSelected, dragSession, depth, onSelec
       <ContextMenuTrigger asChild>
     <div
       ref={rowRef}
-      draggable
+      draggable={asset.modularKind !== 'source'}
       className={`flex items-center gap-2 px-2 py-1.5 text-xs rounded cursor-pointer transition-colors select-none
         ${isSelected
           ? 'bg-primary/20 text-primary border border-primary/40'
@@ -51,8 +51,15 @@ export function LibraryAssetRow({ asset, isSelected, dragSession, depth, onSelec
       `}
       style={{ paddingLeft: `${(depth ?? 0) * 16 + 8}px` }}
       onClick={() => onSelect?.(asset.id)}
-      onDoubleClick={(e) => { e.stopPropagation(); startEdit(); }}
-      onDragStart={(e) => onDragStart?.(e, asset.id)}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        if (asset.modularKind === 'source') onEditModularSprite?.(asset.modularSpriteId);
+        else startEdit();
+      }}
+      onDragStart={(e) => {
+        if (asset.modularKind === 'source') { e.preventDefault(); return; }
+        onDragStart?.(e, asset.id);
+      }}
       onDragOver={handleDragOver}
       onDragLeave={() => onDragOver?.(null, null)}
       onDrop={handleDrop}
@@ -85,14 +92,19 @@ export function LibraryAssetRow({ asset, isSelected, dragSession, depth, onSelec
 
       <span className="flex shrink-0 items-center gap-1 tabular-nums text-muted-foreground">
         {asset.isInUse && <Check className="h-3.5 w-3.5 text-emerald-500" aria-label="Used on canvas" />}
+        {asset.modularKind === 'source' && <span className="rounded bg-primary/15 px-1 py-0.5 text-[8px] font-semibold uppercase text-primary">Modular Source</span>}
         {formatFileSize(asset.size)}
       </span>
     </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-56">
+        {asset.modularKind === 'source' && <ContextMenuItem onSelect={() => onEditModularSprite?.(asset.modularSpriteId)}>
+          <Pencil className="mr-2 h-4 w-4 opacity-70" />
+          Edit modular sprite
+        </ContextMenuItem>}
         <ContextMenuItem onSelect={() => requestAnimationFrame(startEdit)}>
           <Pencil className="mr-2 h-4 w-4 opacity-70" />
-          Rename
+          {asset.modularKind === 'source' ? 'Rename set' : 'Rename'}
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem
@@ -100,7 +112,7 @@ export function LibraryAssetRow({ asset, isSelected, dragSession, depth, onSelec
           onSelect={() => onRemove?.(asset.id)}
         >
           <Trash2 className="mr-2 h-4 w-4 opacity-70" />
-          Remove from library
+          {asset.modularKind === 'source' ? 'Delete modular sprite' : 'Remove from library'}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

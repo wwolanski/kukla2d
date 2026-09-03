@@ -65,6 +65,34 @@ describe('buildLibraryTree', () => {
     expect(rows[0].isInUse).toBe(true);
   });
 
+  it('annotates protected modular sources and ordinary part assets', () => {
+    const rows = buildLibraryTree({
+      textures: [texture('source'), texture('head')],
+      nodes: [],
+      modularSprites: [{
+        id: 'set-1',
+        schemaVersion: 1,
+        name: 'Hero',
+        sourceAssetId: 'source',
+        source: { width: 16, height: 16 },
+        processorVersion: 1,
+        recipe: {
+          background: { mode: 'alpha', color: { r: 0, g: 0, b: 0 }, tolerance: 0, softness: 0.1, despill: 0 },
+          detection: { alphaThreshold: 1, minimumRegionAreaRatio: 0, openingRadius: 0, closingRadius: 0, connectivity: 8 },
+          strokes: [],
+        },
+        parts: [{
+          partKey: 'head', assetId: 'head', name: 'Head', role: 'head', side: 'center', required: true, order: 0,
+          extractionFrame: { x: 0, y: 0, width: 1, height: 1 },
+          contentBounds: { x: 0, y: 0, width: 1, height: 1 },
+          componentSeeds: [{ x: 0.5, y: 0.5 }],
+        }],
+      }],
+    });
+    expect(rows.find(row => row.id === 'source')).toMatchObject({ modularKind: 'source', modularSpriteId: 'set-1' });
+    expect(rows.find(row => row.id === 'head')).toMatchObject({ modularKind: 'part', partKey: 'head' });
+  });
+
   it('falls back to texture id for name', () => {
     const rows = buildLibraryTree({
       textures: [texture('t1', { fileName: null })],
