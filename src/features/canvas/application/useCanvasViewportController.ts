@@ -26,6 +26,7 @@ type ImperativeRef = RefObject<unknown> | undefined;
 interface CanvasImportHandle {
   openFilePicker(): void;
   importFiles: ReturnType<typeof useCanvasController>['import']['importFiles'];
+  commitModularSprite: ReturnType<typeof useCanvasController>['import']['commitModularSprite'];
 }
 
 interface CanvasViewportControllerOptions {
@@ -162,11 +163,12 @@ export function useCanvasViewportController({
     importRef.current = {
       openFilePicker: canvas.input.handlers.onPanelClick,
       importFiles: canvas.import.importFiles,
+      commitModularSprite: canvas.import.commitModularSprite,
     };
     return () => {
       importRef.current = null;
     };
-  }, [canvas.import.importFiles, canvas.input.handlers.onPanelClick, importRef]);
+  }, [canvas.import.commitModularSprite, canvas.import.importFiles, canvas.input.handlers.onPanelClick, importRef]);
 
   const resetPose = useCallback(() => {
     const projectStore = useProjectStore.getState();

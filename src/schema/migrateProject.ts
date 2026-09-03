@@ -7,6 +7,7 @@ import { migrate_5_to_6 } from './migrations/5-to-6.js';
 import { migrate_6_to_7 } from './migrations/6-to-7.js';
 import { migrate_7_to_8 } from './migrations/7-to-8.js';
 import { migrate_8_to_9 } from './migrations/8-to-9.js';
+import { migrate_9_to_10 } from './migrations/9-to-10.js';
 import {
   isMigrationRecord,
   readRawVersion,
@@ -26,6 +27,7 @@ const MIGRATIONS: MigrationRegistry = {
   '6': migrate_6_to_7,
   '7': migrate_7_to_8,
   '8': migrate_8_to_9,
+  '9': migrate_9_to_10,
 };
 
 function missingMigrationError(version: unknown): Error {

@@ -48,6 +48,7 @@ export const PERSISTED_PROJECT_FIELDS = Object.freeze([
   'physicsRules',
   'libraryFolders',
   'assetPlacements',
+  'modularSprites',
   'controlHandles',
   'animationModifiers',
 ] as const satisfies readonly (keyof ProjectDocument)[]);
@@ -139,6 +140,7 @@ export function prepareLoadedProjectDocument(
   project.physicsRules = deepClone(incoming.physicsRules ?? defaults.physicsRules) as typeof defaults.physicsRules;
   project.libraryFolders = deepClone(incoming.libraryFolders ?? defaults.libraryFolders) as typeof defaults.libraryFolders;
   project.assetPlacements = deepClone(incoming.assetPlacements ?? defaults.assetPlacements) as typeof defaults.assetPlacements;
+  project.modularSprites = deepClone(incoming.modularSprites ?? defaults.modularSprites) as typeof defaults.modularSprites;
   project.controlHandles = deepClone(incoming.controlHandles ?? defaults.controlHandles) as typeof defaults.controlHandles;
   const modifiers = deepClone(incoming.animationModifiers ?? defaults.animationModifiers) as typeof defaults.animationModifiers;
   for (const mod of modifiers) {

@@ -34,6 +34,7 @@ export interface PortableProjectDocument {
   physicsRules: ProjectDocument['physicsRules'];
   libraryFolders: ProjectDocument['libraryFolders'];
   assetPlacements: ProjectDocument['assetPlacements'];
+  modularSprites: ProjectDocument['modularSprites'];
   controlHandles: ProjectDocument['controlHandles'];
   animationModifiers: ProjectDocument['animationModifiers'];
 }

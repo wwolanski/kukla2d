@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import type { PartNode, ProjectDocument, Texture } from '@kukla2d/contracts';
+import type { PartNode, Texture } from '@kukla2d/contracts';
 
 import { useEditorStore } from '@/store/editorStore';
 import { useProjectStore } from '@/store/projectStore';
 
-import { deletePartNodes } from '@/domain/deleteCommands.js';
 import { HOVER_SOURCE_PANEL, resolveVisibleHoverHit } from '@/domain/hoverPolicy.js';
 import { writeLibraryAssetDrag } from '@/domain/libraryAssetDrag.js';
 import { buildUniqueTextureNameMap, createUniqueName } from '@/domain/libraryAssetNames.js';
@@ -21,6 +20,7 @@ import { useLayerPanelDepthDnD } from './useLayerPanelDepthDnD.js';
 import { useLayerPanelSelection } from './useLayerPanelSelection.js';
 import { buildBoneTreeRows } from '../domain/buildBoneTreeRows.js';
 import { buildLibraryTree, flattenLibraryTree } from '../domain/buildLibraryTree.js';
+import { removeLibraryAssets } from '../domain/removeLibraryAssets.js';
 
 
 
@@ -32,45 +32,16 @@ import type {
 interface LayerPanelControllerOptions {
   onImportClick?: () => void;
   onImportFiles?: (files: FileList) => void;
+  onImportModularSprite?: () => void;
+  onEditModularSprite?: (id: string) => void;
 }
 
 type LibraryDragSource =
   | { kind: 'asset'; id: string }
   | { kind: 'folder'; id: string };
 
-function removeLibraryAssets(projectDraft: ProjectDocument, assetIds: ReadonlySet<string>) {
-  if (assetIds.size === 0) return;
-
-  const nodeIds = projectDraft.nodes
-    .filter(node => assetIds.has(node.id)
-      || (node.type === 'part' && node.textureId && assetIds.has(node.textureId)))
-    .map(node => node.id);
-  deletePartNodes(projectDraft, nodeIds);
-
-  projectDraft.textures = projectDraft.textures.filter(texture => !assetIds.has(texture.id));
-  projectDraft.assetPlacements = (projectDraft.assetPlacements ?? [])
-    .filter(placement => !assetIds.has(placement.assetId));
-
-  const attachmentIds = new Set(
-    (projectDraft.attachments ?? [])
-      .filter(attachment => attachment.assetId && assetIds.has(attachment.assetId))
-      .map(attachment => attachment.id),
-  );
-  projectDraft.attachments = (projectDraft.attachments ?? [])
-    .filter(attachment => !attachmentIds.has(attachment.id));
-  projectDraft.skins = (projectDraft.skins ?? []).map(skin => ({
-    ...skin,
-    entries: skin.entries.filter(entry => !attachmentIds.has(entry.attachmentId)),
-  }));
-  for (const slot of projectDraft.slots ?? []) {
-    if (slot.setupAttachmentId && attachmentIds.has(slot.setupAttachmentId)) {
-      slot.setupAttachmentId = null;
-    }
-  }
-}
-
 function useLayerPanelControllerImpl(options: LayerPanelControllerOptions = {}) {
-  const { onImportClick, onImportFiles } = options;
+  const { onEditModularSprite, onImportClick, onImportFiles, onImportModularSprite } = options;
   const {
     nodes,
     bones,
@@ -78,6 +49,7 @@ function useLayerPanelControllerImpl(options: LayerPanelControllerOptions = {}) 
     textures,
     libraryFolders,
     assetPlacements,
+    modularSprites,
     updateProject,
     duplicateNode,
     deleteNode,
@@ -89,6 +61,7 @@ function useLayerPanelControllerImpl(options: LayerPanelControllerOptions = {}) 
     textures: s.project.textures,
     libraryFolders: s.project.libraryFolders ?? [],
     assetPlacements: s.project.assetPlacements ?? [],
+    modularSprites: s.project.modularSprites,
     updateProject: s.updateProject,
     duplicateNode: s.duplicateNode,
     deleteNode: s.deleteNode,
@@ -311,8 +284,8 @@ function useLayerPanelControllerImpl(options: LayerPanelControllerOptions = {}) 
   }, []);
 
   const libraryTree = useMemo(
-    () => buildLibraryTree({ libraryFolders, assetPlacements, textures, nodes }),
-    [libraryFolders, assetPlacements, textures, nodes],
+    () => buildLibraryTree({ libraryFolders, assetPlacements, textures, nodes, modularSprites }),
+    [libraryFolders, assetPlacements, modularSprites, textures, nodes],
   );
 
   const libraryFlat = useMemo(() => flattenLibraryTree(libraryTree), [libraryTree]);
@@ -338,6 +311,18 @@ function useLayerPanelControllerImpl(options: LayerPanelControllerOptions = {}) 
 
   const onRenameLibraryAsset = useCallback((assetId: string, newName: string) => {
     updateProject((projectDraft) => {
+      const modularSprite = projectDraft.modularSprites.find(candidate => candidate.sourceAssetId === assetId);
+      if (modularSprite) {
+        modularSprite.name = newName;
+        const sourceTexture = projectDraft.textures.find(candidate => candidate.id === assetId);
+        if (sourceTexture) sourceTexture.name = `${newName} Source`;
+        const placement = projectDraft.assetPlacements.find(candidate => candidate.assetId === assetId);
+        const folder = placement?.folderId
+          ? projectDraft.libraryFolders.find(candidate => candidate.id === placement.folderId)
+          : undefined;
+        if (folder) folder.name = newName;
+        return;
+      }
       const existingNames = [...buildUniqueTextureNameMap(projectDraft.textures, projectDraft.nodes).entries()]
         .filter(([textureId]) => textureId !== assetId)
         .map(([, name]) => name);
@@ -483,6 +468,8 @@ function useLayerPanelControllerImpl(options: LayerPanelControllerOptions = {}) 
       onDropBackground: handleLibraryDrop,
       onSelect: handleSelect,
       onImportClick,
+      onImportModularSprite,
+      onEditModularSprite,
       imageCount: depthNodes.length,
       boneCount: bones.length,
     },

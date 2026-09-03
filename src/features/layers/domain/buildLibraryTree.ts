@@ -1,6 +1,7 @@
 import type {
   AssetPlacement,
   LibraryFolder,
+  ModularSpriteDocument,
   Node,
   Texture,
 } from '@kukla2d/contracts';
@@ -12,6 +13,7 @@ export interface LibraryTreeInput {
   assetPlacements?: readonly AssetPlacement[];
   textures: readonly Texture[];
   nodes: readonly Node[];
+  modularSprites?: readonly ModularSpriteDocument[];
 }
 
 interface LibraryFolderRow {
@@ -32,6 +34,9 @@ interface LibraryAssetRow {
   node: Node | undefined;
   isInUse: boolean;
   size: number | null | undefined;
+  modularSpriteId: string | null;
+  modularKind: 'source' | 'part' | null;
+  partKey: string | null;
 }
 
 export type LibraryTreeRow = LibraryFolderRow | LibraryAssetRow;
@@ -43,12 +48,20 @@ export function buildLibraryTree({
   assetPlacements,
   textures,
   nodes,
+  modularSprites,
 }: LibraryTreeInput): LibraryTreeRow[] {
   const folders = libraryFolders ?? [];
   const placements = assetPlacements ?? [];
   const texMap = new Map<string, Texture>(textures.map(t => [t.id, t]));
   const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]));
   const displayNames = buildUniqueTextureNameMap(textures, nodes);
+  const modularByAssetId = new Map<string, { id: string; kind: 'source' | 'part'; partKey: string | null }>();
+  for (const modularSprite of modularSprites ?? []) {
+    modularByAssetId.set(modularSprite.sourceAssetId, { id: modularSprite.id, kind: 'source', partKey: null });
+    for (const part of modularSprite.parts) {
+      modularByAssetId.set(part.assetId, { id: modularSprite.id, kind: 'part', partKey: part.partKey });
+    }
+  }
   const childrenByParent = new Map<string | null, FolderEntry[]>();
 
   for (const folder of folders) {
@@ -88,6 +101,7 @@ export function buildLibraryTree({
       if (!tex) continue;
       const localName = displayNames.get(assetId) ?? assetId;
       const sourceName = tex.fileName ?? null;
+      const modular = modularByAssetId.get(assetId);
       result.push({
         kind: 'asset',
         id: assetId,
@@ -98,6 +112,9 @@ export function buildLibraryTree({
         isInUse: nodes.some(candidate => candidate.type === 'part'
           && (String(candidate.id) === assetId || candidate.textureId === assetId)),
         size: tex.fileSize,
+        modularSpriteId: modular?.id ?? null,
+        modularKind: modular?.kind ?? null,
+        partKey: modular?.partKey ?? null,
       });
     }
     return result;
@@ -111,6 +128,7 @@ export function buildLibraryTree({
     const node = nodeMap.get(tex.id);
     const localName = displayNames.get(tex.id) ?? tex.id;
     const sourceName = tex.fileName ?? null;
+    const modular = modularByAssetId.get(tex.id);
     looseAssets.push({
       kind: 'asset',
       id: tex.id,
@@ -121,6 +139,9 @@ export function buildLibraryTree({
       isInUse: nodes.some(candidate => candidate.type === 'part'
           && (String(candidate.id) === String(tex.id) || candidate.textureId === tex.id)),
       size: tex.fileSize,
+      modularSpriteId: modular?.id ?? null,
+      modularKind: modular?.kind ?? null,
+      partKey: modular?.partKey ?? null,
     });
   }
 

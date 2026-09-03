@@ -111,6 +111,47 @@ describe('saveProject', () => {
     }
   });
 
+  it('round-trips a modular sprite source, parts, and processing recipe', async () => {
+    vi.stubGlobal('fetch', okFetchMock());
+    vi.stubGlobal('Image', class {
+      constructor() { setTimeout(() => this.onload?.(), 0); }
+      set src(_) {}
+    });
+    vi.spyOn(globalThis.URL, 'createObjectURL').mockReturnValue('blob://modular');
+    vi.spyOn(globalThis.URL, 'revokeObjectURL').mockImplementation(() => {});
+    const project = makeMinimalProject();
+    project.textures = [
+      { id: 'sheet-source', source: 'memory://source.png', name: 'Hero Source', fileName: 'hero.png' },
+      { id: 'head-part', source: 'memory://head.png', name: 'Head', fileName: 'head.png' },
+    ];
+    project.modularSprites = [{
+      id: 'hero-set', schemaVersion: 1, name: 'Hero', sourceAssetId: 'sheet-source',
+      source: { width: 16, height: 16 }, processorVersion: 1,
+      recipe: {
+        background: { mode: 'alpha', color: { r: 0, g: 0, b: 0 }, tolerance: 0, softness: 0.1, despill: 0 },
+        detection: { alphaThreshold: 1, minimumRegionAreaRatio: 0, openingRadius: 0, closingRadius: 0, connectivity: 8 },
+        strokes: [{ kind: 'foreground', radius: 0.01, points: [{ x: 0.5, y: 0.5 }] }],
+      },
+      parts: [{
+        partKey: 'head', assetId: 'head-part', name: 'Head', role: 'head', side: 'center', required: true, order: 0,
+        extractionFrame: { x: 0, y: 0, width: 1, height: 1 },
+        contentBounds: { x: 0.1, y: 0.1, width: 0.8, height: 0.8 },
+        componentSeeds: [{ x: 0.5, y: 0.5 }],
+      }],
+    }];
+
+    const blob = await saveProject(project);
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    expect(zip.file('textures/sheet-source.png')).not.toBeNull();
+    expect(zip.file('textures/head-part.png')).not.toBeNull();
+    const loaded = await loadProject(await blob.arrayBuffer());
+    try {
+      expect(loaded.project.modularSprites).toEqual(project.modularSprites);
+    } finally {
+      loaded.resources.dispose();
+    }
+  });
+
   it('preserves clipToPartId in serialized project.json', async () => {
     vi.stubGlobal('fetch', okFetchMock());
 

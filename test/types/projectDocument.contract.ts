@@ -326,6 +326,7 @@ const doc: ProjectDocument = {
   physicsRules,
   libraryFolders,
   assetPlacements,
+  modularSprites: [],
   controlHandles: [],
   animationModifiers: [],
 };

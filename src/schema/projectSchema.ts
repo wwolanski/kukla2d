@@ -8,6 +8,7 @@ import {
   toBoneId,
   toConstraintId,
   toNodeId,
+  toModularSpriteId,
   toSkinId,
   toSlotId,
 } from '@kukla2d/contracts';
@@ -16,7 +17,7 @@ import { isSupportedTrackProperty, validateTrackValue } from '@/domain/animation
 
 import { CanvasSchema, NodeSchema, TransformSchema } from './projectNodeSchemas.js';
 
-export const CURRENT_PROJECT_VERSION = 9 as const;
+export const CURRENT_PROJECT_VERSION = 10 as const;
 
 const AnimationIdSchema = z.string().min(1).transform(toAnimationId);
 const AnimationTargetIdSchema = z.string().min(1).transform(toAnimationTargetId);
@@ -25,6 +26,7 @@ const AssetIdSchema = z.string().min(1).transform(toAssetId);
 const BoneIdSchema = z.string().min(1).transform(toBoneId);
 const ConstraintIdSchema = z.string().min(1).transform(toConstraintId);
 const NodeIdSchema = z.string().min(1).transform(toNodeId);
+const ModularSpriteIdSchema = z.string().min(1).transform(toModularSpriteId);
 const SkinIdSchema = z.string().min(1).transform(toSkinId);
 const SlotIdSchema = z.string().min(1).transform(toSlotId);
 
@@ -231,6 +233,73 @@ const AssetPlacementSchema = z.object({
   folderId: z.string().nullable().optional(),
 });
 
+const NormalizedPointSchema = z.object({
+  x: z.number().finite().min(0).max(1),
+  y: z.number().finite().min(0).max(1),
+});
+
+const NormalizedRectSchema = NormalizedPointSchema.extend({
+  width: z.number().finite().positive().max(1),
+  height: z.number().finite().positive().max(1),
+}).refine(rect => rect.x + rect.width <= 1 + Number.EPSILON, {
+  message: 'Normalized rectangle exceeds image width',
+}).refine(rect => rect.y + rect.height <= 1 + Number.EPSILON, {
+  message: 'Normalized rectangle exceeds image height',
+});
+
+const ModularSpriteRecipeSchema = z.object({
+  background: z.object({
+    mode: z.enum(['alpha', 'chroma']),
+    color: z.object({
+      r: z.number().int().min(0).max(255),
+      g: z.number().int().min(0).max(255),
+      b: z.number().int().min(0).max(255),
+    }),
+    tolerance: z.number().finite().min(0).max(1),
+    softness: z.number().finite().min(0).max(1),
+    despill: z.number().finite().min(0).max(1),
+  }),
+  detection: z.object({
+    alphaThreshold: z.number().int().min(0).max(255),
+    minimumRegionAreaRatio: z.number().finite().min(0).max(1),
+    openingRadius: z.number().int().min(0).max(32),
+    closingRadius: z.number().int().min(0).max(32),
+    connectivity: z.literal(8),
+  }),
+  strokes: z.array(z.object({
+    kind: z.enum(['foreground', 'background', 'split']),
+    radius: z.number().finite().positive().max(1),
+    points: z.array(NormalizedPointSchema).min(1),
+  })),
+});
+
+const ModularSpritePartSchema = z.object({
+  partKey: z.string().regex(/^[a-z][a-z0-9-]*$/),
+  assetId: AssetIdSchema,
+  name: z.string().min(1),
+  role: z.string().min(1),
+  side: z.enum(['left', 'right', 'center', 'none']),
+  required: z.boolean(),
+  order: z.number().int().nonnegative(),
+  extractionFrame: NormalizedRectSchema,
+  contentBounds: NormalizedRectSchema,
+  componentSeeds: z.array(NormalizedPointSchema).min(1),
+});
+
+const ModularSpriteDocumentSchema = z.object({
+  id: ModularSpriteIdSchema,
+  schemaVersion: z.literal(1),
+  name: z.string().min(1),
+  sourceAssetId: AssetIdSchema,
+  source: z.object({
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+  }),
+  processorVersion: z.literal(1),
+  recipe: ModularSpriteRecipeSchema,
+  parts: z.array(ModularSpritePartSchema),
+});
+
 const PhysicsGroupSchema = z.unknown();
 
 const PhysicsRuleSchema = z.unknown();
@@ -325,10 +394,44 @@ export const ProjectDocumentSchema = z.object({
   physicsRules: z.array(PhysicsRuleSchema).optional(),
   libraryFolders: z.array(LibraryFolderSchema).optional(),
   assetPlacements: z.array(AssetPlacementSchema).optional(),
+  modularSprites: z.array(ModularSpriteDocumentSchema).default([]),
   controlHandles: z.array(ControlHandleSchema),
   animationModifiers: z.array(AnimationModifierSchema),
 }).superRefine((project, ctx) => {
   const nodesById = new Map(project.nodes.map((node) => [node.id, node]));
+  const textureIds = new Set(project.textures.map(texture => String(texture.id)));
+  const modularSpriteIds = new Set<string>();
+  const claimedAssetIds = new Set<string>();
+
+  project.modularSprites.forEach((modularSprite, modularIndex) => {
+    const modularSpriteId = String(modularSprite.id);
+    if (modularSpriteIds.has(modularSpriteId)) {
+      ctx.addIssue({ code: 'custom', message: `Duplicate modular sprite id "${modularSpriteId}"`, path: ['modularSprites', modularIndex, 'id'] });
+    }
+    modularSpriteIds.add(modularSpriteId);
+
+    const localPartKeys = new Set<string>();
+    const assetClaims = [String(modularSprite.sourceAssetId), ...modularSprite.parts.map(part => String(part.assetId))];
+    assetClaims.forEach((assetId, assetIndex) => {
+      const path = assetIndex === 0
+        ? ['modularSprites', modularIndex, 'sourceAssetId']
+        : ['modularSprites', modularIndex, 'parts', assetIndex - 1, 'assetId'];
+      if (!textureIds.has(assetId)) {
+        ctx.addIssue({ code: 'custom', message: `Modular sprite asset "${assetId}" does not match any texture`, path });
+      }
+      if (claimedAssetIds.has(assetId)) {
+        ctx.addIssue({ code: 'custom', message: `Modular sprite asset "${assetId}" is claimed more than once`, path });
+      }
+      claimedAssetIds.add(assetId);
+    });
+
+    modularSprite.parts.forEach((part, partIndex) => {
+      if (localPartKeys.has(part.partKey)) {
+        ctx.addIssue({ code: 'custom', message: `Duplicate modular sprite partKey "${part.partKey}"`, path: ['modularSprites', modularIndex, 'parts', partIndex, 'partKey'] });
+      }
+      localPartKeys.add(part.partKey);
+    });
+  });
 
   project.nodes.forEach((node, index) => {
     if (node.type !== 'part' || node.clipToPartId === undefined) return;

@@ -28,10 +28,15 @@ function loadLoadModal() {
   return import('@/features/projects/components/LoadModal').then(m => ({ default: m.LoadModal }));
 }
 
+function loadModularSpriteWizard() {
+  return import('@/features/modular-sprite/wizard').then(m => ({ default: m.ModularSpriteWizard }));
+}
+
 const ExportModal = lazy(loadExportModal);
 const PreferencesModal = lazy(loadPreferencesModal);
 const SaveModal = lazy(loadSaveModal);
 const LoadModal = lazy(loadLoadModal);
+const ModularSpriteWizard = lazy(loadModularSpriteWizard);
 
 export function EditorModals({
   exportModalOpen,
@@ -42,6 +47,9 @@ export function EditorModals({
   project,
   exportCaptureRef,
   thumbCaptureRef,
+  importRef,
+  modularSpriteEditor,
+  setModularSpriteEditor,
 }) {
   return (
     <>
@@ -88,6 +96,20 @@ export function EditorModals({
             onOpenChange={projectSession.closeLoadModal}
             onLoadFromDb={projectSession.handleLoadFromDb}
             onLoadFromFile={projectSession.handleLoadFromFile}
+          />
+        </Suspense>
+      )}
+
+      {modularSpriteEditor.open && (
+        <Suspense fallback={null}>
+          <ModularSpriteWizard
+            open={modularSpriteEditor.open}
+            existingId={modularSpriteEditor.existingId}
+            onOpenChange={(open) => setModularSpriteEditor(current => ({ ...current, open }))}
+            onCommit={(request) => {
+              if (!importRef.current?.commitModularSprite) throw new Error('Canvas import service is not ready');
+              return importRef.current.commitModularSprite(request);
+            }}
           />
         </Suspense>
       )}
@@ -175,4 +197,10 @@ EditorModals.propTypes = {
   project: PropTypes.object.isRequired,
   exportCaptureRef: refShape.isRequired,
   thumbCaptureRef: refShape.isRequired,
+  importRef: refShape.isRequired,
+  modularSpriteEditor: PropTypes.shape({
+    open: PropTypes.bool.isRequired,
+    existingId: PropTypes.string,
+  }).isRequired,
+  setModularSpriteEditor: PropTypes.func.isRequired,
 };

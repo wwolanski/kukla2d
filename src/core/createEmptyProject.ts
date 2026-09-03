@@ -28,6 +28,7 @@ export function createEmptyProject(): ProjectDocument {
     physicsRules: [],
     libraryFolders: [],
     assetPlacements: [],
+    modularSprites: [],
     controlHandles: [],
     animationModifiers: [],
   };

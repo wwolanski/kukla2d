@@ -9,6 +9,7 @@ export type TrackId = string & { readonly __brand: 'TrackId' };
 export type KeyframeId = string & { readonly __brand: 'KeyframeId' };
 export type ConstraintId = string & { readonly __brand: 'ConstraintId' };
 export type EventDefId = string & { readonly __brand: 'EventDefId' };
+export type ModularSpriteId = string & { readonly __brand: 'ModularSpriteId' };
 export type AnimationTargetId = NodeId | BoneId | SlotId | ConstraintId;
 
 function toBrandedId<T extends string>(value: string, label: string): T {
@@ -32,6 +33,8 @@ export function toAttachmentId(value: string): AttachmentId { return toBrandedId
 export function toSkinId(value: string): SkinId { return toBrandedId<SkinId>(value, 'SkinId'); }
 /** Creates a ConstraintId after the input has crossed a validation or creation boundary. */
 export function toConstraintId(value: string): ConstraintId { return toBrandedId<ConstraintId>(value, 'ConstraintId'); }
+/** Creates a ModularSpriteId after the input has crossed a validation or creation boundary. */
+export function toModularSpriteId(value: string): ModularSpriteId { return toBrandedId<ModularSpriteId>(value, 'ModularSpriteId'); }
 /** Creates an animation target ID after target identity has been validated. */
 export function toAnimationTargetId(value: string): AnimationTargetId { return toBrandedId<AnimationTargetId>(value, 'AnimationTargetId'); }
 

@@ -1,4 +1,4 @@
-import { FolderPlus, Loader2, Settings, Sparkles, Upload } from 'lucide-react';
+import { ChevronDown, FolderPlus, Loader2, Settings, Sparkles, Upload } from 'lucide-react';
 import { useState } from 'react';
 
 import { useImportSettingsStore } from '@/store/importSettingsStore';
@@ -45,6 +45,8 @@ export function LibraryTab({
   onDropBackground,
   onSelect,
   onImportClick,
+  onImportModularSprite,
+  onEditModularSprite,
   onLoadExampleProject,
 }) {
   const isEmpty = tree.length === 0;
@@ -72,8 +74,8 @@ export function LibraryTab({
     if (!target) return;
     setRemovalTarget(null);
     globalThis.setTimeout(() => {
-      if (target.kind === 'asset') onRemoveAsset?.(target.id);
-      else onRemoveFolder?.(target.id);
+      if (target.kind === 'folder') onRemoveFolder?.(target.id);
+      else onRemoveAsset?.(target.id);
     }, 0);
   };
 
@@ -111,7 +113,8 @@ export function LibraryTab({
           depth={depth}
           onSelect={onSelect}
           onRename={onRenameAsset}
-          onRemove={() => requestAnimationFrame(() => setRemovalTarget({ kind: 'asset', id: row.id, name: row.name }))}
+          onRemove={() => requestAnimationFrame(() => setRemovalTarget({ kind: row.modularKind === 'source' ? 'modular-source' : 'asset', id: row.id, name: row.name }))}
+          onEditModularSprite={onEditModularSprite}
           onDragStart={onDragStartAsset}
           onDragOver={onDragOverRow}
           onDrop={onDropRow}
@@ -123,15 +126,17 @@ export function LibraryTab({
   return (
     <>
       <div className="flex h-8 items-center gap-1 border-b px-2 shrink-0">
-        <button
-          type="button"
-          onClick={onImportClick}
-          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          title="Import artwork"
-        >
-          <Upload className="h-3 w-3" />
-          Import
-        </button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Import">
+              <Upload className="h-3 w-3" />Import<ChevronDown className="h-3 w-3" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" sideOffset={5} className="w-56 p-1">
+            <button type="button" onClick={onImportClick} className="flex w-full rounded px-2 py-2 text-left text-xs hover:bg-muted">Artwork…</button>
+            <button type="button" onClick={onImportModularSprite} className="flex w-full rounded px-2 py-2 text-left text-xs hover:bg-muted">2D Modular Sprite…</button>
+          </PopoverContent>
+        </Popover>
         <button
           type="button"
           onClick={onCreateFolder}
@@ -234,6 +239,8 @@ export function LibraryTab({
             <AlertDialogDescription>
               {removalTarget?.kind === 'folder'
                 ? `This will permanently delete “${removalTarget.name}”, its subfolders, and its assets. Any instances of those assets will also be removed from the canvas. This action cannot be undone.`
+                : removalTarget?.kind === 'modular-source'
+                  ? `This will delete the entire modular sprite “${removalTarget.name}”: its protected source, all current parts, and every canvas instance using them. This action cannot be undone.`
                 : `This will permanently delete “${removalTarget?.name}” from Library. Any instances of this asset will also be removed from the canvas. This action cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -243,7 +250,7 @@ export function LibraryTab({
               onClick={handleConfirmRemoval}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Remove from library
+              {removalTarget?.kind === 'modular-source' ? 'Delete modular sprite' : 'Remove from library'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

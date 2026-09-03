@@ -209,7 +209,7 @@ export function parseTaskMessage(value: unknown): TaskMessageParseResult {
 function createDefaultWorker(kind: TaskKind): Worker {
   if (kind !== 'mesh.generate') throw new BrowserTaskServiceError('invalid-message', `Unsupported browser task kind: ${kind}`);
   return new Worker(
-    new URL('../../../src/features/canvas/infrastructure/mesh-worker/worker.js', import.meta.url),
+    new URL('../../../src/features/canvas/infrastructure/mesh-worker/worker.ts', import.meta.url),
     { type: 'module' },
   );
 }

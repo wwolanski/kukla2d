@@ -1,5 +1,5 @@
 /**
- * Shared types for the versioned migration chain (0.1 -> 9).
+ * Shared types for the versioned migration chain (0.1 -> 10).
  *
  * Migration inputs are untrusted JSON-derived records. The migration layer
  * works on a legacy document shape that intentionally stays narrower than the
@@ -25,7 +25,8 @@ export type MigrationFromKey =
   | '5'
   | '6'
   | '7'
-  | '8';
+  | '8'
+  | '9';
 
 interface MigrationTransform {
   x?: number | undefined;
@@ -176,13 +177,14 @@ export interface MigrationDocument {
   assetPlacements?: unknown[];
   controlHandles?: unknown[];
   animationModifiers?: unknown[];
+  modularSprites?: unknown[];
   parameters?: unknown;
   [key: string]: unknown;
 }
 
 /**
  * K5: funkcja kroku z literalnymi wersjami. Registry type guarantees an
- * exhaustive key set 0.1..8 (version 9 ends the loop; it has no migrator).
+ * exhaustive key set 0.1..9 (version 10 ends the loop; it has no migrator).
  */
 type MigrationStepFn = (project: MigrationDocument) => MigrationDocument;
 

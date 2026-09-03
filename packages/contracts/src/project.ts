@@ -1,5 +1,5 @@
 /** Canonical persistent project document contract shared by all packages. */
-import type { NodeId, BoneId, AssetId, AnimationId, AnimationTargetId, SlotId, AttachmentId, SkinId, ConstraintId } from './errors.js';
+import type { NodeId, BoneId, AssetId, AnimationId, AnimationTargetId, SlotId, AttachmentId, SkinId, ConstraintId, ModularSpriteId } from './errors.js';
 
 export type { AnimationTargetId } from './errors.js';
 
@@ -228,6 +228,67 @@ export interface AssetPlacement {
   folderId?: string | null;
 }
 
+export interface NormalizedPoint {
+  x: number;
+  y: number;
+}
+
+export interface NormalizedRect extends NormalizedPoint {
+  width: number;
+  height: number;
+}
+
+export type ModularSpriteSide = 'left' | 'right' | 'center' | 'none';
+export type ModularSpriteMaskStrokeKind = 'foreground' | 'background' | 'split';
+
+export interface ModularSpriteMaskStroke {
+  kind: ModularSpriteMaskStrokeKind;
+  radius: number;
+  points: NormalizedPoint[];
+}
+
+export interface ModularSpriteProcessingRecipe {
+  background: {
+    mode: 'alpha' | 'chroma';
+    color: { r: number; g: number; b: number };
+    tolerance: number;
+    softness: number;
+    despill: number;
+  };
+  detection: {
+    alphaThreshold: number;
+    minimumRegionAreaRatio: number;
+    openingRadius: number;
+    closingRadius: number;
+    connectivity: 8;
+  };
+  strokes: ModularSpriteMaskStroke[];
+}
+
+export interface ModularSpritePart {
+  partKey: string;
+  assetId: AssetId;
+  name: string;
+  role: string;
+  side: ModularSpriteSide;
+  required: boolean;
+  order: number;
+  extractionFrame: NormalizedRect;
+  contentBounds: NormalizedRect;
+  componentSeeds: NormalizedPoint[];
+}
+
+export interface ModularSpriteDocument {
+  id: ModularSpriteId;
+  schemaVersion: 1;
+  name: string;
+  sourceAssetId: AssetId;
+  source: { width: number; height: number };
+  processorVersion: 1;
+  recipe: ModularSpriteProcessingRecipe;
+  parts: ModularSpritePart[];
+}
+
 export interface ControlHandle {
   id: string;
   name: string;
@@ -336,6 +397,7 @@ export interface ProjectDocument {
   physicsRules: PhysicsRule[];
   libraryFolders: LibraryFolder[];
   assetPlacements: AssetPlacement[];
+  modularSprites: ModularSpriteDocument[];
   controlHandles: ControlHandle[];
   animationModifiers: AnimationModifier[];
 }
