@@ -1,3 +1,5 @@
+import meshWorkerUrl from './mesh-worker/worker.ts?worker&url';
+
 import type { LegacyMeshRequest, LegacyMeshResponse, MeshData, MeshImageData } from './mesh-worker/workerProtocol.js';
 import type { MeshGenerationOptions } from '../domain/mesh-generation/generate.js';
 
@@ -15,7 +17,7 @@ export interface MeshWorkerClient {
 
 export function createMeshWorkerClient(options: MeshWorkerClientOptions = {}): MeshWorkerClient {
   const workers = new Map<string, Worker>();
-  const url = options.workerUrl ?? new URL('./mesh-worker/worker.js', import.meta.url);
+  const url = options.workerUrl ?? meshWorkerUrl;
   const createWorker = options.workerFactory ?? ((workerUrl: string | URL, workerOptions: WorkerOptions) => new Worker(workerUrl, workerOptions));
 
   function terminateFor(partId: string): void {

@@ -15,7 +15,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/check-production-workers.mjs",
     "build:e2e": "npm run build && node scripts/prepare-e2e-dist.mjs",
     "lint": "eslint . --max-warnings 0",
     "preview": "vite preview",
