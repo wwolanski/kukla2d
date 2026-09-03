@@ -173,6 +173,8 @@ export default [
             'test/domain/animationTargets.test.ts',
             'test/domain/editorModeFeedback.test.ts',
             'test/layers/buildLibraryTree.test.ts',
+            'test/modularSpriteProcessor.test.ts',
+            'test/modularSpriteProjectSchema.test.ts',
             'test/runtime/pathConstraint.test.ts',
             'test/runtime/physicsRig.test.ts',
             'test/runtime/skin.test.ts',
