@@ -38,6 +38,7 @@ export default function EditorLayout() {
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [modularSpriteEditor, setModularSpriteEditor] = useState({ open: false, existingId: null });
   const [recoveryRecord, setRecoveryRecord] = useState(null);
   const [recoveryError, setRecoveryError] = useState(null);
 
@@ -172,6 +173,8 @@ export default function EditorLayout() {
           onRemesh={handleRemesh}
           onDeleteMesh={handleDeleteMesh}
           onLoadExampleProject={projectSession.handleLoadExampleProject}
+          onImportModularSprite={() => setModularSpriteEditor({ open: true, existingId: null })}
+          onEditModularSprite={(existingId) => setModularSpriteEditor({ open: true, existingId })}
         />
 
         <EditorModals
@@ -183,6 +186,9 @@ export default function EditorLayout() {
           project={project}
           exportCaptureRef={exportCaptureRef}
           thumbCaptureRef={thumbCaptureRef}
+          importRef={importRef}
+          modularSpriteEditor={modularSpriteEditor}
+          setModularSpriteEditor={setModularSpriteEditor}
         />
 
         <Suspense fallback={null}>
