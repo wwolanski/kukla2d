@@ -22,7 +22,7 @@ const ALLOWED_IMPORTS = {
 const FEATURE_DIRS = [
   'animation', 'armature', 'canvas', 'export', 'inspector',
   'layers', 'load', 'parameters', 'physics', 'preferences',
-  'projects', 'rigging', 'save', 'timeline', 'workspace',
+  'projects', 'rigging', 'save', 'timeline', 'workspace', 'modular-sprite',
 ];
 const FEATURE_INTERNAL_SEGMENTS = ['application', 'domain', 'infrastructure', 'components'];
 

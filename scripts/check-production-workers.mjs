@@ -32,4 +32,23 @@ if (referencedWorkers.length === 0) {
   throw new Error('Compiled mesh worker asset is not referenced by the application bundle');
 }
 
-console.log(`Production worker check passed: ${referencedWorkers.join(', ')}`);
+const modularSpriteWorkerAssets = [...javascriptSources]
+  .filter(([, source]) => source.includes('modular-sprite.process')
+    && source.includes('Invalid RGBA image data'))
+  .map(([fileName]) => fileName);
+
+if (modularSpriteWorkerAssets.length === 0) {
+  throw new Error('Production build is missing the compiled modular sprite worker asset');
+}
+
+const referencedModularSpriteWorkers = modularSpriteWorkerAssets.filter(workerFileName =>
+  [...javascriptSources.entries()].some(([fileName, source]) =>
+    fileName !== workerFileName && source.includes(workerFileName),
+  ),
+);
+
+if (referencedModularSpriteWorkers.length === 0) {
+  throw new Error('Compiled modular sprite worker asset is not referenced by the application bundle');
+}
+
+console.log(`Production worker check passed: ${[...referencedWorkers, ...referencedModularSpriteWorkers].join(', ')}`);
