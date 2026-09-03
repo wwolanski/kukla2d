@@ -10,6 +10,7 @@ import { useImportSettingsStore } from '@/store/importSettingsStore';
 import type { ProjectStore } from '@/store/project/projectStoreTypes';
 
 import type { WorkflowEvent } from '@/features/canvas/domain/workflowContracts.js';
+import type { ModularSpriteCommitRequest, ModularSpriteCommitResult } from '@/features/modular-sprite';
 
 import { toast } from '@/components/ui/use-toast';
 
@@ -18,6 +19,7 @@ import { useCanvasAssetImport } from './useCanvasAssetImport.js';
 import { useCanvasFileRouting } from './useCanvasFileRouting.js';
 import { useCanvasProjectLifecycle } from './useCanvasProjectLifecycle.js';
 import { useCanvasProjectSave } from './useCanvasProjectSave.js';
+import { useModularSpriteImport } from './useModularSpriteImport.js';
 
 import type { CanvasEditorSnapshot, CanvasSceneGateway, CanvasTextureCache, MutableRef } from './canvasApplicationTypes.js';
 import type { CanvasDropEvent } from './handleCanvasDrop.js';
@@ -54,6 +56,7 @@ export interface CanvasImportController {
   importFiles: (fileList: FileList | readonly File[] | null) => Promise<void>;
   onDrop: (event: DragEvent<HTMLElement>) => void;
   handleFileChange: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
+  commitModularSprite: (request: ModularSpriteCommitRequest) => Promise<ModularSpriteCommitResult>;
 }
 
 function notifyProjectError(title: string, error: unknown): void {
@@ -75,6 +78,15 @@ export function useCanvasImport(args: CanvasImportArgs): CanvasImportController 
     markDirty,
     resourceOwnerRef,
     notifyError: notifyProjectError,
+  });
+  const commitModularSprite = useModularSpriteImport({
+    projectRef,
+    updateProject,
+    centerView,
+    sceneGatewayRef,
+    textureCache,
+    markDirty,
+    resourceOwnerRef,
   });
   const handlePlaceLibraryAsset = useCallback((assetId: string, event: CanvasDropEvent) => placeLibraryAsset({
     assetId, event, projectRef, canvasRef, editorRef, updateProject, markDirty, sceneGatewayRef, textureCache,
@@ -152,5 +164,6 @@ export function useCanvasImport(args: CanvasImportArgs): CanvasImportController 
   return {
     importPng, processPsdFile, importPsdFile, importStretchFile, handleSave,
     handleLoadProject, handleConfirmWipe, handleImportPsdToLibrary, handleReset, importFiles, onDrop, handleFileChange,
+    commitModularSprite,
   };
 }
