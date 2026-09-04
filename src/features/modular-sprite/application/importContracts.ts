@@ -6,7 +6,7 @@ import type {
 
 import type { ModularSpriteDraftPart, RgbaImageData } from '../domain/contracts.js';
 
-export interface ModularSpriteCommitPart {
+interface ModularSpriteCommitPart {
   draft: ModularSpriteDraftPart;
   image: RgbaImageData;
   blob: Blob;
