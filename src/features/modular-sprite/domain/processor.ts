@@ -1,4 +1,5 @@
 import type { ModularSpriteMaskStroke, ModularSpriteProcessingRecipe } from '@kukla2d/contracts';
+import { createSpriteObservation } from '@kukla2d/modular-sprite-schema';
 
 import { clamp, normalizedPoint, normalizedRect, pixelRect, rgbToOklab, smoothstep } from './imageMath.js';
 
@@ -513,7 +514,8 @@ export function processModularSprite(request: ProcessModularSpriteRequest): Proc
   if (recipe.background.mode === 'chroma' && background.confidence < 0.55) warnings.push('Low border-color confidence; pick the background color manually.');
   if (regions.length === 0) warnings.push('No foreground regions were detected.');
   if (discardedRegionCount > 0) warnings.push(`Showing the ${MAX_DETECTED_REGIONS} largest regions; ${discardedRegionCount} smaller regions were ignored. Increase the minimum region area to remove noise.`);
-  return { width: image.width, height: image.height, rgba, matte, labels, regions, background, warnings };
+  const observation = createSpriteObservation({ width: image.width, height: image.height, matte, labels, regions });
+  return { width: image.width, height: image.height, rgba, matte, labels, regions, background, warnings, observation };
 }
 
 export interface ProcessingHooks {
@@ -582,7 +584,8 @@ export async function processModularSpriteAsync(request: ProcessModularSpriteReq
   if (recipe.background.mode === 'chroma' && background.confidence < 0.55) warnings.push('Low border-color confidence; pick the background color manually.');
   if (regions.length === 0) warnings.push('No foreground regions were detected.');
   if (discardedRegionCount > 0) warnings.push(`Showing the ${MAX_DETECTED_REGIONS} largest regions; ${discardedRegionCount} smaller regions were ignored. Increase the minimum region area to remove noise.`);
-  return { width: image.width, height: image.height, rgba, matte, labels, regions, background, warnings };
+  const observation = createSpriteObservation({ width: image.width, height: image.height, matte, labels, regions });
+  return { width: image.width, height: image.height, rgba, matte, labels, regions, background, warnings, observation };
 }
 
 export function createDefaultExtractionFrame(region: DetectedRegion, sourceWidth: number, sourceHeight: number): ReturnType<typeof normalizedRect> {

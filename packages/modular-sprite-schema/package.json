@@ -1,0 +1,12 @@
+{
+  "name": "@kukla2d/modular-sprite-schema",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  }
+}

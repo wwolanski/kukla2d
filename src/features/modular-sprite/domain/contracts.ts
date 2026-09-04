@@ -4,6 +4,7 @@ import type {
   NormalizedPoint,
   NormalizedRect,
 } from '@kukla2d/contracts';
+import type { SpriteObservation } from '@kukla2d/modular-sprite-schema';
 
 export interface RgbaImageData {
   width: number;
@@ -43,6 +44,7 @@ export interface ProcessedModularSprite {
   regions: DetectedRegion[];
   background: BackgroundAnalysis;
   warnings: string[];
+  observation: SpriteObservation;
 }
 
 export interface ModularSpriteDraftPart extends Omit<ModularSpritePart, 'assetId' | 'componentSeeds'> {

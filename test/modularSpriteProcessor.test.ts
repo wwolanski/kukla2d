@@ -70,6 +70,8 @@ describe('modular sprite processor', () => {
       { x: 1, y: 5, width: 2, height: 2 },
     ]);
     expect(Array.from(first.labels)).toEqual(Array.from(second.labels));
+    expect(first.observation.components).toHaveLength(2);
+    expect(first.observation.components[0]?.shapeMask.data).toBeInstanceOf(Uint8Array);
   });
 
   it('keys a controlled green background while retaining the foreground', () => {
