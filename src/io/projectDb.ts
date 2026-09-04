@@ -1,3 +1,4 @@
+import { openAppDb, PROJECT_STORE, RECOVERY_STORE } from '@/io/appDb';
 import {
   PROJECT_ARCHIVE_FORMAT_ID,
   PROJECT_ARCHIVE_VERSION,
@@ -6,10 +7,7 @@ import {
 
 import { isRecord } from '@/lib/guards';
 
-const DB_NAME = 'kukla2d-db';
-const DB_VERSION = 2;
-const STORE_NAME = 'projects';
-const RECOVERY_STORE = 'workspace-recovery';
+const STORE_NAME = PROJECT_STORE;
 
 export interface StoredProjectRecord {
   id: string;
@@ -69,22 +67,7 @@ export function isValidRecoveryRecord(value: unknown): value is RecoveryRecord {
 }
 
 function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains(RECOVERY_STORE)) {
-        db.createObjectStore(RECOVERY_STORE, { keyPath: 'id' });
-      }
-    };
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error('Failed to open database'));
-  });
+  return openAppDb();
 }
 
 export async function listProjects(): Promise<StoredProjectRecord[]> {
