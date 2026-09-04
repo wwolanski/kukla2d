@@ -10,7 +10,8 @@ import {
 import { handleModularSpriteTask } from '@/features/modular-sprite/infrastructure/workerProtocol';
 import { modularSpriteWizardMachine } from '@/features/modular-sprite/application/modularSpriteWizardMachine';
 
-import type { ModularSpriteDraftPart, RgbaImageData } from '@/features/modular-sprite';
+import type { ModularSpriteTaskRuntime, ModularSpriteWarmCache } from '@/features/modular-sprite/infrastructure/workerProtocol';
+import type { ModularSpriteDraftPart, ProcessedModularSprite, RgbaImageData } from '@/features/modular-sprite';
 
 function image(width: number, height: number, fill = [0, 0, 0, 0]): RgbaImageData {
   const data = new Uint8ClampedArray(width * height * 4);
@@ -45,6 +46,15 @@ function draft(partKey: string, regionIds: number[], extractionFrame = { x: 0, y
     extractionFrame,
     contentBounds: extractionFrame,
     regionIds,
+  };
+}
+
+function createRuntime(isAborted: () => boolean = () => false, warmCache: ModularSpriteWarmCache | null = null): ModularSpriteTaskRuntime {
+  return {
+    warmCache,
+    isAborted,
+    reportProgress: () => {},
+    checkpoint: () => Promise.resolve(),
   };
 }
 
@@ -145,16 +155,55 @@ describe('modular sprite processor', () => {
     expect(matches.map(match => match.regionId)).toEqual([2, 1]);
   });
 
-  it('returns transferable result buffers from the worker protocol', () => {
+  it('returns transferable result buffers from the worker protocol', async () => {
     const source = image(3, 3);
     paint(source, 1, 1, 1, 1, [255, 255, 255, 255]);
-    const task = handleModularSpriteTask({
-      requestId: 'request-1',
-      kind: 'modular-sprite.process',
-      payload: { image: source, recipe: alphaRecipe() },
-    });
+    const task = await handleModularSpriteTask(
+      { type: 'modular-sprite.process', requestId: 'request-1', image: source, recipe: alphaRecipe() },
+      createRuntime(),
+    );
     expect(task.response.type).toBe('result');
     expect(task.transferables).toHaveLength(3);
+  });
+
+  it('processes from the warm cache and reuses the precomputed color space', async () => {
+    const source = image(7, 7, [0, 255, 0, 255]);
+    paint(source, 2, 2, 3, 3, [220, 30, 20, 255]);
+    const runtime = createRuntime();
+    const warm = await handleModularSpriteTask({ type: 'modular-sprite.warm', requestId: 'warm-1', image: source }, runtime);
+    expect(warm.response.type).toBe('result');
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.background.tolerance = 0.02;
+    recipe.background.softness = 0.04;
+    recipe.detection.minimumRegionAreaRatio = 0;
+    recipe.detection.openingRadius = 0;
+    recipe.detection.closingRadius = 0;
+    const task = await handleModularSpriteTask({ type: 'modular-sprite.process', requestId: 'request-2', recipe }, runtime);
+    expect(task.response.type).toBe('result');
+    if (task.response.type !== 'result') throw new Error('Expected a result response');
+    const processed = task.response.data.result as ProcessedModularSprite;
+    expect(processed.matte[0]).toBe(0);
+    expect(processed.matte[3 * 7 + 3]).toBeGreaterThan(250);
+    expect(processed.regions).toHaveLength(1);
+    expect(runtime.warmCache?.oklab).not.toBeNull();
+  });
+
+  it('aborts cooperatively when the runtime reports the request as aborted', async () => {
+    const source = image(3, 3);
+    const outcome = await handleModularSpriteTask(
+      { type: 'modular-sprite.process', requestId: 'request-3', image: source, recipe: alphaRecipe() },
+      createRuntime(() => true),
+    ).then(() => null, (error: unknown) => error);
+    expect(outcome).toBeInstanceOf(DOMException);
+    expect((outcome as DOMException).name).toBe('AbortError');
+  });
+
+  it('reports a warm cache error when processing without a warmed preview', async () => {
+    const task = await handleModularSpriteTask(
+      { type: 'modular-sprite.process', requestId: 'request-4', recipe: alphaRecipe() },
+      createRuntime(),
+    );
+    expect(task.response.type).toBe('error');
   });
 });
 

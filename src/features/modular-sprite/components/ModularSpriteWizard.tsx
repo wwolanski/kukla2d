@@ -1,5 +1,5 @@
 import { useMachine } from '@xstate/react';
-import { Check, Eraser, Merge, MousePointer2, Paintbrush, Redo2, Scissors, Undo2 } from 'lucide-react';
+import { Check, Eraser, Loader2, Merge, MousePointer2, Paintbrush, Redo2, Scissors, Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type {
@@ -16,8 +16,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 
-import { ModularSpritePreviewCanvas } from './ModularSpritePreviewCanvas.js';
+import { ModularSpritePreviewCanvas, type RegionAssignment } from './ModularSpritePreviewCanvas.js';
 import { modularSpriteWizardMachine, type ModularSpriteWizardStep } from '../application/modularSpriteWizardMachine.js';
 import {
   DEFAULT_MODULAR_SPRITE_RECIPE,
@@ -44,6 +45,12 @@ const UiSlider = Slider as React.ComponentType<{
   step?: number;
   value: number[];
   onValueChange: (value: number[]) => void;
+  onValueCommit?: (value: number[]) => void;
+}>;
+const UiSwitch = Switch as React.ComponentType<{
+  checked: boolean;
+  onCheckedChange: (value: boolean) => void;
+  disabled?: boolean;
 }>;
 const UiDialog = Dialog as React.ComponentType<{ open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode }>;
 const UiDialogContent = DialogContent as React.ComponentType<{ className?: string; children: React.ReactNode }>;
@@ -52,7 +59,17 @@ const UiDialogHeader = DialogHeader as React.ComponentType<{ className?: string;
 const UiDialogTitle = DialogTitle as React.ComponentType<{ children: React.ReactNode }>;
 
 const STEPS: ModularSpriteWizardStep[] = ['source', 'background', 'regions', 'parts', 'review'];
+const STEP_LABELS: Record<ModularSpriteWizardStep, string> = {
+  source: 'Source',
+  background: 'Background & cleanup',
+  regions: 'Assign parts',
+  parts: 'Part details',
+  review: 'Review',
+};
 const ROLES = ['head', 'torso', 'upper-arm', 'forearm', 'hand', 'thigh', 'lower-leg', 'foot', 'weapon', 'prop', 'accessory', 'custom'];
+const PART_COLORS = ['#38bdf8', '#f472b6', '#a3e635', '#fbbf24', '#c084fc', '#fb7185', '#4ade80', '#fb923c', '#2dd4bf', '#e879f9'];
+const RECIPE_HISTORY_COALESCE_MS = 900;
+const PROCESS_DEBOUNCE_MS = 60;
 
 interface ModularSpriteWizardProps {
   open: boolean;
@@ -68,6 +85,7 @@ interface EditorSnapshot {
 
 type PreviewMode = 'original' | 'matte' | 'result';
 type EditorTool = 'select' | 'eyedropper' | ModularSpriteMaskStrokeKind;
+type HistoryKind = 'recipe' | 'discrete' | 'parts';
 
 function slug(value: string): string {
   return value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
@@ -92,6 +110,11 @@ function hexToColor(value: string): { r: number; g: number; b: number } {
     g: Number.parseInt(value.slice(3, 5), 16),
     b: Number.parseInt(value.slice(5, 7), 16),
   };
+}
+
+function partColor(parts: ModularSpriteDraftPart[], partKey: string): string {
+  const index = parts.findIndex(part => part.partKey === partKey);
+  return PART_COLORS[(index < 0 ? 0 : index) % PART_COLORS.length]!;
 }
 
 function createPart(region: DetectedRegion, sourceWidth: number, sourceHeight: number, index: number, existingParts: ModularSpriteDraftPart[]): ModularSpriteDraftPart {
@@ -143,6 +166,60 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   return <label className="grid gap-1 text-xs text-muted-foreground">{children}</label>;
 }
 
+function PartThumbnail({
+  resultRef,
+  resultVersion,
+  regionIds,
+}: {
+  resultRef: React.RefObject<ProcessedModularSprite | null>;
+  resultVersion: number;
+  regionIds: number[];
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const result = resultRef.current;
+    const canvas = canvasRef.current;
+    if (!canvas || !result) return;
+    const selected = new Set(regionIds);
+    const selectedRegions = result.regions.filter(region => selected.has(region.id));
+    if (selectedRegions.length === 0) {
+      canvas.width = 1;
+      canvas.height = 1;
+      return;
+    }
+    const minX = Math.min(...selectedRegions.map(region => region.bounds.x));
+    const minY = Math.min(...selectedRegions.map(region => region.bounds.y));
+    const maxX = Math.max(...selectedRegions.map(region => region.bounds.x + region.bounds.width - 1));
+    const maxY = Math.max(...selectedRegions.map(region => region.bounds.y + region.bounds.height - 1));
+    const width = maxX - minX + 1;
+    const height = maxY - minY + 1;
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    const output = new Uint8ClampedArray(width * height * 4);
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const sourcePixel = (y + minY) * result.width + (x + minX);
+        if (!selected.has(result.labels[sourcePixel] ?? 0)) continue;
+        const sourceOffset = sourcePixel * 4;
+        const outputOffset = (y * width + x) * 4;
+        output[outputOffset] = result.rgba[sourceOffset] ?? 0;
+        output[outputOffset + 1] = result.rgba[sourceOffset + 1] ?? 0;
+        output[outputOffset + 2] = result.rgba[sourceOffset + 2] ?? 0;
+        output[outputOffset + 3] = result.matte[sourcePixel] ?? 0;
+      }
+    }
+    context.putImageData(new ImageData(output, width, height), 0, 0);
+    const scale = Math.min(1, 96 / Math.max(width, height));
+    canvas.style.width = `${Math.round(width * scale)}px`;
+    canvas.style.height = `${Math.round(height * scale)}px`;
+  }, [regionIds, resultRef, resultVersion]);
+
+  return <canvas ref={canvasRef} aria-hidden className="shrink-0 rounded border bg-[linear-gradient(45deg,#222_25%,transparent_25%),linear-gradient(-45deg,#222_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#222_75%),linear-gradient(-45deg,transparent_75%,#222_75%)] bg-[length:16px_16px]" />;
+}
+
 export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }: ModularSpriteWizardProps): React.ReactElement {
   const [machine, send] = useMachine(modularSpriteWizardMachine);
   const project = useProjectStore(state => state.project);
@@ -150,7 +227,11 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
   const [source, setSource] = useState<RgbaImageData | null>(null);
   const [previewSource, setPreviewSource] = useState<RgbaImageData | null>(null);
   const [result, setResult] = useState<ProcessedModularSprite | null>(null);
+  const resultRef = useRef<ProcessedModularSprite | null>(null);
+  const [resultVersion, setResultVersion] = useState(0);
   const [recipe, setRecipe] = useState<ModularSpriteProcessingRecipe>(() => structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE));
+  const recipeRef = useRef(recipe);
+  const [processingRevision, setProcessingRevision] = useState(0);
   const [parts, setParts] = useState<ModularSpriteDraftPart[]>([]);
   const [confirmedKeys, setConfirmedKeys] = useState<Set<string>>(new Set());
   const [selectedRegionIds, setSelectedRegionIds] = useState<Set<number>>(new Set());
@@ -159,46 +240,55 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
   const [tool, setTool] = useState<EditorTool>('select');
   const [brushRadius, setBrushRadius] = useState(0.012);
   const [zoom, setZoom] = useState(1);
+  const [showOverlays, setShowOverlays] = useState(true);
+  const [advancedFrameKeys, setAdvancedFrameKeys] = useState<Set<string>>(new Set());
   const [name, setName] = useState('Modular Sprite');
   const [addToCanvas, setAddToCanvas] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [stage, setStage] = useState('Processing');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<EditorSnapshot[]>([]);
   const [future, setFuture] = useState<EditorSnapshot[]>([]);
   const loadedExistingId = useRef<string | null>(null);
-  const previousStep = useRef<string>('source');
+  const lastMemory = useRef<{ at: number; kind: HistoryKind } | null>(null);
   const initializedForResult = useRef(false);
-  const clientRef = useRef(createModularSpriteWorkerClient({ onProgress: update => setProgress(update.progress) }));
+  const processGeneration = useRef(0);
+  const clientRef = useRef(createModularSpriteWorkerClient({ onProgress: update => {
+    setProgress(update.progress);
+    setStage(update.stage);
+  } }));
   const existing = useMemo(
     () => existingId ? project.modularSprites.find(candidate => candidate.id === existingId) : undefined,
     [existingId, project.modularSprites],
   );
   const step = typeof machine.value === 'string' ? machine.value : 'source';
 
-  useEffect(() => {
-    const prior = previousStep.current;
-    previousStep.current = step;
-    if (prior !== step && (prior === 'background' || prior === 'regions')) clientRef.current.cancel();
-  }, [step]);
-
   const reset = useCallback(() => {
     clientRef.current.cancel();
+    lastMemory.current = null;
     setFile(null);
     setSource(null);
     setPreviewSource(null);
     setResult(null);
-    setRecipe(structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE));
+    resultRef.current = null;
+    setResultVersion(version => version + 1);
+    const defaultRecipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipeRef.current = defaultRecipe;
+    setRecipe(defaultRecipe);
     setParts([]);
     setConfirmedKeys(new Set());
     setSelectedRegionIds(new Set());
     setAssignmentPartKey('');
+    setAdvancedFrameKeys(new Set());
     setError(null);
     setBusy(false);
     setHistory([]);
     setFuture([]);
     setProgress(0);
+    setStage('Processing');
     initializedForResult.current = false;
+    processGeneration.current += 1;
   }, []);
 
   useEffect(() => () => clientRef.current.dispose(), []);
@@ -206,6 +296,8 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
   const loadFile = useCallback(async (nextFile: File, existingDocument?: ModularSpriteDocument) => {
     send({ type: 'SOURCE_SELECTED' });
     setBusy(true);
+    setStage('Loading image');
+    setProgress(0);
     setError(null);
     try {
       const decoded = await decodeModularSpriteFile(nextFile);
@@ -219,10 +311,13 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
           color: detected.color,
         },
       };
+      await clientRef.current.warm(preview);
       setFile(nextFile);
       setSource(decoded);
       setPreviewSource(preview);
-      setRecipe(structuredClone(nextRecipe));
+      const recipeCopy = structuredClone(nextRecipe);
+      recipeRef.current = recipeCopy;
+      setRecipe(recipeCopy);
       setName(existingDocument?.name ?? (nextFile.name.replace(/\.[^.]+$/, '') || 'Modular Sprite'));
       initializedForResult.current = false;
       send({ type: 'DECODED' });
@@ -254,70 +349,59 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     loadedExistingId.current = null;
   }, [existingId, open]);
 
-  useEffect(() => {
-    if (!previewSource || !open) return;
-    const timeout = window.setTimeout(() => {
-      setBusy(true);
-      clientRef.current.process({ image: previewSource, recipe })
-        .then(nextResult => {
-          setResult(nextResult);
-          setError(null);
-          if (!initializedForResult.current) {
-            const initialParts = existing
-              ? existingDrafts(existing, nextResult)
-              : nextResult.regions.reduce<ModularSpriteDraftPart[]>((all, region, index) => [
-                ...all,
-                createPart(region, nextResult.width, nextResult.height, index, all),
-              ], []);
-            setParts(initialParts);
-            setConfirmedKeys(new Set(existing ? initialParts.map(part => part.partKey) : []));
-            initializedForResult.current = true;
-          }
-        })
-        .catch(processError => {
-          if (processError instanceof DOMException && processError.name === 'AbortError') return;
-          setError(processError instanceof Error ? processError.message : 'Image processing failed');
-        })
-        .finally(() => setBusy(false));
-    }, 120);
-    return () => window.clearTimeout(timeout);
-  }, [existing, open, previewSource, recipe]);
-
-  const remember = useCallback(() => {
-    setHistory(previous => [...previous.slice(-49), { recipe: structuredClone(recipe), parts: structuredClone(parts) }]);
+  const remember = useCallback((kind: HistoryKind = 'discrete') => {
+    const now = Date.now();
+    const previous = lastMemory.current;
+    const coalesce = kind === 'recipe' && previous?.kind === 'recipe' && now - previous.at < RECIPE_HISTORY_COALESCE_MS;
+    lastMemory.current = { at: now, kind };
+    if (!coalesce) {
+      setHistory(historyState => [...historyState.slice(-49), { recipe: structuredClone(recipe), parts: structuredClone(parts) }]);
+    }
     setFuture([]);
     send({ type: 'CHANGE' });
   }, [parts, recipe, send]);
 
-  const changeRecipe = useCallback((change: (draft: ModularSpriteProcessingRecipe) => void) => {
-    remember();
-    setRecipe(previous => {
-      const next = structuredClone(previous);
-      change(next);
-      return next;
-    });
+  const changeRecipe = useCallback((change: (draft: ModularSpriteProcessingRecipe) => void, kind: HistoryKind = 'recipe', reprocess = true) => {
+    remember(kind);
+    const next = structuredClone(recipeRef.current);
+    change(next);
+    recipeRef.current = next;
+    setRecipe(next);
+    if (reprocess) setProcessingRevision(revision => revision + 1);
   }, [remember]);
+
+  const commitRecipeProcessing = useCallback(() => {
+    setProcessingRevision(revision => revision + 1);
+  }, []);
 
   const undoLocal = () => {
     const previous = history.at(-1);
     if (!previous) return;
+    lastMemory.current = null;
     setFuture(next => [{ recipe: structuredClone(recipe), parts: structuredClone(parts) }, ...next].slice(0, 50));
     setHistory(items => items.slice(0, -1));
-    setRecipe(previous.recipe);
+    const previousRecipe = structuredClone(previous.recipe);
+    recipeRef.current = previousRecipe;
+    setRecipe(previousRecipe);
     setParts(previous.parts);
+    setProcessingRevision(revision => revision + 1);
   };
 
   const redoLocal = () => {
     const next = future[0];
     if (!next) return;
+    lastMemory.current = null;
     setHistory(items => [...items.slice(-49), { recipe: structuredClone(recipe), parts: structuredClone(parts) }]);
     setFuture(items => items.slice(1));
-    setRecipe(next.recipe);
+    const nextRecipe = structuredClone(next.recipe);
+    recipeRef.current = nextRecipe;
+    setRecipe(nextRecipe);
     setParts(next.parts);
+    setProcessingRevision(revision => revision + 1);
   };
 
   const updatePart = (index: number, change: Partial<ModularSpriteDraftPart>) => {
-    remember();
+    remember('parts');
     setParts(previous => previous.map((part, partIndex) => partIndex === index ? { ...part, ...change } : part));
     const currentKey = parts[index]?.partKey;
     if (currentKey) setConfirmedKeys(previous => new Set(previous).add(change.partKey ?? currentKey));
@@ -337,7 +421,7 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
   const removePart = (index: number) => {
     const partKey = parts[index]?.partKey;
     if (!partKey) return;
-    remember();
+    remember('parts');
     setParts(previous => previous.filter((_, partIndex) => partIndex !== index));
     setConfirmedKeys(previous => {
       const next = new Set(previous);
@@ -348,7 +432,7 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
 
   const mergeSelected = () => {
     if (selectedRegionIds.size < 2 || !result) return;
-    remember();
+    remember('parts');
     const ids = [...selectedRegionIds];
     const selectedRegions = result.regions.filter(region => selectedRegionIds.has(region.id));
     const bounds = selectedRegions.reduce((accumulator, region) => ({
@@ -383,7 +467,7 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
 
   const deleteSelected = () => {
     if (selectedRegionIds.size === 0) return;
-    remember();
+    remember('parts');
     setParts(previous => previous
       .map(part => ({ ...part, regionIds: part.regionIds.filter(id => !selectedRegionIds.has(id)) }))
       .filter(part => part.regionIds.length > 0));
@@ -392,7 +476,7 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
 
   const assignSelected = () => {
     if (!assignmentPartKey || selectedRegionIds.size === 0) return;
-    remember();
+    remember('parts');
     setParts(previous => previous.map(part => {
       const withoutSelected = part.regionIds.filter(id => !selectedRegionIds.has(id));
       return part.partKey === assignmentPartKey
@@ -406,6 +490,74 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     });
     setSelectedRegionIds(new Set());
   };
+
+  const toggleRegionSelection = useCallback((regionId: number, additive: boolean) => {
+    setSelectedRegionIds(previous => {
+      if (!regionId) return additive ? previous : new Set();
+      const next = additive ? new Set(previous) : new Set<number>();
+      if (next.has(regionId)) next.delete(regionId); else next.add(regionId);
+      return next;
+    });
+  }, []);
+
+  const assignments = useMemo(() => {
+    const map = new Map<number, RegionAssignment>();
+    if (!result) return map;
+    for (const part of parts) {
+      const color = partColor(parts, part.partKey);
+      for (const regionId of part.regionIds) map.set(regionId, { color, name: part.name });
+    }
+    return map;
+  }, [parts, result]);
+
+  const applyProcessResult = useCallback((nextResult: ProcessedModularSprite) => {
+    resultRef.current = nextResult;
+    setResult(nextResult);
+    setResultVersion(version => version + 1);
+    setError(null);
+    if (!initializedForResult.current) {
+      const initialParts = existing
+        ? existingDrafts(existing, nextResult)
+        : nextResult.regions.reduce<ModularSpriteDraftPart[]>((all, region, index) => [
+          ...all,
+          createPart(region, nextResult.width, nextResult.height, index, all),
+        ], []);
+      setParts(initialParts);
+      setConfirmedKeys(new Set(existing ? initialParts.map(part => part.partKey) : []));
+      initializedForResult.current = true;
+    }
+  }, [existing]);
+
+  useEffect(() => {
+    if (!previewSource || !open) return;
+    const generation = ++processGeneration.current;
+    const timeout = window.setTimeout(() => {
+      const processingRecipe = structuredClone(recipeRef.current);
+      setBusy(true);
+      setStage('Processing');
+      setProgress(0);
+      const apply = (promise: Promise<ProcessedModularSprite>): Promise<void> => promise
+        .then(nextResult => {
+          if (generation === processGeneration.current) applyProcessResult(nextResult);
+        })
+        .catch((processError: unknown) => {
+          if (processError instanceof DOMException && processError.name === 'AbortError') return;
+          const message = processError instanceof Error ? processError.message : 'Image processing failed';
+          if (message.includes('not warmed up')) {
+            return apply(clientRef.current.process({ image: previewSource, recipe: processingRecipe }));
+          }
+          if (generation === processGeneration.current) setError(message);
+        });
+      void apply(clientRef.current.process({ recipe: processingRecipe }))
+        .finally(() => {
+          if (generation === processGeneration.current) setBusy(false);
+        });
+    }, PROCESS_DEBOUNCE_MS);
+    return () => {
+      window.clearTimeout(timeout);
+      clientRef.current.cancel();
+    };
+  }, [applyProcessResult, open, previewSource, processingRevision]);
 
   const finalize = async () => {
     if (!source || !file || !result) return;
@@ -424,6 +576,8 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     }
     send({ type: 'FINALIZE' });
     setBusy(true);
+    setStage('Extracting parts');
+    setProgress(0);
     setError(null);
     try {
       const fullResult = await clientRef.current.process({ image: source, recipe });
@@ -482,6 +636,14 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     });
   }, [confirmedKeys, parts, result, send]);
 
+  const toggleAdvancedFrame = (partKey: string) => {
+    setAdvancedFrameKeys(previous => {
+      const next = new Set(previous);
+      if (next.has(partKey)) next.delete(partKey); else next.add(partKey);
+      return next;
+    });
+  };
+
   return (
     <UiDialog open={open} onOpenChange={nextOpen => { if (!nextOpen) requestClose(); }}>
       <UiDialogContent className="flex h-[95vh] w-[95vw] max-w-none flex-col gap-0 overflow-hidden p-0">
@@ -491,10 +653,10 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
         </UiDialogHeader>
 
         <div className="flex border-b px-6 py-2">
-          {STEPS.map((item, index) => <div key={item} className={`flex-1 text-center text-xs font-medium capitalize ${item === step ? 'text-primary' : 'text-muted-foreground'}`}>{index + 1}. {item}</div>)}
+          {STEPS.map((item, index) => <div key={item} className={`flex-1 text-center text-xs font-medium capitalize ${item === step ? 'text-primary' : 'text-muted-foreground'}`}>{index + 1}. {STEP_LABELS[item]}</div>)}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto p-5">
+        <div className="relative min-h-0 flex-1 overflow-auto p-5">
           {step === 'source' && (
             <label className="flex h-full min-h-80 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-muted-foreground/30 p-8 text-center hover:border-primary/60" onDragOver={event => event.preventDefault()} onDrop={event => {
               event.preventDefault();
@@ -511,87 +673,136 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
           )}
 
           {(step === 'background' || step === 'regions') && source && previewSource && (
-            <div className="grid h-full min-h-[500px] grid-cols-[260px_minmax(0,1fr)] gap-5">
+            <div className="grid h-full min-h-[500px] grid-cols-[280px_minmax(0,1fr)] gap-5">
               <aside className="space-y-4 overflow-auto rounded-lg border p-4">
                 {step === 'background' ? <>
+                  <p className="text-xs text-muted-foreground">The keyer removes the background color (or uses existing alpha) and finds connected regions. Use the touch-up tools below to fix the mask.</p>
                   <FieldLabel>Mode<select className="h-9 rounded-md border bg-background px-2" value={recipe.background.mode} onChange={event => changeRecipe(draft => { draft.background.mode = event.target.value as 'alpha' | 'chroma'; })}><option value="alpha">Existing alpha</option><option value="chroma">Chroma key</option></select></FieldLabel>
                   <FieldLabel>Background color<input className="h-9 w-full" type="color" value={colorToHex(recipe.background.color)} onChange={event => changeRecipe(draft => { draft.background.color = hexToColor(event.target.value); })} /></FieldLabel>
                   <UiButton size="sm" variant={tool === 'eyedropper' ? 'default' : 'outline'} onClick={() => { setTool('eyedropper'); setPreviewMode('original'); }}>Pick from image</UiButton>
-                  <FieldLabel>Tolerance: {recipe.background.tolerance.toFixed(3)}<UiSlider min={0} max={0.25} step={0.002} value={[recipe.background.tolerance]} onValueChange={value => changeRecipe(draft => { draft.background.tolerance = value[0] ?? draft.background.tolerance; })} /></FieldLabel>
-                  <FieldLabel>Soft edge: {recipe.background.softness.toFixed(3)}<UiSlider min={0.002} max={0.25} step={0.002} value={[recipe.background.softness]} onValueChange={value => changeRecipe(draft => { draft.background.softness = value[0] ?? draft.background.softness; })} /></FieldLabel>
-                  <FieldLabel>Despill: {recipe.background.despill.toFixed(2)}<UiSlider min={0} max={1} step={0.02} value={[recipe.background.despill]} onValueChange={value => changeRecipe(draft => { draft.background.despill = value[0] ?? draft.background.despill; })} /></FieldLabel>
-                  <FieldLabel>Detection alpha: {recipe.detection.alphaThreshold}<UiSlider min={1} max={254} step={1} value={[recipe.detection.alphaThreshold]} onValueChange={value => changeRecipe(draft => { draft.detection.alphaThreshold = value[0] ?? draft.detection.alphaThreshold; })} /></FieldLabel>
-                  <FieldLabel>Opening radius: {recipe.detection.openingRadius}px<UiSlider min={0} max={8} step={1} value={[recipe.detection.openingRadius]} onValueChange={value => changeRecipe(draft => { draft.detection.openingRadius = value[0] ?? draft.detection.openingRadius; })} /></FieldLabel>
-                  <FieldLabel>Closing radius: {recipe.detection.closingRadius}px<UiSlider min={0} max={8} step={1} value={[recipe.detection.closingRadius]} onValueChange={value => changeRecipe(draft => { draft.detection.closingRadius = value[0] ?? draft.detection.closingRadius; })} /></FieldLabel>
-                  <FieldLabel>Minimum island: {(recipe.detection.minimumRegionAreaRatio * 100).toFixed(3)}%<UiSlider min={0} max={0.01} step={0.00005} value={[recipe.detection.minimumRegionAreaRatio]} onValueChange={value => changeRecipe(draft => { draft.detection.minimumRegionAreaRatio = value[0] ?? draft.detection.minimumRegionAreaRatio; })} /></FieldLabel>
-                  {result && result.background.confidence < 0.55 && <p className="rounded bg-amber-500/10 p-2 text-xs text-amber-500">Low border-color confidence. Pick the background color manually.</p>}
-                </> : <>
-                  <div className="grid grid-cols-2 gap-2">
-                    <UiButton size="sm" variant={tool === 'select' ? 'default' : 'outline'} onClick={() => setTool('select')}><MousePointer2 className="mr-1 h-4 w-4" />Select</UiButton>
-                    <UiButton size="sm" variant={tool === 'foreground' ? 'default' : 'outline'} onClick={() => setTool('foreground')}><Paintbrush className="mr-1 h-4 w-4" />Keep</UiButton>
-                    <UiButton size="sm" variant={tool === 'background' ? 'default' : 'outline'} onClick={() => setTool('background')}><Eraser className="mr-1 h-4 w-4" />Erase</UiButton>
-                    <UiButton size="sm" variant={tool === 'split' ? 'default' : 'outline'} onClick={() => setTool('split')}><Scissors className="mr-1 h-4 w-4" />Split</UiButton>
+                  <FieldLabel>Tolerance: {recipe.background.tolerance.toFixed(3)}<UiSlider min={0} max={0.25} step={0.002} value={[recipe.background.tolerance]} onValueChange={value => changeRecipe(draft => { draft.background.tolerance = value[0] ?? draft.background.tolerance; }, 'recipe', false)} onValueCommit={commitRecipeProcessing} /></FieldLabel>
+                  <FieldLabel>Soft edge: {recipe.background.softness.toFixed(3)}<UiSlider min={0.002} max={0.25} step={0.002} value={[recipe.background.softness]} onValueChange={value => changeRecipe(draft => { draft.background.softness = value[0] ?? draft.background.softness; }, 'recipe', false)} onValueCommit={commitRecipeProcessing} /></FieldLabel>
+                  <FieldLabel>Despill: {recipe.background.despill.toFixed(2)}<UiSlider min={0} max={1} step={0.02} value={[recipe.background.despill]} onValueChange={value => changeRecipe(draft => { draft.background.despill = value[0] ?? draft.background.despill; }, 'recipe', false)} onValueCommit={commitRecipeProcessing} /></FieldLabel>
+                  <FieldLabel>Detection alpha: {recipe.detection.alphaThreshold}<UiSlider min={1} max={254} step={1} value={[recipe.detection.alphaThreshold]} onValueChange={value => changeRecipe(draft => { draft.detection.alphaThreshold = value[0] ?? draft.detection.alphaThreshold; }, 'recipe', false)} onValueCommit={commitRecipeProcessing} /></FieldLabel>
+                  <FieldLabel>Opening radius: {recipe.detection.openingRadius}px<UiSlider min={0} max={8} step={1} value={[recipe.detection.openingRadius]} onValueChange={value => changeRecipe(draft => { draft.detection.openingRadius = value[0] ?? draft.detection.openingRadius; }, 'recipe', false)} onValueCommit={commitRecipeProcessing} /></FieldLabel>
+                  <FieldLabel>Closing radius: {recipe.detection.closingRadius}px<UiSlider min={0} max={8} step={1} value={[recipe.detection.closingRadius]} onValueChange={value => changeRecipe(draft => { draft.detection.closingRadius = value[0] ?? draft.detection.closingRadius; }, 'recipe', false)} onValueCommit={commitRecipeProcessing} /></FieldLabel>
+                  <FieldLabel>Minimum island: {(recipe.detection.minimumRegionAreaRatio * 100).toFixed(3)}%<UiSlider min={0} max={0.01} step={0.00005} value={[recipe.detection.minimumRegionAreaRatio]} onValueChange={value => changeRecipe(draft => { draft.detection.minimumRegionAreaRatio = value[0] ?? draft.detection.minimumRegionAreaRatio; }, 'recipe', false)} onValueCommit={commitRecipeProcessing} /></FieldLabel>
+                  {result?.warnings.map(warning => <p key={warning} className="rounded bg-amber-500/10 p-2 text-xs text-amber-500">{warning}</p>)}
+                  <div className="space-y-2 border-t pt-3">
+                    <div className="text-xs font-medium">Touch-up tools</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <UiButton size="sm" variant={tool === 'select' ? 'default' : 'outline'} onClick={() => setTool('select')}><MousePointer2 className="mr-1 h-4 w-4" />Select</UiButton>
+                      <UiButton size="sm" variant={tool === 'foreground' ? 'default' : 'outline'} onClick={() => setTool('foreground')}><Paintbrush className="mr-1 h-4 w-4" />Keep</UiButton>
+                      <UiButton size="sm" variant={tool === 'background' ? 'default' : 'outline'} onClick={() => setTool('background')}><Eraser className="mr-1 h-4 w-4" />Erase</UiButton>
+                      <UiButton size="sm" variant={tool === 'split' ? 'default' : 'outline'} onClick={() => setTool('split')}><Scissors className="mr-1 h-4 w-4" />Split</UiButton>
+                    </div>
+                    <FieldLabel>Brush radius: {(brushRadius * 100).toFixed(1)}%<UiSlider min={0.002} max={0.08} step={0.002} value={[brushRadius]} onValueChange={value => setBrushRadius(value[0] ?? brushRadius)} /></FieldLabel>
+                    <p className="text-xs text-muted-foreground">Keep and Erase paint the transparent mask. Split cuts a region in two so it can be assigned to different parts; the exported image alpha stays continuous.</p>
                   </div>
-                  <FieldLabel>Brush radius: {(brushRadius * 100).toFixed(1)}%<UiSlider min={0.002} max={0.08} step={0.002} value={[brushRadius]} onValueChange={value => setBrushRadius(value[0] ?? brushRadius)} /></FieldLabel>
-                  <UiButton className="w-full" size="sm" variant="outline" disabled={selectedRegionIds.size < 2} onClick={mergeSelected}><Merge className="mr-1 h-4 w-4" />Merge selected</UiButton>
-                  <select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={assignmentPartKey} onChange={event => setAssignmentPartKey(event.target.value)}>
-                    <option value="">Assign to part…</option>
+                </> : <>
+                  <p className="text-xs text-muted-foreground">Regions become parts. Click a region on the canvas or in the list (Shift-click selects several) — every region is drawn in the color of the part it belongs to.</p>
+                  <UiButton className="w-full" size="sm" variant={tool === 'select' ? 'default' : 'outline'} onClick={() => setTool('select')}><MousePointer2 className="mr-1 h-4 w-4" />Select</UiButton>
+                  <FieldLabel>Assign to part<select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={assignmentPartKey} onChange={event => setAssignmentPartKey(event.target.value)}>
+                    <option value="">Choose a part…</option>
                     {parts.map(part => <option key={part.partKey} value={part.partKey}>{part.name}</option>)}
-                  </select>
+                  </select></FieldLabel>
                   <UiButton className="w-full" size="sm" variant="outline" disabled={!assignmentPartKey || selectedRegionIds.size === 0} onClick={assignSelected}>Assign selected</UiButton>
+                  <UiButton className="w-full" size="sm" variant="outline" disabled={selectedRegionIds.size < 2} onClick={mergeSelected}><Merge className="mr-1 h-4 w-4" />Merge into new part</UiButton>
                   <UiButton className="w-full" size="sm" variant="destructive" disabled={selectedRegionIds.size === 0} onClick={deleteSelected}>Ignore selected</UiButton>
-                  <p className="text-xs text-muted-foreground">Shift-click to select multiple regions. Split affects detection only; exported alpha remains continuous.</p>
+                  <div className="space-y-1 border-t pt-3">
+                    <div className="text-xs font-medium">Regions ({result?.regions.length ?? 0})</div>
+                    <ul className="space-y-1">
+                      {result?.regions.map(region => {
+                        const assignment = assignments.get(region.id);
+                        const isSelected = selectedRegionIds.has(region.id);
+                        return (
+                          <li key={region.id}>
+                            <button
+                              type="button"
+                              className={`flex w-full items-center gap-2 rounded border px-2 py-1 text-left text-xs ${isSelected ? 'border-primary bg-primary/10' : 'border-transparent hover:border-border hover:bg-muted/50'}`}
+                              onClick={event => toggleRegionSelection(region.id, event.shiftKey)}
+                            >
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: assignment?.color ?? '#22d3ee' }} />
+                              <span className="truncate">Region {region.id}</span>
+                              <span className="ml-auto truncate text-muted-foreground">{assignment ? assignment.name : 'unassigned'}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
                 </>}
                 <div className="flex gap-2 border-t pt-3"><UiButton size="icon" variant="outline" disabled={!history.length} onClick={undoLocal}><Undo2 className="h-4 w-4" /></UiButton><UiButton size="icon" variant="outline" disabled={!future.length} onClick={redoLocal}><Redo2 className="h-4 w-4" /></UiButton></div>
               </aside>
               <section className="flex min-h-0 flex-col rounded-lg border bg-black/40">
-                <div className="flex gap-1 border-b bg-background p-2">
+                <div className="flex items-center gap-1 border-b bg-background p-2">
                   {(['original', 'matte', 'result'] as const).map(mode => <UiButton key={mode} size="sm" variant={previewMode === mode ? 'default' : 'ghost'} onClick={() => setPreviewMode(mode)}>{mode}</UiButton>)}
+                  <span className="mx-1 h-5 w-px bg-border" />
+                  <label className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
+                    <UiSwitch checked={showOverlays} onCheckedChange={value => setShowOverlays(value)} />
+                    Region outlines
+                  </label>
                   <UiButton size="sm" variant="ghost" onClick={() => setZoom(value => Math.max(0.25, value - 0.25))}>−</UiButton>
                   <span className="self-center text-xs text-muted-foreground">{Math.round(zoom * 100)}%</span>
                   <UiButton size="sm" variant="ghost" onClick={() => setZoom(value => Math.min(4, value + 0.25))}>+</UiButton>
-                  <span className="ml-auto self-center text-xs text-muted-foreground">{busy ? `Processing ${Math.round(progress * 100)}%` : `${result?.regions.length ?? 0} regions`}</span>
+                  <span className="ml-auto self-center text-xs text-muted-foreground">{busy ? `${stage}… ${Math.round(progress * 100)}%` : `${result?.regions.length ?? 0} regions`}</span>
                 </div>
                 <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
-                  <ModularSpritePreviewCanvas source={previewSource} result={result} mode={previewMode} tool={tool} zoom={zoom} selectedRegionIds={selectedRegionIds} onSelectRegion={(regionId, additive) => setSelectedRegionIds(previous => {
-                    if (!regionId) return new Set();
-                    const next = additive ? new Set(previous) : new Set<number>();
-                    if (next.has(regionId)) next.delete(regionId); else next.add(regionId);
-                    return next;
-                  })} onPickColor={color => { changeRecipe(draft => { draft.background.mode = 'chroma'; draft.background.color = color; }); setTool('select'); }} onStroke={(kind, points) => changeRecipe(draft => { draft.strokes.push({ kind, radius: brushRadius, points }); })} />
+                  <ModularSpritePreviewCanvas source={previewSource} resultRef={resultRef} resultVersion={resultVersion} mode={previewMode} tool={tool} zoom={zoom} selectedRegionIds={selectedRegionIds} assignments={assignments} showOverlays={showOverlays} onSelectRegion={toggleRegionSelection} onPickColor={color => { changeRecipe(draft => { draft.background.mode = 'chroma'; draft.background.color = color; }, 'discrete'); setTool('select'); }} onStroke={(kind, points) => changeRecipe(draft => { draft.strokes.push({ kind, radius: brushRadius, points }); }, 'discrete')} />
                 </div>
               </section>
             </div>
           )}
 
-          {step === 'parts' && <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Suggestions are not accepted automatically. Review and confirm each anatomical assignment.</p>
-            {parts.map((part, index) => <div key={`${part.partKey}-${index}`} className="space-y-3 rounded-lg border p-3">
-              <div className="grid grid-cols-[1fr_1fr_1fr_130px_90px_90px] items-end gap-2">
-                <FieldLabel>Name<UiInput value={part.name} onChange={event => updatePart(index, { name: event.target.value })} /></FieldLabel>
-                <FieldLabel>Stable key<UiInput value={part.partKey} onChange={event => updatePart(index, { partKey: slug(event.target.value) })} /></FieldLabel>
-                <FieldLabel>Role<select className="h-10 rounded-md border bg-background px-2" value={part.role} onChange={event => updatePart(index, { role: event.target.value })}>{ROLES.map(role => <option key={role}>{role}</option>)}</select></FieldLabel>
-                <FieldLabel>Anatomical side<select className="h-10 rounded-md border bg-background px-2" value={part.side} onChange={event => updatePart(index, { side: event.target.value as ModularSpriteDraftPart['side'] })}><option value="none">none</option><option value="left">left</option><option value="right">right</option><option value="center">center</option></select></FieldLabel>
-                <FieldLabel>Order<UiInput type="number" value={part.order} onChange={event => updatePart(index, { order: Number(event.target.value) })} /></FieldLabel>
-                <div className="grid gap-1"><label className="flex h-5 items-center gap-2 text-xs"><input type="checkbox" checked={part.required} onChange={event => updatePart(index, { required: event.target.checked })} />Required</label><UiButton size="sm" variant={confirmedKeys.has(part.partKey) ? 'outline' : 'default'} onClick={() => setConfirmedKeys(previous => new Set(previous).add(part.partKey))}><Check className="mr-1 h-3 w-3" />{confirmedKeys.has(part.partKey) ? 'Confirmed' : 'Confirm'}</UiButton></div>
-              </div>
-              <div className="grid grid-cols-[repeat(4,1fr)_auto] items-end gap-2 border-t pt-2">
-                {(['x', 'y', 'width', 'height'] as const).map(field => <FieldLabel key={field}>Frame {field}
-                  <UiInput type="number" min={0} max={1} step={0.001} value={part.extractionFrame[field]} onChange={event => updateExtractionFrame(index, field, Number(event.target.value))} />
-                </FieldLabel>)}
-                <UiButton type="button" variant="destructive" onClick={() => removePart(index)}>Remove part</UiButton>
-              </div>
-            </div>)}
-          </div>}
+          {step === 'parts' && (
+            <div className="mx-auto max-w-3xl space-y-3">
+              <p className="text-sm text-muted-foreground">Every region is grouped into a named part. Give each part a name and an anatomical role, then confirm it — only confirmed parts are imported. The extraction frame is usually fine as suggested; open “Extraction frame” only for fine-tuning.</p>
+              {parts.map((part, index) => <div key={`${part.partKey}-${index}`} className="space-y-3 rounded-lg border p-3">
+                <div className="flex gap-3">
+                  <PartThumbnail resultRef={resultRef} resultVersion={resultVersion} regionIds={part.regionIds} />
+                  <div className="grid min-w-0 flex-1 content-start gap-2">
+                    <div className="grid grid-cols-[1fr_1fr_150px_110px_70px] items-end gap-2">
+                      <FieldLabel>Name<UiInput value={part.name} onChange={event => updatePart(index, { name: event.target.value })} /></FieldLabel>
+                      <FieldLabel>Stable key<UiInput value={part.partKey} onChange={event => updatePart(index, { partKey: slug(event.target.value) })} /></FieldLabel>
+                      <FieldLabel>Role<select className="h-10 rounded-md border bg-background px-2" value={part.role} onChange={event => updatePart(index, { role: event.target.value })}>{ROLES.map(role => <option key={role}>{role}</option>)}</select></FieldLabel>
+                      <FieldLabel>Side<select className="h-10 rounded-md border bg-background px-2" value={part.side} onChange={event => updatePart(index, { side: event.target.value as ModularSpriteDraftPart['side'] })}><option value="none">none</option><option value="left">left</option><option value="right">right</option><option value="center">center</option></select></FieldLabel>
+                      <FieldLabel>Order<UiInput type="number" value={part.order} onChange={event => updatePart(index, { order: Number(event.target.value) })} /></FieldLabel>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={part.required} onChange={event => updatePart(index, { required: event.target.checked })} />Required</label>
+                      <UiButton size="sm" variant={confirmedKeys.has(part.partKey) ? 'outline' : 'default'} onClick={() => setConfirmedKeys(previous => new Set(previous).add(part.partKey))}><Check className="mr-1 h-3 w-3" />{confirmedKeys.has(part.partKey) ? 'Confirmed' : 'Confirm'}</UiButton>
+                      <UiButton size="sm" variant="ghost" onClick={() => toggleAdvancedFrame(part.partKey)}>{advancedFrameKeys.has(part.partKey) ? 'Hide extraction frame' : 'Extraction frame'}</UiButton>
+                      <UiButton className="ml-auto" size="sm" variant="destructive" onClick={() => removePart(index)}>Remove part</UiButton>
+                    </div>
+                  </div>
+                </div>
+                {advancedFrameKeys.has(part.partKey) && (
+                  <div className="grid grid-cols-[repeat(4,1fr)] items-end gap-2 border-t pt-2">
+                    {(['x', 'y', 'width', 'height'] as const).map(field => <FieldLabel key={field}>Frame {field} (%)
+                      <UiInput type="number" min={0} max={100} step={0.1} value={Number((part.extractionFrame[field] * 100).toFixed(1))} onChange={event => updateExtractionFrame(index, field, Number(event.target.value) / 100)} />
+                    </FieldLabel>)}
+                  </div>
+                )}
+              </div>)}
+            </div>
+          )}
 
           {step === 'review' && <div className="mx-auto grid max-w-2xl gap-5">
             <FieldLabel>Set and folder name<UiInput value={name} onChange={event => { setName(event.target.value); send({ type: 'CHANGE' }); }} /></FieldLabel>
             <label className="flex items-center gap-3 rounded-lg border p-4 text-sm"><input type="checkbox" checked={addToCanvas} onChange={event => setAddToCanvas(event.target.checked)} />Add arranged parts to canvas</label>
-            <div className="rounded-lg border p-4"><div className="font-medium">{parts.length} parts ready</div><ul className="mt-2 grid grid-cols-2 gap-1 text-sm text-muted-foreground">{[...parts].sort((a, b) => a.order - b.order).map(part => <li key={part.partKey}>{part.name} · {part.role} · {part.side}</li>)}</ul></div>
+            <div className="rounded-lg border p-4"><div className="font-medium">{parts.length} parts ready</div><ul className="mt-2 grid grid-cols-2 gap-1 text-sm text-muted-foreground">{[...parts].sort((a, b) => a.order - b.order).map(part => <li key={part.partKey}><span className="mr-1 inline-block h-2 w-2 rounded-full align-middle" style={{ backgroundColor: partColor(parts, part.partKey) }} />{part.name} · {part.role} · {part.side}</li>)}</ul></div>
             {file?.type === 'image/jpeg' && <p className="rounded bg-amber-500/10 p-3 text-sm text-amber-500">JPEG compression can leave a colored halo around extracted parts.</p>}
           </div>}
 
           {(step === 'failure' || error) && <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{error ?? machine.context.error}</p>}
+
+          {busy && (
+            <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-lg bg-background/70 backdrop-blur-[2px]">
+              <Loader2 className="h-9 w-9 animate-spin text-primary" aria-hidden />
+              <span className="text-sm font-medium">{stage}…</span>
+              <span className="text-xs text-muted-foreground">{Math.round(progress * 100)}%</span>
+            </div>
+          )}
         </div>
 
         <footer className="flex items-center gap-2 border-t px-6 py-3">

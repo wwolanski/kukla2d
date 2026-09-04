@@ -3,7 +3,7 @@ import type { RgbaImageData } from '../domain/contracts.js';
 export const MODULAR_SPRITE_MAX_FILE_BYTES = 50 * 1024 * 1024;
 export const MODULAR_SPRITE_MAX_SIDE = 8192;
 export const MODULAR_SPRITE_MAX_PIXELS = 20_000_000;
-export const MODULAR_SPRITE_PREVIEW_SIDE = 1024;
+export const MODULAR_SPRITE_PREVIEW_SIDE = 768;
 
 const SUPPORTED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
