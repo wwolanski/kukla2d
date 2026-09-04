@@ -18,6 +18,11 @@ const NEIGHBORS_8 = [
   [-1, 1], [0, 1], [1, 1],
 ] as const;
 
+const MAX_DETECTED_REGIONS = 256;
+const MAX_CONTOUR_CANDIDATES = 1024;
+const MAX_CONTOUR_POINTS = 256;
+const PROCESSING_CHUNK_ROWS = 64;
+
 export function analyzeModularSpriteBackground(image: RgbaImageData): BackgroundAnalysis {
   const { data, width, height } = image;
   const borderIndices: number[] = [];
@@ -73,10 +78,49 @@ function createMatte(
 ): { matte: Uint8ClampedArray; rgba: Uint8ClampedArray } {
   const matte = new Uint8ClampedArray(image.width * image.height);
   const rgba = new Uint8ClampedArray(image.data);
-  const background = recipe.background;
-  const backgroundLab = rgbToOklab(background.color.r, background.color.g, background.color.b);
+  const backgroundLab = rgbToOklab(recipe.background.color.r, recipe.background.color.g, recipe.background.color.b);
+  computeMatteRange(image, recipe, backgroundLab, null, matte, rgba, 0, image.height);
+  return { matte, rgba };
+}
 
-  for (let pixelIndex = 0; pixelIndex < matte.length; pixelIndex += 1) {
+export function precomputeOklab(image: RgbaImageData): Float32Array {
+  const oklab = new Float32Array(image.width * image.height * 3);
+  precomputeOklabRange(image, oklab, 0, image.height);
+  return oklab;
+}
+
+function precomputeOklabRange(image: RgbaImageData, oklab: Float32Array, yStart: number, yEnd: number): void {
+  const { data, width, height } = image;
+  const startPixel = Math.max(0, Math.min(height, yStart)) * width;
+  const endPixel = Math.max(0, Math.min(height, yEnd)) * width;
+  for (let pixelIndex = startPixel; pixelIndex < endPixel; pixelIndex += 1) {
+    const offset = pixelIndex * 4;
+    const [lightness, aAxis, bAxis] = rgbToOklab(data[offset] ?? 0, data[offset + 1] ?? 0, data[offset + 2] ?? 0);
+    oklab[pixelIndex * 3] = lightness;
+    oklab[pixelIndex * 3 + 1] = aAxis;
+    oklab[pixelIndex * 3 + 2] = bAxis;
+  }
+}
+
+function computeMatteRange(
+  image: RgbaImageData,
+  recipe: ModularSpriteProcessingRecipe,
+  backgroundLab: readonly number[],
+  oklab: Float32Array | null,
+  matte: Uint8ClampedArray,
+  rgba: Uint8ClampedArray,
+  yStart: number,
+  yEnd: number,
+): void {
+  const { width, height } = image;
+  const background = recipe.background;
+  const [backgroundLightness = 0, backgroundA = 0, backgroundB = 0] = backgroundLab;
+  const startY = Math.max(0, Math.min(height, yStart));
+  const endY = Math.max(startY, Math.min(height, yEnd));
+  const startPixel = startY * width;
+  const endPixel = endY * width;
+
+  for (let pixelIndex = startPixel; pixelIndex < endPixel; pixelIndex += 1) {
     const offset = pixelIndex * 4;
     const sourceAlpha = (image.data[offset + 3] ?? 0) / 255;
     if (background.mode === 'alpha') {
@@ -87,10 +131,19 @@ function createMatte(
     const red = image.data[offset] ?? 0;
     const green = image.data[offset + 1] ?? 0;
     const blue = image.data[offset + 2] ?? 0;
-    const lab = rgbToOklab(red, green, blue);
-    const deltaLightness = (lab[0] - backgroundLab[0]) * 0.5;
-    const deltaA = lab[1] - backgroundLab[1];
-    const deltaB = lab[2] - backgroundLab[2];
+    let labLightness: number;
+    let labA: number;
+    let labB: number;
+    if (oklab) {
+      labLightness = oklab[pixelIndex * 3] ?? 0;
+      labA = oklab[pixelIndex * 3 + 1] ?? 0;
+      labB = oklab[pixelIndex * 3 + 2] ?? 0;
+    } else {
+      [labLightness, labA, labB] = rgbToOklab(red, green, blue);
+    }
+    const deltaLightness = (labLightness - backgroundLightness) * 0.5;
+    const deltaA = labA - backgroundA;
+    const deltaB = labB - backgroundB;
     const distance = Math.sqrt(deltaLightness * deltaLightness + deltaA * deltaA + deltaB * deltaB);
     const keyAlpha = smoothstep(background.tolerance, background.tolerance + background.softness, distance);
     const alpha = sourceAlpha * keyAlpha;
@@ -108,7 +161,6 @@ function createMatte(
     }
     rgba[offset + 3] = matte[pixelIndex] ?? 0;
   }
-  return { matte, rgba };
 }
 
 function paintCircle(target: Uint8Array | Uint8ClampedArray, width: number, height: number, x: number, y: number, radius: number, value: number): void {
@@ -214,10 +266,48 @@ interface ComponentStats {
   sumY: number;
 }
 
-function connectedComponents(mask: Uint8Array, width: number, height: number, minimumArea: number): { labels: Int32Array; stats: ComponentStats[] } {
+function hasLowerRetentionPriority(left: ComponentStats, right: ComponentStats): boolean {
+  if (left.area !== right.area) return left.area < right.area;
+  if (left.minY !== right.minY) return left.minY > right.minY;
+  return left.minX > right.minX;
+}
+
+function retainLargestComponent(heap: ComponentStats[], component: ComponentStats): void {
+  if (heap.length < MAX_DETECTED_REGIONS) {
+    heap.push(component);
+    let index = heap.length - 1;
+    while (index > 0) {
+      const parent = Math.floor((index - 1) / 2);
+      if (!hasLowerRetentionPriority(heap[index]!, heap[parent]!)) break;
+      [heap[index], heap[parent]] = [heap[parent]!, heap[index]!];
+      index = parent;
+    }
+    return;
+  }
+  if (!hasLowerRetentionPriority(heap[0]!, component)) return;
+  heap[0] = component;
+  let index = 0;
+  while (true) {
+    const left = index * 2 + 1;
+    const right = left + 1;
+    if (left >= heap.length) break;
+    let lowest = left;
+    if (right < heap.length && hasLowerRetentionPriority(heap[right]!, heap[left]!)) lowest = right;
+    if (!hasLowerRetentionPriority(heap[lowest]!, heap[index]!)) break;
+    [heap[index], heap[lowest]] = [heap[lowest]!, heap[index]!];
+    index = lowest;
+  }
+}
+
+function connectedComponents(mask: Uint8Array, width: number, height: number, minimumArea: number): {
+  labels: Int32Array;
+  stats: ComponentStats[];
+  discardedRegionCount: number;
+} {
   const temporaryLabels = new Int32Array(mask.length);
   const queue = new Int32Array(mask.length);
   const components: ComponentStats[] = [];
+  let validRegionCount = 0;
   let nextLabel = 1;
 
   for (let start = 0; start < mask.length; start += 1) {
@@ -252,22 +342,25 @@ function connectedComponents(mask: Uint8Array, width: number, height: number, mi
         queue[tail++] = neighborIndex;
       }
     }
-    components.push(stats);
+    if (stats.area >= minimumArea) {
+      validRegionCount += 1;
+      retainLargestComponent(components, stats);
+    }
     nextLabel += 1;
   }
 
-  const valid = components
-    .filter(component => component.area >= minimumArea)
-    .sort((left, right) => left.minY - right.minY || left.minX - right.minX || right.area - left.area);
-  const remap = new Map<number, number>();
-  valid.forEach((component, index) => remap.set(component.id, index + 1));
+  const discardedRegionCount = Math.max(0, validRegionCount - components.length);
+  const valid = components.sort((left, right) => left.minY - right.minY || left.minX - right.minX || right.area - left.area);
+  const remap = new Int32Array(nextLabel);
+  valid.forEach((component, index) => { remap[component.id] = index + 1; });
   const labels = new Int32Array(mask.length);
   for (let index = 0; index < labels.length; index += 1) {
-    labels[index] = remap.get(temporaryLabels[index] ?? 0) ?? 0;
+    labels[index] = remap[temporaryLabels[index] ?? 0] ?? 0;
   }
   return {
     labels,
     stats: valid.map((component, index) => ({ ...component, id: index + 1 })),
+    discardedRegionCount,
   };
 }
 
@@ -306,17 +399,34 @@ function suggestRole(bounds: { x: number; y: number; width: number; height: numb
   return 'custom';
 }
 
-function componentContour(labels: Int32Array, id: number, width: number, height: number, centroid: { x: number; y: number }): ReturnType<typeof normalizedPoint>[] {
+function componentContour(
+  labels: Int32Array,
+  id: number,
+  width: number,
+  height: number,
+  centroid: { x: number; y: number },
+  bounds: { minX: number; minY: number; maxX: number; maxY: number },
+): ReturnType<typeof normalizedPoint>[] {
   const boundary: Array<{ x: number; y: number }> = [];
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      if (labels[y * width + x] !== id) continue;
+  let boundaryCount = 0;
+  for (let y = bounds.minY; y <= bounds.maxY && y < height; y += 1) {
+    for (let x = bounds.minX; x <= bounds.maxX && x < width; x += 1) {
+      const pixelIndex = y * width + x;
+      if (labels[pixelIndex] !== id) continue;
       const isBoundary = x === 0 || y === 0 || x === width - 1 || y === height - 1
         || labels[y * width + x - 1] !== id
         || labels[y * width + x + 1] !== id
         || labels[(y - 1) * width + x] !== id
         || labels[(y + 1) * width + x] !== id;
-      if (isBoundary) boundary.push({ x, y });
+      if (!isBoundary) continue;
+      boundaryCount += 1;
+      if (boundary.length < MAX_CONTOUR_CANDIDATES) {
+        boundary.push({ x, y });
+        continue;
+      }
+      // Deterministic reservoir sampling bounds memory for noisy/large outlines.
+      const slot = ((Math.imul(pixelIndex, 0x9e3779b1) >>> 0) % boundaryCount);
+      if (slot < MAX_CONTOUR_CANDIDATES) boundary[slot] = { x, y };
     }
   }
   boundary.sort((left, right) => {
@@ -324,9 +434,68 @@ function componentContour(labels: Int32Array, id: number, width: number, height:
     const rightAngle = Math.atan2(right.y / height - centroid.y, right.x / width - centroid.x);
     return leftAngle - rightAngle || left.y - right.y || left.x - right.x;
   });
-  const stride = Math.max(1, Math.ceil(boundary.length / 512));
+  const stride = Math.max(1, Math.ceil(boundary.length / MAX_CONTOUR_POINTS));
   return boundary.filter((_, index) => index % stride === 0)
     .map(point => normalizedPoint(point.x, point.y, width, height));
+}
+
+function matteStrokesPass(matte: Uint8ClampedArray, rgba: Uint8ClampedArray, recipe: ModularSpriteProcessingRecipe, width: number, height: number): void {
+  const alphaStrokes = recipe.strokes.filter(stroke => stroke.kind === 'foreground' || stroke.kind === 'background');
+  if (alphaStrokes.length === 0) return;
+  for (const stroke of alphaStrokes) {
+    if (stroke.kind === 'foreground') rasterizeStroke(matte, width, height, stroke, 255);
+    if (stroke.kind === 'background') rasterizeStroke(matte, width, height, stroke, 0);
+  }
+  for (let index = 0; index < matte.length; index += 1) rgba[index * 4 + 3] = matte[index] ?? 0;
+}
+
+function buildDetectionMask(matte: Uint8ClampedArray, recipe: ModularSpriteProcessingRecipe, width: number, height: number): Uint8Array {
+  const detection: Uint8Array<ArrayBufferLike> = new Uint8Array(matte.length);
+  for (let index = 0; index < matte.length; index += 1) {
+    detection[index] = Number((matte[index] ?? 0) >= recipe.detection.alphaThreshold);
+  }
+  return applyMorphology(detection, width, height, recipe);
+}
+
+function detectionStrokesPass(detection: Uint8Array, recipe: ModularSpriteProcessingRecipe, width: number, height: number): Uint8Array | null {
+  const hasSplitStroke = recipe.strokes.some(stroke => stroke.kind === 'split');
+  const beforeSplit = hasSplitStroke ? new Uint8Array(detection) : null;
+  for (const stroke of recipe.strokes) {
+    if (stroke.kind === 'split') rasterizeStroke(detection, width, height, stroke, 0);
+    if (stroke.kind === 'foreground') rasterizeStroke(detection, width, height, stroke, 1);
+    if (stroke.kind === 'background') rasterizeStroke(detection, width, height, stroke, 0);
+  }
+  return beforeSplit;
+}
+
+function buildRegions(detection: Uint8Array, beforeSplit: Uint8Array | null, width: number, height: number, recipe: ModularSpriteProcessingRecipe): {
+  labels: Int32Array;
+  regions: DetectedRegion[];
+  discardedRegionCount: number;
+} {
+  const minimumArea = Math.max(1, Math.round(width * height * recipe.detection.minimumRegionAreaRatio));
+  const { labels, stats, discardedRegionCount } = connectedComponents(detection, width, height, minimumArea);
+  if (beforeSplit) restoreSplitPixels(labels, beforeSplit, width, height);
+  const regions: DetectedRegion[] = stats.map(component => {
+    const bounds = {
+      x: component.minX,
+      y: component.minY,
+      width: component.maxX - component.minX + 1,
+      height: component.maxY - component.minY + 1,
+    };
+    const normalizedBounds = normalizedRect(bounds, width, height);
+    const centroid = normalizedPoint(component.sumX / component.area, component.sumY / component.area, width, height);
+    return {
+      id: component.id,
+      area: component.area,
+      bounds,
+      normalizedBounds,
+      centroid,
+      suggestedRole: suggestRole(normalizedBounds, component.area / (width * height)),
+      contour: componentContour(labels, component.id, width, height, centroid, component),
+    };
+  });
+  return { labels, regions, discardedRegionCount };
 }
 
 export function processModularSprite(request: ProcessModularSpriteRequest): ProcessedModularSprite {
@@ -336,50 +505,83 @@ export function processModularSprite(request: ProcessModularSpriteRequest): Proc
   }
   const background = analyzeModularSpriteBackground(image);
   const { matte, rgba } = createMatte(image, recipe);
-
-  for (const stroke of recipe.strokes) {
-    if (stroke.kind === 'foreground') rasterizeStroke(matte, image.width, image.height, stroke, 255);
-    if (stroke.kind === 'background') rasterizeStroke(matte, image.width, image.height, stroke, 0);
-  }
-  for (let index = 0; index < matte.length; index += 1) rgba[index * 4 + 3] = matte[index] ?? 0;
-
-  let detection: Uint8Array<ArrayBufferLike> = new Uint8Array(matte.length);
-  for (let index = 0; index < matte.length; index += 1) {
-    detection[index] = Number((matte[index] ?? 0) >= recipe.detection.alphaThreshold);
-  }
-  detection = applyMorphology(detection, image.width, image.height, recipe);
-  const beforeSplit = new Uint8Array(detection);
-  for (const stroke of recipe.strokes) {
-    if (stroke.kind === 'split') rasterizeStroke(detection, image.width, image.height, stroke, 0);
-    if (stroke.kind === 'foreground') rasterizeStroke(detection, image.width, image.height, stroke, 1);
-    if (stroke.kind === 'background') rasterizeStroke(detection, image.width, image.height, stroke, 0);
-  }
-
-  const minimumArea = Math.max(1, Math.round(image.width * image.height * recipe.detection.minimumRegionAreaRatio));
-  const { labels, stats } = connectedComponents(detection, image.width, image.height, minimumArea);
-  restoreSplitPixels(labels, beforeSplit, image.width, image.height);
-  const regions: DetectedRegion[] = stats.map(component => {
-    const bounds = {
-      x: component.minX,
-      y: component.minY,
-      width: component.maxX - component.minX + 1,
-      height: component.maxY - component.minY + 1,
-    };
-    const normalizedBounds = normalizedRect(bounds, image.width, image.height);
-    const centroid = normalizedPoint(component.sumX / component.area, component.sumY / component.area, image.width, image.height);
-    return {
-      id: component.id,
-      area: component.area,
-      bounds,
-      normalizedBounds,
-      centroid,
-      suggestedRole: suggestRole(normalizedBounds, component.area / (image.width * image.height)),
-      contour: componentContour(labels, component.id, image.width, image.height, centroid),
-    };
-  });
+  matteStrokesPass(matte, rgba, recipe, image.width, image.height);
+  const detection = buildDetectionMask(matte, recipe, image.width, image.height);
+  const beforeSplit = detectionStrokesPass(detection, recipe, image.width, image.height);
+  const { labels, regions, discardedRegionCount } = buildRegions(detection, beforeSplit, image.width, image.height, recipe);
   const warnings: string[] = [];
   if (recipe.background.mode === 'chroma' && background.confidence < 0.55) warnings.push('Low border-color confidence; pick the background color manually.');
   if (regions.length === 0) warnings.push('No foreground regions were detected.');
+  if (discardedRegionCount > 0) warnings.push(`Showing the ${MAX_DETECTED_REGIONS} largest regions; ${discardedRegionCount} smaller regions were ignored. Increase the minimum region area to remove noise.`);
+  return { width: image.width, height: image.height, rgba, matte, labels, regions, background, warnings };
+}
+
+export interface ProcessingHooks {
+  throwIfAborted(): void;
+  checkpoint(): Promise<void>;
+  report(progress: number, stage: string): void;
+}
+
+export async function precomputeOklabAsync(image: RgbaImageData, hooks: ProcessingHooks): Promise<Float32Array> {
+  const oklab = new Float32Array(image.width * image.height * 3);
+  for (let y = 0; y < image.height; y += PROCESSING_CHUNK_ROWS) {
+    hooks.throwIfAborted();
+    precomputeOklabRange(image, oklab, y, y + PROCESSING_CHUNK_ROWS);
+    await hooks.checkpoint();
+  }
+  hooks.throwIfAborted();
+  return oklab;
+}
+
+export async function processModularSpriteAsync(request: ProcessModularSpriteRequest, hooks: ProcessingHooks, oklab?: Float32Array | null): Promise<ProcessedModularSprite> {
+  const { image, recipe } = request;
+  if (image.width <= 0 || image.height <= 0 || image.data.length !== image.width * image.height * 4) {
+    throw new Error('Invalid RGBA image data');
+  }
+  hooks.throwIfAborted();
+  const background = analyzeModularSpriteBackground(image);
+  hooks.report(0.05, 'Analyzing background');
+  await hooks.checkpoint();
+
+  const matte = new Uint8ClampedArray(image.width * image.height);
+  const rgba = new Uint8ClampedArray(image.data);
+  if (recipe.background.mode === 'chroma') {
+    const backgroundLab = rgbToOklab(recipe.background.color.r, recipe.background.color.g, recipe.background.color.b);
+    for (let y = 0; y < image.height; y += PROCESSING_CHUNK_ROWS) {
+      hooks.throwIfAborted();
+      computeMatteRange(image, recipe, backgroundLab, oklab ?? null, matte, rgba, y, y + PROCESSING_CHUNK_ROWS);
+      hooks.report(0.05 + 0.4 * (y / image.height), 'Keying background');
+      await hooks.checkpoint();
+    }
+  } else {
+    computeMatteRange(image, recipe, [0, 0, 0], null, matte, rgba, 0, image.height);
+  }
+  hooks.throwIfAborted();
+  matteStrokesPass(matte, rgba, recipe, image.width, image.height);
+  hooks.report(0.5, 'Applying mask strokes');
+  await hooks.checkpoint();
+
+  hooks.throwIfAborted();
+  const detection = buildDetectionMask(matte, recipe, image.width, image.height);
+  hooks.report(0.6, 'Cleaning detection mask');
+  await hooks.checkpoint();
+
+  hooks.throwIfAborted();
+  const beforeSplit = detectionStrokesPass(detection, recipe, image.width, image.height);
+  hooks.report(0.68, 'Finding regions');
+  await hooks.checkpoint();
+
+  hooks.throwIfAborted();
+  const { labels, regions, discardedRegionCount } = buildRegions(detection, beforeSplit, image.width, image.height, recipe);
+  hooks.report(0.85, 'Tracing outlines');
+  await hooks.checkpoint();
+
+  hooks.throwIfAborted();
+  hooks.report(1, 'Done');
+  const warnings: string[] = [];
+  if (recipe.background.mode === 'chroma' && background.confidence < 0.55) warnings.push('Low border-color confidence; pick the background color manually.');
+  if (regions.length === 0) warnings.push('No foreground regions were detected.');
+  if (discardedRegionCount > 0) warnings.push(`Showing the ${MAX_DETECTED_REGIONS} largest regions; ${discardedRegionCount} smaller regions were ignored. Increase the minimum region area to remove noise.`);
   return { width: image.width, height: image.height, rgba, matte, labels, regions, background, warnings };
 }
 
