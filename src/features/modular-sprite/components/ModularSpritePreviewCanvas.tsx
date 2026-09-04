@@ -7,12 +7,20 @@ import type { ProcessedModularSprite, RgbaImageData } from '../domain/contracts.
 type PreviewMode = 'original' | 'matte' | 'result';
 type EditorTool = 'select' | 'eyedropper' | ModularSpriteMaskStrokeKind;
 
+export interface RegionAssignment {
+  color: string;
+  name: string;
+}
+
 interface ModularSpritePreviewCanvasProps {
   source: RgbaImageData;
-  result: ProcessedModularSprite | null;
+  resultRef: React.RefObject<ProcessedModularSprite | null>;
+  resultVersion: number;
   mode: PreviewMode;
   tool: EditorTool;
   selectedRegionIds: ReadonlySet<number>;
+  assignments: ReadonlyMap<number, RegionAssignment>;
+  showOverlays: boolean;
   onSelectRegion: (regionId: number, additive: boolean) => void;
   onStroke: (kind: ModularSpriteMaskStrokeKind, points: NormalizedPoint[]) => void;
   onPickColor?: (color: { r: number; g: number; b: number }) => void;
@@ -39,10 +47,13 @@ function imageDataForMode(source: RgbaImageData, result: ProcessedModularSprite 
 
 export function ModularSpritePreviewCanvas({
   source,
-  result,
+  resultRef,
+  resultVersion,
   mode,
   tool,
   selectedRegionIds,
+  assignments,
+  showOverlays,
   onSelectRegion,
   onStroke,
   onPickColor,
@@ -52,6 +63,7 @@ export function ModularSpritePreviewCanvas({
   const activeStroke = useRef<NormalizedPoint[] | null>(null);
 
   useEffect(() => {
+    const result = resultRef.current;
     const canvas = canvasRef.current;
     if (!canvas) return;
     canvas.width = source.width;
@@ -59,12 +71,15 @@ export function ModularSpritePreviewCanvas({
     const context = canvas.getContext('2d');
     if (!context) return;
     context.putImageData(imageDataForMode(source, result, mode), 0, 0);
-    if (!result || mode === 'matte') return;
+    if (!result || mode === 'matte' || !showOverlays) return;
     context.lineWidth = Math.max(1, Math.max(source.width, source.height) / 400);
     context.font = `${Math.max(10, Math.max(source.width, source.height) / 70)}px sans-serif`;
     for (const region of result.regions) {
-      context.strokeStyle = selectedRegionIds.has(region.id) ? '#fbbf24' : '#22d3ee';
+      const assignment = assignments.get(region.id);
+      const isSelected = selectedRegionIds.has(region.id);
+      context.strokeStyle = isSelected ? '#fbbf24' : assignment?.color ?? '#22d3ee';
       context.fillStyle = context.strokeStyle;
+      if (isSelected) context.lineWidth = Math.max(2, Math.max(source.width, source.height) / 200);
       if (region.contour.length > 1) {
         context.beginPath();
         context.moveTo(region.contour[0]!.x * source.width, region.contour[0]!.y * source.height);
@@ -73,9 +88,11 @@ export function ModularSpritePreviewCanvas({
         context.stroke();
       }
       context.strokeRect(region.bounds.x, region.bounds.y, region.bounds.width, region.bounds.height);
-      context.fillText(String(region.id), region.bounds.x + 3, region.bounds.y + 14);
+      if (isSelected) context.lineWidth = Math.max(1, Math.max(source.width, source.height) / 400);
+      const label = assignment ? `${region.id} · ${assignment.name}` : String(region.id);
+      context.fillText(label, region.bounds.x + 3, region.bounds.y + 14);
     }
-  }, [mode, result, selectedRegionIds, source]);
+  }, [assignments, mode, resultRef, resultVersion, selectedRegionIds, showOverlays, source]);
 
   const normalizedPointer = (event: React.PointerEvent<HTMLCanvasElement>): NormalizedPoint => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -101,6 +118,7 @@ export function ModularSpritePreviewCanvas({
           return;
         }
         if (tool === 'select') {
+          const result = resultRef.current;
           if (!result) return;
           const x = Math.min(result.width - 1, Math.floor(point.x * result.width));
           const y = Math.min(result.height - 1, Math.floor(point.y * result.height));
