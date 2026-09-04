@@ -278,6 +278,8 @@ const ModularSpritePartSchema = z.object({
   assetId: AssetIdSchema,
   name: z.string().min(1),
   role: z.string().min(1),
+  semanticRoleId: z.string().min(1).optional(),
+  qualifiers: z.record(z.string(), z.string()).optional(),
   side: z.enum(['left', 'right', 'center', 'none']),
   required: z.boolean(),
   order: z.number().int().nonnegative(),
@@ -298,6 +300,20 @@ const ModularSpriteDocumentSchema = z.object({
   processorVersion: z.literal(1),
   recipe: ModularSpriteRecipeSchema,
   parts: z.array(ModularSpritePartSchema),
+  schemaBinding: z.object({
+    schemaId: z.string().min(1),
+    schemaRevision: z.number().int().positive(),
+    compositionId: z.string().length(64),
+    slotToPartKey: z.record(z.string(), z.string()),
+    snapshot: z.object({
+      formatVersion: z.literal(1),
+      schemaId: z.string().min(1),
+      revision: z.number().int().positive(),
+      compositionId: z.string().length(64),
+      name: z.string().min(1),
+      slots: z.array(z.unknown()),
+    }),
+  }).optional(),
 });
 
 const PhysicsGroupSchema = z.unknown();

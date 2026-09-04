@@ -270,6 +270,8 @@ export interface ModularSpritePart {
   assetId: AssetId;
   name: string;
   role: string;
+  semanticRoleId?: string;
+  qualifiers?: Record<string, string>;
   side: ModularSpriteSide;
   required: boolean;
   order: number;
@@ -287,6 +289,20 @@ export interface ModularSpriteDocument {
   processorVersion: 1;
   recipe: ModularSpriteProcessingRecipe;
   parts: ModularSpritePart[];
+  schemaBinding?: {
+    schemaId: string;
+    schemaRevision: number;
+    compositionId: string;
+    slotToPartKey: Record<string, string>;
+    snapshot: {
+      formatVersion: 1;
+      schemaId: string;
+      revision: number;
+      compositionId: string;
+      name: string;
+      slots: unknown[];
+    };
+  };
 }
 
 export interface ControlHandle {
