@@ -3,6 +3,7 @@ import type {
   ModularSpriteProcessingRecipe,
   NormalizedPoint,
 } from '@kukla2d/contracts';
+import type { PortableSchemaSnapshot } from '@kukla2d/modular-sprite-schema';
 
 import type { ModularSpriteDraftPart, RgbaImageData } from '../domain/contracts.js';
 
@@ -23,6 +24,13 @@ export interface ModularSpriteCommitRequest {
   recipe: ModularSpriteProcessingRecipe;
   parts: ModularSpriteCommitPart[];
   addToCanvas: boolean;
+  schemaBinding?: {
+    schemaId: string;
+    schemaRevision: number;
+    compositionId: string;
+    slotToPartKey: Record<string, string>;
+    snapshot: PortableSchemaSnapshot;
+  };
 }
 
 export interface ModularSpriteCommitResult {

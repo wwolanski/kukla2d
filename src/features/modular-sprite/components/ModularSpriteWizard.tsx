@@ -9,8 +9,14 @@ import type {
   ModularSpriteProcessingRecipe,
   NormalizedPoint,
 } from '@kukla2d/contracts';
+import { semanticRoleIdForLegacyRole, type ModularSpriteSchema, type SchemaComparisonResult } from '@kukla2d/modular-sprite-schema';
 
 import { useProjectStore } from '@/store/projectStore';
+
+import { createUserSchema, localSchemaApi, portableSnapshot, schemaCatalog, type NewSchemaMetadata } from '@/features/modular-sprite-schema';
+import { SchemaComparisonSidebar } from '@/features/modular-sprite-schema/components/SchemaComparisonSidebar';
+import { SchemaEditor } from '@/features/modular-sprite-schema/components/SchemaEditor';
+import { SemanticRolePicker } from '@/features/modular-sprite-schema/components/SemanticRolePicker';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -66,7 +72,6 @@ const STEP_LABELS: Record<ModularSpriteWizardStep, string> = {
   parts: 'Part details',
   review: 'Review',
 };
-const ROLES = ['head', 'torso', 'upper-arm', 'forearm', 'hand', 'thigh', 'lower-leg', 'foot', 'weapon', 'prop', 'accessory', 'custom'];
 const PART_COLORS = ['#38bdf8', '#f472b6', '#a3e635', '#fbbf24', '#c084fc', '#fb7185', '#4ade80', '#fb923c', '#2dd4bf', '#e879f9'];
 const RECIPE_HISTORY_COALESCE_MS = 900;
 const PROCESS_DEBOUNCE_MS = 60;
@@ -90,6 +95,16 @@ type HistoryKind = 'recipe' | 'discrete' | 'parts';
 function slug(value: string): string {
   return value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'part';
+}
+
+function parseQualifiers(value: string): Record<string, string> {
+  const qualifiers: Record<string, string> = {};
+  for (const entry of value.split(',')) {
+    const [rawKey, ...rawValue] = entry.split('=');
+    const key = rawKey?.trim() ?? ''; const itemValue = rawValue.join('=').trim();
+    if (key && itemValue) qualifiers[key] = itemValue;
+  }
+  return qualifiers;
 }
 
 function uniqueKey(base: string, parts: ModularSpriteDraftPart[]): string {
@@ -119,12 +134,15 @@ function partColor(parts: ModularSpriteDraftPart[], partKey: string): string {
 
 function createPart(region: DetectedRegion, sourceWidth: number, sourceHeight: number, index: number, existingParts: ModularSpriteDraftPart[]): ModularSpriteDraftPart {
   const suggested = region.suggestedRole || 'custom';
+  const semanticRoleId = semanticRoleIdForLegacyRole(suggested);
   const name = suggested === 'custom' ? `Part ${index + 1}` : suggested.replaceAll('-', ' ');
   return {
     partKey: uniqueKey(slug(name), existingParts),
     name,
     role: suggested,
+    ...(semanticRoleId ? { semanticRoleId } : {}),
     side: 'none',
+    qualifiers: {},
     required: true,
     order: index,
     extractionFrame: createDefaultExtractionFrame(region, sourceWidth, sourceHeight),
@@ -248,12 +266,22 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
   const [stage, setStage] = useState('Processing');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [autoMatch, setAutoMatch] = useState(true);
+  const [schemaMatching, setSchemaMatching] = useState(false);
+  const [schemaProgress, setSchemaProgress] = useState({ completed: 0, total: 0 });
+  const [schemaMatches, setSchemaMatches] = useState<SchemaComparisonResult[]>([]);
+  const [schemas, setSchemas] = useState<ModularSpriteSchema[]>([]);
+  const [appliedSchema, setAppliedSchema] = useState<{ schema: ModularSpriteSchema; match: SchemaComparisonResult; modified: boolean } | null>(null);
+  const [addSchema, setAddSchema] = useState(false);
+  const [schemaSaveMode, setSchemaSaveMode] = useState<'new'|'revision'>('new');
+  const [schemaMetadata, setSchemaMetadata] = useState<NewSchemaMetadata>({ name: 'New modular sprite schema', description: '', characterTypeIds: [], characterClassIds: [], tags: [] });
   const [history, setHistory] = useState<EditorSnapshot[]>([]);
   const [future, setFuture] = useState<EditorSnapshot[]>([]);
   const loadedExistingId = useRef<string | null>(null);
   const lastMemory = useRef<{ at: number; kind: HistoryKind } | null>(null);
   const initializedForResult = useRef(false);
   const processGeneration = useRef(0);
+  const lastAutoApplied = useRef('');
   const clientRef = useRef(createModularSpriteWorkerClient({ onProgress: update => {
     setProgress(update.progress);
     setStage(update.stage);
@@ -287,11 +315,20 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     setFuture([]);
     setProgress(0);
     setStage('Processing');
+    setSchemaMatches([]);
+    setSchemaMatching(false);
+    setSchemaProgress({ completed: 0, total: 0 });
+    setAppliedSchema(null);
+    setAddSchema(false);
+    setSchemaSaveMode('new');
     initializedForResult.current = false;
     processGeneration.current += 1;
+    lastAutoApplied.current = '';
   }, []);
 
   useEffect(() => () => clientRef.current.dispose(), []);
+
+  useEffect(() => { if (!open) return; let ignore=false; void localSchemaApi.initialize().then(()=>{if(!ignore)setSchemas(schemaCatalog.list());}).catch(catalogError=>{if(!ignore)setError(catalogError instanceof Error?catalogError.message:'Could not load schema catalog');}); return()=>{ignore=true;}; }, [open]);
 
   const loadFile = useCallback(async (nextFile: File, existingDocument?: ModularSpriteDocument) => {
     send({ type: 'SOURCE_SELECTED' });
@@ -358,6 +395,7 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
       setHistory(historyState => [...historyState.slice(-49), { recipe: structuredClone(recipe), parts: structuredClone(parts) }]);
     }
     setFuture([]);
+    if (kind === 'parts') setAppliedSchema(current => current ? { ...current, modified: true } : null);
     send({ type: 'CHANGE' });
   }, [parts, recipe, send]);
 
@@ -528,6 +566,27 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     }
   }, [existing]);
 
+  const applySchemaMatch = useCallback((match: SchemaComparisonResult, currentResult: ProcessedModularSprite = resultRef.current!) => {
+    if (!currentResult) return;
+    const schema = schemas.find(item => item.schemaId === match.schemaId && item.revision === match.schemaRevision);
+    if (!schema) return;
+    const roleCatalog = schemaCatalog.semantics;
+    const nextParts = schema.slots.flatMap<ModularSpriteDraftPart>((slot, index) => {
+      const assignment = match.assignments.find(item => item.slotKey === slot.slotKey);
+      const regions = currentResult.regions.filter(region => assignment?.componentIds.includes(region.id));
+      if (!regions.length) return [];
+      const x = Math.min(...regions.map(item => item.bounds.x)); const y = Math.min(...regions.map(item => item.bounds.y));
+      const right = Math.max(...regions.map(item => item.bounds.x + item.bounds.width)); const bottom = Math.max(...regions.map(item => item.bounds.y + item.bounds.height));
+      const synthetic: DetectedRegion = { ...regions[0]!, bounds: { x, y, width: right - x, height: bottom - y }, normalizedBounds: { x: x/currentResult.width, y: y/currentResult.height, width: (right-x)/currentResult.width, height: (bottom-y)/currentResult.height } };
+      const semantic = slot.semanticRoleId ? roleCatalog.get(slot.semanticRoleId) : undefined;
+      const side = slot.qualifiers.side;
+      return [{ ...createPart(synthetic,currentResult.width,currentResult.height,index,[]), partKey: slot.slotKey, name: slot.label, role: semantic?.key ?? 'custom', ...(slot.semanticRoleId ? { semanticRoleId: slot.semanticRoleId } : {}), qualifiers: structuredClone(slot.qualifiers), side: side==='left'||side==='right'||side==='center'?side:'none', required:slot.required,order:slot.drawOrder,regionIds:regions.map(item=>item.id) }];
+    });
+    const used = new Set(nextParts.flatMap(item=>item.regionIds));
+    for (const region of currentResult.regions) if (!used.has(region.id)) nextParts.push(createPart(region,currentResult.width,currentResult.height,nextParts.length,nextParts));
+    setParts(nextParts); setConfirmedKeys(new Set(nextParts.map(item=>item.partKey))); setAppliedSchema({schema,match,modified:false});
+  }, [schemas]);
+
   useEffect(() => {
     if (!previewSource || !open) return;
     const generation = ++processGeneration.current;
@@ -558,6 +617,14 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
       clientRef.current.cancel();
     };
   }, [applyProcessResult, open, previewSource, processingRevision]);
+
+  useEffect(() => {
+    if (!open || !autoMatch || !result || !schemas.length) return;
+    const controller = new AbortController(); let ignore=false; setSchemaMatching(true); setSchemaProgress({completed:0,total:schemas.length});
+    const requestId=crypto.randomUUID();
+    void localSchemaApi.match({requestId,observation:result.observation,matcherProfileId:'default-v1'}, {signal:controller.signal,onProgress:event=>{if(!ignore)setSchemaProgress({completed:event.completed,total:event.total});}}).then(response=>{if(ignore)return;setSchemaMatches(response.matches);const best=response.matches[0];const autoKey=`${resultVersion}:${best?.schemaId??''}`;if(best?.confidence==='high'&&lastAutoApplied.current!==autoKey){lastAutoApplied.current=autoKey;applySchemaMatch(best,result);}}).catch(matchError=>{if(!ignore&&!(matchError instanceof DOMException&&matchError.name==='AbortError'))setError(matchError instanceof Error?matchError.message:'Schema matching failed');}).finally(()=>{if(!ignore)setSchemaMatching(false);});
+    return()=>{ignore=true;controller.abort();};
+  }, [applySchemaMatch, autoMatch, open, result, resultVersion, schemas]);
 
   const finalize = async () => {
     if (!source || !file || !result) return;
@@ -603,7 +670,24 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
         contentBounds: extractedPart.contentBounds,
         componentSeeds: extractedPart.componentSeeds,
       })));
-      await onCommit({ ...(existing ? { existingId: existing.id } : {}), name: name.trim() || 'Modular Sprite', sourceFileName: file.name, sourceImage: source, sourceBlob, recipe, parts: commitParts, addToCanvas });
+      let boundSchema = appliedSchema?.schema;
+      if (addSchema) {
+        const assetId = `schema-asset-${crypto.randomUUID()}`;
+        const revisionTarget = schemaSaveMode === 'revision' && appliedSchema?.schema.origin.kind === 'user' ? appliedSchema.schema : undefined;
+        boundSchema = createUserSchema({ metadata: { ...schemaMetadata, name: schemaMetadata.name.trim() || `${name} schema` }, parts: fullParts, observation: fullResult.observation, referenceAsset: { assetId, mimeType: 'image/png', width: source.width, height: source.height }, ...(revisionTarget ? { schemaId: revisionTarget.schemaId, revision: revisionTarget.revision + 1 } : {}) });
+        boundSchema.thumbnailAsset = boundSchema.referenceAsset;
+        await localSchemaApi.saveAsset({ ...boundSchema.referenceAsset, blob: sourceBlob });
+        await localSchemaApi.save(boundSchema);
+        setSchemas(schemaCatalog.list());
+      }
+      const slotToPartKey: Record<string,string> = {};
+      if (boundSchema) for (const slot of boundSchema.slots) {
+        const assignment = appliedSchema?.match.assignments.find(item=>item.slotKey===slot.slotKey);
+        const part = assignment ? parts.find(item=>item.regionIds.some(id=>assignment.componentIds.includes(id))) : fullParts.find(item=>item.partKey===slot.slotKey);
+        if (part) slotToPartKey[slot.slotKey]=part.partKey;
+      }
+      const schemaBinding = boundSchema ? { schemaId: boundSchema.schemaId, schemaRevision: boundSchema.revision, compositionId: boundSchema.compositionId, slotToPartKey, snapshot: portableSnapshot(boundSchema) } : undefined;
+      await onCommit({ ...(existing ? { existingId: existing.id } : {}), name: name.trim() || 'Modular Sprite', sourceFileName: file.name, sourceImage: source, sourceBlob, recipe, parts: commitParts, addToCanvas, ...(schemaBinding ? { schemaBinding } : {}) });
       send({ type: 'SUCCESS' });
       reset();
       onOpenChange(false);
@@ -673,7 +757,7 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
           )}
 
           {(step === 'background' || step === 'regions') && source && previewSource && (
-            <div className="grid h-full min-h-[500px] grid-cols-[280px_minmax(0,1fr)] gap-5">
+            <div className={`grid h-full min-h-[500px] gap-5 ${step === 'background' ? 'grid-cols-[280px_minmax(0,1fr)_300px]' : 'grid-cols-[280px_minmax(0,1fr)]'}`}>
               <aside className="space-y-4 overflow-auto rounded-lg border p-4">
                 {step === 'background' ? <>
                   <p className="text-xs text-muted-foreground">The keyer removes the background color (or uses existing alpha) and finds connected regions. Use the touch-up tools below to fix the mask.</p>
@@ -751,6 +835,7 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
                   <ModularSpritePreviewCanvas source={previewSource} resultRef={resultRef} resultVersion={resultVersion} mode={previewMode} tool={tool} zoom={zoom} selectedRegionIds={selectedRegionIds} assignments={assignments} showOverlays={showOverlays} onSelectRegion={toggleRegionSelection} onPickColor={color => { changeRecipe(draft => { draft.background.mode = 'chroma'; draft.background.color = color; }, 'discrete'); setTool('select'); }} onStroke={(kind, points) => changeRecipe(draft => { draft.strokes.push({ kind, radius: brushRadius, points }); }, 'discrete')} />
                 </div>
               </section>
+              {step === 'background' && <SchemaComparisonSidebar enabled={autoMatch} onEnabledChange={setAutoMatch} analyzing={schemaMatching} progress={schemaProgress} matches={schemaMatches} schemas={schemas} {...(appliedSchema ? { appliedSchemaId: appliedSchema.schema.schemaId } : {})} onApply={applySchemaMatch} />}
             </div>
           )}
 
@@ -764,7 +849,7 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
                     <div className="grid grid-cols-[1fr_1fr_150px_110px_70px] items-end gap-2">
                       <FieldLabel>Name<UiInput value={part.name} onChange={event => updatePart(index, { name: event.target.value })} /></FieldLabel>
                       <FieldLabel>Stable key<UiInput value={part.partKey} onChange={event => updatePart(index, { partKey: slug(event.target.value) })} /></FieldLabel>
-                      <FieldLabel>Role<select className="h-10 rounded-md border bg-background px-2" value={part.role} onChange={event => updatePart(index, { role: event.target.value })}>{ROLES.map(role => <option key={role}>{role}</option>)}</select></FieldLabel>
+                      <FieldLabel>Role<SemanticRolePicker role={part.role} {...(part.semanticRoleId ? { semanticRoleId: part.semanticRoleId } : {})} onChange={value => updatePart(index, value)} /></FieldLabel>
                       <FieldLabel>Side<select className="h-10 rounded-md border bg-background px-2" value={part.side} onChange={event => updatePart(index, { side: event.target.value as ModularSpriteDraftPart['side'] })}><option value="none">none</option><option value="left">left</option><option value="right">right</option><option value="center">center</option></select></FieldLabel>
                       <FieldLabel>Order<UiInput type="number" value={part.order} onChange={event => updatePart(index, { order: Number(event.target.value) })} /></FieldLabel>
                     </div>
@@ -774,6 +859,20 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
                       <UiButton size="sm" variant="ghost" onClick={() => toggleAdvancedFrame(part.partKey)}>{advancedFrameKeys.has(part.partKey) ? 'Hide extraction frame' : 'Extraction frame'}</UiButton>
                       <UiButton className="ml-auto" size="sm" variant="destructive" onClick={() => removePart(index)}>Remove part</UiButton>
                     </div>
+                    <details className="rounded-md border bg-muted/20 px-3 py-2">
+                      <summary className="cursor-pointer text-xs font-medium">Additional attributes (optional)</summary>
+                      <div className="mt-2 grid gap-2">
+                        <p className="text-xs text-muted-foreground">Use these only when the role and side are not specific enough. They help schemas distinguish details such as an upper wing, a lower limb segment, or one finger. They do not change the extracted image.</p>
+                        <FieldLabel>Attributes
+                          <UiInput
+                            placeholder="segment=lower, limbIndex=3"
+                            value={Object.entries(part.qualifiers ?? {}).map(([key,value])=>`${key}=${value}`).join(', ')}
+                            onChange={event=>updatePart(index,{qualifiers:parseQualifiers(event.target.value)})}
+                          />
+                        </FieldLabel>
+                        <p className="text-[11px] text-muted-foreground">Format: <code>name=value</code>, separated with commas. Examples: <code>segment=lower</code>, <code>finger=index</code>, <code>wing=upper-left</code>.</p>
+                      </div>
+                    </details>
                   </div>
                 </div>
                 {advancedFrameKeys.has(part.partKey) && (
@@ -784,6 +883,7 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
                   </div>
                 )}
               </div>)}
+              <SchemaEditor enabled={addSchema} onEnabledChange={setAddSchema} value={schemaMetadata} onChange={setSchemaMetadata} existingApplied={!!appliedSchema} canRevise={appliedSchema?.schema.origin.kind === 'user'} saveMode={schemaSaveMode} onSaveModeChange={setSchemaSaveMode} />
             </div>
           )}
 

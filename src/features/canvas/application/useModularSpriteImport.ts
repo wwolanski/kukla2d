@@ -173,6 +173,8 @@ export function useModularSpriteImport({
             assetId: partAssetIds.get(part.draft.partKey)!,
             name: part.draft.name,
             role: part.draft.role,
+            ...(part.draft.semanticRoleId ? { semanticRoleId: part.draft.semanticRoleId } : {}),
+            ...(part.draft.qualifiers ? { qualifiers: structuredClone(part.draft.qualifiers) } : {}),
             side: part.draft.side,
             required: part.draft.required,
             order: part.draft.order,
@@ -180,6 +182,7 @@ export function useModularSpriteImport({
             contentBounds: structuredClone(part.contentBounds),
             componentSeeds: structuredClone(part.componentSeeds),
           })),
+          ...(request.schemaBinding ? { schemaBinding: structuredClone(request.schemaBinding) } : {}),
         };
         const existingIndex = projectDraft.modularSprites.findIndex(candidate => candidate.id === modularSpriteId);
         if (existingIndex >= 0) projectDraft.modularSprites[existingIndex] = nextDocument;
