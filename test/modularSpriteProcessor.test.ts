@@ -78,6 +78,32 @@ describe('modular sprite processor', () => {
     expect(result.regions).toHaveLength(1);
   });
 
+  it('caps noisy detections before they can overwhelm the UI', () => {
+    const source = image(768, 768);
+    for (let y = 0; y < source.height; y += 2) {
+      for (let x = 0; x < source.width; x += 2) paint(source, x, y, 1, 1, [255, 255, 255, 255]);
+    }
+    const result = processModularSprite({ image: source, recipe: alphaRecipe() });
+    expect(result.regions).toHaveLength(256);
+    expect(result.warnings.some(warning => warning.includes('smaller regions were ignored'))).toBe(true);
+  });
+
+  it('keeps the largest regions when noisy detections are capped', () => {
+    const source = image(60, 60);
+    for (let y = 0; y < source.height; y += 3) {
+      for (let x = 0; x < source.width; x += 3) paint(source, x, y, 1, 1, [255, 255, 255, 255]);
+    }
+    paint(source, 45, 45, 10, 10, [255, 255, 255, 255]);
+    const result = processModularSprite({ image: source, recipe: alphaRecipe() });
+    expect(result.regions.some(region => region.area === 100)).toBe(true);
+  });
+
+  it('bounds contour payload size for large regions', () => {
+    const source = image(100, 100, [255, 255, 255, 255]);
+    const result = processModularSprite({ image: source, recipe: alphaRecipe() });
+    expect(result.regions[0]?.contour.length).toBeLessThanOrEqual(256);
+  });
+
   it('splits detection without removing source alpha pixels', () => {
     const source = image(11, 7);
     paint(source, 1, 2, 9, 3, [200, 100, 50, 255]);
