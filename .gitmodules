@@ -1,4 +1,4 @@
 [submodule "_context"]
 	path = _context
 	url = git@github.com:wwolanski/kukla2d_context.git
-	ignore = dirty
+	ignore = all
