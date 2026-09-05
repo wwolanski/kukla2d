@@ -18,7 +18,6 @@ import type {
   ModularSpriteCommitResult,
   RgbaImageData,
 } from '@/features/modular-sprite';
-import { imageToCanvas } from '@/features/modular-sprite';
 
 import { uid } from '@/lib/uid';
 
@@ -47,6 +46,16 @@ function pngFileName(value: string): string {
 
 function toImageData(image: RgbaImageData): ImageData {
   return new ImageData(new Uint8ClampedArray(image.data), image.width, image.height);
+}
+
+function imageToCanvas(image: RgbaImageData): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('2D canvas is unavailable');
+  context.putImageData(toImageData(image), 0, 0);
+  return canvas;
 }
 
 export function useModularSpriteImport({

@@ -26,6 +26,7 @@ export interface ModularSpriteWorkerClient {
   warm(image: RgbaImageData): Promise<void>;
   process(request: ModularSpriteProcessRequest): Promise<ProcessedModularSprite>;
   extract(request: ProcessModularSpriteRequest, parts: ModularSpriteDraftPart[]): Promise<ExtractedPart[]>;
+  onProgress: (listener: (progress: { progress: number; stage: string }) => void) => () => void;
   cancel(): void;
   dispose(): void;
 }
@@ -40,6 +41,8 @@ export function createModularSpriteWorkerClient(options: ModularSpriteWorkerClie
   const workerFactory = options.workerFactory ?? ((url: string | URL, workerOptions: WorkerOptions) => new Worker(url, workerOptions));
   let worker: Worker | null = null;
   let disposed = false;
+  const progressListeners = new Set<(progress: { progress: number; stage: string }) => void>();
+  if (options.onProgress) progressListeners.add(options.onProgress);
   const pending = new Map<string, PendingTask>();
 
   function ensureWorker(): Worker {
@@ -49,7 +52,7 @@ export function createModularSpriteWorkerClient(options: ModularSpriteWorkerClie
         const message = event.data;
         const entry = pending.get(message.data.requestId);
         if (message.type === 'progress') {
-          if (entry) options.onProgress?.({ progress: message.data.progress, stage: message.data.stage });
+          if (entry) for (const listener of progressListeners) listener({ progress: message.data.progress, stage: message.data.stage });
           return;
         }
         if (!entry) return;
@@ -138,5 +141,10 @@ export function createModularSpriteWorkerClient(options: ModularSpriteWorkerClie
     worker = null;
   }
 
-  return { warm, process, extract, cancel: cancelPending, dispose };
+  function onProgress(listener: (progress: { progress: number; stage: string }) => void): () => void {
+    progressListeners.add(listener);
+    return () => progressListeners.delete(listener);
+  }
+
+  return { warm, process, extract, onProgress, cancel: cancelPending, dispose };
 }

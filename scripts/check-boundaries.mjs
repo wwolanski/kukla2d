@@ -22,9 +22,9 @@ const ALLOWED_IMPORTS = {
 const FEATURE_DIRS = [
   'animation', 'armature', 'canvas', 'export', 'inspector',
   'layers', 'load', 'parameters', 'physics', 'preferences',
-  'projects', 'rigging', 'save', 'timeline', 'workspace', 'modular-sprite',
+  'projects', 'rigging', 'save', 'timeline', 'workspace', 'modular-sprite', 'modular-sprite-schema',
 ];
-const FEATURE_INTERNAL_SEGMENTS = ['application', 'domain', 'infrastructure', 'components'];
+const FEATURE_INTERNAL_SEGMENTS = ['application', 'domain', 'infrastructure', 'components', 'composition'];
 
 const errors = [];
 
@@ -241,6 +241,43 @@ function checkAppFeatureBoundaries() {
   }
 }
 
+function checkModularSpriteLayerBoundaries() {
+  const featureRoot = join(srcDir, 'features', 'modular-sprite');
+  const importRegex = /(?:import\s+[^;]+?\sfrom\s+|import\s*\(\s*|require\(\s*)['"]([^'"]+)['"]/g;
+  const forbiddenByLayer = {
+    components: [/\/infrastructure(?:\/|$)/, /@\/store\//, /@\/features\/[^/]+\/infrastructure(?:\/|$)/],
+    application: [/\/components(?:\/|$)/, /\/infrastructure(?:\/|$)/, /\/composition(?:\/|$)/, /@\/store\//],
+    domain: [/\/application(?:\/|$)/, /\/components(?:\/|$)/, /\/infrastructure(?:\/|$)/, /\/composition(?:\/|$)/, /@\/store\//],
+    infrastructure: [/\/components(?:\/|$)/, /\/composition(?:\/|$)/, /@\/store\//],
+  };
+  for (const file of walkSrc(featureRoot)) {
+    const relativePath = relative(featureRoot, file).split(sep);
+    const layer = relativePath[0];
+    const rules = forbiddenByLayer[layer];
+    if (!rules) continue;
+    let src;
+    try {
+      src = readFileSync(file, 'utf-8');
+    } catch {
+      continue;
+    }
+    let match;
+    importRegex.lastIndex = 0;
+    while ((match = importRegex.exec(src))) {
+      const spec = match[1];
+      if (relativePath[1] === 'ModularSpriteWizard.tsx' && layer === 'components' && spec.includes('/composition/')) continue;
+      if (rules.some(rule => rule.test(spec))) {
+        errors.push({
+          file: relative(rootDir, file),
+          rule: 'modular-sprite/layer',
+          imported: spec,
+          message: `${relative(rootDir, file)} violates modular-sprite ${layer} layer direction: ${spec}`,
+        });
+      }
+    }
+  }
+}
+
 const DOMAIN_FORBIDDEN_IMPORTS = [
   /^react(\/|$)/,
   /^zustand(\/|$)/,
@@ -310,6 +347,7 @@ function checkDomainPurity() {
 
 walkPackages(packagesDir);
 checkAppFeatureBoundaries();
+checkModularSpriteLayerBoundaries();
 checkDomainPurity();
 
 if (errors.length > 0) {
