@@ -8,6 +8,8 @@ import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescrip
 import { importX } from 'eslint-plugin-import-x'
 import tseslint from 'typescript-eslint'
 
+import noApplicationPassThroughPublicApi from './eslint-rules/no-application-pass-through-public-api.js'
+
 const architectureMessages = {
   domainToApplication: 'ARCH-001: Domain must not depend on Application. Reason: Domain is the innermost layer and must remain independent of application workflows. Fix: Move the required abstraction or domain concept into Domain, or invert the dependency so Application depends on Domain.',
   domainToInfrastructure: 'ARCH-002: Domain must not depend on Infrastructure. Reason: Infrastructure is an implementation detail and dependencies must point inward. Fix: Define the required contract/port in Domain or Application and implement it in Infrastructure.',
@@ -21,7 +23,7 @@ const architectureMessages = {
   productionToTests: 'ARCH-011: Production code must not depend on test-only code. Reason: Tests, fixtures and mocks are not part of the production dependency graph. Fix: Move reusable production logic/data into a production module and let the tests import it from there.',
   domainToUiFramework: 'ARCH-012: Domain must not depend on presentation frameworks. Reason: Domain must remain framework-independent. Fix: Move presentation-specific code to UI and keep only framework-agnostic domain logic/types in Domain.',
   domainToInfrastructureFramework: 'ARCH-013: Domain must not depend on infrastructure frameworks or concrete adapters. Reason: Domain should express business rules without depending on storage, transport or persistence technology. Fix: Introduce a framework-independent contract/port and move the concrete integration to Infrastructure.',
-  infrastructureToUi: 'ARCH-014: Infrastructure must not depend on UI. Reason: Technical adapters must remain independent of presentation code so dependencies continue to point inward. Fix: Move presentation behavior to UI or expose an Infrastructure capability through an Application/Domain contract.',
+  infrastructureToUi: 'ARCH-010: Infrastructure must not depend on UI. Reason: Technical adapters must remain independent of presentation code so dependencies continue to point inward. Fix: Move presentation behavior to UI or expose an Infrastructure capability through an Application/Domain contract.',
 }
 
 const repositoryPolicyMessages = {
@@ -86,6 +88,12 @@ const relativeImportExtension = {
   },
 }
 
+const localArchitectureRules = {
+  rules: {
+    'no-application-pass-through-public-api': noApplicationPassThroughPublicApi,
+  },
+}
+
 export default [
   {
     ignores: [
@@ -137,6 +145,13 @@ export default [
       }],
       'relative-import-extension/require-extension': 'error',
       'id-denylist': ['error', 'ed', 'proj', 'anim', 'kfOv', 'drOv'],
+    },
+  },
+  {
+    files: ['src/features/*/index.{ts,tsx,js,jsx}'],
+    plugins: { local: localArchitectureRules },
+    rules: {
+      'local/no-application-pass-through-public-api': 'error',
     },
   },
   {
@@ -675,7 +690,7 @@ export default [
     },
   },
   {
-    files: ['scripts/**/*.{js,mjs}', '*.config.js'],
+    files: ['scripts/**/*.{js,mjs}', 'eslint-rules/**/*.js', '*.config.js'],
     languageOptions: {
       globals: globals.node,
     },
