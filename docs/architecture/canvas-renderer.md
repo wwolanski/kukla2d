@@ -31,7 +31,7 @@
 
 - Pixi-only runtime: all canvas input, rendering, and overlays go through Pixi
 - Geometry overlays (gizmo, skeleton, warp, weight, marquee, brush) render inside Pixi layer
-- All quality gates pass: `npm run lint`, `npm run test:unit`, `npm run build`, `npm run check:canvas-boundaries`, `npm run check:boundaries`, `npm run check:deadcode`
+- All quality gates pass: `npm run lint`, `npm run test:unit`, `npm run build`, `npm run check:deadcode`
 
 ## Mask Clipping
 
@@ -51,8 +51,6 @@ Iris/eyewhite clipping is implemented via explicit `clipToPartId` model-data fie
 | `npm run lint` | 0 | PASS |
 | `npm run test:unit` | 0 | PASS |
 | `npm run build` | 0 | PASS |
-| `npm run check:canvas-boundaries` | 0 | PASS |
-| `npm run check:boundaries` | 0 | PASS |
 | `npm run check:deadcode` | 0 | PASS |
 
 ## Public API
@@ -102,8 +100,7 @@ src/features/canvas/infrastructure/rendering/pixi/
 
 ## Validation Commands
 
-- `npm run check:canvas-boundaries` — file size limits for canvas feature
-- `npm run check:boundaries` — cross-feature import rules
+- `npm run lint` — architecture boundaries and the Canvas feature file-size limit
 - `npm run check:deadcode` — dead code detection (knip)
 
 ### Pixi Performance Metrics
