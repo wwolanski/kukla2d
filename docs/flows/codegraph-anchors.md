@@ -1,7 +1,7 @@
 # CodeGraph Anchors
 
 This map names runtime and composition boundaries. Use public feature APIs for
-cross-feature imports; `npm run check:boundaries` rejects another feature's
+cross-feature imports; ESLint (`npm run lint`) rejects another feature's
 internal `application/`, `domain/`, `infrastructure/`, and `components/` paths.
 
 | Flow | Owner | Entry symbol | Wiring/effect symbol | Effect (real module) | Contract test |

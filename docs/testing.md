@@ -5,22 +5,19 @@
 1. TypeScript compilation and graph coverage.
 2. TypeScript migration guard.
 3. ESLint with zero warnings.
-4. Feature, package, and canvas boundary checks.
-5. Knip dead-code and dependency analysis.
-6. Vitest unit and integration tests.
-7. Production build and initial JavaScript bundle budget.
+4. Knip dead-code and dependency analysis.
+5. Vitest unit and integration tests.
+6. Production build and initial JavaScript bundle budget.
 
 Use focused commands while developing:
 
 | Command | Purpose |
 | --- | --- |
-| `npm run lint` | Lint source, tests, scripts, and configuration. |
+| `npm run lint` | Lint source, tests, scripts, configuration, architecture boundaries, workspace-package directions, and the Canvas file-size limit. |
 | `npm run typecheck` | Check the root TypeScript project. |
 | `npm run test:unit` | Run Vitest once. |
 | `npm run test:watch` | Run Vitest in watch mode. |
 | `npm run test:coverage` | Enforce configured coverage thresholds. |
-| `npm run check:boundaries` | Enforce package and feature dependency direction. |
-| `npm run check:canvas-boundaries` | Enforce canvas structure and file-size limits. |
 | `npm run check:deadcode` | Run strict Knip dead-code and dependency analysis. |
 | `npm run test:e2e` | Build and test the production app in Chromium. |
 

@@ -26,9 +26,7 @@
     "typecheck": "tsc --noEmit",
     "check:ts-graph": "node scripts/check-typescript-graph.mjs",
     "check:typescript-migration": "node scripts/check-typescript-migration.mjs",
-    "check:canvas-boundaries": "node scripts/check-canvas-boundaries.mjs",
     "check:deadcode": "knip --cache --treat-config-hints-as-errors",
-    "check:boundaries": "node scripts/check-boundaries.mjs",
     "check:full": "node scripts/run-check.mjs",
     "check": "npm run check:full",
     "test:e2e": "npm run build:e2e && playwright test"
@@ -94,6 +92,7 @@
     "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^9.39.0",
     "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-boundaries": "^7.2.0",
     "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
