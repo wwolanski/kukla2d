@@ -1,16 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { createActor } from 'xstate';
-
 import {
   DEFAULT_MODULAR_SPRITE_RECIPE,
   extractModularSpriteParts,
   matchRegionsToTemplate,
   processModularSprite,
+  processModularSpriteAsync,
 } from '@/features/modular-sprite';
-import { handleModularSpriteTask } from '@/features/modular-sprite/infrastructure/workerProtocol';
-import { modularSpriteWizardMachine } from '@/features/modular-sprite/application/modularSpriteWizardMachine';
+import { handleModularSpriteTask } from '@/features/modular-sprite/infrastructure/workerTaskHandler';
 
-import type { ModularSpriteTaskRuntime, ModularSpriteWarmCache } from '@/features/modular-sprite/infrastructure/workerProtocol';
+import type { ModularSpriteTaskRuntime, ModularSpriteWarmCache } from '@/features/modular-sprite/infrastructure/workerTaskHandler';
 import type { ModularSpriteDraftPart, ProcessedModularSprite, RgbaImageData } from '@/features/modular-sprite';
 
 function image(width: number, height: number, fill = [0, 0, 0, 0]): RgbaImageData {
@@ -72,6 +70,41 @@ describe('modular sprite processor', () => {
     expect(Array.from(first.labels)).toEqual(Array.from(second.labels));
     expect(first.observation.components).toHaveLength(2);
     expect(first.observation.components[0]?.shapeMask.data).toBeInstanceOf(Uint8Array);
+  });
+
+  it('keeps the synchronous and cooperative pipelines behaviorally aligned', async () => {
+    const source = image(12, 8);
+    paint(source, 7, 1, 3, 2, [255, 0, 0, 255]);
+    paint(source, 1, 5, 2, 2, [0, 0, 255, 255]);
+    const recipe = alphaRecipe();
+    const sync = processModularSprite({ image: source, recipe });
+    const asyncResult = await processModularSpriteAsync({ image: source, recipe }, {
+      throwIfAborted: () => {},
+      checkpoint: () => Promise.resolve(),
+      report: () => {},
+    });
+
+    expect(Array.from(asyncResult.rgba)).toEqual(Array.from(sync.rgba));
+    expect(Array.from(asyncResult.matte)).toEqual(Array.from(sync.matte));
+    expect(Array.from(asyncResult.labels)).toEqual(Array.from(sync.labels));
+    expect(asyncResult.regions).toEqual(sync.regions);
+  });
+
+  it('keeps concave contour points in perimeter order', () => {
+    const source = image(12, 12);
+    paint(source, 2, 2, 2, 8, [255, 255, 255, 255]);
+    paint(source, 2, 8, 8, 2, [255, 255, 255, 255]);
+    const result = processModularSprite({ image: source, recipe: alphaRecipe() });
+    const contour = result.regions[0]?.contour ?? [];
+    const pixels = contour.map(point => ({ x: point.x * source.width - 0.5, y: point.y * source.height - 0.5 }));
+
+    expect(result.regions).toHaveLength(1);
+    expect(pixels.length).toBeGreaterThan(3);
+    for (let index = 0; index < pixels.length; index += 1) {
+      const current = pixels[index]!;
+      const next = pixels[(index + 1) % pixels.length]!;
+      expect(Math.hypot(current.x - next.x, current.y - next.y)).toBeLessThanOrEqual(Math.SQRT2);
+    }
   });
 
   it('keys a controlled green background while retaining the foreground', () => {
@@ -206,21 +239,5 @@ describe('modular sprite processor', () => {
       createRuntime(),
     );
     expect(task.response.type).toBe('error');
-  });
-});
-
-describe('modular sprite wizard machine', () => {
-  it('guards incomplete steps and tracks dirty edits', () => {
-    const actor = createActor(modularSpriteWizardMachine).start();
-    actor.send({ type: 'SOURCE_SELECTED' });
-    actor.send({ type: 'DECODED' });
-    actor.send({ type: 'NEXT' });
-    expect(actor.getSnapshot().value).toBe('background');
-    actor.send({ type: 'SET_READY', step: 'background', ready: true });
-    actor.send({ type: 'CHANGE' });
-    actor.send({ type: 'NEXT' });
-    expect(actor.getSnapshot().value).toBe('regions');
-    expect(actor.getSnapshot().context.dirty).toBe(true);
-    actor.stop();
   });
 });

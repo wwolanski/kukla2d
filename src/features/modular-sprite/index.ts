@@ -10,13 +10,8 @@ export {
   processModularSpriteAsync,
 } from './domain/processor.js';
 export { matchRegionsToTemplate } from './domain/matching.js';
-export { createModularSpriteWorkerClient } from './infrastructure/modularSpriteWorkerClient.js';
-export {
-  createPreviewImage,
-  decodeModularSpriteFile,
-  encodeRgbaPng,
-  imageToCanvas,
-} from './infrastructure/imageCodec.js';
+export { createInitialGrouping, createPartFromRegions, excludeRegions, moveRegionsToPart, reconcileGrouping, removePart, renamePart, validateGrouping } from './domain/partGrouping.js';
+export { mapRegions, reconcilePreviewToFullResolution, reconcileRegionGrouping } from './domain/regionReconciliation.js';
 export type {
   ModularSpriteDraftPart,
   ProcessedModularSprite,
@@ -26,3 +21,14 @@ export type {
   ModularSpriteCommitRequest,
   ModularSpriteCommitResult,
 } from './application/importContracts.js';
+export type {
+  GroupingValidation,
+  PartFactory,
+  RegionGrouping,
+  RegionGroupingChange,
+} from './domain/partGrouping.js';
+export type {
+  RegionMapping,
+  RegionReconciliationReport,
+  RegionReconciliationResult,
+} from './domain/regionReconciliation.js';

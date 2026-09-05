@@ -7,7 +7,7 @@ import type { PortableSchemaSnapshot } from '@kukla2d/modular-sprite-schema';
 
 import type { ModularSpriteDraftPart, RgbaImageData } from '../domain/contracts.js';
 
-interface ModularSpriteCommitPart {
+export interface ModularSpriteCommitPart {
   draft: ModularSpriteDraftPart;
   image: RgbaImageData;
   blob: Blob;
