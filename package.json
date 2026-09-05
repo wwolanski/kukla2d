@@ -17,7 +17,7 @@
     "dev": "vite",
     "build": "vite build && node scripts/check-production-workers.mjs",
     "build:e2e": "npm run build && node scripts/prepare-e2e-dist.mjs",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --cache --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest run",
     "test:unit": "vitest run",
@@ -29,12 +29,19 @@
     "check:deadcode": "knip --cache --treat-config-hints-as-errors",
     "check:full": "node scripts/run-check.mjs",
     "check": "npm run check:full",
-    "test:e2e": "npm run build:e2e && playwright test"
+    "test:e2e": "npm run build:e2e && playwright test",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,mts,cjs,cts}": [
+      "eslint --fix --max-warnings 0",
+      "prettier --write"
+    ],
+    "*.{json,css,scss,md,mdx,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
-    "@kukla2d/adapter-phaser-atlas": "*",
-    "@kukla2d/contracts": "*",
-    "@kukla2d/modular-sprite-schema": "*",
     "@fontsource/inter": "^5.2.6",
     "@fontsource/lato": "^5.2.6",
     "@fontsource/montserrat": "^5.2.6",
@@ -42,6 +49,9 @@
     "@fontsource/poppins": "^5.2.6",
     "@fontsource/roboto": "^5.2.6",
     "@fontsource/source-sans-3": "^5.2.8",
+    "@kukla2d/adapter-phaser-atlas": "*",
+    "@kukla2d/contracts": "*",
+    "@kukla2d/modular-sprite-schema": "*",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-checkbox": "^1.1.1",
     "@radix-ui/react-context-menu": "^2.2.1",
@@ -98,9 +108,12 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
+    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "knip": "^6.20.0",
+    "lint-staged": "^17.5.0",
     "phaser": "4.2.1",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4.3.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.64.0",
