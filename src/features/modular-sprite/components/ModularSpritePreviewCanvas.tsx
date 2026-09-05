@@ -77,19 +77,26 @@ export function ModularSpritePreviewCanvas({
     for (const region of result.regions) {
       const assignment = assignments.get(region.id);
       const isSelected = selectedRegionIds.has(region.id);
-      context.strokeStyle = isSelected ? '#fbbf24' : assignment?.color ?? '#22d3ee';
-      context.fillStyle = context.strokeStyle;
+      const isExcluded = !assignment;
+      context.strokeStyle = isSelected ? '#fbbf24' : assignment?.color ?? '#64748b';
+      context.fillStyle = isExcluded ? 'rgba(71, 85, 105, 0.58)' : context.strokeStyle;
+      context.setLineDash(isExcluded && !isSelected ? [6, 4] : []);
       if (isSelected) context.lineWidth = Math.max(2, Math.max(source.width, source.height) / 200);
       if (region.contour.length > 1) {
         context.beginPath();
         context.moveTo(region.contour[0]!.x * source.width, region.contour[0]!.y * source.height);
         for (const point of region.contour.slice(1)) context.lineTo(point.x * source.width, point.y * source.height);
         context.closePath();
+        if (isExcluded) context.fill();
         context.stroke();
+      } else if (isExcluded) {
+        context.fillRect(region.bounds.x, region.bounds.y, region.bounds.width, region.bounds.height);
       }
       context.strokeRect(region.bounds.x, region.bounds.y, region.bounds.width, region.bounds.height);
       if (isSelected) context.lineWidth = Math.max(1, Math.max(source.width, source.height) / 400);
-      const label = assignment ? `${region.id} · ${assignment.name}` : String(region.id);
+      context.setLineDash([]);
+      context.fillStyle = isExcluded ? '#94a3b8' : context.strokeStyle;
+      const label = assignment ? `${region.id} · ${assignment.name}` : `${region.id} · Excluded`;
       context.fillText(label, region.bounds.x + 3, region.bounds.y + 14);
     }
   }, [assignments, mode, resultRef, resultVersion, selectedRegionIds, showOverlays, source]);

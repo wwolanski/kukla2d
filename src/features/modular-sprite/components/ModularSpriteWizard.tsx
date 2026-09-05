@@ -68,7 +68,7 @@ const STEPS: ModularSpriteWizardStep[] = ['source', 'background', 'regions', 'pa
 const STEP_LABELS: Record<ModularSpriteWizardStep, string> = {
   source: 'Source',
   background: 'Background & cleanup',
-  regions: 'Assign parts',
+  regions: 'Group regions',
   parts: 'Part details',
   review: 'Review',
 };
@@ -86,6 +86,7 @@ interface ModularSpriteWizardProps {
 interface EditorSnapshot {
   recipe: ModularSpriteProcessingRecipe;
   parts: ModularSpriteDraftPart[];
+  confirmedKeys: string[];
 }
 
 type PreviewMode = 'original' | 'matte' | 'result';
@@ -188,10 +189,12 @@ function PartThumbnail({
   resultRef,
   resultVersion,
   regionIds,
+  maxSize = 96,
 }: {
   resultRef: React.RefObject<ProcessedModularSprite | null>;
   resultVersion: number;
   regionIds: number[];
+  maxSize?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -230,10 +233,10 @@ function PartThumbnail({
       }
     }
     context.putImageData(new ImageData(output, width, height), 0, 0);
-    const scale = Math.min(1, 96 / Math.max(width, height));
+    const scale = Math.min(1, maxSize / Math.max(width, height));
     canvas.style.width = `${Math.round(width * scale)}px`;
     canvas.style.height = `${Math.round(height * scale)}px`;
-  }, [regionIds, resultRef, resultVersion]);
+  }, [maxSize, regionIds, resultRef, resultVersion]);
 
   return <canvas ref={canvasRef} aria-hidden className="shrink-0 rounded border bg-[linear-gradient(45deg,#222_25%,transparent_25%),linear-gradient(-45deg,#222_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#222_75%),linear-gradient(-45deg,transparent_75%,#222_75%)] bg-[length:16px_16px]" />;
 }
@@ -392,12 +395,12 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     const coalesce = kind === 'recipe' && previous?.kind === 'recipe' && now - previous.at < RECIPE_HISTORY_COALESCE_MS;
     lastMemory.current = { at: now, kind };
     if (!coalesce) {
-      setHistory(historyState => [...historyState.slice(-49), { recipe: structuredClone(recipe), parts: structuredClone(parts) }]);
+      setHistory(historyState => [...historyState.slice(-49), { recipe: structuredClone(recipe), parts: structuredClone(parts), confirmedKeys: [...confirmedKeys] }]);
     }
     setFuture([]);
     if (kind === 'parts') setAppliedSchema(current => current ? { ...current, modified: true } : null);
     send({ type: 'CHANGE' });
-  }, [parts, recipe, send]);
+  }, [confirmedKeys, parts, recipe, send]);
 
   const changeRecipe = useCallback((change: (draft: ModularSpriteProcessingRecipe) => void, kind: HistoryKind = 'recipe', reprocess = true) => {
     remember(kind);
@@ -416,12 +419,13 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     const previous = history.at(-1);
     if (!previous) return;
     lastMemory.current = null;
-    setFuture(next => [{ recipe: structuredClone(recipe), parts: structuredClone(parts) }, ...next].slice(0, 50));
+    setFuture(next => [{ recipe: structuredClone(recipe), parts: structuredClone(parts), confirmedKeys: [...confirmedKeys] }, ...next].slice(0, 50));
     setHistory(items => items.slice(0, -1));
     const previousRecipe = structuredClone(previous.recipe);
     recipeRef.current = previousRecipe;
     setRecipe(previousRecipe);
     setParts(previous.parts);
+    setConfirmedKeys(new Set(previous.confirmedKeys));
     setProcessingRevision(revision => revision + 1);
   };
 
@@ -429,12 +433,13 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     const next = future[0];
     if (!next) return;
     lastMemory.current = null;
-    setHistory(items => [...items.slice(-49), { recipe: structuredClone(recipe), parts: structuredClone(parts) }]);
+    setHistory(items => [...items.slice(-49), { recipe: structuredClone(recipe), parts: structuredClone(parts), confirmedKeys: [...confirmedKeys] }]);
     setFuture(items => items.slice(1));
     const nextRecipe = structuredClone(next.recipe);
     recipeRef.current = nextRecipe;
     setRecipe(nextRecipe);
     setParts(next.parts);
+    setConfirmedKeys(new Set(next.confirmedKeys));
     setProcessingRevision(revision => revision + 1);
   };
 
@@ -442,7 +447,12 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     remember('parts');
     setParts(previous => previous.map((part, partIndex) => partIndex === index ? { ...part, ...change } : part));
     const currentKey = parts[index]?.partKey;
-    if (currentKey) setConfirmedKeys(previous => new Set(previous).add(change.partKey ?? currentKey));
+    if (currentKey) setConfirmedKeys(previous => {
+      const next = new Set(previous);
+      next.delete(currentKey);
+      if (change.partKey) next.delete(change.partKey);
+      return next;
+    });
   };
 
   const updateExtractionFrame = (index: number, field: 'x' | 'y' | 'width' | 'height', value: number) => {
@@ -472,6 +482,9 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     if (selectedRegionIds.size < 2 || !result) return;
     remember('parts');
     const ids = [...selectedRegionIds];
+    const affectedKeys = parts
+      .filter(part => part.regionIds.some(id => selectedRegionIds.has(id)))
+      .map(part => part.partKey);
     const selectedRegions = result.regions.filter(region => selectedRegionIds.has(region.id));
     const bounds = selectedRegions.reduce((accumulator, region) => ({
       x: Math.min(accumulator.x, region.bounds.x),
@@ -495,35 +508,53 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
         .filter(part => part.regionIds.length > 0);
       return [...stripped, {
         ...createPart(synthetic, result.width, result.height, stripped.length, stripped),
-        name: `Merged part ${stripped.length + 1}`,
         partKey: uniqueKey(`merged-part-${stripped.length + 1}`, stripped),
         regionIds: ids,
       }];
     });
+    setConfirmedKeys(previous => {
+      const next = new Set(previous);
+      for (const partKey of affectedKeys) next.delete(partKey);
+      return next;
+    });
+    setAssignmentPartKey('');
     setSelectedRegionIds(new Set());
   };
 
-  const deleteSelected = () => {
+  const excludeSelected = () => {
     if (selectedRegionIds.size === 0) return;
     remember('parts');
+    const target = parts.find(part => part.partKey === assignmentPartKey);
+    if (target && target.regionIds.every(id => selectedRegionIds.has(id))) setAssignmentPartKey('');
+    const affectedKeys = parts
+      .filter(part => part.regionIds.some(id => selectedRegionIds.has(id)))
+      .map(part => part.partKey);
     setParts(previous => previous
       .map(part => ({ ...part, regionIds: part.regionIds.filter(id => !selectedRegionIds.has(id)) }))
       .filter(part => part.regionIds.length > 0));
+    setConfirmedKeys(previous => {
+      const next = new Set(previous);
+      for (const partKey of affectedKeys) next.delete(partKey);
+      return next;
+    });
     setSelectedRegionIds(new Set());
   };
 
   const assignSelected = () => {
     if (!assignmentPartKey || selectedRegionIds.size === 0) return;
     remember('parts');
+    const affectedKeys = parts
+      .filter(part => part.partKey === assignmentPartKey || part.regionIds.some(id => selectedRegionIds.has(id)))
+      .map(part => part.partKey);
     setParts(previous => previous.map(part => {
       const withoutSelected = part.regionIds.filter(id => !selectedRegionIds.has(id));
       return part.partKey === assignmentPartKey
         ? { ...part, regionIds: [...withoutSelected, ...selectedRegionIds] }
         : { ...part, regionIds: withoutSelected };
-    }));
+    }).filter(part => part.regionIds.length > 0));
     setConfirmedKeys(previous => {
       const next = new Set(previous);
-      next.delete(assignmentPartKey);
+      for (const partKey of affectedKeys) next.delete(partKey);
       return next;
     });
     setSelectedRegionIds(new Set());
@@ -543,7 +574,9 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
     if (!result) return map;
     for (const part of parts) {
       const color = partColor(parts, part.partKey);
-      for (const regionId of part.regionIds) map.set(regionId, { color, name: part.name });
+      for (const regionId of part.regionIds) {
+        map.set(regionId, { color, name: part.name });
+      }
     }
     return map;
   }, [parts, result]);
@@ -784,36 +817,85 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
                     <p className="text-xs text-muted-foreground">Keep and Erase paint the transparent mask. Split cuts a region in two so it can be assigned to different parts; the exported image alpha stays continuous.</p>
                   </div>
                 </> : <>
-                  <p className="text-xs text-muted-foreground">Regions become parts. Click a region on the canvas or in the list (Shift-click selects several) — every region is drawn in the color of the part it belongs to.</p>
+                  <p className="text-xs text-muted-foreground">Group detected regions into the images that should be imported as parts. Part names come from detection or schema matching; correct them directly in the tree when needed. Anatomical roles are reviewed in the next step. Shift-click selects several regions.</p>
                   <UiButton className="w-full" size="sm" variant={tool === 'select' ? 'default' : 'outline'} onClick={() => setTool('select')}><MousePointer2 className="mr-1 h-4 w-4" />Select</UiButton>
-                  <FieldLabel>Assign to part<select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={assignmentPartKey} onChange={event => setAssignmentPartKey(event.target.value)}>
-                    <option value="">Choose a part…</option>
+                  <FieldLabel>Existing target part<select className="h-9 w-full rounded-md border bg-background px-2 text-xs" value={assignmentPartKey} onChange={event => setAssignmentPartKey(event.target.value)}>
+                    <option value="">Choose an existing part…</option>
                     {parts.map(part => <option key={part.partKey} value={part.partKey}>{part.name}</option>)}
                   </select></FieldLabel>
-                  <UiButton className="w-full" size="sm" variant="outline" disabled={!assignmentPartKey || selectedRegionIds.size === 0} onClick={assignSelected}>Assign selected</UiButton>
-                  <UiButton className="w-full" size="sm" variant="outline" disabled={selectedRegionIds.size < 2} onClick={mergeSelected}><Merge className="mr-1 h-4 w-4" />Merge into new part</UiButton>
-                  <UiButton className="w-full" size="sm" variant="destructive" disabled={selectedRegionIds.size === 0} onClick={deleteSelected}>Ignore selected</UiButton>
-                  <div className="space-y-1 border-t pt-3">
-                    <div className="text-xs font-medium">Regions ({result?.regions.length ?? 0})</div>
-                    <ul className="space-y-1">
-                      {result?.regions.map(region => {
-                        const assignment = assignments.get(region.id);
-                        const isSelected = selectedRegionIds.has(region.id);
-                        return (
-                          <li key={region.id}>
-                            <button
-                              type="button"
-                              className={`flex w-full items-center gap-2 rounded border px-2 py-1 text-left text-xs ${isSelected ? 'border-primary bg-primary/10' : 'border-transparent hover:border-border hover:bg-muted/50'}`}
-                              onClick={event => toggleRegionSelection(region.id, event.shiftKey)}
-                            >
-                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: assignment?.color ?? '#22d3ee' }} />
-                              <span className="truncate">Region {region.id}</span>
-                              <span className="ml-auto truncate text-muted-foreground">{assignment ? assignment.name : 'unassigned'}</span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                  <UiButton className="w-full" size="sm" variant="outline" disabled={!assignmentPartKey || selectedRegionIds.size === 0} onClick={assignSelected}>Move selection to target part</UiButton>
+                  <UiButton className="w-full" size="sm" variant="outline" disabled={selectedRegionIds.size < 2} onClick={mergeSelected}><Merge className="mr-1 h-4 w-4" />Create new part from selection</UiButton>
+                  <UiButton className="w-full" size="sm" variant="outline" disabled={selectedRegionIds.size === 0} onClick={excludeSelected}>Exclude selection from import</UiButton>
+                  <p className="text-[11px] text-muted-foreground">Excluded regions stay visible in muted gray so you can select them and move them back into a part. They will not be imported.</p>
+                  <div className="space-y-2 border-t pt-3">
+                    <div className="text-xs font-medium">Parts and regions</div>
+                    {parts.map((part, partIndex) => {
+                      const color = partColor(parts, part.partKey);
+                      return (
+                        <div key={part.partKey} className="overflow-hidden rounded-md border bg-muted/10">
+                          <div className="flex items-center gap-2 border-b px-2 py-1.5 text-xs font-semibold">
+                            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                            <span className="shrink-0 text-muted-foreground">Part</span>
+                            <UiInput
+                              className="h-7 min-w-0 flex-1 px-2 text-xs font-medium"
+                              aria-label={`Name of part ${partIndex + 1}`}
+                              value={part.name}
+                              onChange={event => updatePart(partIndex, { name: event.target.value })}
+                            />
+                            <span className="ml-auto font-normal text-muted-foreground">{part.regionIds.length} {part.regionIds.length === 1 ? 'region' : 'regions'}</span>
+                          </div>
+                          <ul className="ml-4 space-y-1 border-l py-1 pl-2 pr-1">
+                            {part.regionIds.map(regionId => {
+                              const region = result?.regions.find(item => item.id === regionId);
+                              if (!region) return null;
+                              const isSelected = selectedRegionIds.has(region.id);
+                              return (
+                                <li key={region.id}>
+                                  <button
+                                    type="button"
+                                    className={`flex min-h-10 w-full items-center gap-2 rounded border px-1.5 py-1 text-left text-xs ${isSelected ? 'border-primary bg-primary/10' : 'border-transparent hover:border-border hover:bg-muted/50'}`}
+                                    onClick={event => toggleRegionSelection(region.id, event.shiftKey)}
+                                  >
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded border bg-black/30">
+                                      <PartThumbnail resultRef={resultRef} resultVersion={resultVersion} regionIds={[region.id]} maxSize={30} />
+                                    </span>
+                                    <span className="truncate">Region {region.id}</span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      );
+                    })}
+                    {result && result.regions.some(region => !assignments.has(region.id)) && (
+                      <div className="overflow-hidden rounded-md border border-slate-500/70 bg-slate-500/20 text-muted-foreground">
+                        <div className="flex items-center gap-2 border-b border-slate-500/50 px-2 py-1.5 text-xs font-semibold">
+                          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-slate-500" />
+                          <span>Excluded</span>
+                          <span className="ml-auto font-normal">{result.regions.filter(region => !assignments.has(region.id)).length}</span>
+                        </div>
+                        <ul className="ml-4 space-y-1 border-l border-slate-500/50 py-1 pl-2 pr-1">
+                          {result.regions.filter(region => !assignments.has(region.id)).map(region => {
+                            const isSelected = selectedRegionIds.has(region.id);
+                            return (
+                              <li key={region.id}>
+                                <button
+                                  type="button"
+                                  className={`flex min-h-10 w-full items-center gap-2 rounded border px-1.5 py-1 text-left text-xs ${isSelected ? 'border-primary bg-primary/10' : 'border-transparent hover:border-slate-500 hover:bg-slate-500/30'}`}
+                                  onClick={event => toggleRegionSelection(region.id, event.shiftKey)}
+                                >
+                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded border border-slate-500/60 bg-slate-700/40 opacity-70 grayscale">
+                                    <PartThumbnail resultRef={resultRef} resultVersion={resultVersion} regionIds={[region.id]} maxSize={30} />
+                                  </span>
+                                  <span className="truncate">Region {region.id}</span>
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </>}
                 <div className="flex gap-2 border-t pt-3"><UiButton size="icon" variant="outline" disabled={!history.length} onClick={undoLocal}><Undo2 className="h-4 w-4" /></UiButton><UiButton size="icon" variant="outline" disabled={!future.length} onClick={redoLocal}><Redo2 className="h-4 w-4" /></UiButton></div>
@@ -841,7 +923,7 @@ export function ModularSpriteWizard({ open, existingId, onOpenChange, onCommit }
 
           {step === 'parts' && (
             <div className="mx-auto max-w-3xl space-y-3">
-              <p className="text-sm text-muted-foreground">Every region is grouped into a named part. Give each part a name and an anatomical role, then confirm it — only confirmed parts are imported. The extraction frame is usually fine as suggested; open “Extraction frame” only for fine-tuning.</p>
+              <p className="text-sm text-muted-foreground">Name each imported part and describe what it represents. Name identifies this specific image (for example “Red left glove”); Role describes its reusable anatomical meaning (for example “hand”). Then confirm each part. Excluded regions from the previous step are not imported.</p>
               {parts.map((part, index) => <div key={`${part.partKey}-${index}`} className="space-y-3 rounded-lg border p-3">
                 <div className="flex gap-3">
                   <PartThumbnail resultRef={resultRef} resultVersion={resultVersion} regionIds={part.regionIds} />
