@@ -307,19 +307,50 @@ export const architectureMessages = {
   passThrough: defineMessage({
     code: "ARCH-014",
     summary:
-      'Domain symbol "{{symbol}}" is exposed through a pass-through Application re-export.',
+      'Public API symbol "{{symbol}}" is exposed through a pass-through forwarding layer.',
     reason:
-      "Application adds no behavior or orchestration to this public API symbol.",
+      "The module public API must expose symbols from their actual owner instead of hiding their origin behind forwarding files.",
     details: [
-      "Application file: {{applicationFile}}",
-      "Domain source: {{domainFile}}",
+      "Pass-through file: {{passThroughFile}}",
+      "Actual source: {{sourceFile}}",
     ],
-    fix: 'Re-export "{{symbol}}" directly from Domain in the module root public API, or implement genuine Application-level behavior if this operation is intended to belong to Application.',
+    fix: 'Re-export "{{symbol}}" directly from its actual owner in the module root public API, or make the intermediate layer a genuine owner by adding the behavior or composition that belongs there.',
     executors: [
       {
         kind: "custom-eslint-rule",
-        rule: "local/no-application-pass-through-public-api",
-        file: "eslint-rules/no-application-pass-through-public-api.js",
+        rule: "local/no-pass-through-public-api",
+        file: "eslint-rules/no-pass-through-public-api.js",
+      },
+    ],
+  }),
+
+  publicApiWildcardExport: defineMessage({
+    code: "ARCH-017",
+    summary: "Module public API must not use wildcard re-exports.",
+    reason:
+      "The module root index is an explicit public API manifest. Wildcard exports can expose newly added internal symbols without an intentional public API decision.",
+    fix: "Replace export * / export type * with explicit named re-exports of the symbols intentionally belonging to the module public API.",
+    executors: [
+      {
+        kind: "custom-eslint-rule",
+        rule: "local/no-public-api-wildcard-export",
+        file: "eslint-rules/no-public-api-wildcard-export.js",
+      },
+    ],
+  }),
+
+  publicApiExportAlias: defineMessage({
+    code: "ARCH-018",
+    summary:
+      'Module public API must not rename "{{localName}}" to "{{exportedName}}".',
+    reason:
+      "Public symbols should preserve the name assigned by their actual owner so one symbol has one stable identity throughout the repository.",
+    fix: 'Export "{{localName}}" under its original name. If the public name should be different, rename the symbol at its actual owner instead of aliasing it in the module public API.',
+    executors: [
+      {
+        kind: "custom-eslint-rule",
+        rule: "local/no-public-api-export-alias",
+        file: "eslint-rules/no-public-api-export-alias.js",
       },
     ],
   }),

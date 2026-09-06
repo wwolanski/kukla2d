@@ -17,6 +17,31 @@ const entries = Object.entries(lintMessageRegistry).flatMap(
 );
 
 describe("lint message registry", () => {
+  it("registers the module public API architecture diagnostics", () => {
+    expect(lintMessageRegistry.architecture.passThrough).toMatchObject({
+      code: "ARCH-014",
+      message: expect.stringContaining(
+        'Public API symbol "{{symbol}}" is exposed through a pass-through forwarding layer.',
+      ),
+    });
+    expect(
+      lintMessageRegistry.architecture.publicApiWildcardExport,
+    ).toMatchObject({
+      code: "ARCH-017",
+      message: expect.stringContaining(
+        "Module public API must not use wildcard re-exports.",
+      ),
+    });
+    expect(lintMessageRegistry.architecture.publicApiExportAlias).toMatchObject(
+      {
+        code: "ARCH-018",
+        message: expect.stringContaining(
+          'Module public API must not rename "{{localName}}" to "{{exportedName}}".',
+        ),
+      },
+    );
+  });
+
   it("keeps project-owned message codes unique", () => {
     const codes = entries
       .map(({ definition }) => definition.code)

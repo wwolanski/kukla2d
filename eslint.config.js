@@ -8,7 +8,9 @@ import { createTypeScriptImportResolver } from "eslint-import-resolver-typescrip
 import { importX } from "eslint-plugin-import-x";
 import tseslint from "typescript-eslint";
 
-import noApplicationPassThroughPublicApi from "./eslint-rules/no-application-pass-through-public-api.js";
+import noPassThroughPublicApi from "./eslint-rules/no-pass-through-public-api.js";
+import noPublicApiExportAlias from "./eslint-rules/no-public-api-export-alias.js";
+import noPublicApiWildcardExport from "./eslint-rules/no-public-api-wildcard-export.js";
 import noTypesTypesFile from "./eslint-rules/no-types-types-file.js";
 import relativeImportExtensionRule from "./eslint-rules/relative-import-extension.js";
 import typeDeclarationLocation from "./eslint-rules/type-declaration-location.js";
@@ -48,7 +50,9 @@ const tsManifest = [
 ];
 const localArchitectureRules = {
   rules: {
-    "no-application-pass-through-public-api": noApplicationPassThroughPublicApi,
+    "no-pass-through-public-api": noPassThroughPublicApi,
+    "no-public-api-export-alias": noPublicApiExportAlias,
+    "no-public-api-wildcard-export": noPublicApiWildcardExport,
     "no-types-types-file": noTypesTypesFile,
     "type-declaration-location": typeDeclarationLocation,
     "type-file-requires-export": typeFileRequiresExport,
@@ -126,7 +130,9 @@ export default [
     files: ["src/features/*/index.{ts,tsx,js,jsx}"],
     plugins: { local: localArchitectureRules },
     rules: {
-      "local/no-application-pass-through-public-api": "error",
+      "local/no-pass-through-public-api": "error",
+      "local/no-public-api-export-alias": "error",
+      "local/no-public-api-wildcard-export": "error",
     },
   },
   {
@@ -658,6 +664,18 @@ export default [
       "local/type-declaration-location": "error",
       "local/type-file-requires-export": "error",
       "local/type-files-only": "error",
+    },
+  },
+  {
+    // TypeScript fixtures are lint-staged source files, but they are not
+    // production modules and therefore intentionally bypass production rules.
+    files: ["test/fixtures/**/*.{ts,tsx}"],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
     },
   },
   {
