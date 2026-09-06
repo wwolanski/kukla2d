@@ -6,7 +6,6 @@ import tseslint from "typescript-eslint";
 import { describe, expect, it } from "vitest";
 
 import noTypesTypesFile from "../../eslint-rules/no-types-types-file.js";
-import typeDeclarationLocation from "../../eslint-rules/type-declaration-location.js";
 import typeFileRequiresExport from "../../eslint-rules/type-file-requires-export.js";
 import typeFilesOnly from "../../eslint-rules/type-files-only.js";
 
@@ -25,99 +24,6 @@ const ruleTesterOptions = {
     sourceType: "module",
   },
 };
-
-new RuleTester(ruleTesterOptions).run(
-  "type-declaration-location",
-  typeDeclarationLocation,
-  {
-    valid: [
-      {
-        name: "allows a local type beside implementation code",
-        code: "type Local = { value: string }",
-        filename: fixture("component.ts"),
-      },
-      {
-        name: "allows a local interface beside implementation code",
-        code: "interface LocalState { open: boolean }",
-        filename: fixture("component.tsx"),
-      },
-      {
-        name: "allows exported declarations in a suffix type file",
-        code: "export interface Public {}",
-        filename: fixture("contracts.types.ts"),
-      },
-      {
-        name: "allows exported declarations in a types tree",
-        code: "export type Public = {}",
-        filename: fixture("types", "contracts.ts"),
-      },
-      {
-        name: "does not treat a re-export as an original declaration",
-        code: "export type { Public } from './types/contracts.js'",
-        filename: fixture("index.ts"),
-      },
-      {
-        name: "leaves declaration files to TypeScript declaration-file semantics",
-        code: "export interface Public {}",
-        filename: fixture("public.d.ts"),
-      },
-    ],
-    invalid: [
-      {
-        name: "rejects an exported type in an implementation file",
-        code: "export type Public = {}",
-        filename: fixture("component.ts"),
-        errors: [
-          {
-            messageId: "exportedTypeOutsideTypeFile",
-            data: { name: "Public" },
-          },
-        ],
-      },
-      {
-        name: "rejects an exported interface in an implementation file",
-        code: "export interface Props {}",
-        filename: fixture("Component.tsx"),
-        errors: [
-          { messageId: "exportedTypeOutsideTypeFile", data: { name: "Props" } },
-        ],
-      },
-      {
-        name: "tracks a separately declared type-only export",
-        code: "type Public = {}\nexport type { Public }",
-        filename: fixture("component.ts"),
-        errors: [
-          {
-            messageId: "exportedTypeOutsideTypeFile",
-            data: { name: "Public" },
-          },
-        ],
-      },
-      {
-        name: "tracks an unmarked separately declared export",
-        code: "interface Public {}\nexport { Public }",
-        filename: fixture("component.ts"),
-        errors: [
-          {
-            messageId: "exportedTypeOutsideTypeFile",
-            data: { name: "Public" },
-          },
-        ],
-      },
-      {
-        name: "rejects a default-exported interface in an implementation file",
-        code: "export default interface Public {}",
-        filename: fixture("component.ts"),
-        errors: [
-          {
-            messageId: "exportedTypeOutsideTypeFile",
-            data: { name: "Public" },
-          },
-        ],
-      },
-    ],
-  },
-);
 
 new RuleTester(ruleTesterOptions).run("type-files-only", typeFilesOnly, {
   valid: [
@@ -310,14 +216,14 @@ new RuleTester(ruleTesterOptions).run(
   },
 );
 
-describe("TYPE-001–007 flat config integration", () => {
-  it("enables the policy rules for production TypeScript and type-only exports", async () => {
+describe("local TYPE rules flat config integration", () => {
+  it("enables file-local policy rules for production TypeScript and type-only exports", async () => {
     const eslint = new ESLint({ cwd: projectRoot });
     const config = await eslint.calculateConfigForFile(
       path.join(projectRoot, "src/features/canvas/domain/framePose.ts"),
     );
 
-    expect(config.rules["local/type-declaration-location"]).toEqual([2]);
+    expect(config.rules["local/type-declaration-location"]).toBeUndefined();
     expect(config.rules["local/type-files-only"]).toEqual([2]);
     expect(config.rules["local/no-types-types-file"]).toEqual([2]);
     expect(config.rules["local/type-file-requires-export"]).toEqual([2]);

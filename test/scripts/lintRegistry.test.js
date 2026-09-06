@@ -85,10 +85,11 @@ describe("lint message registry", () => {
     }
   });
 
-  it("points custom executors at existing project rule files", () => {
+  it("points custom executors and repository checks at existing files", () => {
     for (const { category, messageId, definition } of entries) {
       for (const executor of definition.executors) {
-        if (executor.kind !== "custom-eslint-rule") continue;
+        if (!["custom-eslint-rule", "repository-check"].includes(executor.kind))
+          continue;
 
         expect(
           fs.existsSync(path.join(projectRoot, executor.file)),

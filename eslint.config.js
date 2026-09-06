@@ -13,7 +13,6 @@ import noPublicApiExportAlias from "./eslint-rules/no-public-api-export-alias.js
 import noPublicApiWildcardExport from "./eslint-rules/no-public-api-wildcard-export.js";
 import noTypesTypesFile from "./eslint-rules/no-types-types-file.js";
 import relativeImportExtensionRule from "./eslint-rules/relative-import-extension.js";
-import typeDeclarationLocation from "./eslint-rules/type-declaration-location.js";
 import typeFileRequiresExport from "./eslint-rules/type-file-requires-export.js";
 import typeFilesOnly from "./eslint-rules/type-files-only.js";
 import {
@@ -54,7 +53,6 @@ const localArchitectureRules = {
     "no-public-api-export-alias": noPublicApiExportAlias,
     "no-public-api-wildcard-export": noPublicApiWildcardExport,
     "no-types-types-file": noTypesTypesFile,
-    "type-declaration-location": typeDeclarationLocation,
     "type-file-requires-export": typeFileRequiresExport,
     "type-files-only": typeFilesOnly,
   },
@@ -642,7 +640,8 @@ export default [
     },
   },
   {
-    // TYPE-001/002/006/007 describe production module boundaries. The
+    // TYPE-002/006/007 describe local production module boundaries. TYPE-001,
+    // TYPE-003 and TYPE-004 require the repository-wide type-locality checker.
     // executable TypeScript contract fixtures under test/types are kept out
     // of this production-only policy block.
     files: ["src/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}"],
@@ -661,7 +660,6 @@ export default [
       ],
       "@typescript-eslint/explicit-module-boundary-types": "error",
       "local/no-types-types-file": "error",
-      "local/type-declaration-location": "error",
       "local/type-file-requires-export": "error",
       "local/type-files-only": "error",
     },

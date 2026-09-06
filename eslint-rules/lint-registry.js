@@ -36,15 +36,47 @@ export const typesMessages = {
   exportedTypeOutsideTypeFile: defineMessage({
     code: "TYPE-001",
     summary:
-      'File-exported type declaration "{{name}}" must live in a dedicated type file.',
+      'Shared or public type declaration "{{name}}" must live in a dedicated type file.',
     reason:
-      "Types/interfaces intentionally exposed beyond their declaration file must be separated from implementation code.",
+      "Types used by at least two concrete consumer files, and contracts exposed through a public API, must be separated from implementation code.",
     fix: 'Move "{{name}}" to a *.types.ts file or a file inside types/, then import or re-export it from there.',
     executors: [
       {
-        kind: "custom-eslint-rule",
-        rule: "local/type-declaration-location",
-        file: "eslint-rules/type-declaration-location.js",
+        kind: "repository-check",
+        rule: "type-locality",
+        file: "scripts/check-type-locality.mjs",
+      },
+    ],
+  }),
+
+  unnecessaryTypeExport: defineMessage({
+    code: "TYPE-003",
+    summary:
+      'Type declaration "{{name}}" is exported without an external concrete consumer.',
+    reason:
+      "Local implementation details should remain private, while unused exports create an accidental API surface.",
+    fix: 'Remove the export from "{{name}}", or remove the declaration when it is unused.',
+    executors: [
+      {
+        kind: "repository-check",
+        rule: "type-locality",
+        file: "scripts/check-type-locality.mjs",
+      },
+    ],
+  }),
+
+  singleConsumerType: defineMessage({
+    code: "TYPE-004",
+    summary: 'Type declaration "{{name}}" has only one concrete consumer file.',
+    reason:
+      "A type owned by one implementation should stay beside that implementation instead of creating a remote contract.",
+    details: ["Consumer: {{consumer}}"],
+    fix: 'Move "{{name}}" next to its sole consumer and keep it non-exported.',
+    executors: [
+      {
+        kind: "repository-check",
+        rule: "type-locality",
+        file: "scripts/check-type-locality.mjs",
       },
     ],
   }),
