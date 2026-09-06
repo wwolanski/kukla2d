@@ -4,6 +4,7 @@ import {
   isInsideTypesDirectory,
   isTypeScriptImplementationFile,
 } from "./type-file-utils.js";
+import { typesMessages } from "./lint-registry.js";
 
 export default {
   meta: {
@@ -13,8 +14,7 @@ export default {
     },
     schema: [],
     messages: {
-      genericTypesFileName:
-        'TYPE-006: A file inside a types/ tree must not be named types.ts.\nReason: The types/ directory already communicates the category, so "types.ts" provides no meaningful grouping information.\nFix: Rename the file to describe the contained contract group, for example contracts.ts, api.ts, processing.ts, or another domain-specific name.',
+      genericTypesFileName: typesMessages.genericTypesFileName.message,
     },
   },
 

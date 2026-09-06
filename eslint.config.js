@@ -10,55 +10,15 @@ import tseslint from "typescript-eslint";
 
 import noApplicationPassThroughPublicApi from "./eslint-rules/no-application-pass-through-public-api.js";
 import noTypesTypesFile from "./eslint-rules/no-types-types-file.js";
+import relativeImportExtensionRule from "./eslint-rules/relative-import-extension.js";
 import typeDeclarationLocation from "./eslint-rules/type-declaration-location.js";
 import typeFileRequiresExport from "./eslint-rules/type-file-requires-export.js";
 import typeFilesOnly from "./eslint-rules/type-files-only.js";
-
-const architectureMessages = {
-  domainToApplication:
-    "ARCH-001: Domain must not depend on Application. Reason: Domain is the innermost layer and must remain independent of application workflows. Fix: Move the required abstraction or domain concept into Domain, or invert the dependency so Application depends on Domain.",
-  domainToInfrastructure:
-    "ARCH-002: Domain must not depend on Infrastructure. Reason: Infrastructure is an implementation detail and dependencies must point inward. Fix: Define the required contract/port in Domain or Application and implement it in Infrastructure.",
-  domainToUi:
-    "ARCH-003: Domain must not depend on UI. Reason: Domain logic must remain independent of presentation frameworks and components. Fix: Move shared domain concepts into Domain and let UI depend on them, not the other way around.",
-  applicationToInfrastructure:
-    "ARCH-004: Application must not depend on Infrastructure. Reason: Application should orchestrate use cases through abstractions, not concrete technical implementations. Fix: Depend on a port/interface defined in Application or Domain and provide its implementation from Infrastructure.",
-  applicationToUi:
-    "ARCH-005: Application must not depend on UI. Reason: Application use cases must remain independent of presentation code. Fix: Move the required contract to Application/Domain or make UI call Application instead.",
-  uiToInfrastructure:
-    "ARCH-006: UI must not depend directly on Infrastructure. Reason: Presentation code should use application/domain APIs instead of concrete technical implementations. Fix: Call an Application use case/service or depend on a public contract instead of importing Infrastructure directly.",
-  crossModuleDeepImport:
-    "ARCH-007: Cross-module deep import is forbidden. Reason: Other modules may access this module only through its public API. Fix: Import the required symbol from the target module root entry point (index.ts). If it is not exported there, decide whether it should become part of the module's public API.",
-  publicInfrastructureExport:
-    "ARCH-008: Module public API must not expose Infrastructure. Reason: Infrastructure is a private implementation detail of the module. Fix: Export an Application/Domain contract or a higher-level module operation instead. Keep the Infrastructure implementation private.",
-  privateInfrastructure:
-    "ARCH-009: Infrastructure is private to its owning module. Reason: Other modules must not depend on another module's technical implementation. Fix: Use the target module's public API. If a capability is missing, expose an appropriate Application/Domain contract through that public API.",
-  productionToTests:
-    "ARCH-011: Production code must not depend on test-only code. Reason: Tests, fixtures and mocks are not part of the production dependency graph. Fix: Move reusable production logic/data into a production module and let the tests import it from there.",
-  domainToUiFramework:
-    "ARCH-012: Domain must not depend on presentation frameworks. Reason: Domain must remain framework-independent. Fix: Move presentation-specific code to UI and keep only framework-agnostic domain logic/types in Domain.",
-  domainToInfrastructureFramework:
-    "ARCH-013: Domain must not depend on infrastructure frameworks or concrete adapters. Reason: Domain should express business rules without depending on storage, transport or persistence technology. Fix: Introduce a framework-independent contract/port and move the concrete integration to Infrastructure.",
-  infrastructureToUi:
-    "ARCH-010: Infrastructure must not depend on UI. Reason: Technical adapters must remain independent of presentation code so dependencies continue to point inward. Fix: Move presentation behavior to UI or expose an Infrastructure capability through an Application/Domain contract.",
-};
-
-const repositoryPolicyMessages = {
-  innerLayerToComposition:
-    "ARCH-015: Inner feature layers must not depend on Composition. Reason: Composition is the outermost wiring layer and may depend inward; reversing that direction couples business code to bootstrap details. Fix: Move the wiring to Composition and make the inner layer depend on an Application/Domain contract.",
-  domainToStateFramework:
-    "ARCH-016: Domain must not depend on application state frameworks or stores. Reason: Domain logic must remain independent of application state management and workflow runtimes. Fix: Pass framework-independent values or ports into Domain and keep Zustand/XState/store access in Application or Composition.",
-  domainBrowserGlobal:
-    "ARCH-017: Domain must not use browser runtime globals. Reason: Domain code must be executable without DOM, Worker, or browser APIs. Fix: Move browser access to Infrastructure and pass framework-independent data or a port into Domain.",
-  modularSpriteToGlobalStore:
-    "ARCH-018: Modular Sprite inner layers must not depend on the app-global store. Reason: This module has an explicit ports-based composition boundary and must remain independently composable. Fix: Pass the required capability through a Domain/Application port and connect it in modular-sprite/composition.",
-  workspacePackageDependency:
-    "ARCH-019: Workspace package dependency is not allowed by the package matrix. Reason: Low-level contracts, utilities, and adapters must not acquire undeclared inward or sideways workspace dependencies. Fix: Remove the dependency or explicitly revise the documented package matrix; only engine and platform-browser may currently depend on @kukla2d/contracts.",
-  legacyFeatureComponent:
-    "ARCH-020: Legacy feature component imports are forbidden. Reason: Feature-owned UI belongs under src/features/<feature>, while src/components is reserved for shared UI primitives. Fix: Import through the feature public API or move the component to its owning feature.",
-  canvasUiToLegacyIo:
-    "ARCH-021: Canvas UI must not depend directly on legacy I/O modules. Reason: Presentation code must reach PSD/project-file operations through Application instead of bypassing the feature boundary. Fix: Call a Canvas Application operation or introduce an Application port implemented by the I/O adapter.",
-};
+import {
+  architectureMessages,
+  repositoryPolicyMessages,
+  typescriptMessages,
+} from "./eslint-rules/lint-registry.js";
 
 const featureElementTypes = [
   "feature-domain",
@@ -86,35 +46,6 @@ const tsManifest = [
   "test/types/**/*.ts",
   "test/fixtures/goldenProject.ts",
 ];
-const relativeImportExtension = {
-  rules: {
-    "require-extension": {
-      create(context) {
-        const check = (source) => {
-          const specifier = source.value;
-          if (typeof specifier !== "string" || !specifier.startsWith("."))
-            return;
-          if (/\.[a-z0-9]+(?:[?#].*)?$/i.test(specifier)) return;
-          context.report({
-            node: source,
-            message: "Relative import must include its emitted file extension.",
-          });
-        };
-        return {
-          ImportDeclaration: (node) => check(node.source),
-          ExportAllDeclaration: (node) => check(node.source),
-          ExportNamedDeclaration: (node) => {
-            if (node.source) check(node.source);
-          },
-          ImportExpression: (node) => {
-            if (node.source.type === "Literal") check(node.source);
-          },
-        };
-      },
-    },
-  },
-};
-
 const localArchitectureRules = {
   rules: {
     "no-application-pass-through-public-api": noApplicationPassThroughPublicApi,
@@ -149,7 +80,9 @@ export default [
     },
     plugins: {
       "import-x": importX,
-      "relative-import-extension": relativeImportExtension,
+      "relative-import-extension": {
+        rules: { "require-extension": relativeImportExtensionRule },
+      },
     },
     rules: {
       "import-x/no-unresolved": "error",
@@ -306,37 +239,37 @@ export default [
             {
               from: { element: { type: "feature-domain" } },
               disallow: { to: { element: { type: "feature-application" } } },
-              message: architectureMessages.domainToApplication,
+              message: architectureMessages.domainToApplication.message,
             },
             {
               from: { element: { type: "feature-domain" } },
               disallow: { to: { element: { type: "feature-infrastructure" } } },
-              message: architectureMessages.domainToInfrastructure,
+              message: architectureMessages.domainToInfrastructure.message,
             },
             {
               from: { element: { type: "feature-domain" } },
               disallow: { to: { element: { type: "feature-ui" } } },
-              message: architectureMessages.domainToUi,
+              message: architectureMessages.domainToUi.message,
             },
             {
               from: { element: { type: "feature-application" } },
               disallow: { to: { element: { type: "feature-infrastructure" } } },
-              message: architectureMessages.applicationToInfrastructure,
+              message: architectureMessages.applicationToInfrastructure.message,
             },
             {
               from: { element: { type: "feature-application" } },
               disallow: { to: { element: { type: "feature-ui" } } },
-              message: architectureMessages.applicationToUi,
+              message: architectureMessages.applicationToUi.message,
             },
             {
               from: { element: { type: "feature-ui" } },
               disallow: { to: { element: { type: "feature-infrastructure" } } },
-              message: architectureMessages.uiToInfrastructure,
+              message: architectureMessages.uiToInfrastructure.message,
             },
             {
               from: { element: { type: "feature-infrastructure" } },
               disallow: { to: { element: { type: "feature-ui" } } },
-              message: architectureMessages.infrastructureToUi,
+              message: architectureMessages.infrastructureToUi.message,
             },
             {
               from: { element: { type: featureElementTypes } },
@@ -354,7 +287,7 @@ export default [
                   },
                 },
               },
-              message: architectureMessages.crossModuleDeepImport,
+              message: architectureMessages.crossModuleDeepImport.message,
             },
             {
               from: { element: { type: featureElementTypes } },
@@ -367,7 +300,7 @@ export default [
                   },
                 },
               },
-              message: architectureMessages.crossModuleDeepImport,
+              message: architectureMessages.crossModuleDeepImport.message,
             },
             {
               from: {
@@ -388,7 +321,7 @@ export default [
                   },
                 },
               },
-              message: architectureMessages.crossModuleDeepImport,
+              message: architectureMessages.crossModuleDeepImport.message,
             },
             {
               from: {
@@ -404,7 +337,7 @@ export default [
                   },
                 },
               },
-              message: architectureMessages.crossModuleDeepImport,
+              message: architectureMessages.crossModuleDeepImport.message,
             },
             {
               from: { element: { type: "app-composition" } },
@@ -420,7 +353,7 @@ export default [
                   },
                 },
               },
-              message: architectureMessages.crossModuleDeepImport,
+              message: architectureMessages.crossModuleDeepImport.message,
             },
             {
               from: { element: { type: "app-composition" } },
@@ -432,7 +365,7 @@ export default [
                   },
                 },
               },
-              message: architectureMessages.crossModuleDeepImport,
+              message: architectureMessages.crossModuleDeepImport.message,
             },
             {
               from: {
@@ -459,7 +392,7 @@ export default [
               },
               dependency: { nodeKind: "export" },
               disallow: { to: { element: { type: "feature-infrastructure" } } },
-              message: architectureMessages.publicInfrastructureExport,
+              message: architectureMessages.publicInfrastructureExport.message,
             },
             {
               from: { element: { type: featureElementTypes } },
@@ -471,7 +404,7 @@ export default [
                   },
                 },
               },
-              message: architectureMessages.privateInfrastructure,
+              message: architectureMessages.privateInfrastructure.message,
             },
             {
               from: {
@@ -480,7 +413,7 @@ export default [
                 },
               },
               disallow: { to: { element: { type: "feature-infrastructure" } } },
-              message: architectureMessages.privateInfrastructure,
+              message: architectureMessages.privateInfrastructure.message,
             },
             {
               from: { element: { type: ["feature-domain", "shared-domain"] } },
@@ -501,7 +434,7 @@ export default [
                   },
                 },
               },
-              message: architectureMessages.domainToUiFramework,
+              message: architectureMessages.domainToUiFramework.message,
             },
             {
               from: { element: { type: ["feature-domain", "shared-domain"] } },
@@ -524,7 +457,8 @@ export default [
                   },
                 },
               },
-              message: architectureMessages.domainToInfrastructureFramework,
+              message:
+                architectureMessages.domainToInfrastructureFramework.message,
             },
             {
               from: { element: { type: ["feature-domain", "shared-domain"] } },
@@ -540,7 +474,7 @@ export default [
                   ],
                 },
               },
-              message: repositoryPolicyMessages.domainToStateFramework,
+              message: repositoryPolicyMessages.domainToStateFramework.message,
             },
             {
               from: { element: { type: ["feature-domain", "shared-domain"] } },
@@ -549,7 +483,7 @@ export default [
                   source: ["@/components/**", "@/hooks/**"],
                 },
               },
-              message: architectureMessages.domainToUi,
+              message: architectureMessages.domainToUi.message,
             },
             {
               from: {
@@ -559,7 +493,7 @@ export default [
                 },
               },
               disallow: { dependency: { source: "@/contexts/**" } },
-              message: architectureMessages.domainToUi,
+              message: architectureMessages.domainToUi.message,
             },
             {
               from: {
@@ -569,7 +503,8 @@ export default [
                 },
               },
               disallow: { dependency: { source: "@/io/**" } },
-              message: architectureMessages.domainToInfrastructureFramework,
+              message:
+                architectureMessages.domainToInfrastructureFramework.message,
             },
             {
               from: {
@@ -590,7 +525,7 @@ export default [
                   },
                 },
               },
-              message: repositoryPolicyMessages.innerLayerToComposition,
+              message: repositoryPolicyMessages.innerLayerToComposition.message,
             },
             {
               from: {
@@ -612,12 +547,14 @@ export default [
                 },
               },
               disallow: { dependency: { source: "@/store/**" } },
-              message: repositoryPolicyMessages.modularSpriteToGlobalStore,
+              message:
+                repositoryPolicyMessages.modularSpriteToGlobalStore.message,
             },
             {
               from: { element: { type: "workspace-package-isolated" } },
               disallow: { dependency: { source: "@kukla2d/**" } },
-              message: repositoryPolicyMessages.workspacePackageDependency,
+              message:
+                repositoryPolicyMessages.workspacePackageDependency.message,
             },
             {
               from: {
@@ -628,7 +565,8 @@ export default [
                   source: ["@kukla2d/!(contracts)", "@kukla2d/!(contracts)/**"],
                 },
               },
-              message: repositoryPolicyMessages.workspacePackageDependency,
+              message:
+                repositoryPolicyMessages.workspacePackageDependency.message,
             },
             {
               from: { element: { type: ["app-composition", "feature-ui"] } },
@@ -637,7 +575,7 @@ export default [
                   source: ["@/components/!(ui)", "@/components/!(ui)/**"],
                 },
               },
-              message: repositoryPolicyMessages.legacyFeatureComponent,
+              message: repositoryPolicyMessages.legacyFeatureComponent.message,
             },
             {
               from: {
@@ -656,11 +594,11 @@ export default [
                   ],
                 },
               },
-              message: repositoryPolicyMessages.canvasUiToLegacyIo,
+              message: repositoryPolicyMessages.canvasUiToLegacyIo.message,
             },
             {
               disallow: { to: { file: { categories: "test-only" } } },
-              message: architectureMessages.productionToTests,
+              message: architectureMessages.productionToTests.message,
             },
           ],
         },
@@ -678,7 +616,7 @@ export default [
         {
           globals: ["window", "document", "Worker", "Image"].map((name) => ({
             name,
-            message: repositoryPolicyMessages.domainBrowserGlobal,
+            message: repositoryPolicyMessages.domainBrowserGlobal.message,
           })),
         },
       ],
@@ -712,7 +650,7 @@ export default [
         "error",
         {
           selector: "TSAsExpression > TSAsExpression",
-          message: "Double TypeScript assertions bypass validated boundaries.",
+          message: typescriptMessages.doubleAssertion.message,
         },
       ],
       "@typescript-eslint/explicit-module-boundary-types": "error",

@@ -3,6 +3,7 @@ import {
   isTypeDeclaration,
   isTypeScriptImplementationFile,
 } from "./type-file-utils.js";
+import { typesMessages } from "./lint-registry.js";
 
 function declarationLabel(node) {
   const labels = {
@@ -98,8 +99,7 @@ export default {
     },
     schema: [],
     messages: {
-      runtimeConstruct:
-        'TYPE-002: Runtime construct "{{construct}}" is not allowed in a dedicated type file.\nReason: *.types.ts and types/** are reserved exclusively for compile-time type contracts.\nFix: Move runtime values, functions, classes, enums, imports, re-exports or side effects to an implementation file.',
+      runtimeConstruct: typesMessages.runtimeConstruct.message,
     },
   },
 

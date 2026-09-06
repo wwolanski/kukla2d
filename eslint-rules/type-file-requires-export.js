@@ -3,6 +3,7 @@ import {
   isTypeDeclaration,
   isTypeScriptImplementationFile,
 } from "./type-file-utils.js";
+import { typesMessages } from "./lint-registry.js";
 
 function hasTypeOnlyReExport(statement) {
   if (statement.type === "ExportAllDeclaration")
@@ -56,8 +57,7 @@ export default {
     },
     schema: [],
     messages: {
-      missingTypeExport:
-        "TYPE-007: Dedicated type file contains no file-exported type contract or type-only re-export.\nReason: *.types.ts and types/** are reserved for declarations intentionally exposed beyond their own file, or for type-only barrels.\nFix: Move purely local type/interface declarations next to the implementation that uses them, or export the intended type contract from this file.",
+      missingTypeExport: typesMessages.missingTypeExport.message,
     },
   },
 

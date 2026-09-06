@@ -4,6 +4,7 @@ import {
   isTypeScriptImplementationFile,
   typeDeclarationName,
 } from "./type-file-utils.js";
+import { typesMessages } from "./lint-registry.js";
 
 function addDeclaration(declarations, node) {
   if (!isTypeDeclaration(node) || !node.id?.name) return;
@@ -30,7 +31,7 @@ export default {
     schema: [],
     messages: {
       exportedTypeOutsideTypeFile:
-        'TYPE-001: File-exported type declaration "{{name}}" must live in a dedicated type file.\nReason: Types/interfaces intentionally exposed beyond their declaration file must be separated from implementation code.\nFix: Move "{{name}}" to a *.types.ts file or a file inside types/, then import or re-export it from there.',
+        typesMessages.exportedTypeOutsideTypeFile.message,
     },
   },
 
