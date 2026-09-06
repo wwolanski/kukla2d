@@ -25,6 +25,25 @@ describe("lint message registry", () => {
     expect(new Set(codes).size).toBe(codes.length);
   });
 
+  it("keeps general and repository-specific architecture namespaces separate", () => {
+    for (const definition of Object.values(lintMessageRegistry.architecture)) {
+      if (!definition.code) continue;
+      expect(definition.code).toMatch(/^ARCH-\d+$/);
+    }
+
+    const repositoryCodes = Object.values(lintMessageRegistry.repository).map(
+      ({ code }) => code,
+    );
+
+    for (const code of repositoryCodes) {
+      expect(code).toMatch(/^ARCH-RS-\d+$/);
+    }
+
+    expect(repositoryCodes).toEqual(
+      repositoryCodes.map((_, index) => `ARCH-RS-${index + 1}`),
+    );
+  });
+
   it("documents at least one executor for every message", () => {
     for (const { category, messageId, definition } of entries) {
       expect(definition.message, `${category}.${messageId}`).toEqual(

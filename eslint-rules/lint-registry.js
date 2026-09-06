@@ -323,9 +323,7 @@ export const architectureMessages = {
       },
     ],
   }),
-};
 
-export const repositoryPolicyMessages = {
   innerLayerToComposition: defineMessage({
     code: "ARCH-015",
     summary: "Inner feature layers must not depend on Composition.",
@@ -358,9 +356,12 @@ export const repositoryPolicyMessages = {
       },
     ],
   }),
+};
 
+export const repositoryPolicyMessages = {
+  // Repository-specific architecture policies use the ARCH-RS-* namespace.
   domainBrowserGlobal: defineMessage({
-    code: "ARCH-017",
+    code: "ARCH-RS-1",
     summary: "Domain must not use browser runtime globals.",
     reason:
       "Domain code must be executable without DOM, Worker, or browser APIs.",
@@ -375,7 +376,7 @@ export const repositoryPolicyMessages = {
   }),
 
   modularSpriteToGlobalStore: defineMessage({
-    code: "ARCH-018",
+    code: "ARCH-RS-2",
     summary:
       "Modular Sprite inner layers must not depend on the app-global store.",
     reason:
@@ -392,7 +393,7 @@ export const repositoryPolicyMessages = {
   }),
 
   workspacePackageDependency: defineMessage({
-    code: "ARCH-019",
+    code: "ARCH-RS-3",
     summary:
       "Workspace package dependency is not allowed by the package matrix.",
     reason:
@@ -409,7 +410,7 @@ export const repositoryPolicyMessages = {
   }),
 
   legacyFeatureComponent: defineMessage({
-    code: "ARCH-020",
+    code: "ARCH-RS-4",
     summary: "Legacy feature component imports are forbidden.",
     reason:
       "Feature-owned UI belongs under src/features/<feature>, while src/components is reserved for shared UI primitives.",
@@ -425,7 +426,7 @@ export const repositoryPolicyMessages = {
   }),
 
   canvasUiToLegacyIo: defineMessage({
-    code: "ARCH-021",
+    code: "ARCH-RS-5",
     summary: "Canvas UI must not depend directly on legacy I/O modules.",
     reason:
       "Presentation code must reach PSD/project-file operations through Application instead of bypassing the feature boundary.",

@@ -474,7 +474,7 @@ export default [
                   ],
                 },
               },
-              message: repositoryPolicyMessages.domainToStateFramework.message,
+              message: architectureMessages.domainToStateFramework.message,
             },
             {
               from: { element: { type: ["feature-domain", "shared-domain"] } },
@@ -525,7 +525,7 @@ export default [
                   },
                 },
               },
-              message: repositoryPolicyMessages.innerLayerToComposition.message,
+              message: architectureMessages.innerLayerToComposition.message,
             },
             {
               from: {
