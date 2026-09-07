@@ -1,12 +1,43 @@
-import type { CapturedRasterFrame } from '@kukla2d/contracts';
+import type {
+  CapturedRasterFrame,
+  ExportAreaContract,
+  RasterFrameSpec,
+} from "@kukla2d/contracts";
 
-import { createFrameCaptureRequestFromRasterPlan } from '@/features/export/domain/createFrameCaptureRequestFromRasterPlan';
+import { createFrameCaptureRequestFromRasterPlan } from "@/features/export/domain/createFrameCaptureRequestFromRasterPlan";
 
-import type { CaptureRasterFramesOptions, CaptureRasterFramesResult } from './exportApplicationTypes.js';
+import type { ExportProgress } from "./exportApplicationTypes.types.js";
+import type { CaptureFrame } from "../domain/frameCaptureTypes.types.js";
 
-export async function captureRasterFrames({ plan, captureFrame, format, onProgress, signal }: CaptureRasterFramesOptions): Promise<CaptureRasterFramesResult> {
+interface CaptureRasterFramesOptions {
+  plan: Readonly<{
+    area: ExportAreaContract;
+    background: { enabled: boolean; color: string };
+    frameSpecs: readonly RasterFrameSpec[];
+  }>;
+  captureFrame: CaptureFrame;
+  format?: "png" | "webp" | undefined;
+  onProgress?: ((progress: ExportProgress | null) => void) | undefined;
+  signal?: AbortSignal | undefined;
+}
+
+type CaptureRasterFramesResult =
+  | { ok: true; frames: CapturedRasterFrame[] }
+  | { ok: false; cancelled: true }
+  | { ok: false; error: { code: string; message: string } };
+
+export async function captureRasterFrames({
+  plan,
+  captureFrame,
+  format,
+  onProgress,
+  signal,
+}: CaptureRasterFramesOptions): Promise<CaptureRasterFramesResult> {
   if (!plan || !plan.frameSpecs) {
-    return { ok: false, error: { code: 'INVALID_PLAN', message: 'Invalid raster export plan' } };
+    return {
+      ok: false,
+      error: { code: "INVALID_PLAN", message: "Invalid raster export plan" },
+    };
   }
 
   const frames: CapturedRasterFrame[] = [];
@@ -18,12 +49,16 @@ export async function captureRasterFrames({ plan, captureFrame, format, onProgre
     }
 
     const spec = plan.frameSpecs[i]!;
-    onProgress?.({ current: i + 1, total, label: `${spec.animName} — frame ${spec.frameIndex + 1}` });
+    onProgress?.({
+      current: i + 1,
+      total,
+      label: `${spec.animName} — frame ${spec.frameIndex + 1}`,
+    });
 
     const request = createFrameCaptureRequestFromRasterPlan({
       area: plan.area,
       frameSpec: spec,
-      format: format ?? 'png',
+      format: format ?? "png",
       bgEnabled: plan.background.enabled,
       bgColor: plan.background.color,
     });
@@ -32,7 +67,10 @@ export async function captureRasterFrames({ plan, captureFrame, format, onProgre
     if (!result || !result.ok) {
       return {
         ok: false,
-        error: result?.error ?? { code: 'CAPTURE_FAILED', message: 'Capture returned no result' },
+        error: result?.error ?? {
+          code: "CAPTURE_FAILED",
+          message: "Capture returned no result",
+        },
       };
     }
 

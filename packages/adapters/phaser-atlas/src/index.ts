@@ -1,38 +1,48 @@
-export { scanAlphaBounds } from './domain/phaserAtlasTrim.js';
-export type { TrimResult } from './domain/phaserAtlasTrim.js';
+export { scanAlphaBounds } from "./domain/phaserAtlasTrim.js";
+export type { TrimResult } from "./domain/phaserAtlasTrim.types.js";
 
-export { packAtlasFrames, validatePackLayout } from './domain/phaserAtlasPacker.js';
+export {
+  packAtlasFrames,
+  validatePackLayout,
+} from "./domain/phaserAtlasPacker.js";
 export type {
   PackInput,
   PackResult,
   PackError,
   PackedRegion,
   PackedPage,
-} from './domain/phaserAtlasPacker.js';
+} from "./domain/phaserAtlasPacker.types.js";
 
-export { encodePhaserAtlasPackage } from './encodePhaserAtlasPackage.js';
+export { encodePhaserAtlasPackage } from "./encodePhaserAtlasPackage.js";
 export type {
   CapturedFrame,
   PackageOptions,
   ExportArtifact,
   EncodeResult,
-} from './encodePhaserAtlasPackage.js';
+} from "./encodePhaserAtlasPackage.types.js";
 
-export { decodePngDataUrl, composePageBlob, AbortError } from './browserImage.js';
-export type { DecodedPng, CropSource, PageComposeSource } from './browserImage.js';
+export {
+  decodePngDataUrl,
+  composePageBlob,
+  AbortError,
+} from "./browserImage.js";
+export type { DecodedPng, PageComposeSource } from "./browserImage.types.js";
 
 export {
   buildSingleAtlasJson,
   buildMultiAtlasJson,
-} from './phaserAtlasJson.js';
+} from "./phaserAtlasJson.js";
 export type {
   SingleAtlasJson,
   MultiAtlasJson,
   AtlasJsonRegion,
   MultiAtlasPageEntry,
-} from './phaserAtlasJson.js';
+} from "./phaserAtlasJson.types.js";
 
-export { buildAnimationJson, buildMarkerManifest } from './phaserAnimationJson.js';
+export {
+  buildAnimationJson,
+  buildMarkerManifest,
+} from "./phaserAnimationJson.js";
 export type {
   AnimationJson,
   AnimationJsonEntry,
@@ -40,13 +50,17 @@ export type {
   AnimationInput,
   MarkerEntry,
   MarkerManifest,
-} from './phaserAnimationJson.js';
+} from "./phaserAnimationJson.types.js";
 
-export { buildExportReport, buildExampleTs, buildReadme } from './phaserPackageDocs.js';
+export {
+  buildExportReport,
+  buildExampleTs,
+  buildReadme,
+} from "./phaserPackageDocs.js";
 export type {
   BakeReport,
   BakeReportEntry,
   BakeReportInput,
   ExampleInput,
   ReadmeInput,
-} from './phaserPackageDocs.js';
+} from "./phaserPackageDocs.types.js";

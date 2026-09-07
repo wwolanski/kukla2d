@@ -1,16 +1,17 @@
-import { useCallback } from 'react';
+import { useCallback } from "react";
 
-import { EditorWorkflowContext } from './EditorWorkflowContext.js';
+import { EditorWorkflowContext } from "./EditorWorkflowContext.js";
 
-import type { editorWorkflowMachine } from './editorWorkflowMachine.js';
-import type { WorkflowEvent } from '../domain/workflowContracts.js';
-import type { SnapshotFrom } from 'xstate';
+import type { editorWorkflowMachine } from "./editorWorkflowMachine.js";
+import type { WorkflowEvent } from "../domain/workflowContracts.types.js";
+import type { SnapshotFrom } from "xstate";
 
 type WorkflowSnapshot = SnapshotFrom<typeof editorWorkflowMachine>;
-export interface WorkflowActorApi {
+
+interface WorkflowActorApi {
   send: (event: WorkflowEvent) => void;
-  getState: () => WorkflowSnapshot['value'];
-  selectSession: () => WorkflowSnapshot['context']['activeSession'];
+  getState: () => WorkflowSnapshot["value"];
+  selectSession: () => WorkflowSnapshot["context"]["activeSession"];
   actorRef: ReturnType<typeof EditorWorkflowContext.useActorRef>;
 }
 
@@ -26,9 +27,12 @@ export interface WorkflowActorApi {
 export function useWorkflowActor(): WorkflowActorApi {
   const actorRef = EditorWorkflowContext.useActorRef();
 
-  const send = useCallback((event: WorkflowEvent) => {
-    actorRef.send(event);
-  }, [actorRef]);
+  const send = useCallback(
+    (event: WorkflowEvent) => {
+      actorRef.send(event);
+    },
+    [actorRef],
+  );
 
   const getState = useCallback(() => {
     return actorRef.getSnapshot().value;

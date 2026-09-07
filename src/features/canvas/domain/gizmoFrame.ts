@@ -1,7 +1,9 @@
-import type { Node, Vertex } from '@kukla2d/contracts';
+import type { Node, Vertex } from "@kukla2d/contracts";
 
-import { mat3Identity, mat3Inverse } from '@/domain/transforms.js';
-import type { Matrix3 } from '@/domain/transforms.js';
+import { mat3Identity, mat3Inverse } from "@/domain/transforms.js";
+import type { Matrix3 } from "@/domain/transforms.types.js";
+
+import type { GizmoFrame } from "./gizmoFrame.types.js";
 
 const ROT_OFFSET_PX = 52;
 
@@ -15,15 +17,9 @@ const ROT_OFFSET_PX = 52;
  * @param {Map}     args.worldMatrices   - computeWorldMatrices output
  * @returns {Object} gizmo frame with world-space coordinates
  */
-interface Point { x: number; y: number }
-export interface GizmoFrame {
-  bboxPoints: Point[];
-  outlineContours?: Point[][] | null;
-  pivot: Point;
-  center: Point;
-  topCenter: Point;
-  rotationHandle: Point;
-  visible: boolean;
+interface Point {
+  x: number;
+  y: number;
 }
 
 interface GizmoFrameInput {
@@ -32,8 +28,12 @@ interface GizmoFrameInput {
   worldMatrices: ReadonlyMap<string, Matrix3>;
 }
 
-export function buildGizmoFrame({ selectedNode, effectiveNodes, worldMatrices }: GizmoFrameInput): GizmoFrame {
-  if (!selectedNode || selectedNode.type === 'warpDeformer') {
+export function buildGizmoFrame({
+  selectedNode,
+  effectiveNodes,
+  worldMatrices,
+}: GizmoFrameInput): GizmoFrame {
+  if (!selectedNode || selectedNode.type === "warpDeformer") {
     return {
       bboxPoints: [],
       pivot: { x: 0, y: 0 },
@@ -53,7 +53,10 @@ export function buildGizmoFrame({ selectedNode, effectiveNodes, worldMatrices }:
   const worldPivY = wm[1] * pivX + wm[4] * pivY + wm[7];
 
   const iswm = mat3Inverse(wm);
-  let bbMinX = Infinity, bbMinY = Infinity, bbMaxX = -Infinity, bbMaxY = -Infinity;
+  let bbMinX = Infinity,
+    bbMinY = Infinity,
+    bbMaxX = -Infinity,
+    bbMaxY = -Infinity;
 
   function pushPoint(wx: number, wy: number): void {
     const lx = iswm[0] * wx + iswm[3] * wy + iswm[6];
@@ -65,7 +68,7 @@ export function buildGizmoFrame({ selectedNode, effectiveNodes, worldMatrices }:
   }
 
   function traverse(node: Node): void {
-    if (node.type === 'part') {
+    if (node.type === "part") {
       if (node.mesh?.vertices) {
         const nwm = worldMatrices.get(node.id) ?? mat3Identity();
         for (const v of node.mesh.vertices) {
@@ -76,8 +79,18 @@ export function buildGizmoFrame({ selectedNode, effectiveNodes, worldMatrices }:
         }
       } else if (node.imageBounds) {
         const nwm = worldMatrices.get(node.id) ?? mat3Identity();
-        const { minX: bminX, minY: bminY, maxX: bmaxX, maxY: bmaxY } = node.imageBounds;
-        const corners: [number, number][] = [[bminX, bminY], [bmaxX, bminY], [bmaxX, bmaxY], [bminX, bmaxY]];
+        const {
+          minX: bminX,
+          minY: bminY,
+          maxX: bmaxX,
+          maxY: bmaxY,
+        } = node.imageBounds;
+        const corners: [number, number][] = [
+          [bminX, bminY],
+          [bmaxX, bminY],
+          [bmaxX, bmaxY],
+          [bminX, bmaxY],
+        ];
         for (const [vx, vy] of corners) {
           pushPoint(
             nwm[0] * vx + nwm[3] * vy + nwm[6],
@@ -86,15 +99,21 @@ export function buildGizmoFrame({ selectedNode, effectiveNodes, worldMatrices }:
         }
       }
     }
-    const children = effectiveNodes.filter(c => c.parent === node.id);
+    const children = effectiveNodes.filter((c) => c.parent === node.id);
     for (const c of children) traverse(c);
   }
 
   traverse(selectedNode);
 
-  let minX = -50, maxX = 50, minY = -50, maxY = 50;
+  let minX = -50,
+    maxX = 50,
+    minY = -50,
+    maxY = 50;
   if (bbMinX !== Infinity) {
-    minX = bbMinX; maxX = bbMaxX; minY = bbMinY; maxY = bbMaxY;
+    minX = bbMinX;
+    maxX = bbMaxX;
+    minY = bbMinY;
+    maxY = bbMaxY;
   }
 
   function toWorld(lx: number, ly: number): Point {
@@ -110,15 +129,21 @@ export function buildGizmoFrame({ selectedNode, effectiveNodes, worldMatrices }:
   const pt3 = toWorld(minX, maxY);
   const bboxPoints = [pt0, pt1, pt2, pt3];
   let outlineContours = null;
-  if (selectedNode.type === 'part' && selectedNode.alphaContours?.length) {
-    outlineContours = selectedNode.alphaContours.map(contour =>
-      contour.map(([x, y]) => toWorld(x, y)));
-  } else if (selectedNode.type === 'part' && (selectedNode.mesh?.edgeIndices?.length ?? 0) >= 3) {
+  if (selectedNode.type === "part" && selectedNode.alphaContours?.length) {
+    outlineContours = selectedNode.alphaContours.map((contour) =>
+      contour.map(([x, y]) => toWorld(x, y)),
+    );
+  } else if (
+    selectedNode.type === "part" &&
+    (selectedNode.mesh?.edgeIndices?.length ?? 0) >= 3
+  ) {
     const mesh = selectedNode.mesh!;
-    outlineContours = [mesh.edgeIndices
-      .map(index => mesh.vertices[index])
-      .filter((vertex): vertex is Vertex => vertex !== undefined)
-      .map(vertex => toWorld(vertex.x, vertex.y))];
+    outlineContours = [
+      mesh.edgeIndices
+        .map((index) => mesh.vertices[index])
+        .filter((vertex): vertex is Vertex => vertex !== undefined)
+        .map((vertex) => toWorld(vertex.x, vertex.y)),
+    ];
   }
 
   const localCx = (minX + maxX) / 2;

@@ -4,29 +4,51 @@
  * Pure helpers used by input routing. No React, DOM, or WebGL dependencies.
  * `worldToLocal` centralizes inverse-matrix behavior.
  */
-import type { Bone, BoneId, Constraint, ConstraintId, Node, PartNode, Vertex } from '@kukla2d/contracts';
+import type {
+  Bone,
+  BoneId,
+  Constraint,
+  ConstraintId,
+  Node,
+  PartNode,
+  Vertex,
+} from "@kukla2d/contracts";
 
-import { mat3Inverse } from '@/domain/transforms';
+import { mat3Inverse } from "@/domain/transforms";
 
-import { worldToLocal } from './coordinates.js';
+import { worldToLocal } from "./coordinates.js";
 
-import type { ScreenRect } from './workflowContracts.js';
+import type { ScreenRect } from "./workflowContracts.types.js";
 
 type Matrix3 = Parameters<typeof mat3Inverse>[0];
-interface BoneSegment { x1: number; y1: number; x2: number; y2: number }
+interface BoneSegment {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
 
 /**
  * Find the vertex index closest to (x, y) within `radius`. Returns -1 if none.
  */
-export function findNearestVertex(vertices: readonly Vertex[], x: number, y: number, radius: number): number {
+export function findNearestVertex(
+  vertices: readonly Vertex[],
+  x: number,
+  y: number,
+  radius: number,
+): number {
   const r2 = radius * radius;
-  let best = -1, bestD = r2;
+  let best = -1,
+    bestD = r2;
   for (let i = 0; i < vertices.length; i++) {
     const vertex = vertices[i]!;
     const dx = vertex.x - x;
     const dy = vertex.y - y;
     const d = dx * dx + dy * dy;
-    if (d < bestD) { best = i; bestD = d; }
+    if (d < bestD) {
+      best = i;
+      bestD = d;
+    }
   }
   return best;
 }
@@ -34,9 +56,15 @@ export function findNearestVertex(vertices: readonly Vertex[], x: number, y: num
 /**
  * Sample alpha (0-255) at integer pixel coords from an ImageData. Returns 0 if out-of-bounds.
  */
-export function sampleAlpha(imageData: ImageData, lx: number, ly: number): number {
-  const ix = Math.floor(lx), iy = Math.floor(ly);
-  if (ix < 0 || iy < 0 || ix >= imageData.width || iy >= imageData.height) return 0;
+export function sampleAlpha(
+  imageData: ImageData,
+  lx: number,
+  ly: number,
+): number {
+  const ix = Math.floor(lx),
+    iy = Math.floor(ly);
+  if (ix < 0 || iy < 0 || ix >= imageData.width || iy >= imageData.height)
+    return 0;
   return imageData.data[(iy * imageData.width + ix) * 4 + 3] ?? 0;
 }
 
@@ -60,7 +88,21 @@ export function sortPartsForPicking(nodes: readonly PartNode[]): PartNode[] {
  * @param {number}   [args.zoom]            - currently unused; reserved for future radius-based picking
  * @returns {string|null}  partId or null
  */
-export function findAlphaHit({ parts, imageDataByPartId, worldMatrices, worldX, worldY, zoom }: { parts: readonly PartNode[]; imageDataByPartId: ReadonlyMap<string, ImageData>; worldMatrices: ReadonlyMap<string, Matrix3>; worldX: number; worldY: number; zoom?: number }): string | null {
+export function findAlphaHit({
+  parts,
+  imageDataByPartId,
+  worldMatrices,
+  worldX,
+  worldY,
+  zoom,
+}: {
+  parts: readonly PartNode[];
+  imageDataByPartId: ReadonlyMap<string, ImageData>;
+  worldMatrices: ReadonlyMap<string, Matrix3>;
+  worldX: number;
+  worldY: number;
+  zoom?: number;
+}): string | null {
   // Retain zoom in the stable input contract for future radius-based picking.
   void zoom;
   for (const part of sortPartsForPicking(parts)) {
@@ -75,7 +117,14 @@ export function findAlphaHit({ parts, imageDataByPartId, worldMatrices, worldX, 
   return null;
 }
 
-function distanceToSegment(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {
+function distanceToSegment(
+  px: number,
+  py: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+): number {
   const dx = x2 - x1;
   const dy = y2 - y1;
   const len2 = dx * dx + dy * dy;
@@ -86,7 +135,10 @@ function distanceToSegment(px: number, py: number, x1: number, y1: number, x2: n
   return Math.hypot(px - sx, py - sy);
 }
 
-export function getBoneSegment(bone: Bone, boneMap: ReadonlyMap<string, Bone>): BoneSegment {
+export function getBoneSegment(
+  bone: Bone,
+  boneMap: ReadonlyMap<string, Bone>,
+): BoneSegment {
   void boneMap;
   const x = bone.setup?.x ?? 0;
   const y = bone.setup?.y ?? 0;
@@ -101,7 +153,19 @@ export function getBoneSegment(bone: Bone, boneMap: ReadonlyMap<string, Bone>): 
   };
 }
 
-export function findBoneHit({ bones, worldX, worldY, zoom = 1, radiusPx = 10 }: { bones: readonly Bone[]; worldX: number; worldY: number; zoom?: number; radiusPx?: number }): BoneId | null {
+export function findBoneHit({
+  bones,
+  worldX,
+  worldY,
+  zoom = 1,
+  radiusPx = 10,
+}: {
+  bones: readonly Bone[];
+  worldX: number;
+  worldY: number;
+  zoom?: number;
+  radiusPx?: number;
+}): BoneId | null {
   const boneMap = new Map(bones.map((bone) => [bone.id, bone]));
   const radius = radiusPx / Math.max(zoom || 1, 0.001);
   let best: BoneId | null = null;
@@ -118,14 +182,30 @@ export function findBoneHit({ bones, worldX, worldY, zoom = 1, radiusPx = 10 }: 
 }
 
 export function findConstraintTargetHit({
-  constraints, worldX, worldY, zoom = 1, radiusPx = 14,
-}: { constraints: readonly Constraint[]; worldX: number; worldY: number; zoom?: number; radiusPx?: number }): ConstraintId | null {
+  constraints,
+  worldX,
+  worldY,
+  zoom = 1,
+  radiusPx = 14,
+}: {
+  constraints: readonly Constraint[];
+  worldX: number;
+  worldY: number;
+  zoom?: number;
+  radiusPx?: number;
+}): ConstraintId | null {
   const radius = radiusPx / Math.max(zoom || 1, 0.001);
   let best: ConstraintId | null = null;
   let bestDistance = radius;
   for (const constraint of constraints ?? []) {
     const { targetX, targetY } = constraint;
-    if (typeof targetX !== 'number' || !Number.isFinite(targetX) || typeof targetY !== 'number' || !Number.isFinite(targetY)) continue;
+    if (
+      typeof targetX !== "number" ||
+      !Number.isFinite(targetX) ||
+      typeof targetY !== "number" ||
+      !Number.isFinite(targetY)
+    )
+      continue;
     const distance = Math.hypot(worldX - targetX, worldY - targetY);
     if (distance <= bestDistance) {
       best = constraint.id;
@@ -135,27 +215,42 @@ export function findConstraintTargetHit({
   return best;
 }
 
-export function selectElementsInRect({ nodes, worldMatrices, rect }: { nodes: readonly Node[]; worldMatrices: ReadonlyMap<string, Matrix3>; rect: ScreenRect }): string[] {
+export function selectElementsInRect({
+  nodes,
+  worldMatrices,
+  rect,
+}: {
+  nodes: readonly Node[];
+  worldMatrices: ReadonlyMap<string, Matrix3>;
+  rect: ScreenRect;
+}): string[] {
   const minX = Math.min(rect.x, rect.x + rect.w);
   const maxX = Math.max(rect.x, rect.x + rect.w);
   const minY = Math.min(rect.y, rect.y + rect.h);
   const maxY = Math.max(rect.y, rect.y + rect.h);
-  return nodes.filter((node) => {
-    if (node.type !== 'part') return false;
-    const matrix = worldMatrices.get(node.id);
-    const width = node.imageWidth ?? 0;
-    const height = node.imageHeight ?? 0;
-    if (!matrix || !width || !height) return false;
-    const corners = [[0, 0], [width, 0], [width, height], [0, height]].map(([x = 0, y = 0]) => ({
-      x: (matrix[0] ?? 0) * x + (matrix[3] ?? 0) * y + (matrix[6] ?? 0),
-      y: (matrix[1] ?? 0) * x + (matrix[4] ?? 0) * y + (matrix[7] ?? 0),
-    }));
-    const left = Math.min(...corners.map(point => point.x));
-    const right = Math.max(...corners.map(point => point.x));
-    const top = Math.min(...corners.map(point => point.y));
-    const bottom = Math.max(...corners.map(point => point.y));
-    return !(right < minX || left > maxX || bottom < minY || top > maxY);
-  }).map((node) => node.id);
+  return nodes
+    .filter((node) => {
+      if (node.type !== "part") return false;
+      const matrix = worldMatrices.get(node.id);
+      const width = node.imageWidth ?? 0;
+      const height = node.imageHeight ?? 0;
+      if (!matrix || !width || !height) return false;
+      const corners = [
+        [0, 0],
+        [width, 0],
+        [width, height],
+        [0, height],
+      ].map(([x = 0, y = 0]) => ({
+        x: (matrix[0] ?? 0) * x + (matrix[3] ?? 0) * y + (matrix[6] ?? 0),
+        y: (matrix[1] ?? 0) * x + (matrix[4] ?? 0) * y + (matrix[7] ?? 0),
+      }));
+      const left = Math.min(...corners.map((point) => point.x));
+      const right = Math.max(...corners.map((point) => point.x));
+      const top = Math.min(...corners.map((point) => point.y));
+      const bottom = Math.max(...corners.map((point) => point.y));
+      return !(right < minX || left > maxX || bottom < minY || top > maxY);
+    })
+    .map((node) => node.id);
 }
 
 /**
@@ -168,7 +263,13 @@ export function selectElementsInRect({ nodes, worldMatrices, rect }: { nodes: re
  * @param {{x:number,y:number,w:number,h:number}} args.rect  - world rect
  * @returns {string[]} selected bone ids, in the same order as `bones`
  */
-export function selectBonesInRect({ bones, rect }: { bones: readonly Bone[]; rect: ScreenRect }): string[] {
+export function selectBonesInRect({
+  bones,
+  rect,
+}: {
+  bones: readonly Bone[];
+  rect: ScreenRect;
+}): string[] {
   if (!bones?.length || !rect) return [];
   const minX = Math.min(rect.x, rect.x + rect.w);
   const maxX = Math.max(rect.x, rect.x + rect.w);
@@ -185,11 +286,24 @@ export function selectBonesInRect({ bones, rect }: { bones: readonly Bone[]; rec
   return out;
 }
 
-function pointInRect(px: number, py: number, minX: number, minY: number, maxX: number, maxY: number): boolean {
+function pointInRect(
+  px: number,
+  py: number,
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number,
+): boolean {
   return px >= minX && px <= maxX && py >= minY && py <= maxY;
 }
 
-function segmentIntersectsRect(seg: BoneSegment, minX: number, minY: number, maxX: number, maxY: number): boolean {
+function segmentIntersectsRect(
+  seg: BoneSegment,
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number,
+): boolean {
   if (pointInRect(seg.x1, seg.y1, minX, minY, maxX, maxY)) return true;
   if (pointInRect(seg.x2, seg.y2, minX, minY, maxX, maxY)) return true;
   return (
@@ -200,12 +314,20 @@ function segmentIntersectsRect(seg: BoneSegment, minX: number, minY: number, max
   );
 }
 
-function segmentIntersectsEdge(seg: BoneSegment, ax: number, ay: number, bx: number, by: number): boolean {
+function segmentIntersectsEdge(
+  seg: BoneSegment,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+): boolean {
   const d1 = (bx - ax) * (seg.y1 - ay) - (seg.x1 - ax) * (by - ay);
   const d2 = (bx - ax) * (seg.y2 - ay) - (seg.x2 - ax) * (by - ay);
   if ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) {
-    const d3 = (seg.x2 - seg.x1) * (ay - seg.y1) - (seg.y2 - seg.y1) * (ax - seg.x1);
-    const d4 = (seg.x2 - seg.x1) * (by - seg.y1) - (seg.y2 - seg.y1) * (bx - seg.x1);
+    const d3 =
+      (seg.x2 - seg.x1) * (ay - seg.y1) - (seg.y2 - seg.y1) * (ax - seg.x1);
+    const d4 =
+      (seg.x2 - seg.x1) * (by - seg.y1) - (seg.y2 - seg.y1) * (bx - seg.x1);
     if ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0)) return true;
   }
   return false;
@@ -223,7 +345,15 @@ function segmentIntersectsEdge(seg: BoneSegment, ax: number, ay: number, bx: num
  * @param {{x:number,y:number,w:number,h:number}} args.rect
  * @returns {string[]} selected constraint ids, in the order of `constraints`
  */
-export function selectConstraintsInRect({ constraints, bones, rect }: { constraints: readonly Constraint[]; bones: readonly Bone[]; rect: ScreenRect }): string[] {
+export function selectConstraintsInRect({
+  constraints,
+  bones,
+  rect,
+}: {
+  constraints: readonly Constraint[];
+  bones: readonly Bone[];
+  rect: ScreenRect;
+}): string[] {
   if (!constraints?.length || !bones?.length || !rect) return [];
   const minX = Math.min(rect.x, rect.x + rect.w);
   const maxX = Math.max(rect.x, rect.x + rect.w);
@@ -233,8 +363,18 @@ export function selectConstraintsInRect({ constraints, bones, rect }: { constrai
   const out: string[] = [];
   for (const c of constraints) {
     const { targetX, targetY } = c;
-    if (typeof targetX === 'number' && Number.isFinite(targetX) && typeof targetY === 'number' && Number.isFinite(targetY)) {
-      if (targetX >= minX && targetX <= maxX && targetY >= minY && targetY <= maxY) {
+    if (
+      typeof targetX === "number" &&
+      Number.isFinite(targetX) &&
+      typeof targetY === "number" &&
+      Number.isFinite(targetY)
+    ) {
+      if (
+        targetX >= minX &&
+        targetX <= maxX &&
+        targetY >= minY &&
+        targetY <= maxY
+      ) {
         out.push(c.id);
       }
       continue;
@@ -276,7 +416,14 @@ export function computeBoneSelectionFromClick({
   boneHit,
   shiftKey,
   ctrlOrMetaKey,
-}: { orderedBoneIds: readonly string[]; currentSelection: readonly string[]; anchorBoneId: string | null; boneHit: string; shiftKey: boolean; ctrlOrMetaKey: boolean }): string[] {
+}: {
+  orderedBoneIds: readonly string[];
+  currentSelection: readonly string[];
+  anchorBoneId: string | null;
+  boneHit: string;
+  shiftKey: boolean;
+  ctrlOrMetaKey: boolean;
+}): string[] {
   if (!boneHit) return [];
   const order: readonly string[] = orderedBoneIds;
   const current = currentSelection.filter((id) => order.includes(id));

@@ -1,6 +1,14 @@
-import type { BackgroundAnalysis, RgbaImageData } from '../contracts.js';
+import type { RgbaImageData } from "../contracts.types.js";
 
-export function analyzeModularSpriteBackground(image: RgbaImageData): BackgroundAnalysis {
+interface BackgroundAnalysis {
+  mode: "alpha" | "chroma";
+  color: { r: number; g: number; b: number };
+  confidence: number;
+}
+
+export function analyzeModularSpriteBackground(
+  image: RgbaImageData,
+): BackgroundAnalysis {
   const { data, width, height } = image;
   const borderIndices: number[] = [];
   for (let x = 0; x < width; x += 1) {
@@ -11,7 +19,10 @@ export function analyzeModularSpriteBackground(image: RgbaImageData): Background
   }
 
   let transparent = 0;
-  const bins = new Map<number, { count: number; red: number; green: number; blue: number }>();
+  const bins = new Map<
+    number,
+    { count: number; red: number; green: number; blue: number }
+  >();
   for (const pixelIndex of borderIndices) {
     const offset = pixelIndex * 4;
     const alpha = data[offset + 3] ?? 0;
@@ -30,14 +41,19 @@ export function analyzeModularSpriteBackground(image: RgbaImageData): Background
 
   const borderCount = Math.max(1, borderIndices.length);
   if (transparent / borderCount >= 0.5) {
-    return { mode: 'alpha', color: { r: 0, g: 0, b: 0 }, confidence: transparent / borderCount };
+    return {
+      mode: "alpha",
+      color: { r: 0, g: 0, b: 0 },
+      confidence: transparent / borderCount,
+    };
   }
 
   let dominant = { count: 0, red: 0, green: 0, blue: 0 };
-  for (const bin of bins.values()) if (bin.count > dominant.count) dominant = bin;
+  for (const bin of bins.values())
+    if (bin.count > dominant.count) dominant = bin;
   const divisor = Math.max(1, dominant.count);
   return {
-    mode: 'chroma',
+    mode: "chroma",
     color: {
       r: Math.round(dominant.red / divisor),
       g: Math.round(dominant.green / divisor),
@@ -46,4 +62,3 @@ export function analyzeModularSpriteBackground(image: RgbaImageData): Background
     confidence: dominant.count / borderCount,
   };
 }
-

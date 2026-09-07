@@ -1,4 +1,4 @@
-import type { MigrationDocument } from './types.js';
+import type { MigrationDocument } from "./migrationDocument.types.js";
 
 export const FROM_VERSION = 8 as const;
 export const TO_VERSION = 9 as const;

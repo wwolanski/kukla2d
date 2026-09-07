@@ -18,7 +18,15 @@ import {
 } from "../infrastructure/imageCodec.js";
 import { createModularSpriteGateway } from "../infrastructure/modularSpriteGateway.js";
 
-import type { ModularSpriteWizardCompositionProps } from "./ModularSpriteWizardComposition.types.js";
+import type { ModularSpriteWizardProps as WizardViewProps } from "../components/wizard/ModularSpriteWizard.types.js";
+
+interface ModularSpriteWizardCompositionProps {
+  open: boolean;
+  existingId?: ModularSpriteId | null;
+  onOpenChange: (open: boolean) => void;
+  onCommit: WizardViewProps["onCommit"];
+  confirmDiscard?: () => boolean;
+}
 
 export function ModularSpriteWizardComposition({
   open,

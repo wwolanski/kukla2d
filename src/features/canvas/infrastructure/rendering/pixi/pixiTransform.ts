@@ -1,3 +1,5 @@
+import type { Transform } from "@kukla2d/contracts";
+
 /**
  * Pure helper: apply a node transform to a Pixi display object.
  *
@@ -11,12 +13,19 @@
  * @param {{ position: {x:number,y:number}, rotation: number, scale: {x:number,y:number}, pivot: {x:number,y:number} }} displayObject
  * @param {{ x?: number, y?: number, rotation?: number, scaleX?: number, scaleY?: number, pivotX?: number, pivotY?: number }} t
  */
-import type { PixiTransformInput } from '../rendererTypes.js';
-import type { Container } from 'pixi.js';
+import type { Container } from "pixi.js";
 
-type TransformableDisplayObject = Pick<Container, 'position' | 'rotation' | 'scale' | 'pivot'>;
+type PixiTransformInput = Partial<Transform>;
 
-export function applyNodeTransformToPixiDisplayObject(displayObject: TransformableDisplayObject, t: PixiTransformInput | null | undefined): void {
+type TransformableDisplayObject = Pick<
+  Container,
+  "position" | "rotation" | "scale" | "pivot"
+>;
+
+export function applyNodeTransformToPixiDisplayObject(
+  displayObject: TransformableDisplayObject,
+  t: PixiTransformInput | null | undefined,
+): void {
   const {
     x = 0,
     y = 0,

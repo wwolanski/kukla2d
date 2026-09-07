@@ -1,24 +1,19 @@
-import type { AnimationModifier, Bone, ProjectDocument } from '@kukla2d/contracts';
+import type { AnimationModifier, ProjectDocument } from "@kukla2d/contracts";
 
-import type { AnimationState } from '@/store/animationStoreTypes';
+import type { AnimationState } from "@/store/animationStoreTypes.types.js";
 
-import type { PoseOverrides } from '@/domain/animationEngine';
-import { evaluateAnimationModifiers, evaluateReactionModifiers } from '@/domain/autoMotion';
+import {
+  evaluateAnimationModifiers,
+  evaluateReactionModifiers,
+} from "@/domain/autoMotion/modifierEvaluation.js";
 
-import { buildFramePose } from '@/features/canvas/domain/framePose.js';
-import type { FramePose } from '@/features/canvas/domain/framePose.js';
+import { buildFramePose } from "@/features/canvas/domain/framePose.js";
+import type { FramePose } from "@/features/canvas/domain/framePose.types.js";
 
-import type { CanvasEditorSnapshot } from './canvasApplicationTypes.js';
+import type { CanvasEditorSnapshot } from "./canvasApplication.types.js";
+import type { PhysicsRuntime } from "./evaluateEditorFramePose.types.js";
 
-export interface PhysicsRuntime {
-  evaluate(args: { project: ProjectDocument; effectiveBones: readonly Bone[]; timestamp: number; enabled: boolean }): {
-    active: boolean;
-    overrides: PoseOverrides | null;
-  };
-  reset?: () => void;
-}
-
-export interface EvaluateEditorFramePoseArgs {
+interface EvaluateEditorFramePoseArgs {
   project: ProjectDocument;
   editorState: CanvasEditorSnapshot;
   animationState: AnimationState;
@@ -63,9 +58,10 @@ export function evaluateEditorFramePose({
     ? animationState.currentTime
     : (timestamp ?? 0);
   const liveTimeMs = Number.isFinite(timestamp) ? timestamp : transportTimeMs;
-  const timeMs = editorState?.editorMode === 'animation' || animationState?.isPlaying
-    ? transportTimeMs
-    : liveTimeMs;
+  const timeMs =
+    editorState?.editorMode === "animation" || animationState?.isPlaying
+      ? transportTimeMs
+      : liveTimeMs;
 
   const timeModifierPoseOverrides = evaluateAnimationModifiers({
     project,
@@ -111,7 +107,7 @@ export function evaluateEditorFramePose({
     project,
     effectiveBones: prePhysicsFrame.effectiveBones,
     timestamp,
-    enabled: editorState.activeTool === 'pose',
+    enabled: editorState.activeTool === "pose",
   });
 
   if (!physicsResult.overrides?.size) {

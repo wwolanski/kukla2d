@@ -1,16 +1,16 @@
-import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 
-import type { ProjectDocument } from '@kukla2d/contracts';
+import type { ProjectDocument } from "@kukla2d/contracts";
 
-import { useProjectStore } from '@/store/projectStore';
+import { useProjectStore } from "@/store/projectStore";
 
-import { useRecoveryRepository } from './useRecoveryRepository.js';
+import { useRecoveryRepository } from "./useRecoveryRepository.js";
 
-import type { RecoveryRecord } from '@/io/projectDb';
+import type { RecoveryRecord } from "@/io/projectDb.types.js";
 
 const DEBOUNCE_MS = 3000;
 
-type RecoveryStatus = 'idle' | 'scheduled' | 'saving' | 'saved' | 'failed';
+type RecoveryStatus = "idle" | "scheduled" | "saving" | "saved" | "failed";
 
 interface SourceIdentity {
   sourceProjectId: string | null;
@@ -36,9 +36,12 @@ interface SchedulerResult {
   readRecovery: () => Promise<RecoveryRecord | null>;
 }
 
-export function useRecoveryScheduler({ enabled = true, getSourceIdentity }: SchedulerOptions = {}): SchedulerResult {
+export function useRecoveryScheduler({
+  enabled = true,
+  getSourceIdentity,
+}: SchedulerOptions = {}): SchedulerResult {
   const repository = useRecoveryRepository();
-  const [status, setStatus] = useState<RecoveryStatus>('idle');
+  const [status, setStatus] = useState<RecoveryStatus>("idle");
   const revisionRef = useRef(0);
   const pendingRevisionRef = useRef<number | null>(null);
   const inflightRef = useRef(false);
@@ -49,7 +52,10 @@ export function useRecoveryScheduler({ enabled = true, getSourceIdentity }: Sche
   const activeSaveRef = useRef<Promise<void> | null>(null);
 
   const scheduleSnapshot = useCallback(() => {
-    const state = useProjectStore.getState() as { project: ProjectDocument; hasUnsavedChanges: boolean };
+    const state = useProjectStore.getState() as {
+      project: ProjectDocument;
+      hasUnsavedChanges: boolean;
+    };
     if (!state.hasUnsavedChanges) return;
     const identity = getSourceIdentity?.() ?? ({} as SourceIdentity);
     snapshotRef.current = {
@@ -67,14 +73,14 @@ export function useRecoveryScheduler({ enabled = true, getSourceIdentity }: Sche
     }
 
     inflightRef.current = true;
-    setStatus('saving');
+    setStatus("saving");
     const saveOperation = (async (): Promise<void> => {
       try {
-        const { saveProject } = await import('@/io/projectFile');
+        const { saveProject } = await import("@/io/projectFile");
         while (mountedRef.current) {
           const snapshot = snapshotRef.current;
           if (!snapshot) {
-            setStatus('idle');
+            setStatus("idle");
             return;
           }
 
@@ -82,14 +88,21 @@ export function useRecoveryScheduler({ enabled = true, getSourceIdentity }: Sche
           const clearGeneration = clearGenerationRef.current;
           pendingRevisionRef.current = null;
           const archive = await saveProject(snapshot.project);
-          if (!mountedRef.current || clearGenerationRef.current !== clearGeneration) return;
+          if (
+            !mountedRef.current ||
+            clearGenerationRef.current !== clearGeneration
+          )
+            return;
 
-          if (pendingRevisionRef.current !== null && pendingRevisionRef.current > revision) {
+          if (
+            pendingRevisionRef.current !== null &&
+            pendingRevisionRef.current > revision
+          ) {
             continue;
           }
 
           await repository.write({
-            id: 'workspace-recovery',
+            id: "workspace-recovery",
             archive,
             savedAt: Date.now(),
             sourceProjectId: snapshot.sourceProjectId,
@@ -97,21 +110,32 @@ export function useRecoveryScheduler({ enabled = true, getSourceIdentity }: Sche
             documentVersion: snapshot.project.version,
             revision,
           });
-          if (!mountedRef.current || clearGenerationRef.current !== clearGeneration) return;
+          if (
+            !mountedRef.current ||
+            clearGenerationRef.current !== clearGeneration
+          )
+            return;
 
-          if (pendingRevisionRef.current !== null && pendingRevisionRef.current > revision) {
+          if (
+            pendingRevisionRef.current !== null &&
+            pendingRevisionRef.current > revision
+          ) {
             continue;
           }
-          setStatus('saved');
+          setStatus("saved");
           return;
         }
       } catch (error) {
-        console.error('[Recovery] Failed to save workspace recovery:', error);
-        if (mountedRef.current) setStatus('failed');
+        console.error("[Recovery] Failed to save workspace recovery:", error);
+        if (mountedRef.current) setStatus("failed");
       } finally {
         inflightRef.current = false;
         activeSaveRef.current = null;
-        if (mountedRef.current && pendingRevisionRef.current !== null && snapshotRef.current) {
+        if (
+          mountedRef.current &&
+          pendingRevisionRef.current !== null &&
+          snapshotRef.current
+        ) {
           pendingRevisionRef.current = null;
           void runSave();
         }
@@ -126,7 +150,7 @@ export function useRecoveryScheduler({ enabled = true, getSourceIdentity }: Sche
 
     if (!scheduleSnapshot()) return;
     revisionRef.current += 1;
-    setStatus('scheduled');
+    setStatus("scheduled");
 
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
@@ -144,13 +168,13 @@ export function useRecoveryScheduler({ enabled = true, getSourceIdentity }: Sche
     snapshotRef.current = null;
     pendingRevisionRef.current = null;
     revisionRef.current = 0;
-    setStatus('idle');
+    setStatus("idle");
     try {
       await repository.clear();
       return true;
     } catch (error) {
-      console.error('[Recovery] Failed to clear workspace recovery:', error);
-      if (mountedRef.current) setStatus('failed');
+      console.error("[Recovery] Failed to clear workspace recovery:", error);
+      if (mountedRef.current) setStatus("failed");
       return false;
     }
   }, [repository]);
@@ -175,12 +199,22 @@ export function useRecoveryScheduler({ enabled = true, getSourceIdentity }: Sche
 
   useEffect(() => {
     if (!enabled) return;
-    const previousState = useProjectStore.getState() as { project: ProjectDocument; hasUnsavedChanges: boolean };
+    const previousState = useProjectStore.getState() as {
+      project: ProjectDocument;
+      hasUnsavedChanges: boolean;
+    };
     if (previousState.hasUnsavedChanges) scheduleSave();
     const unsub = useProjectStore.subscribe((state) => {
-      const s = state as { project: ProjectDocument; hasUnsavedChanges: boolean };
+      const s = state as {
+        project: ProjectDocument;
+        hasUnsavedChanges: boolean;
+      };
       const dirty = s.hasUnsavedChanges;
-      if (dirty && (!previousState.hasUnsavedChanges || s.project !== previousState.project)) {
+      if (
+        dirty &&
+        (!previousState.hasUnsavedChanges ||
+          s.project !== previousState.project)
+      ) {
         scheduleSave();
       }
       previousState.project = s.project;
@@ -189,11 +223,14 @@ export function useRecoveryScheduler({ enabled = true, getSourceIdentity }: Sche
     return unsub;
   }, [enabled, scheduleSave]);
 
-  return useMemo(() => ({
-    status,
-    scheduleSave,
-    clearRecovery,
-    forceSave,
-    readRecovery: repository.read,
-  }), [status, scheduleSave, clearRecovery, forceSave, repository.read]);
+  return useMemo(
+    () => ({
+      status,
+      scheduleSave,
+      clearRecovery,
+      forceSave,
+      readRecovery: repository.read,
+    }),
+    [status, scheduleSave, clearRecovery, forceSave, repository.read],
+  );
 }

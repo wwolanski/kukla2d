@@ -1,6 +1,6 @@
-import type { CaptureOptions } from '../rendererTypes.js';
-import type { PixiViewportBridge } from './PixiViewportBridge.js';
-import type { Application } from 'pixi.js';
+import type { PixiViewportBridge } from "./PixiViewportBridge.js";
+import type { CaptureOptions } from "../../../application/canvasRenderer.types.js";
+import type { Application } from "pixi.js";
 
 interface PixiCaptureServiceOptions {
   app: Application;
@@ -21,8 +21,10 @@ export class PixiCaptureService {
     const prevWidth = renderer.width;
     const prevHeight = renderer.height;
 
-    const needsResize = options.width != null && options.height != null
-      && (options.width !== prevWidth || options.height !== prevHeight);
+    const needsResize =
+      options.width != null &&
+      options.height != null &&
+      (options.width !== prevWidth || options.height !== prevHeight);
 
     const captureWidth = needsResize ? options.width : prevWidth;
     const captureHeight = needsResize ? options.height : prevHeight;
@@ -32,10 +34,18 @@ export class PixiCaptureService {
       if (needsResize) renderer.resize(captureWidth, captureHeight);
       this.app.render();
 
-      const gl = 'gl' in renderer ? renderer.gl : null;
+      const gl = "gl" in renderer ? renderer.gl : null;
       if (!gl) return null;
       const pixels = new Uint8Array(captureWidth * captureHeight * 4);
-      gl.readPixels(0, 0, captureWidth, captureHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      gl.readPixels(
+        0,
+        0,
+        captureWidth,
+        captureHeight,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        pixels,
+      );
 
       const rows = new Uint8Array(pixels.length);
       const rowStride = captureWidth * 4;
@@ -45,7 +55,11 @@ export class PixiCaptureService {
         rows.set(pixels.subarray(srcOffset, srcOffset + rowStride), dstOffset);
       }
 
-      return new ImageData(new Uint8ClampedArray(rows.buffer), captureWidth, captureHeight);
+      return new ImageData(
+        new Uint8ClampedArray(rows.buffer),
+        captureWidth,
+        captureHeight,
+      );
     } finally {
       if (needsResize) {
         renderer.resize(prevWidth, prevHeight);

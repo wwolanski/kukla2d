@@ -1,6 +1,6 @@
-import { normalizedPoint } from '../imageMath.js';
+import { normalizedPoint } from "../imageMath.js";
 
-import type { ComponentStats } from './connectedComponents.js';
+import type { ComponentStats } from "./connectedComponents.types.js";
 
 const MAX_CONTOUR_CANDIDATES = 1024;
 const MAX_CONTOUR_POINTS = 256;
@@ -17,24 +17,48 @@ interface ContourSample extends GridPoint {
 // Clockwise Moore-neighbour order.  Keeping the traversal on adjacent pixels
 // prevents the renderer from connecting unrelated points across a concavity.
 const MOORE_NEIGHBOURS: readonly (readonly [number, number])[] = [
-  [-1, -1], [0, -1], [1, -1], [1, 0],
-  [1, 1], [0, 1], [-1, 1], [-1, 0],
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+  [1, 0],
+  [1, 1],
+  [0, 1],
+  [-1, 1],
+  [-1, 0],
 ];
 
 function samePoint(left: GridPoint, right: GridPoint): boolean {
   return left.x === right.x && left.y === right.y;
 }
 
-function isComponentPixel(labels: Int32Array, id: number, width: number, height: number, x: number, y: number): boolean {
-  return x >= 0 && x < width && y >= 0 && y < height && labels[y * width + x] === id;
+function isComponentPixel(
+  labels: Int32Array,
+  id: number,
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+): boolean {
+  return (
+    x >= 0 && x < width && y >= 0 && y < height && labels[y * width + x] === id
+  );
 }
 
-function isBoundaryPixel(labels: Int32Array, id: number, width: number, height: number, point: GridPoint): boolean {
-  if (!isComponentPixel(labels, id, width, height, point.x, point.y)) return false;
-  return !isComponentPixel(labels, id, width, height, point.x - 1, point.y)
-    || !isComponentPixel(labels, id, width, height, point.x + 1, point.y)
-    || !isComponentPixel(labels, id, width, height, point.x, point.y - 1)
-    || !isComponentPixel(labels, id, width, height, point.x, point.y + 1);
+function isBoundaryPixel(
+  labels: Int32Array,
+  id: number,
+  width: number,
+  height: number,
+  point: GridPoint,
+): boolean {
+  if (!isComponentPixel(labels, id, width, height, point.x, point.y))
+    return false;
+  return (
+    !isComponentPixel(labels, id, width, height, point.x - 1, point.y) ||
+    !isComponentPixel(labels, id, width, height, point.x + 1, point.y) ||
+    !isComponentPixel(labels, id, width, height, point.x, point.y - 1) ||
+    !isComponentPixel(labels, id, width, height, point.x, point.y + 1)
+  );
 }
 
 function nextBoundaryPixel(
@@ -45,24 +69,38 @@ function nextBoundaryPixel(
   current: GridPoint,
   backtrack: GridPoint,
 ): { point: GridPoint; backtrack: GridPoint } | null {
-  const backtrackIndex = MOORE_NEIGHBOURS.findIndex(([deltaX, deltaY]) => current.x + deltaX === backtrack.x && current.y + deltaY === backtrack.y);
-  const firstDirection = backtrackIndex < 0 ? 0 : (backtrackIndex + 1) % MOORE_NEIGHBOURS.length;
+  const backtrackIndex = MOORE_NEIGHBOURS.findIndex(
+    ([deltaX, deltaY]) =>
+      current.x + deltaX === backtrack.x && current.y + deltaY === backtrack.y,
+  );
+  const firstDirection =
+    backtrackIndex < 0 ? 0 : (backtrackIndex + 1) % MOORE_NEIGHBOURS.length;
   for (let offset = 0; offset < MOORE_NEIGHBOURS.length; offset += 1) {
     const direction = (firstDirection + offset) % MOORE_NEIGHBOURS.length;
     const [deltaX, deltaY] = MOORE_NEIGHBOURS[direction]!;
     const point = { x: current.x + deltaX, y: current.y + deltaY };
-    if (!isComponentPixel(labels, id, width, height, point.x, point.y)) continue;
-    const previousDirection = (direction + MOORE_NEIGHBOURS.length - 1) % MOORE_NEIGHBOURS.length;
-    const [previousDeltaX, previousDeltaY] = MOORE_NEIGHBOURS[previousDirection]!;
+    if (!isComponentPixel(labels, id, width, height, point.x, point.y))
+      continue;
+    const previousDirection =
+      (direction + MOORE_NEIGHBOURS.length - 1) % MOORE_NEIGHBOURS.length;
+    const [previousDeltaX, previousDeltaY] =
+      MOORE_NEIGHBOURS[previousDirection]!;
     return {
       point,
-      backtrack: { x: current.x + previousDeltaX, y: current.y + previousDeltaY },
+      backtrack: {
+        x: current.x + previousDeltaX,
+        y: current.y + previousDeltaY,
+      },
     };
   }
   return null;
 }
 
-function appendContourSample(samples: ContourSample[], point: GridPoint, step: number): void {
+function appendContourSample(
+  samples: ContourSample[],
+  point: GridPoint,
+  step: number,
+): void {
   if (samples.length < MAX_CONTOUR_CANDIDATES) {
     samples.push({ ...point, step });
     return;
@@ -77,7 +115,7 @@ export function componentContour(
   width: number,
   height: number,
   centroid: { x: number; y: number },
-  bounds: Pick<ComponentStats, 'minX' | 'minY' | 'maxX' | 'maxY'>,
+  bounds: Pick<ComponentStats, "minX" | "minY" | "maxX" | "maxY">,
 ): ReturnType<typeof normalizedPoint>[] {
   // Retain the argument for callers that already provide the component
   // centroid.  The contour must follow neighbouring boundary pixels rather
@@ -106,7 +144,14 @@ export function componentContour(
 
   for (let step = 0; step < maxSteps; step += 1) {
     appendContourSample(samples, current, step);
-    const next = nextBoundaryPixel(labels, id, width, height, current, backtrack);
+    const next = nextBoundaryPixel(
+      labels,
+      id,
+      width,
+      height,
+      current,
+      backtrack,
+    );
     if (!next) break;
     if (!firstNext) {
       firstNext = next.point;
@@ -118,8 +163,11 @@ export function componentContour(
     backtrack = next.backtrack;
   }
 
-  if (closed && samples.length > 1 && samePoint(samples.at(-1)!, start)) samples.pop();
+  if (closed && samples.length > 1 && samePoint(samples.at(-1)!, start))
+    samples.pop();
   samples.sort((left, right) => left.step - right.step);
   const stride = Math.max(1, Math.ceil(samples.length / MAX_CONTOUR_POINTS));
-  return samples.filter((_, index) => index % stride === 0).map(point => normalizedPoint(point.x, point.y, width, height));
+  return samples
+    .filter((_, index) => index % stride === 0)
+    .map((point) => normalizedPoint(point.x, point.y, width, height));
 }

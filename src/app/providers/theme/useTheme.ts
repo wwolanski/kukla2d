@@ -1,9 +1,9 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext } from "react";
 
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from "react";
 
-type ThemeMode = 'light' | 'dark' | 'system';
-type ResolvedTheme = Exclude<ThemeMode, 'system'>;
+type ThemeMode = "light" | "dark" | "system";
+type ResolvedTheme = Exclude<ThemeMode, "system">;
 
 interface ThemePreset {
   name: string;
@@ -16,7 +16,7 @@ interface ThemeModalConfig {
   onSelect: (theme: ThemePreset) => void;
 }
 
-export interface ThemeContextValue {
+interface ThemeContextValue {
   themeMode: ThemeMode;
   setThemeMode: Dispatch<SetStateAction<ThemeMode>>;
   lightTheme: ThemePreset;
@@ -36,7 +36,7 @@ export const ThemeContext = createContext<ThemeContextValue | null>(null);
 export const useTheme = (): ThemeContextValue => {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+    throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
 };

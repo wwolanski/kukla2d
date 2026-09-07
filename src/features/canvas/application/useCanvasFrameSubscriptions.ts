@@ -1,43 +1,71 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
-import { useAnimationStore } from '@/store/animationStore';
-import type { AnimationStore } from '@/store/animationStoreTypes';
-import { useEditorStore } from '@/store/editorStore';
-import type { EditorStore } from '@/store/editorStoreTypes';
-import { useProjectStore } from '@/store/projectStore';
+import type { ProjectDocument } from "@kukla2d/contracts";
 
-import { FRAME_RELEVANT_EDITOR_FIELDS } from '@/features/canvas/domain/frameEditorFields.js';
-import type { EditorWorkflowState } from '@/features/canvas/domain/workflowContracts.js';
+import { useAnimationStore } from "@/store/animationStore";
+import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
+import { useEditorStore } from "@/store/editorStore";
+import type { EditorStore } from "@/store/editorStoreTypes.types.js";
+import { useProjectStore } from "@/store/projectStore";
 
-import type { CanvasFrameSubscriptionRefs } from './canvasApplicationTypes.js';
+import { FRAME_RELEVANT_EDITOR_FIELDS } from "@/features/canvas/domain/frameEditorFields.js";
+import type { EditorWorkflowState } from "@/features/canvas/domain/workflowContracts.types.js";
+
+import type {
+  CanvasEditorSnapshot,
+  MutableRef,
+} from "./canvasApplication.types.js";
+import type { editorWorkflowMachine } from "./editorWorkflowMachine.js";
+import type { ActorRefFrom } from "xstate";
+
+type WorkflowActorRef = ActorRefFrom<typeof editorWorkflowMachine>;
+
+interface CanvasFrameSubscriptionRefs {
+  projectRef: MutableRef<ProjectDocument>;
+  editorRef: MutableRef<CanvasEditorSnapshot>;
+  animationRef: MutableRef<AnimationStore>;
+  workflowActorRef: WorkflowActorRef;
+  markDirty: () => void;
+}
 
 const WORKFLOW_FRAME_FIELDS = [
-  'activeTool',
-  'selectionTarget',
-  'riggingMode',
-  'riggingTool',
-  'toolMode',
-  'meshEditMode',
-  'meshSubMode',
-  'weightPaintMode',
+  "activeTool",
+  "selectionTarget",
+  "riggingMode",
+  "riggingTool",
+  "toolMode",
+  "meshEditMode",
+  "meshSubMode",
+  "weightPaintMode",
 ] as const satisfies readonly (keyof EditorWorkflowState)[];
 
 const ANIMATION_FRAME_FIELDS = [
-  'activeAnimationId',
-  'currentTime',
-  'endFrame',
-  'fps',
-  'loopKeyframes',
-  'draftPose',
+  "activeAnimationId",
+  "currentTime",
+  "endFrame",
+  "fps",
+  "loopKeyframes",
+  "draftPose",
 ] as const satisfies readonly (keyof AnimationStore)[];
 
-export const didFrameEditorStateChange = (prev: EditorStore, next: EditorStore): boolean =>
-  (FRAME_RELEVANT_EDITOR_FIELDS as readonly (keyof EditorStore)[]).some((field) => next[field] !== prev[field]);
+export const didFrameEditorStateChange = (
+  prev: EditorStore,
+  next: EditorStore,
+): boolean =>
+  (FRAME_RELEVANT_EDITOR_FIELDS as readonly (keyof EditorStore)[]).some(
+    (field) => next[field] !== prev[field],
+  );
 
-export const didWorkflowFrameStateChange = (prev: EditorWorkflowState, next: EditorWorkflowState): boolean =>
+export const didWorkflowFrameStateChange = (
+  prev: EditorWorkflowState,
+  next: EditorWorkflowState,
+): boolean =>
   WORKFLOW_FRAME_FIELDS.some((field) => next[field] !== prev[field]);
 
-export const didAnimationFrameStateChange = (prev: AnimationStore, next: AnimationStore): boolean =>
+export const didAnimationFrameStateChange = (
+  prev: AnimationStore,
+  next: AnimationStore,
+): boolean =>
   ANIMATION_FRAME_FIELDS.some((field) => next[field] !== prev[field]);
 
 export function createCanvasFrameSubscriptions({
@@ -91,28 +119,20 @@ export function createCanvasFrameSubscriptions({
   };
 }
 
-export function useCanvasFrameSubscriptions(args: CanvasFrameSubscriptionRefs): void {
-  const {
-    projectRef,
-    editorRef,
-    animationRef,
-    workflowActorRef,
-    markDirty,
-  } = args;
+export function useCanvasFrameSubscriptions(
+  args: CanvasFrameSubscriptionRefs,
+): void {
+  const { projectRef, editorRef, animationRef, workflowActorRef, markDirty } =
+    args;
   useEffect(
-    () => createCanvasFrameSubscriptions({
-      projectRef,
-      editorRef,
-      animationRef,
-      workflowActorRef,
-      markDirty,
-    }),
-    [
-      projectRef,
-      editorRef,
-      animationRef,
-      workflowActorRef,
-      markDirty,
-    ],
+    () =>
+      createCanvasFrameSubscriptions({
+        projectRef,
+        editorRef,
+        animationRef,
+        workflowActorRef,
+        markDirty,
+      }),
+    [projectRef, editorRef, animationRef, workflowActorRef, markDirty],
   );
 }

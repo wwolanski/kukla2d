@@ -1,58 +1,40 @@
-import { toAnimationId, type Animation, type AnimationId } from '@kukla2d/contracts';
+import {
+  toAnimationId,
+  type Animation,
+  type AnimationId,
+} from "@kukla2d/contracts";
 
-import { loadAnimationSettings } from '@/platform/animationSettingsRepository.js';
+import { loadAnimationSettings } from "@/platform/animationSettingsRepository.js";
 
-import { useAnimationStore } from '@/store/animationStore';
-import type {
-  ProjectActions,
-  ProjectCommandResult,
-} from '@/store/project/projectStoreTypes';
-import { useProjectStore } from '@/store/projectStore';
-import { beginBatch, endBatch } from '@/store/undoHistory';
+import { useAnimationStore } from "@/store/animationStore";
+import { useProjectStore } from "@/store/projectStore";
+import { beginBatch, endBatch } from "@/store/undoHistory";
 
-import { canNavigate } from '@/domain/animationAuthoring.js';
+import { canNavigate } from "@/domain/animationAuthoring.js";
 import type {
   CreateAnimationClipPayload,
   UpdateAnimationTimingPayload,
-} from '@/domain/animationCommandTypes';
-import { durationMsFromFrameCount } from '@/domain/animationDefaults.js';
+} from "@/domain/animationCommandTypes.types.js";
+import { durationMsFromFrameCount } from "@/domain/animationDefaults.js";
 
-
-
+import type { TimelineCommandApi } from "./createTimelineCommandApi.types.js";
 
 interface TimelineCreateAnimationPayload extends CreateAnimationClipPayload {
   frameCount?: number;
 }
 
-export interface TimelineCommandApi extends Pick<
-  ProjectActions,
-  | 'renameAnimationClip'
-  | 'deleteAnimationClip'
-  | 'updateAnimationTiming'
-  | 'upsertAnimationKeyframe'
-  | 'upsertAnimationKeyframes'
-  | 'editAnimationKeyframes'
-  | 'moveAnimationKeyframes'
-  | 'deleteAnimationKeyframes'
-  | 'setAnimationKeyframeEasing'
-  | 'addAnimationMarker'
-  | 'addAnimationAudioTrack'
-  | 'updateAnimationAudioTrack'
-  | 'removeAnimationAudioTrack'
-  | 'setAnimationTargetBoomerang'
-> {
-  selectAnimationClip: (animationId: AnimationId) => AnimationId | null;
-  ensureAnimationClip: () => AnimationId | null;
-  createAnimationClip: (payload?: TimelineCreateAnimationPayload) => ProjectCommandResult;
-  beginAudioTrackGesture: (name: string) => void;
-  endAudioTrackGesture: () => void;
-}
-
 function getAnimationById(animationId: AnimationId): Animation | null {
-  return useProjectStore.getState().project.animations.find((animation) => animation.id === animationId) ?? null;
+  return (
+    useProjectStore
+      .getState()
+      .project.animations.find((animation) => animation.id === animationId) ??
+    null
+  );
 }
 
-function syncRuntimeToAnimation(animation: Animation | null): AnimationId | null {
+function syncRuntimeToAnimation(
+  animation: Animation | null,
+): AnimationId | null {
   if (!animation) return null;
   const animationState = useAnimationStore.getState();
   animationState.switchAnimation(animation);
@@ -76,7 +58,10 @@ function selectAnimation(animationId: AnimationId): AnimationId | null {
 
 function checkNavigationGuard(): ReturnType<typeof canNavigate> {
   const animationState = useAnimationStore.getState();
-  return canNavigate({ dirty: animationState.draftDirty, values: animationState.draftPose });
+  return canNavigate({
+    dirty: animationState.draftDirty,
+    values: animationState.draftPose,
+  });
 }
 
 export function createTimelineCommandApi(): TimelineCommandApi {
@@ -95,7 +80,10 @@ export function createTimelineCommandApi(): TimelineCommandApi {
     ensureAnimationClip() {
       const project = useProjectStore.getState().project;
       const animationState = useAnimationStore.getState();
-      const activeAnimation = project.animations.find((animation) => animation.id === animationState.activeAnimationId) ?? null;
+      const activeAnimation =
+        project.animations.find(
+          (animation) => animation.id === animationState.activeAnimationId,
+        ) ?? null;
       if (activeAnimation) return activeAnimation.id;
 
       const firstAnimation = project.animations[0] ?? null;
@@ -105,12 +93,17 @@ export function createTimelineCommandApi(): TimelineCommandApi {
 
       const settings = loadAnimationSettings();
       const resolvedFps = settings.fps;
-      const resolvedDuration = payloadDuration(resolvedFps, settings.frameCount);
+      const resolvedDuration = payloadDuration(
+        resolvedFps,
+        settings.frameCount,
+      );
       const result = useProjectStore.getState().createAnimationClip({
         fps: resolvedFps,
         durationMs: resolvedDuration,
       });
-      const createdId = result.affectedIds[0] ? toAnimationId(result.affectedIds[0]) : null;
+      const createdId = result.affectedIds[0]
+        ? toAnimationId(result.affectedIds[0])
+        : null;
       if (createdId) {
         selectAnimation(createdId);
       }
@@ -137,11 +130,14 @@ export function createTimelineCommandApi(): TimelineCommandApi {
       }
 
       if (payload.name !== undefined) merged.name = payload.name;
-      if (payload.animationId !== undefined) merged.animationId = payload.animationId;
+      if (payload.animationId !== undefined)
+        merged.animationId = payload.animationId;
       if (payload.id !== undefined) merged.id = payload.id;
 
       const result = useProjectStore.getState().createAnimationClip(merged);
-      const createdId = result.affectedIds[0] ? toAnimationId(result.affectedIds[0]) : null;
+      const createdId = result.affectedIds[0]
+        ? toAnimationId(result.affectedIds[0])
+        : null;
       if (createdId) {
         selectAnimation(createdId);
       }
@@ -158,11 +154,14 @@ export function createTimelineCommandApi(): TimelineCommandApi {
         const nav = checkNavigationGuard();
         if (!nav.allowed) return { changed: false, affectedIds: [] };
       }
-      const result = useProjectStore.getState().deleteAnimationClip(animationId);
+      const result = useProjectStore
+        .getState()
+        .deleteAnimationClip(animationId);
       if (!result.changed) return result;
 
       if (activeAnimationId === animationId) {
-        const remaining = useProjectStore.getState().project.animations[0] ?? null;
+        const remaining =
+          useProjectStore.getState().project.animations[0] ?? null;
         if (remaining) {
           selectAnimation(remaining.id);
         } else {
@@ -178,7 +177,10 @@ export function createTimelineCommandApi(): TimelineCommandApi {
       if (!result.changed) return result;
 
       const animation = getAnimationById(payload.animationId);
-      if (animation && useAnimationStore.getState().activeAnimationId === animation.id) {
+      if (
+        animation &&
+        useAnimationStore.getState().activeAnimationId === animation.id
+      ) {
         syncRuntimeTiming(animation);
       }
 
@@ -230,7 +232,7 @@ export function createTimelineCommandApi(): TimelineCommandApi {
     },
 
     beginAudioTrackGesture(name) {
-      beginBatch(null, { name, type: 'timeline' });
+      beginBatch(null, { name, type: "timeline" });
     },
 
     endAudioTrackGesture() {

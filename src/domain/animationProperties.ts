@@ -1,186 +1,185 @@
-import { isFiniteNumber } from '@/lib/math';
+import { isFiniteNumber } from "@/lib/math";
+
+import type {
+  AnimationPropertySpec,
+  AnimationTargetKind,
+  TrackValueCategory,
+} from "./animationProperties.types.js";
+
+type InterpolationMode = "none" | "linear" | "cubic";
 
 export const TRACK_VALUE_CATEGORIES = Object.freeze({
-  NUMERIC: 'numeric',
-  BOOLEAN: 'boolean',
-  MESH_VERTICES: 'meshVertices',
-  BLEND_SHAPE: 'blendShape',
-  EVENT: 'event',
+  NUMERIC: "numeric",
+  BOOLEAN: "boolean",
+  MESH_VERTICES: "meshVertices",
+  BLEND_SHAPE: "blendShape",
+  EVENT: "event",
 });
 
-export type TrackValueCategory = typeof TRACK_VALUE_CATEGORIES[keyof typeof TRACK_VALUE_CATEGORIES];
-export type AnimationTargetKind = 'node' | 'bone' | 'constraint' | 'slot';
-export type InterpolationMode = 'none' | 'linear' | 'cubic';
-
-export interface AnimationPropertySpec {
-  property: string;
-  targetKinds: readonly string[];
-  valueCategory: TrackValueCategory;
-  interpolation: InterpolationMode;
-  authorable: boolean;
-  rendered: boolean;
-  min?: number;
-  max?: number;
-  integer?: boolean;
-}
-
 const VALID_EASING_PRESETS: readonly string[] = Object.freeze([
-  'linear',
-  'ease',
-  'ease-both',
-  'ease-in',
-  'ease-out',
-  'stepped',
+  "linear",
+  "ease",
+  "ease-both",
+  "ease-in",
+  "ease-out",
+  "stepped",
 ]);
 
-const ANIMATION_PROPERTY_SPECS: readonly AnimationPropertySpec[] = Object.freeze([
-  Object.freeze({
-    property: 'x',
-    targetKinds: ['node', 'bone'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'cubic',
-    authorable: true,
-    rendered: true,
-  }),
-  Object.freeze({
-    property: 'y',
-    targetKinds: ['node', 'bone'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'cubic',
-    authorable: true,
-    rendered: true,
-  }),
-  Object.freeze({
-    property: 'rotation',
-    targetKinds: ['node', 'bone'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'cubic',
-    authorable: true,
-    rendered: true,
-  }),
-  Object.freeze({
-    property: 'scaleX',
-    targetKinds: ['node', 'bone'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'cubic',
-    authorable: true,
-    rendered: true,
-  }),
-  Object.freeze({
-    property: 'scaleY',
-    targetKinds: ['node', 'bone'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'cubic',
-    authorable: true,
-    rendered: true,
-  }),
-  Object.freeze({
-    property: 'opacity',
-    targetKinds: ['node'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'cubic',
-    authorable: true,
-    rendered: true,
-    min: 0,
-    max: 1,
-  }),
-  Object.freeze({
-    property: 'visible',
-    targetKinds: ['node'],
-    valueCategory: TRACK_VALUE_CATEGORIES.BOOLEAN,
-    interpolation: 'none',
-    authorable: true,
-    rendered: true,
-  }),
-  Object.freeze({
-    property: 'mesh_verts',
-    targetKinds: ['node'],
-    valueCategory: TRACK_VALUE_CATEGORIES.MESH_VERTICES,
-    interpolation: 'cubic',
-    authorable: true,
-    rendered: true,
-  }),
-  Object.freeze({
-    property: 'targetX',
-    targetKinds: ['constraint'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'cubic',
-    authorable: true,
-    rendered: true,
-  }),
-  Object.freeze({
-    property: 'targetY',
-    targetKinds: ['constraint'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'cubic',
-    authorable: true,
-    rendered: true,
-  }),
-  Object.freeze({
-    property: 'mix',
-    targetKinds: ['constraint'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'cubic',
-    authorable: true,
-    rendered: true,
-    min: 0,
-    max: 1,
-  }),
-  Object.freeze({
-    property: 'fkIk',
-    targetKinds: ['constraint'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'cubic',
-    authorable: true,
-    rendered: true,
-    min: 0,
-    max: 1,
-  }),
-  Object.freeze({
-    property: 'bendPositive',
-    targetKinds: ['constraint'],
-    valueCategory: TRACK_VALUE_CATEGORIES.BOOLEAN,
-    interpolation: 'none',
-    authorable: true,
-    rendered: true,
-  }),
-  Object.freeze({
-    property: 'order',
-    targetKinds: ['constraint'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'none',
-    authorable: true,
-    rendered: true,
-    integer: true,
-  }),
-  Object.freeze({
-    property: 'drawOrder',
-    targetKinds: ['node', 'slot'],
-    valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
-    interpolation: 'none',
-    authorable: true,
-    rendered: true,
-    integer: true,
-  }),
-  Object.freeze({
-    property: 'event',
-    targetKinds: ['node'],
-    valueCategory: TRACK_VALUE_CATEGORIES.EVENT,
-    interpolation: 'none',
-    authorable: false,
-    rendered: false,
-  }),
-]);
+const ANIMATION_PROPERTY_SPECS: readonly AnimationPropertySpec[] =
+  Object.freeze([
+    Object.freeze({
+      property: "x",
+      targetKinds: ["node", "bone"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "cubic",
+      authorable: true,
+      rendered: true,
+    }),
+    Object.freeze({
+      property: "y",
+      targetKinds: ["node", "bone"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "cubic",
+      authorable: true,
+      rendered: true,
+    }),
+    Object.freeze({
+      property: "rotation",
+      targetKinds: ["node", "bone"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "cubic",
+      authorable: true,
+      rendered: true,
+    }),
+    Object.freeze({
+      property: "scaleX",
+      targetKinds: ["node", "bone"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "cubic",
+      authorable: true,
+      rendered: true,
+    }),
+    Object.freeze({
+      property: "scaleY",
+      targetKinds: ["node", "bone"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "cubic",
+      authorable: true,
+      rendered: true,
+    }),
+    Object.freeze({
+      property: "opacity",
+      targetKinds: ["node"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "cubic",
+      authorable: true,
+      rendered: true,
+      min: 0,
+      max: 1,
+    }),
+    Object.freeze({
+      property: "visible",
+      targetKinds: ["node"],
+      valueCategory: TRACK_VALUE_CATEGORIES.BOOLEAN,
+      interpolation: "none",
+      authorable: true,
+      rendered: true,
+    }),
+    Object.freeze({
+      property: "mesh_verts",
+      targetKinds: ["node"],
+      valueCategory: TRACK_VALUE_CATEGORIES.MESH_VERTICES,
+      interpolation: "cubic",
+      authorable: true,
+      rendered: true,
+    }),
+    Object.freeze({
+      property: "targetX",
+      targetKinds: ["constraint"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "cubic",
+      authorable: true,
+      rendered: true,
+    }),
+    Object.freeze({
+      property: "targetY",
+      targetKinds: ["constraint"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "cubic",
+      authorable: true,
+      rendered: true,
+    }),
+    Object.freeze({
+      property: "mix",
+      targetKinds: ["constraint"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "cubic",
+      authorable: true,
+      rendered: true,
+      min: 0,
+      max: 1,
+    }),
+    Object.freeze({
+      property: "fkIk",
+      targetKinds: ["constraint"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "cubic",
+      authorable: true,
+      rendered: true,
+      min: 0,
+      max: 1,
+    }),
+    Object.freeze({
+      property: "bendPositive",
+      targetKinds: ["constraint"],
+      valueCategory: TRACK_VALUE_CATEGORIES.BOOLEAN,
+      interpolation: "none",
+      authorable: true,
+      rendered: true,
+    }),
+    Object.freeze({
+      property: "order",
+      targetKinds: ["constraint"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "none",
+      authorable: true,
+      rendered: true,
+      integer: true,
+    }),
+    Object.freeze({
+      property: "drawOrder",
+      targetKinds: ["node", "slot"],
+      valueCategory: TRACK_VALUE_CATEGORIES.NUMERIC,
+      interpolation: "none",
+      authorable: true,
+      rendered: true,
+      integer: true,
+    }),
+    Object.freeze({
+      property: "event",
+      targetKinds: ["node"],
+      valueCategory: TRACK_VALUE_CATEGORIES.EVENT,
+      interpolation: "none",
+      authorable: false,
+      rendered: false,
+    }),
+  ]);
 
-const SPECS_BY_PROPERTY = new Map(ANIMATION_PROPERTY_SPECS.map((spec) => [spec.property, spec]));
+const SPECS_BY_PROPERTY = new Map(
+  ANIMATION_PROPERTY_SPECS.map((spec) => [spec.property, spec]),
+);
 
-function isFiniteVector(value: unknown): value is readonly { x: number; y: number }[] {
-  return Array.isArray(value)
-    && value.every((point: unknown) => {
-      if (!point || typeof point !== 'object') return false;
+function isFiniteVector(
+  value: unknown,
+): value is readonly { x: number; y: number }[] {
+  return (
+    Array.isArray(value) &&
+    value.every((point: unknown) => {
+      if (!point || typeof point !== "object") return false;
       const vector = point as Record<string, unknown>;
       return Number.isFinite(vector.x) && Number.isFinite(vector.y);
-    });
+    })
+  );
 }
 
 /**
@@ -189,9 +188,12 @@ function isFiniteVector(value: unknown): value is readonly { x: number; y: numbe
  * @param {string} property
  * @returns {string | null}
  */
-export function getTrackValueCategory(property: string): TrackValueCategory | null {
-  if (typeof property !== 'string' || property.length === 0) return null;
-  if (property.startsWith('blendShape:')) return TRACK_VALUE_CATEGORIES.BLEND_SHAPE;
+export function getTrackValueCategory(
+  property: string,
+): TrackValueCategory | null {
+  if (typeof property !== "string" || property.length === 0) return null;
+  if (property.startsWith("blendShape:"))
+    return TRACK_VALUE_CATEGORIES.BLEND_SHAPE;
   return SPECS_BY_PROPERTY.get(property)?.valueCategory ?? null;
 }
 
@@ -212,18 +214,20 @@ export function isSupportedTrackProperty(property: string): boolean {
  * @param {string} property
  * @returns {AnimationPropertySpec | null}
  */
-export function getAnimationPropertySpec(property: string): AnimationPropertySpec | null {
-  if (typeof property !== 'string' || property.length === 0) return null;
+export function getAnimationPropertySpec(
+  property: string,
+): AnimationPropertySpec | null {
+  if (typeof property !== "string" || property.length === 0) return null;
 
   const staticSpec = SPECS_BY_PROPERTY.get(property);
   if (staticSpec) return staticSpec;
 
-  if (property.startsWith('blendShape:')) {
+  if (property.startsWith("blendShape:")) {
     return Object.freeze({
-      property: 'blendShape:',
-      targetKinds: ['node'],
+      property: "blendShape:",
+      targetKinds: ["node"],
       valueCategory: TRACK_VALUE_CATEGORIES.BLEND_SHAPE,
-      interpolation: 'cubic',
+      interpolation: "cubic",
       authorable: true,
       rendered: true,
       min: 0,
@@ -281,7 +285,10 @@ export function isRenderedProperty(property: string): boolean {
  * @param {string} targetKind - 'node' | 'bone' | 'constraint' | 'slot'
  * @returns {boolean}
  */
-export function isPropertyAllowedForTargetKind(property: string, targetKind: AnimationTargetKind): boolean {
+export function isPropertyAllowedForTargetKind(
+  property: string,
+  targetKind: AnimationTargetKind,
+): boolean {
   const spec = getAnimationPropertySpec(property);
   return spec !== null && spec.targetKinds.includes(targetKind);
 }
@@ -292,7 +299,9 @@ export function isPropertyAllowedForTargetKind(property: string, targetKind: Ani
  * @param {string} property
  * @returns {'none'|'linear'|'cubic'|null}
  */
-export function getPropertyInterpolation(property: string): InterpolationMode | null {
+export function getPropertyInterpolation(
+  property: string,
+): InterpolationMode | null {
   const spec = getAnimationPropertySpec(property);
   return spec?.interpolation ?? null;
 }
@@ -319,11 +328,14 @@ export function validateTrackValue(property: string, value: unknown): boolean {
       return true;
     }
     case TRACK_VALUE_CATEGORIES.BOOLEAN:
-      return typeof value === 'boolean';
+      return typeof value === "boolean";
     case TRACK_VALUE_CATEGORIES.MESH_VERTICES:
       return isFiniteVector(value);
     case TRACK_VALUE_CATEGORIES.EVENT:
-      return typeof value === 'string' || (typeof value === 'object' && value !== null);
+      return (
+        typeof value === "string" ||
+        (typeof value === "object" && value !== null)
+      );
     default:
       return false;
   }
@@ -336,7 +348,7 @@ export function validateTrackValue(property: string, value: unknown): boolean {
  * @returns {boolean}
  */
 export function isValidEasing(easing: unknown): boolean {
-  if (typeof easing === 'string') {
+  if (typeof easing === "string") {
     return VALID_EASING_PRESETS.includes(easing);
   }
   if (Array.isArray(easing) && easing.length === 4) {

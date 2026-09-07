@@ -1,66 +1,86 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useState } from "react";
 
-import { TextureReplacementModal } from '@/features/texture-replacement';
+import { TextureReplacementModal } from "@/features/texture-replacement";
 
-import { BoneTreeTab } from './BoneTreeTab.jsx';
-import { DepthTab } from './DepthTab.jsx';
-import { useLayerPanelController } from '../application/useLayerPanelController.js';
+import { BoneTreeTab } from "./BoneTreeTab.jsx";
+import { DepthTab } from "./DepthTab.jsx";
+import { useLayerPanelController } from "../application/useLayerPanelController.js";
 
-const LibraryTab = lazy(() => import('./LibraryTab.jsx').then(m => ({ default: m.LibraryTab })));
+const LibraryTab = lazy(() =>
+  import("./LibraryTab.jsx").then((m) => ({ default: m.LibraryTab })),
+);
 
-export function LayerPanel({ onImportClick, onImportFiles, onImportModularSprite, onEditModularSprite, onLoadExampleProject }) {
-  const { shared, tabs, library, depth, bones } = useLayerPanelController({ onImportClick, onImportFiles, onImportModularSprite, onEditModularSprite });
+export function LayerPanelView({
+  getDragImage,
+  onImportClick,
+  onImportFiles,
+  onImportModularSprite,
+  onEditModularSprite,
+  onLoadExampleProject,
+}) {
+  const { shared, tabs, library, depth, bones } = useLayerPanelController({
+    getDragImage,
+    onImportClick,
+    onImportFiles,
+    onImportModularSprite,
+    onEditModularSprite,
+  });
   const [replaceTexturesOpen, setReplaceTexturesOpen] = useState(false);
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center border-b shrink-0">
-        {['library', 'depth', 'groups'].map(tab => (
+        {["library", "depth", "groups"].map((tab) => (
           <button
             key={tab}
-            className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors ${tabs.active === tab
-              ? 'text-foreground border-b-2 border-primary'
-              : 'text-muted-foreground hover:text-foreground'
+            className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
+              tabs.active === tab
+                ? "text-foreground border-b-2 border-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
             onClick={() => tabs.setActive(tab)}
           >
-            {tab === 'library' ? 'Library' : tab === 'depth' ? 'DRAW ORDER' : 'Bones'}
+            {tab === "library"
+              ? "Library"
+              : tab === "depth"
+                ? "DRAW ORDER"
+                : "Bones"}
           </button>
         ))}
       </div>
 
-      {tabs.active === 'library' && (
+      {tabs.active === "library" && (
         <Suspense fallback={null}>
           <LibraryTab
-          tree={library.tree}
-          expandedFolderIds={library.expandedFolderIds}
-          dragSession={library.dragSession}
-          selection={shared.selection}
-          dragActive={library.dragActive}
-          onToggleFolderExpand={library.onToggleFolderExpand}
-          onCreateFolder={library.onCreateFolder}
-          onRenameFolder={library.onRenameFolder}
-          onRenameAsset={library.onRenameAsset}
-          onRemoveFolder={library.onRemoveFolder}
-          onRemoveAsset={library.onRemoveAsset}
-          onDragStartAsset={library.onDragStartAsset}
-          onDragStartFolder={library.onDragStartFolder}
-          onDragOverRow={library.onDragOverRow}
-          onDropRow={library.onDropRow}
-          onDragEnter={library.onDragEnter}
-          onDragOverBackground={library.onDragOverBackground}
-          onDragLeave={library.onDragLeave}
-          onDropBackground={library.onDropBackground}
-          onSelect={library.onSelect}
-	          onImportClick={library.onImportClick}
-	          onImportModularSprite={library.onImportModularSprite}
-	          onEditModularSprite={library.onEditModularSprite}
-          onLoadExampleProject={onLoadExampleProject}
+            tree={library.tree}
+            expandedFolderIds={library.expandedFolderIds}
+            dragSession={library.dragSession}
+            selection={shared.selection}
+            dragActive={library.dragActive}
+            onToggleFolderExpand={library.onToggleFolderExpand}
+            onCreateFolder={library.onCreateFolder}
+            onRenameFolder={library.onRenameFolder}
+            onRenameAsset={library.onRenameAsset}
+            onRemoveFolder={library.onRemoveFolder}
+            onRemoveAsset={library.onRemoveAsset}
+            onDragStartAsset={library.onDragStartAsset}
+            onDragStartFolder={library.onDragStartFolder}
+            onDragOverRow={library.onDragOverRow}
+            onDropRow={library.onDropRow}
+            onDragEnter={library.onDragEnter}
+            onDragOverBackground={library.onDragOverBackground}
+            onDragLeave={library.onDragLeave}
+            onDropBackground={library.onDropBackground}
+            onSelect={library.onSelect}
+            onImportClick={library.onImportClick}
+            onImportModularSprite={library.onImportModularSprite}
+            onEditModularSprite={library.onEditModularSprite}
+            onLoadExampleProject={onLoadExampleProject}
           />
         </Suspense>
       )}
 
-      {tabs.active === 'depth' && (
+      {tabs.active === "depth" && (
         <DepthTab
           nodes={depth.nodes}
           allNodes={shared.nodes}
@@ -81,7 +101,7 @@ export function LayerPanel({ onImportClick, onImportFiles, onImportModularSprite
         />
       )}
 
-      {tabs.active === 'groups' && (
+      {tabs.active === "groups" && (
         <BoneTreeTab
           rows={bones.rows}
           allNodes={shared.nodes}
@@ -117,7 +137,10 @@ export function LayerPanel({ onImportClick, onImportFiles, onImportModularSprite
           onDeleteNode={bones.onDeleteNode}
         />
       )}
-      <TextureReplacementModal open={replaceTexturesOpen} onOpenChange={setReplaceTexturesOpen} />
+      <TextureReplacementModal
+        open={replaceTexturesOpen}
+        onOpenChange={setReplaceTexturesOpen}
+      />
     </div>
   );
 }

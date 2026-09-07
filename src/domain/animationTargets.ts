@@ -8,11 +8,21 @@
  *   - 'slot': slot (draw order, color)
  */
 
-import type { AnimationTargetId, Bone, Constraint, Node, ProjectDocument, Slot } from '@kukla2d/contracts';
+import type {
+  AnimationTargetId,
+  Bone,
+  Constraint,
+  Node,
+  ProjectDocument,
+  Slot,
+} from "@kukla2d/contracts";
 
-import { getAnimationPropertySpec, isSupportedTrackProperty } from './animationProperties.js';
+import {
+  getAnimationPropertySpec,
+  isSupportedTrackProperty,
+} from "./animationProperties.js";
 
-import type { AnimationTargetKind as TargetKind } from './animationProperties.js';
+import type { AnimationTargetKind as TargetKind } from "./animationProperties.types.js";
 
 type AnimationTarget = Node | Bone | Constraint | Slot;
 
@@ -25,12 +35,27 @@ type AnimationTarget = Node | Bone | Constraint | Slot;
  * @returns {TargetKind | null}
  */
 export function inferTargetKind(entity: unknown): TargetKind | null {
-  if (!entity || typeof entity !== 'object') return null;
+  if (!entity || typeof entity !== "object") return null;
   const candidate = entity as Record<string, unknown>;
-  if (candidate.type === 'part' || candidate.type === 'group' || candidate.type === 'warpDeformer') return 'node';
-  if (candidate.setup !== undefined && candidate.parentId !== undefined && candidate.length === undefined) return 'bone';
-  if (candidate.type === 'ik') return 'constraint';
-  if (candidate.boneId !== undefined && candidate.id !== undefined && candidate.setup === undefined) return 'slot';
+  if (
+    candidate.type === "part" ||
+    candidate.type === "group" ||
+    candidate.type === "warpDeformer"
+  )
+    return "node";
+  if (
+    candidate.setup !== undefined &&
+    candidate.parentId !== undefined &&
+    candidate.length === undefined
+  )
+    return "bone";
+  if (candidate.type === "ik") return "constraint";
+  if (
+    candidate.boneId !== undefined &&
+    candidate.id !== undefined &&
+    candidate.setup === undefined
+  )
+    return "slot";
   return null;
 }
 
@@ -41,26 +66,29 @@ export function inferTargetKind(entity: unknown): TargetKind | null {
  * @param {string} targetKind
  * @returns {unknown}
  */
-export function getDefaultValue(property: string, targetKind: TargetKind): unknown {
+export function getDefaultValue(
+  property: string,
+  targetKind: TargetKind,
+): unknown {
   const spec = getAnimationPropertySpec(property);
   if (!spec) return undefined;
 
-  if (property === 'opacity') return 1;
-  if (property === 'visible') return true;
-  if (property === 'bendPositive') return true;
-  if (property === 'mix') return 1;
-  if (property === 'fkIk') return 0;
-  if (property === 'order') return 0;
-  if (property === 'drawOrder') return 0;
-  if (property === 'targetX') return 0;
-  if (property === 'targetY') return 0;
-  if (property.startsWith('blendShape:')) return 0;
-  if (targetKind === 'bone') {
-    if (property === 'scaleX' || property === 'scaleY') return 1;
+  if (property === "opacity") return 1;
+  if (property === "visible") return true;
+  if (property === "bendPositive") return true;
+  if (property === "mix") return 1;
+  if (property === "fkIk") return 0;
+  if (property === "order") return 0;
+  if (property === "drawOrder") return 0;
+  if (property === "targetX") return 0;
+  if (property === "targetY") return 0;
+  if (property.startsWith("blendShape:")) return 0;
+  if (targetKind === "bone") {
+    if (property === "scaleX" || property === "scaleY") return 1;
     return 0;
   }
-  if (targetKind === 'node') {
-    if (property === 'scaleX' || property === 'scaleY') return 1;
+  if (targetKind === "node") {
+    if (property === "scaleX" || property === "scaleY") return 1;
     return 0;
   }
   return 0;
@@ -75,9 +103,11 @@ export function getDefaultValue(property: string, targetKind: TargetKind): unkno
  * @param {string} property
  * @returns {{ valid: boolean, targetKind?: TargetKind, error?: string }}
  */
-export function validateTargetProperty(project: ProjectDocument, targetId: AnimationTargetId, property: string):
-  | { valid: true; targetKind: TargetKind }
-  | { valid: false; error: string } {
+export function validateTargetProperty(
+  project: ProjectDocument,
+  targetId: AnimationTargetId,
+  property: string,
+): { valid: true; targetKind: TargetKind } | { valid: false; error: string } {
   if (!isSupportedTrackProperty(property)) {
     return { valid: false, error: `Unknown animation property "${property}"` };
   }
@@ -89,7 +119,10 @@ export function validateTargetProperty(project: ProjectDocument, targetId: Anima
 
   const targetKind = inferTargetKind(entity);
   if (!targetKind) {
-    return { valid: false, error: `Cannot determine target kind for "${targetId}"` };
+    return {
+      valid: false,
+      error: `Cannot determine target kind for "${targetId}"`,
+    };
   }
 
   const spec = getAnimationPropertySpec(property);
@@ -110,7 +143,10 @@ export function validateTargetProperty(project: ProjectDocument, targetId: Anima
  * @param {string} targetId
  * @returns {Object | null}
  */
-export function findTarget(project: ProjectDocument | null | undefined, targetId: AnimationTargetId): AnimationTarget | null {
+export function findTarget(
+  project: ProjectDocument | null | undefined,
+  targetId: AnimationTargetId,
+): AnimationTarget | null {
   if (!project || !targetId) return null;
 
   const node = project.nodes?.find((n) => n.id === targetId);
@@ -135,17 +171,20 @@ export function findTarget(project: ProjectDocument | null | undefined, targetId
  * @param {TargetKind} kind
  * @returns {string[]}
  */
-export function getTargetsByKind(project: ProjectDocument | null | undefined, kind: TargetKind): string[] {
+export function getTargetsByKind(
+  project: ProjectDocument | null | undefined,
+  kind: TargetKind,
+): string[] {
   if (!project) return [];
 
   switch (kind) {
-    case 'node':
+    case "node":
       return (project.nodes ?? []).map((n) => n.id);
-    case 'bone':
+    case "bone":
       return (project.bones ?? []).map((b) => b.id);
-    case 'constraint':
+    case "constraint":
       return (project.constraints ?? []).map((c) => c.id);
-    case 'slot':
+    case "slot":
       return (project.slots ?? []).map((s) => s.id);
     default:
       return [];

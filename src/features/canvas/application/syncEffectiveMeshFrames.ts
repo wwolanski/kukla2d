@@ -1,13 +1,22 @@
-import type { Mesh, ProjectDocument, Vertex } from '@kukla2d/contracts';
+import type { Mesh, ProjectDocument, Vertex } from "@kukla2d/contracts";
 
-import type { EffectiveMeshFrame } from '@/features/canvas/domain/meshDeformation.js';
+import type { EffectiveMeshFrame } from "@/features/canvas/domain/meshDeformation.types.js";
 
 interface MeshPositionGateway {
-  uploadPositions(partId: string, vertices: readonly Vertex[], uvs: Mesh['uvs']): void;
+  uploadPositions(
+    partId: string,
+    vertices: readonly Vertex[],
+    uvs: Mesh["uvs"],
+  ): void;
 }
 
 function hasMesh(value: unknown): value is { mesh: Mesh } {
-  return typeof value === 'object' && value !== null && 'mesh' in value && (value as { mesh?: unknown }).mesh != null;
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "mesh" in value &&
+    (value as { mesh?: unknown }).mesh != null
+  );
 }
 
 /**
@@ -19,7 +28,12 @@ function hasMesh(value: unknown): value is { mesh: Mesh } {
  * mutable buffer updates, so we never rebuild a full Pixi Mesh per frame
  * when only positions changed.
  */
-export function syncEffectiveMeshFrames({ gateway, project, effectiveMeshes, previousIds }: {
+export function syncEffectiveMeshFrames({
+  gateway,
+  project,
+  effectiveMeshes,
+  previousIds,
+}: {
   gateway: MeshPositionGateway;
   project: ProjectDocument;
   effectiveMeshes: ReadonlyMap<string, EffectiveMeshFrame> | null | undefined;
@@ -35,7 +49,7 @@ export function syncEffectiveMeshFrames({ gateway, project, effectiveMeshes, pre
   // Reset parts that disappeared from the effective mesh set back to setup.
   for (const partId of previousIds ?? []) {
     if (nextIds.has(partId)) continue;
-    const node = project?.nodes?.find(candidate => candidate.id === partId);
+    const node = project?.nodes?.find((candidate) => candidate.id === partId);
     if (hasMesh(node) && node.mesh.vertices.length) {
       gateway.uploadPositions(partId, node.mesh.vertices, node.mesh.uvs);
     }

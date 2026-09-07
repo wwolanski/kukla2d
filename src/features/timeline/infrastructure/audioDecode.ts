@@ -10,7 +10,7 @@ interface AudioDecodeBase {
   durationMs: number;
 }
 
-export type AudioDecodeResult =
+type AudioDecodeResult =
   | (AudioDecodeBase & { ok: true; buffer: AudioBuffer })
   | (AudioDecodeBase & { ok: false; buffer: null; error: string });
 
@@ -19,9 +19,10 @@ export async function decodeAudioFile(
   file: File,
   audioContext?: AudioContext,
 ): Promise<AudioDecodeResult> {
-  const AudioContextConstructor = window.AudioContext ?? window.webkitAudioContext;
+  const AudioContextConstructor =
+    window.AudioContext ?? window.webkitAudioContext;
   if (!audioContext && !AudioContextConstructor) {
-    throw new Error('Web Audio API is unavailable');
+    throw new Error("Web Audio API is unavailable");
   }
   const ctx = audioContext ?? new AudioContextConstructor();
   const blobUrl = URL.createObjectURL(file);

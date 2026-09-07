@@ -6,23 +6,23 @@
  * projectStore imports pushPatches/isBatching/clearHistory from here.
  * useUndoRedo imports undo/redo/applyPatches from here.
  */
-import './immerPatches.js';
-import { applyPatches as immerApplyPatches, type Patch } from 'immer';
+import "./immerPatches.js";
+import { applyPatches as immerApplyPatches, type Patch } from "immer";
 
-const MAX_HISTORY = 50;
-const DEFAULT_ENTRY_META = { name: 'Project edit', type: 'project' };
-const DEFAULT_BATCH_META = { name: 'Batch edit', type: 'batch' };
-
-export interface HistoryEntryMetadata {
+interface HistoryEntryMetadata {
   name: string;
   type: string;
 }
 
-export interface HistoryEntry extends HistoryEntryMetadata {
+interface HistoryEntry extends HistoryEntryMetadata {
   id: number;
   forwardPatches: Patch[];
   inversePatches: Patch[];
 }
+
+const MAX_HISTORY = 50;
+const DEFAULT_ENTRY_META = { name: "Project edit", type: "project" };
+const DEFAULT_BATCH_META = { name: "Batch edit", type: "batch" };
 
 interface PendingPatchPair {
   forwardPatches: Patch[];
@@ -40,29 +40,42 @@ function normalizeMeta(
   meta: Partial<HistoryEntryMetadata> | null | undefined,
   fallback: HistoryEntryMetadata,
 ): HistoryEntryMetadata {
-  const name = typeof meta?.name === 'string' && meta.name.trim()
-    ? meta.name
-    : fallback.name;
-  const type = typeof meta?.type === 'string' && meta.type.trim()
-    ? meta.type
-    : fallback.type;
+  const name =
+    typeof meta?.name === "string" && meta.name.trim()
+      ? meta.name
+      : fallback.name;
+  const type =
+    typeof meta?.type === "string" && meta.type.trim()
+      ? meta.type
+      : fallback.type;
   return { name, type };
 }
 
-export function applyPatches<State extends object>(state: State, patches: readonly Patch[]): State {
+export function applyPatches<State extends object>(
+  state: State,
+  patches: readonly Patch[],
+): State {
   return immerApplyPatches(state, [...patches]);
 }
 
 /**
  * Push raw patches (low-level API). Respects active batch.
  */
-export function pushPatches(forwardPatches: Patch[], inversePatches: Patch[]): void {
+export function pushPatches(
+  forwardPatches: Patch[],
+  inversePatches: Patch[],
+): void {
   if (forwardPatches.length === 0) return;
   if (_batchDepth > 0) {
     _batchAccumulatedPatches.push({ forwardPatches, inversePatches });
     return;
   }
-  _undoStack.push({ id: _nextEntryId++, ...DEFAULT_ENTRY_META, forwardPatches, inversePatches });
+  _undoStack.push({
+    id: _nextEntryId++,
+    ...DEFAULT_ENTRY_META,
+    forwardPatches,
+    inversePatches,
+  });
   if (_undoStack.length > MAX_HISTORY) _undoStack.shift();
   _redoStack = [];
 }
@@ -86,10 +99,12 @@ export function transaction(name: string, type: string, fn: () => void): void {
     _batchDepth = Math.max(0, _batchDepth - 1);
     if (_batchDepth === 0) {
       if (_batchAccumulatedPatches.length > 0) {
-        const forwardPatches = _batchAccumulatedPatches.flatMap(e => e.forwardPatches);
+        const forwardPatches = _batchAccumulatedPatches.flatMap(
+          (e) => e.forwardPatches,
+        );
         const inversePatches = [..._batchAccumulatedPatches]
           .reverse()
-          .flatMap(e => e.inversePatches);
+          .flatMap((e) => e.inversePatches);
         const meta = _batchMeta ?? DEFAULT_ENTRY_META;
         _undoStack.push({
           id: _nextEntryId++,
@@ -128,10 +143,12 @@ export function endBatch(): void {
   _batchDepth = Math.max(0, _batchDepth - 1);
   if (_batchDepth === 0) {
     if (_batchAccumulatedPatches.length > 0) {
-      const forwardPatches = _batchAccumulatedPatches.flatMap(e => e.forwardPatches);
+      const forwardPatches = _batchAccumulatedPatches.flatMap(
+        (e) => e.forwardPatches,
+      );
       const inversePatches = [..._batchAccumulatedPatches]
         .reverse()
-        .flatMap(e => e.inversePatches);
+        .flatMap((e) => e.inversePatches);
       const meta = _batchMeta ?? DEFAULT_BATCH_META;
       _undoStack.push({
         id: _nextEntryId++,
@@ -212,7 +229,7 @@ export function canRedo(): boolean {
  * Peek at the top undo entry metadata (without removing it).
  * Returns { id, name, type } or null.
  */
-export function peekUndo(): Pick<HistoryEntry, 'id' | 'name' | 'type'> | null {
+export function peekUndo(): Pick<HistoryEntry, "id" | "name" | "type"> | null {
   if (_undoStack.length === 0) return null;
   const entry = _undoStack[_undoStack.length - 1];
   if (!entry) return null;

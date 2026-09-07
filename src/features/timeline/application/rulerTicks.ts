@@ -1,18 +1,18 @@
-const TICK_CAP = 2000;
-const PREFERRED_MAJOR_INTERVALS = 6;
-
-export interface RulerTick {
+interface RulerTick {
   frame: number;
   major: boolean;
   label: string | null;
 }
 
-export interface RulerTickOptions {
+interface RulerTickOptions {
   startFrame: number;
   endFrame: number;
   widthPx: number;
   minLabelPx?: number;
 }
+
+const TICK_CAP = 2000;
+const PREFERRED_MAJOR_INTERVALS = 6;
 
 function sanitizeFinite(v: number, fallback: number): number {
   if (!Number.isFinite(v)) return fallback;
@@ -29,12 +29,12 @@ function alignedMajorStep(
   for (let intervals = 2; intervals <= maxIntervals; intervals++) {
     if (range % intervals !== 0) continue;
     if (
-      bestIntervals === 0
-      || Math.abs(intervals - preferredIntervals) < Math.abs(bestIntervals - preferredIntervals)
-      || (
-        Math.abs(intervals - preferredIntervals) === Math.abs(bestIntervals - preferredIntervals)
-        && intervals > bestIntervals
-      )
+      bestIntervals === 0 ||
+      Math.abs(intervals - preferredIntervals) <
+        Math.abs(bestIntervals - preferredIntervals) ||
+      (Math.abs(intervals - preferredIntervals) ===
+        Math.abs(bestIntervals - preferredIntervals) &&
+        intervals > bestIntervals)
     ) {
       bestIntervals = intervals;
     }
@@ -70,16 +70,29 @@ export function computeRulerTicks({
   const range = end - start;
   if (range <= 0) return [];
 
-  const maxMajorIntervals = Math.max(1, Math.floor(Math.max(widthPx, 1) / Math.max(minLabelPx, 1)));
-  const preferredIntervals = Math.min(PREFERRED_MAJOR_INTERVALS, maxMajorIntervals);
-  const majorStep = alignedMajorStep(range, preferredIntervals, maxMajorIntervals)
-    ?? Math.max(1, Math.round(range / preferredIntervals));
-  const minorStep = Math.max(minorStepFor(majorStep), Math.ceil(range / TICK_CAP));
+  const maxMajorIntervals = Math.max(
+    1,
+    Math.floor(Math.max(widthPx, 1) / Math.max(minLabelPx, 1)),
+  );
+  const preferredIntervals = Math.min(
+    PREFERRED_MAJOR_INTERVALS,
+    maxMajorIntervals,
+  );
+  const majorStep =
+    alignedMajorStep(range, preferredIntervals, maxMajorIntervals) ??
+    Math.max(1, Math.round(range / preferredIntervals));
+  const minorStep = Math.max(
+    minorStepFor(majorStep),
+    Math.ceil(range / TICK_CAP),
+  );
 
   const byFrame = new Map<number, RulerTick>();
   const addTick = (
     frame: number,
-    { major = false, label = null }: { major?: boolean; label?: string | null } = {},
+    {
+      major = false,
+      label = null,
+    }: { major?: boolean; label?: string | null } = {},
   ): void => {
     const current = byFrame.get(frame);
     byFrame.set(frame, {

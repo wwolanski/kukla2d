@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
-import type { ProcessedModularSprite } from '../../domain/contracts.js';
+import type { ProcessedModularSprite } from "../../domain/contracts.types.js";
 
 export function PartThumbnail({
   resultRef,
@@ -20,21 +20,31 @@ export function PartThumbnail({
     const canvas = canvasRef.current;
     if (!canvas || !result) return;
     const selected = new Set(regionIds);
-    const selectedRegions = result.regions.filter(region => selected.has(region.id));
+    const selectedRegions = result.regions.filter((region) =>
+      selected.has(region.id),
+    );
     if (selectedRegions.length === 0) {
       canvas.width = 1;
       canvas.height = 1;
       return;
     }
-    const minX = Math.min(...selectedRegions.map(region => region.bounds.x));
-    const minY = Math.min(...selectedRegions.map(region => region.bounds.y));
-    const maxX = Math.max(...selectedRegions.map(region => region.bounds.x + region.bounds.width - 1));
-    const maxY = Math.max(...selectedRegions.map(region => region.bounds.y + region.bounds.height - 1));
+    const minX = Math.min(...selectedRegions.map((region) => region.bounds.x));
+    const minY = Math.min(...selectedRegions.map((region) => region.bounds.y));
+    const maxX = Math.max(
+      ...selectedRegions.map(
+        (region) => region.bounds.x + region.bounds.width - 1,
+      ),
+    );
+    const maxY = Math.max(
+      ...selectedRegions.map(
+        (region) => region.bounds.y + region.bounds.height - 1,
+      ),
+    );
     const width = maxX - minX + 1;
     const height = maxY - minY + 1;
     canvas.width = width;
     canvas.height = height;
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext("2d");
     if (!context) return;
     const output = new Uint8ClampedArray(width * height * 4);
     for (let y = 0; y < height; y += 1) {
@@ -55,6 +65,11 @@ export function PartThumbnail({
     canvas.style.height = `${Math.round(height * scale)}px`;
   }, [maxSize, regionIds, resultRef, resultVersion]);
 
-  return <canvas ref={canvasRef} aria-hidden className="shrink-0 rounded border bg-[linear-gradient(45deg,#222_25%,transparent_25%),linear-gradient(-45deg,#222_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#222_75%),linear-gradient(-45deg,transparent_75%,#222_75%)] bg-[length:16px_16px]" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden
+      className="shrink-0 rounded border bg-[linear-gradient(45deg,#222_25%,transparent_25%),linear-gradient(-45deg,#222_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#222_75%),linear-gradient(-45deg,transparent_75%,#222_75%)] bg-[length:16px_16px]"
+    />
+  );
 }
-

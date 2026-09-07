@@ -21,8 +21,8 @@ import { PartThumbnail } from "../preview/PartThumbnail.js";
 import type {
   ModularSpriteDraftPart,
   ProcessedModularSprite,
-} from "../../domain/contracts.js";
-import type { RegionGrouping } from "../../domain/partGrouping.js";
+} from "../../domain/contracts.types.js";
+import type { RegionGrouping } from "../../domain/partGrouping.types.js";
 
 const UiButton = Button as React.ComponentType<
   React.ButtonHTMLAttributes<HTMLButtonElement> & {

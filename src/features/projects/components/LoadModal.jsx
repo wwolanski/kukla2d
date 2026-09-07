@@ -1,21 +1,22 @@
-import { Files, FolderOpen, LoaderCircle, Plus } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { Files, FolderOpen, LoaderCircle, Plus } from "lucide-react";
+import { useRef, useState } from "react";
 
-import { hasProjectFileExtension } from '@/io/projectFormat';
+import { hasProjectFileExtension } from "@/io/projectFormat";
 
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { ProjectGallery } from './ProjectGallery.jsx';
-import { externalImportFormats, importExternalProject } from '../infrastructure/externalImport/index.js';
+import { ProjectGallery } from "./ProjectGallery.jsx";
 
-export function LoadModal({
+export function LoadModalView({
+  externalImportFormats,
+  importExternalProject,
   open,
   onOpenChange,
   onLoadFromDb,
@@ -48,7 +49,7 @@ export function LoadModal({
       setExternalError(error instanceof Error ? error.message : String(error));
     } finally {
       setIsImporting(false);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
@@ -79,8 +80,16 @@ export function LoadModal({
                       <Plus className="h-6 w-6 text-primary" />
                     </div>
                     <p className="text-xs font-semibold">Import Project</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">Select .kk2d file</p>
-                    <input type="file" accept=".kk2d" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Select .kk2d file
+                    </p>
+                    <input
+                      type="file"
+                      accept=".kk2d"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
                   </div>
                 }
                 onSelect={(p) => {
@@ -91,15 +100,23 @@ export function LoadModal({
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="external" className="mt-0 flex-1 p-6 overflow-auto">
+          <TabsContent
+            value="external"
+            className="mt-0 flex-1 p-6 overflow-auto"
+          >
             <div className="mx-auto max-w-2xl space-y-5">
               <div>
                 <h2 className="text-sm font-semibold">BrashMonkey Spriter</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Import one .scml project with all referenced image files. Sprites, bones, draw order, opacity, and animations become editable Kukla2D data.
+                  Import one .scml project with all referenced image files.
+                  Sprites, bones, draw order, opacity, and animations become
+                  editable Kukla2D data.
                 </p>
                 <p className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Supported: {externalImportFormats.map(format => format.label).join(', ')}
+                  Supported:{" "}
+                  {externalImportFormats
+                    .map((format) => format.label)
+                    .join(", ")}
                 </p>
               </div>
 
@@ -109,9 +126,19 @@ export function LoadModal({
                 onClick={() => externalFolderRef.current?.click()}
                 className="w-full min-h-44 rounded-lg border-2 border-dashed bg-muted/20 p-6 flex flex-col items-center justify-center hover:border-primary hover:bg-primary/5 disabled:opacity-60 disabled:pointer-events-none transition-colors"
               >
-                {isImporting ? <LoaderCircle className="h-8 w-8 animate-spin text-primary" /> : <FolderOpen className="h-8 w-8 text-primary" />}
-                <span className="mt-3 text-sm font-semibold">{isImporting ? 'Importing project…' : 'Select Spriter project folder'}</span>
-                <span className="mt-1 text-xs text-muted-foreground">Recommended: folder containing .scml and images</span>
+                {isImporting ? (
+                  <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+                ) : (
+                  <FolderOpen className="h-8 w-8 text-primary" />
+                )}
+                <span className="mt-3 text-sm font-semibold">
+                  {isImporting
+                    ? "Importing project…"
+                    : "Select Spriter project folder"}
+                </span>
+                <span className="mt-1 text-xs text-muted-foreground">
+                  Recommended: folder containing .scml and images
+                </span>
               </button>
 
               <button
@@ -125,7 +152,10 @@ export function LoadModal({
               </button>
 
               {externalError && (
-                <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-xs text-destructive">
+                <div
+                  role="alert"
+                  className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-xs text-destructive"
+                >
                   {externalError}
                 </div>
               )}

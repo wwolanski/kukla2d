@@ -6,21 +6,29 @@
  *
  * No React / Zustand / Pixi / DOM / Worker imports allowed in this file.
  */
-import type { Bone, Mesh, Node, PartNode, VertexInfluence, WarpDeformerNode } from '@kukla2d/contracts';
+import type {
+  Bone,
+  Mesh,
+  Node,
+  PartNode,
+  VertexInfluence,
+  WarpDeformerNode,
+} from "@kukla2d/contracts";
 
 import {
   computeWorldMatrices,
   makeLocalMatrix,
   mat3Inverse,
   mat3Mul,
-} from '@/domain/transforms.js';
-import type { Matrix3 } from '@/domain/transforms.js';
+} from "@/domain/transforms.js";
+import type { Matrix3 } from "@/domain/transforms.types.js";
 
-import { clamp, isFiniteNumber, lerp } from '@/lib/math';
+import { clamp, isFiniteNumber, lerp } from "@/lib/math";
 
-import { normalizeVertexInfluences } from './meshEditing.js';
-import { buildRestGrid } from './warpKeyframes.js';
+import { normalizeVertexInfluences } from "./meshEditing.js";
+import { buildRestGrid } from "./warpKeyframes.js";
 
+import type { EffectiveMeshFrame } from "./meshDeformation.types.js";
 
 const WARP_DEFAULTS = Object.freeze({
   col: 2,
@@ -31,17 +39,39 @@ const WARP_DEFAULTS = Object.freeze({
   gridH: 100,
 });
 
-interface Point { x: number; y: number }
+interface Point {
+  x: number;
+  y: number;
+}
+type BaseMeshSource = "poseOverride" | "setup";
+interface WarpGridFrame {
+  nodeId: string | undefined;
+  col: number;
+  row: number;
+  gridX: number;
+  gridY: number;
+  gridW: number;
+  gridH: number;
+  points: Point[];
+}
 type VertexInput = readonly Point[] | readonly number[];
-interface MeshPoseOverride { mesh_verts?: readonly unknown[] }
+interface MeshPoseOverride {
+  mesh_verts?: readonly unknown[];
+}
 
 function isPoint(value: unknown): value is Point {
-  return typeof value === 'object' && value !== null && isFiniteNumber((value as { x?: unknown }).x) && isFiniteNumber((value as { y?: unknown }).y);
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    isFiniteNumber((value as { x?: unknown }).x) &&
+    isFiniteNumber((value as { y?: unknown }).y)
+  );
 }
 
 function toObjectVertices(vertices: VertexInput): Point[] {
   if (!vertices?.length) return [];
-  if (isPoint(vertices[0])) return (vertices as readonly Point[]).map(({ x, y }) => ({ x, y }));
+  if (isPoint(vertices[0]))
+    return (vertices as readonly Point[]).map(({ x, y }) => ({ x, y }));
   const count = Math.floor(vertices.length / 2);
   return Array.from({ length: count }, (_, index) => ({
     x: (vertices as readonly number[])[index * 2] ?? 0,
@@ -57,7 +87,7 @@ function transformPoint(matrix: Matrix3, x: number, y: number): Point {
 }
 
 function clonePointArray(vertices: readonly Point[]): Point[] {
-  return vertices.map(v => ({ x: v.x, y: v.y }));
+  return vertices.map((v) => ({ x: v.x, y: v.y }));
 }
 
 /**
@@ -67,7 +97,10 @@ function clonePointArray(vertices: readonly Point[]): Point[] {
 export function ensureInfluenceSlots(mesh: Mesh | null | undefined): void {
   if (!mesh?.vertices?.length) return;
   const vertexCount = mesh.vertices.length;
-  if (!Array.isArray(mesh.influences) || mesh.influences.length !== vertexCount) {
+  if (
+    !Array.isArray(mesh.influences) ||
+    mesh.influences.length !== vertexCount
+  ) {
     mesh.influences = Array.from({ length: vertexCount }, () => []);
   }
 }
@@ -76,8 +109,14 @@ export function ensureInfluenceSlots(mesh: Mesh | null | undefined): void {
  * Normalize every vertex influence list to max 4 bones with total weight ~1.
  * Returns a new influences array of exactly vertexCount entries.
  */
-export function normalizeInfluenceSlots(influences: readonly (readonly VertexInfluence[])[] | null | undefined, vertexCount: number): VertexInfluence[][] {
-  const slots: VertexInfluence[][] = Array.from({ length: vertexCount }, () => []);
+export function normalizeInfluenceSlots(
+  influences: readonly (readonly VertexInfluence[])[] | null | undefined,
+  vertexCount: number,
+): VertexInfluence[][] {
+  const slots: VertexInfluence[][] = Array.from(
+    { length: vertexCount },
+    () => [],
+  );
   if (!influences) return slots;
   for (let i = 0; i < Math.min(influences.length, vertexCount); i++) {
     slots[i] = normalizeVertexInfluences(influences[i] ?? []);
@@ -91,21 +130,31 @@ export function normalizeInfluenceSlots(influences: readonly (readonly VertexInf
  * Uses poseOverride.mesh_verts when its length matches the setup mesh.
  * Otherwise falls back to mesh.vertices and reports a diagnostic marker.
  */
-export type BaseMeshSource = 'poseOverride' | 'setup';
-export function resolveBaseMeshVertices({ node, poseOverride }: {
+export function resolveBaseMeshVertices({
+  node,
+  poseOverride,
+}: {
   node: PartNode | null | undefined;
   poseOverride: MeshPoseOverride | null | undefined;
 }): { vertices: Point[]; source: BaseMeshSource; mismatch: boolean } {
   const setup = node?.mesh?.vertices ?? [];
   const overrideVerts = poseOverride?.mesh_verts;
   if (
-    Array.isArray(overrideVerts)
-    && overrideVerts.length === setup.length
-    && overrideVerts.every(isPoint)
+    Array.isArray(overrideVerts) &&
+    overrideVerts.length === setup.length &&
+    overrideVerts.every(isPoint)
   ) {
-    return { vertices: clonePointArray(overrideVerts), source: 'poseOverride', mismatch: false };
+    return {
+      vertices: clonePointArray(overrideVerts),
+      source: "poseOverride",
+      mismatch: false,
+    };
   }
-  return { vertices: clonePointArray(setup), source: 'setup', mismatch: Array.isArray(overrideVerts) };
+  return {
+    vertices: clonePointArray(setup),
+    source: "setup",
+    mismatch: Array.isArray(overrideVerts),
+  };
 }
 
 /**
@@ -114,14 +163,20 @@ export function resolveBaseMeshVertices({ node, poseOverride }: {
  * bones and restBones are Maps of boneId -> bone object with a `setup` transform.
  * Returns a new array of vertices; input arrays are not mutated.
  */
-export function applyLinearBlendSkinning({ vertices, node, bones, restBones }: {
+export function applyLinearBlendSkinning({
+  vertices,
+  node,
+  bones,
+  restBones,
+}: {
   vertices: VertexInput;
   node: PartNode & { mesh: Mesh };
   bones: ReadonlyMap<string, Bone>;
   restBones: ReadonlyMap<string, Bone>;
 }): Point[] {
   const influences = node?.mesh?.influences;
-  if (!influences?.length || !vertices.length) return toObjectVertices(vertices);
+  if (!influences?.length || !vertices.length)
+    return toObjectVertices(vertices);
 
   const objectVertices = toObjectVertices(vertices);
   const nodeWorldMatrix = computeWorldMatrices([node]).get(node.id)!;
@@ -134,7 +189,10 @@ export function applyLinearBlendSkinning({ vertices, node, bones, restBones }: {
       if (!posedBone || !bindBone?.setup) continue;
       bindToPose.set(
         boneId,
-        mat3Mul(makeLocalMatrix(posedBone.setup), mat3Inverse(makeLocalMatrix(bindBone.setup))),
+        mat3Mul(
+          makeLocalMatrix(posedBone.setup),
+          mat3Inverse(makeLocalMatrix(bindBone.setup)),
+        ),
       );
     }
   }
@@ -150,7 +208,11 @@ export function applyLinearBlendSkinning({ vertices, node, bones, restBones }: {
     for (const influence of influences[index] ?? []) {
       const deltaMatrix = bindToPose.get(influence.boneId);
       if (!deltaMatrix || influence.weight <= 0) continue;
-      const posedWorld = transformPoint(deltaMatrix, sourceWorld.x, sourceWorld.y);
+      const posedWorld = transformPoint(
+        deltaMatrix,
+        sourceWorld.x,
+        sourceWorld.y,
+      );
       worldX += posedWorld.x * influence.weight;
       worldY += posedWorld.y * influence.weight;
       totalWeight += influence.weight;
@@ -184,11 +246,10 @@ function sanitizeWarpNumber(value: unknown, fallback: number): number {
  * kept. Invalid col/row/gridW/gridH are replaced with defaults so the grid
  * is always usable.
  */
-export interface WarpGridFrame {
-  nodeId: string | undefined; col: number; row: number; gridX: number; gridY: number;
-  gridW: number; gridH: number; points: Point[];
-}
-export function buildWarpGridFrame({ warpNode, poseOverride }: {
+export function buildWarpGridFrame({
+  warpNode,
+  poseOverride,
+}: {
   warpNode: WarpDeformerNode | null | undefined;
   poseOverride: { mesh_verts?: readonly unknown[] } | null | undefined;
 }): WarpGridFrame {
@@ -220,7 +281,13 @@ export function buildWarpGridFrame({ warpNode, poseOverride }: {
   };
 }
 
-function bilinearSample(grid: WarpGridFrame, col: number, row: number, gx: number, gy: number): Point {
+function bilinearSample(
+  grid: WarpGridFrame,
+  col: number,
+  row: number,
+  gx: number,
+  gy: number,
+): Point {
   const colF = clamp(gx, grid.gridX, grid.gridX + grid.gridW);
   const rowF = clamp(gy, grid.gridY, grid.gridY + grid.gridH);
   const u = grid.gridW > 0 ? (colF - grid.gridX) / grid.gridW : 0;
@@ -251,21 +318,25 @@ function bilinearSample(grid: WarpGridFrame, col: number, row: number, gx: numbe
  * Each vertex is treated as a point in the warp's local coordinate system.
  * Points outside the grid bounds keep their original position (identity).
  */
-export function applyWarpGridToVertices({ vertices, warpFrame }: {
+export function applyWarpGridToVertices({
+  vertices,
+  warpFrame,
+}: {
   vertices: VertexInput;
   warpFrame: WarpGridFrame | null | undefined;
 }): Point[] {
-  if (!warpFrame?.points.length || !vertices.length) return toObjectVertices(vertices);
+  if (!warpFrame?.points.length || !vertices.length)
+    return toObjectVertices(vertices);
   const { col, row, gridX, gridY, gridW, gridH } = warpFrame;
   const objectVertices = toObjectVertices(vertices);
-  return objectVertices.map(v => {
+  return objectVertices.map((v) => {
     if (
-      v.x < gridX
-      || v.x > gridX + gridW
-      || v.y < gridY
-      || v.y > gridY + gridH
-      || gridW <= 0
-      || gridH <= 0
+      v.x < gridX ||
+      v.x > gridX + gridW ||
+      v.y < gridY ||
+      v.y > gridY + gridH ||
+      gridW <= 0 ||
+      gridH <= 0
     ) {
       return { x: v.x, y: v.y };
     }
@@ -273,14 +344,17 @@ export function applyWarpGridToVertices({ vertices, warpFrame }: {
   });
 }
 
-function findAncestorWarpNodes(partNode: PartNode, allNodes: readonly Node[]): WarpDeformerNode[] {
-  const nodeMap = new Map(allNodes.map(n => [n.id, n]));
+function findAncestorWarpNodes(
+  partNode: PartNode,
+  allNodes: readonly Node[],
+): WarpDeformerNode[] {
+  const nodeMap = new Map(allNodes.map((n) => [n.id, n]));
   const warps: WarpDeformerNode[] = [];
   let parentId = partNode?.parent;
   while (parentId) {
     const parent = nodeMap.get(parentId);
     if (!parent) break;
-    if (parent.type === 'warpDeformer') warps.push(parent);
+    if (parent.type === "warpDeformer") warps.push(parent);
     parentId = parent.parent;
   }
   return warps;
@@ -291,15 +365,14 @@ function findAncestorWarpNodes(partNode: PartNode, allNodes: readonly Node[]): W
  *
  * Composes setup/rest -> pose override mesh_verts -> skinning -> ancestor warp deformers.
  */
-export interface EffectiveMeshFrame {
-  partId: string;
-  vertices: Point[];
-  uvs: Mesh['uvs'];
-  triangles: Mesh['triangles'];
-  source: BaseMeshSource | 'setup(mismatch)';
-}
-
-export function buildEffectiveMeshFrame({ partNode, poseOverrides, effectiveBones, restBones, warpFrames, allNodes }: {
+export function buildEffectiveMeshFrame({
+  partNode,
+  poseOverrides,
+  effectiveBones,
+  restBones,
+  warpFrames,
+  allNodes,
+}: {
   partNode: PartNode;
   poseOverrides?: ReadonlyMap<string, MeshPoseOverride> | null;
   effectiveBones?: readonly Bone[] | null;
@@ -313,8 +386,12 @@ export function buildEffectiveMeshFrame({ partNode, poseOverrides, effectiveBone
   const base = resolveBaseMeshVertices({ node: partNode, poseOverride });
   let vertices = base.vertices;
 
-  const boneMap = new Map<string, Bone>((effectiveBones ?? []).map(b => [b.id, b]));
-  const restBoneMap = new Map<string, Bone>((restBones ?? []).map(b => [b.id, b]));
+  const boneMap = new Map<string, Bone>(
+    (effectiveBones ?? []).map((b) => [b.id, b]),
+  );
+  const restBoneMap = new Map<string, Bone>(
+    (restBones ?? []).map((b) => [b.id, b]),
+  );
   const partMesh = partNode.mesh;
   if (partMesh?.influences?.length) {
     vertices = applyLinearBlendSkinning({
@@ -327,7 +404,12 @@ export function buildEffectiveMeshFrame({ partNode, poseOverrides, effectiveBone
 
   const warpAncestors = findAncestorWarpNodes(partNode, allNodes ?? []);
   for (const warpNode of warpAncestors) {
-    const warpFrame = warpFrames?.get(warpNode.id) ?? buildWarpGridFrame({ warpNode, poseOverride: poseOverrides?.get(warpNode.id) });
+    const warpFrame =
+      warpFrames?.get(warpNode.id) ??
+      buildWarpGridFrame({
+        warpNode,
+        poseOverride: poseOverrides?.get(warpNode.id),
+      });
     if (!warpFrame) continue;
     vertices = applyWarpGridToVertices({ vertices, warpFrame });
   }
@@ -337,6 +419,6 @@ export function buildEffectiveMeshFrame({ partNode, poseOverrides, effectiveBone
     vertices,
     uvs: partMesh?.uvs ?? [],
     triangles: partMesh?.triangles ?? [],
-    source: base.mismatch ? 'setup(mismatch)' : base.source,
+    source: base.mismatch ? "setup(mismatch)" : base.source,
   };
 }

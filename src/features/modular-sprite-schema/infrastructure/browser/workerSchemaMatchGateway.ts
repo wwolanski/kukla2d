@@ -11,10 +11,12 @@ import workerUrl from "./schemaMatcher.worker.ts?worker&url";
 import {
   assertMatchRequest,
   assertMatchResponse,
-  type SchemaMatcherWorkerRequest,
-  type SchemaMatcherWorkerResponse,
 } from "./schemaMatcherProtocol.js";
 
+import type {
+  SchemaMatcherWorkerRequest,
+  SchemaMatcherWorkerResponse,
+} from "./schemaMatcherProtocol.types.js";
 import type { CatalogAwareSchemaMatchGateway } from "../../application/localSchemaApi.types.js";
 
 interface Pending {

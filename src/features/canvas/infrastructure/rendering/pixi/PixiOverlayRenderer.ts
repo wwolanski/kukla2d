@@ -1,23 +1,30 @@
-import { Graphics, type Container } from 'pixi.js';
+import { Graphics, type Container } from "pixi.js";
 
-import type { CanvasOverlayFrame } from '@/features/canvas/domain/canvasOverlayFrame.js';
-import type { GizmoFrame } from '@/features/canvas/domain/gizmoFrame.js';
-import type { buildSkeletonFrame } from '@/features/canvas/domain/skeletonFrame.js';
-import type { WarpLatticeFrame } from '@/features/canvas/domain/warpLatticeFrame.js';
+import type { CanvasOverlayFrame } from "@/features/canvas/domain/canvasOverlayFrame.types.js";
+import type { GizmoFrame } from "@/features/canvas/domain/gizmoFrame.types.js";
+import type { buildSkeletonFrame } from "@/features/canvas/domain/skeletonFrame.js";
+import type { WarpLatticeFrame } from "@/features/canvas/domain/warpLatticeFrame.types.js";
 
-import { drawIkConstraints, drawMeshWireframe, drawWarpLattice, drawWeightPaint } from './PixiMeshOverlayDrawers.js';
-import { drawSkeleton } from './PixiRigOverlayDrawers.js';
+import {
+  drawIkConstraints,
+  drawMeshWireframe,
+  drawWarpLattice,
+  drawWeightPaint,
+} from "./PixiMeshOverlayDrawers.js";
+import { drawSkeleton } from "./PixiRigOverlayDrawers.js";
 
 type SkeletonFrame = NonNullable<ReturnType<typeof buildSkeletonFrame>>;
-type MeshWireframe = CanvasOverlayFrame['meshWireframe'];
-type IkOverlay = CanvasOverlayFrame['ikOverlay'];
-type WeightPaintOverlay = CanvasOverlayFrame['weightPaintOverlay'];
-type WeightPaintPoints = CanvasOverlayFrame['weightPaintPoints'];
-type MarqueeWorldBox = CanvasOverlayFrame['marqueeWorldBox'];
-type DrawBonePreview = CanvasOverlayFrame['drawBonePreview'];
-type ExportAreaFrame = CanvasOverlayFrame['exportAreaFrame'];
-type BrushCursor = CanvasOverlayFrame['brushCursor'];
-interface HoverOptions { tone?: 'amber' | 'default' }
+type MeshWireframe = CanvasOverlayFrame["meshWireframe"];
+type IkOverlay = CanvasOverlayFrame["ikOverlay"];
+type WeightPaintOverlay = CanvasOverlayFrame["weightPaintOverlay"];
+type WeightPaintPoints = CanvasOverlayFrame["weightPaintPoints"];
+type MarqueeWorldBox = CanvasOverlayFrame["marqueeWorldBox"];
+type DrawBonePreview = CanvasOverlayFrame["drawBonePreview"];
+type ExportAreaFrame = CanvasOverlayFrame["exportAreaFrame"];
+type BrushCursor = CanvasOverlayFrame["brushCursor"];
+interface HoverOptions {
+  tone?: "amber" | "default";
+}
 interface DashedLineOptions {
   graphics: Graphics;
   startX: number;
@@ -41,7 +48,11 @@ function drawDashedLine({
   if (length <= 0) return;
   const unitX = (endX - startX) / length;
   const unitY = (endY - startY) / length;
-  for (let distance = 0; distance < length; distance += dashLength + gapLength) {
+  for (
+    let distance = 0;
+    distance < length;
+    distance += dashLength + gapLength
+  ) {
     const dashEnd = Math.min(distance + dashLength, length);
     graphics.moveTo(startX + unitX * distance, startY + unitY * distance);
     graphics.lineTo(startX + unitX * dashEnd, startY + unitY * dashEnd);
@@ -76,10 +87,17 @@ export class PixiOverlayRenderer {
     this._brushGraphics = new Graphics();
     this._exportAreaGraphics = new Graphics();
     const layers = [
-      this._gizmoGraphics, this._skeletonGraphics, this._warpGraphics,
-      this._meshGraphics, this._ikGraphics, this._weightGraphics,
-      this._hoverGraphics, this._marqueeGraphics, this._drawBoneGraphics,
-      this._brushGraphics, this._exportAreaGraphics,
+      this._gizmoGraphics,
+      this._skeletonGraphics,
+      this._warpGraphics,
+      this._meshGraphics,
+      this._ikGraphics,
+      this._weightGraphics,
+      this._hoverGraphics,
+      this._marqueeGraphics,
+      this._drawBoneGraphics,
+      this._brushGraphics,
+      this._exportAreaGraphics,
     ];
     for (const l of layers) overlayLayer.addChild(l);
   }
@@ -105,8 +123,10 @@ export class PixiOverlayRenderer {
     if (pts.length >= 4) {
       const [first, second, third, fourth] = pts;
       if (!first || !second || !third || !fourth) return;
-      g.moveTo(first.x, first.y); g.lineTo(second.x, second.y);
-      g.lineTo(third.x, third.y); g.lineTo(fourth.x, fourth.y);
+      g.moveTo(first.x, first.y);
+      g.lineTo(second.x, second.y);
+      g.lineTo(third.x, third.y);
+      g.lineTo(fourth.x, fourth.y);
       g.closePath();
       g.stroke({ width: 2 * invZoom, color: 0x22d3ee, alpha: 0.9 });
     }
@@ -117,15 +137,20 @@ export class PixiOverlayRenderer {
     for (const point of pts) {
       const size = 8 * invZoom;
       const half = size / 2;
-      g.moveTo(point.x - half, point.y - half); g.lineTo(point.x + half, point.y - half);
-      g.lineTo(point.x + half, point.y + half); g.lineTo(point.x - half, point.y + half);
+      g.moveTo(point.x - half, point.y - half);
+      g.lineTo(point.x + half, point.y - half);
+      g.lineTo(point.x + half, point.y + half);
+      g.lineTo(point.x - half, point.y + half);
       g.closePath();
       g.fill({ color: 0xffffff, alpha: 1 });
       g.stroke({ width: 1.5 * invZoom, color: 0x0891b2, alpha: 1 });
     }
     const rotR = 6 * invZoom;
-    g.circle(gizmoFrame.rotationHandle.x, gizmoFrame.rotationHandle.y, rotR)
-      .fill({ color: 0xfacc15, alpha: 0.9 });
+    g.circle(
+      gizmoFrame.rotationHandle.x,
+      gizmoFrame.rotationHandle.y,
+      rotR,
+    ).fill({ color: 0xfacc15, alpha: 0.9 });
     g.moveTo(gizmoFrame.topCenter.x, gizmoFrame.topCenter.y);
     g.lineTo(gizmoFrame.rotationHandle.x, gizmoFrame.rotationHandle.y);
     g.stroke({ width: 1.5 * invZoom, color: 0xfacc15, alpha: 0.6 });
@@ -142,18 +167,27 @@ export class PixiOverlayRenderer {
   renderIkConstraints(frame: IkOverlay | null, zoom: number): void {
     drawIkConstraints(this._ikGraphics, frame, zoom);
   }
-  renderWeightPaint(frame: WeightPaintOverlay | WeightPaintPoints, zoom: number): void {
+  renderWeightPaint(
+    frame: WeightPaintOverlay | WeightPaintPoints,
+    zoom: number,
+  ): void {
     drawWeightPaint(this._weightGraphics, frame, zoom);
   }
-  renderHover(hoverHit: GizmoFrame | null, zoom: number, options: HoverOptions = {}): void {
+  renderHover(
+    hoverHit: GizmoFrame | null,
+    zoom: number,
+    options: HoverOptions = {},
+  ): void {
     const g = this._hoverGraphics;
     g.clear();
     if (!hoverHit) return;
     const invZoom = zoom > 0 ? 1 / zoom : 1;
-    const amber = options.tone === 'amber';
+    const amber = options.tone === "amber";
     const color = amber ? 0xfacc15 : 0x38bdf8;
-    const contours = hoverHit.outlineContours?.length ? hoverHit.outlineContours : [hoverHit.bboxPoints];
-    if (contours.some(points => points?.length >= 3)) {
+    const contours = hoverHit.outlineContours?.length
+      ? hoverHit.outlineContours
+      : [hoverHit.bboxPoints];
+    if (contours.some((points) => points?.length >= 3)) {
       for (const pts of contours) {
         if (pts?.length < 3) continue;
         const first = pts[0];
@@ -210,13 +244,54 @@ export class PixiOverlayRenderer {
     const { x, y, width, height } = exportAreaFrame;
     const dash = 8 * invZoom;
     const gap = 5 * invZoom;
-    drawDashedLine({ graphics: g, startX: x, startY: y, endX: x + width, endY: y, dashLength: dash, gapLength: gap });
-    drawDashedLine({ graphics: g, startX: x + width, startY: y, endX: x + width, endY: y + height, dashLength: dash, gapLength: gap });
-    drawDashedLine({ graphics: g, startX: x + width, startY: y + height, endX: x, endY: y + height, dashLength: dash, gapLength: gap });
-    drawDashedLine({ graphics: g, startX: x, startY: y + height, endX: x, endY: y, dashLength: dash, gapLength: gap });
-    g.stroke({ width: Math.max(1, 1.5 * invZoom), color: 0x22d3ee, alpha: 0.85 });
+    drawDashedLine({
+      graphics: g,
+      startX: x,
+      startY: y,
+      endX: x + width,
+      endY: y,
+      dashLength: dash,
+      gapLength: gap,
+    });
+    drawDashedLine({
+      graphics: g,
+      startX: x + width,
+      startY: y,
+      endX: x + width,
+      endY: y + height,
+      dashLength: dash,
+      gapLength: gap,
+    });
+    drawDashedLine({
+      graphics: g,
+      startX: x + width,
+      startY: y + height,
+      endX: x,
+      endY: y + height,
+      dashLength: dash,
+      gapLength: gap,
+    });
+    drawDashedLine({
+      graphics: g,
+      startX: x,
+      startY: y + height,
+      endX: x,
+      endY: y,
+      dashLength: dash,
+      gapLength: gap,
+    });
+    g.stroke({
+      width: Math.max(1, 1.5 * invZoom),
+      color: 0x22d3ee,
+      alpha: 0.85,
+    });
   }
-  renderBrush(brushCursor: BrushCursor, brushWorldX: number | null, brushWorldY: number | null, zoom: number): void {
+  renderBrush(
+    brushCursor: BrushCursor,
+    brushWorldX: number | null,
+    brushWorldY: number | null,
+    zoom: number,
+  ): void {
     const g = this._brushGraphics;
     g.clear();
     if (!brushCursor || brushWorldX == null || brushWorldY == null) return;
@@ -228,10 +303,17 @@ export class PixiOverlayRenderer {
   dispose(): void {
     this.clear();
     const graphics = [
-      this._gizmoGraphics, this._skeletonGraphics, this._warpGraphics,
-      this._meshGraphics, this._ikGraphics, this._weightGraphics,
-      this._hoverGraphics, this._marqueeGraphics, this._drawBoneGraphics,
-      this._brushGraphics, this._exportAreaGraphics,
+      this._gizmoGraphics,
+      this._skeletonGraphics,
+      this._warpGraphics,
+      this._meshGraphics,
+      this._ikGraphics,
+      this._weightGraphics,
+      this._hoverGraphics,
+      this._marqueeGraphics,
+      this._drawBoneGraphics,
+      this._brushGraphics,
+      this._exportAreaGraphics,
     ];
     for (const g of graphics) {
       if (g.parent) g.parent.removeChild(g);

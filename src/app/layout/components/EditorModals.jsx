@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import { lazy, Suspense } from 'react';
+import PropTypes from "prop-types";
+import { lazy, Suspense } from "react";
 
 import {
   AlertDialog,
@@ -10,26 +10,32 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 
 function loadExportModal() {
-  return import('@/features/export/components/ExportModal').then(m => ({ default: m.ExportModal }));
+  return import("@/features/export").then((m) => ({ default: m.ExportModal }));
 }
 
 function loadPreferencesModal() {
-  return import('@/features/preferences/components/PreferencesModal').then(m => ({ default: m.PreferencesModal }));
+  return import("@/features/preferences/components/PreferencesModal").then(
+    (m) => ({ default: m.PreferencesModal }),
+  );
 }
 
 function loadSaveModal() {
-  return import('@/features/projects/components/SaveModal').then(m => ({ default: m.SaveModal }));
+  return import("@/features/projects/components/SaveModal").then((m) => ({
+    default: m.SaveModal,
+  }));
 }
 
 function loadLoadModal() {
-  return import('@/features/projects/components/LoadModal').then(m => ({ default: m.LoadModal }));
+  return import("@/features/projects").then((m) => ({ default: m.LoadModal }));
 }
 
 function loadModularSpriteWizard() {
-  return import('@/features/modular-sprite/wizard').then(m => ({ default: m.ModularSpriteWizard }));
+  return import("@/features/modular-sprite").then((m) => ({
+    default: m.ModularSpriteWizardComposition,
+  }));
 }
 
 const ExportModal = lazy(loadExportModal);
@@ -105,22 +111,29 @@ export function EditorModals({
           <ModularSpriteWizard
             open={modularSpriteEditor.open}
             existingId={modularSpriteEditor.existingId}
-            onOpenChange={(open) => setModularSpriteEditor(current => ({ ...current, open }))}
+            onOpenChange={(open) =>
+              setModularSpriteEditor((current) => ({ ...current, open }))
+            }
             onCommit={(request) => {
-              if (!importRef.current?.commitModularSprite) throw new Error('Canvas import service is not ready');
+              if (!importRef.current?.commitModularSprite)
+                throw new Error("Canvas import service is not ready");
               return importRef.current.commitModularSprite(request);
             }}
           />
         </Suspense>
       )}
 
-      <AlertDialog open={projectSession.confirmWipe.open} onOpenChange={(open) => !open && projectSession.closeConfirmWipe()}>
+      <AlertDialog
+        open={projectSession.confirmWipe.open}
+        onOpenChange={(open) => !open && projectSession.closeConfirmWipe()}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Replace current project?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete all existing layers, meshes, and
-              animations in your current workspace. Unsaved changes will be lost.
+              animations in your current workspace. Unsaved changes will be
+              lost.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -135,19 +148,39 @@ export function EditorModals({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={projectSession.confirmStore.open} onOpenChange={(open) => !open && projectSession.closeConfirmStore()}>
+      <AlertDialog
+        open={projectSession.confirmStore.open}
+        onOpenChange={(open) => !open && projectSession.closeConfirmStore()}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Store imported project in Library?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Store imported project in Library?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Would you like to save this project to your library so you can access it easily later?
+              Would you like to save this project to your library so you can
+              access it easily later?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => projectSession.finalizeLoadFile(projectSession.confirmStore.file, false)}>
+            <AlertDialogCancel
+              onClick={() =>
+                projectSession.finalizeLoadFile(
+                  projectSession.confirmStore.file,
+                  false,
+                )
+              }
+            >
               Skip
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => projectSession.finalizeLoadFile(projectSession.confirmStore.file, true)}>
+            <AlertDialogAction
+              onClick={() =>
+                projectSession.finalizeLoadFile(
+                  projectSession.confirmStore.file,
+                  true,
+                )
+              }
+            >
               Save to Library
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -183,7 +216,7 @@ EditorModals.propTypes = {
     handleNewProject: PropTypes.func.isRequired,
     confirmWipe: PropTypes.shape({
       open: PropTypes.bool.isRequired,
-      type: PropTypes.oneOf(['db', 'file', 'new']),
+      type: PropTypes.oneOf(["db", "file", "new"]),
       data: PropTypes.any,
     }).isRequired,
     confirmStore: PropTypes.shape({

@@ -1,13 +1,10 @@
-/**
- * Create coordinate conversion functions that delegate to PixiViewportBridge.
- *
- * @param {{ canvas: HTMLCanvasElement|null, view: { zoom: number, panX: number, panY: number }, sceneGatewayRef: React.MutableRefObject<any> }} deps
- * @returns {{ screenToWorld: (clientX: number, clientY: number) => [number, number], worldToScreen: (worldX: number, worldY: number) => [number, number] }}
- */
-import type { CoordinatePair, ViewTransform } from '@/features/canvas/domain/coordinates.js';
+import type {
+  CoordinatePair,
+  ViewTransform,
+} from "@/features/canvas/domain/coordinates.types.js";
 
-import type { CanvasSceneGateway } from './rendererTypes.js';
-import type { RefObject } from 'react';
+import type { CanvasRendererPort as CanvasSceneGateway } from "../../application/canvasRenderer.types.js";
+import type { RefObject } from "react";
 
 interface ViewportCoordinatesOptions {
   canvas: HTMLCanvasElement;
@@ -15,12 +12,21 @@ interface ViewportCoordinatesOptions {
   sceneGatewayRef: RefObject<CanvasSceneGateway | null>;
 }
 
-export interface ViewportCoordinates {
+interface ViewportCoordinates {
   screenToWorld(clientX: number, clientY: number): CoordinatePair;
   worldToScreen(worldX: number, worldY: number): CoordinatePair;
 }
 
-export function createViewportCoordinates({ canvas, sceneGatewayRef }: ViewportCoordinatesOptions): ViewportCoordinates {
+/**
+ * Create coordinate conversion functions that delegate to PixiViewportBridge.
+ *
+ * @param {{ canvas: HTMLCanvasElement|null, view: { zoom: number, panX: number, panY: number }, sceneGatewayRef: React.MutableRefObject<any> }} deps
+ * @returns {{ screenToWorld: (clientX: number, clientY: number) => [number, number], worldToScreen: (worldX: number, worldY: number) => [number, number] }}
+ */
+export function createViewportCoordinates({
+  canvas,
+  sceneGatewayRef,
+}: ViewportCoordinatesOptions): ViewportCoordinates {
   return {
     screenToWorld(clientX, clientY) {
       const bridge = sceneGatewayRef.current?.viewportBridge;

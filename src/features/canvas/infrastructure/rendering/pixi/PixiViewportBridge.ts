@@ -1,9 +1,9 @@
-import { Viewport } from 'pixi-viewport';
+import { Viewport } from "pixi-viewport";
 
-import { DEFAULT_WORLD_WIDTH, DEFAULT_WORLD_HEIGHT } from './pixiConstants.js';
+import { DEFAULT_WORLD_WIDTH, DEFAULT_WORLD_HEIGHT } from "./pixiConstants.js";
 
-import type { EditorView } from '../rendererTypes.js';
-import type { Application, Point } from 'pixi.js';
+import type { EditorView } from "../../../application/canvasRenderer.types.js";
+import type { Application, Point } from "pixi.js";
 
 interface PixiViewportBridgeOptions {
   app: Application;
@@ -31,10 +31,7 @@ export class PixiViewportBridge {
       disableOnContextMenu: true,
     });
 
-    this.viewport
-      .drag({ mouseButtons: 'middle-right' })
-      .pinch()
-      .wheel();
+    this.viewport.drag({ mouseButtons: "middle-right" }).pinch().wheel();
 
     try {
       this.viewport.clampZoom({ minScale: 0.05, maxScale: 20 });
@@ -47,7 +44,7 @@ export class PixiViewportBridge {
         this.onViewChange(this.readEditorView());
       }
     };
-    this.viewport.on('moved', this.onMoved);
+    this.viewport.on("moved", this.onMoved);
 
     if (initialView) {
       this.applyEditorView(initialView);
@@ -70,7 +67,12 @@ export class PixiViewportBridge {
   }
 
   resize(width: number, height: number): void {
-    this.viewport.resize(width, height, DEFAULT_WORLD_WIDTH, DEFAULT_WORLD_HEIGHT);
+    this.viewport.resize(
+      width,
+      height,
+      DEFAULT_WORLD_WIDTH,
+      DEFAULT_WORLD_HEIGHT,
+    );
   }
 
   toWorld(screenX: number, screenY: number): Point {
@@ -82,7 +84,7 @@ export class PixiViewportBridge {
   }
 
   dispose(): void {
-    this.viewport.off('moved', this.onMoved);
+    this.viewport.off("moved", this.onMoved);
     this.viewport.destroy({ children: true });
   }
 }

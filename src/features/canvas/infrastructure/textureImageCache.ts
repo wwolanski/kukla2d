@@ -5,7 +5,7 @@
  * most recently uploaded source) and `imageDataMapRef` (ImageData for alpha-based
  * picking) into one place with methods matching existing usage.
  */
-export interface TextureImageCache {
+interface TextureImageCache {
   getLastSource(partId: string): string | undefined;
   setLastSource(partId: string, source: string | null | undefined): void;
   getImageData(partId: string): ImageData | undefined;
@@ -28,14 +28,16 @@ export function createTextureImageCache(): TextureImageCache {
       return lastUploadedSources.get(partId);
     },
     setLastSource(partId, source) {
-      if (source === undefined || source === null) lastUploadedSources.delete(partId);
+      if (source === undefined || source === null)
+        lastUploadedSources.delete(partId);
       else lastUploadedSources.set(partId, source);
     },
     getImageData(partId) {
       return imageDataByPartId.get(partId);
     },
     setImageData(partId, imageData) {
-      if (imageData === undefined || imageData === null) imageDataByPartId.delete(partId);
+      if (imageData === undefined || imageData === null)
+        imageDataByPartId.delete(partId);
       else imageDataByPartId.set(partId, imageData);
     },
     clearImageData() {

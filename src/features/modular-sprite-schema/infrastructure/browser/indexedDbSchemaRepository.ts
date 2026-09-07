@@ -14,9 +14,14 @@ import {
 
 import type {
   LocalSchemaRepository,
-  SchemaCatalogSyncState,
   StoredSchemaAsset,
 } from "../../application/localSchemaApi.types.js";
+
+interface SchemaCatalogSyncState {
+  sourceId: string;
+  revision: string;
+  updatedAt: string;
+}
 
 export class IndexedDbSchemaRepository implements LocalSchemaRepository {
   async list(): Promise<ModularSpriteSchema[]> {

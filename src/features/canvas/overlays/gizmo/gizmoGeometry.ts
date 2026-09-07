@@ -9,12 +9,20 @@
  * Compute bounding box from `node.imageBounds` (or default to 0..1).
  * Returns {x, y, w, h} in world/image space.
  */
-import type { PartNode } from '@kukla2d/contracts';
+import type { PartNode } from "@kukla2d/contracts";
 
-import type { ViewTransform } from '../../domain/coordinates.js';
+import type { ViewTransform } from "../../domain/coordinates.types.js";
 
-export interface Bounds { x: number; y: number; w: number; h: number }
-export interface ScreenPoint { x: number; y: number }
+interface Bounds {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+interface ScreenPoint {
+  x: number;
+  y: number;
+}
 
 export function nodeBounds(node: PartNode): Bounds {
   if (node.imageBounds) {
@@ -31,7 +39,11 @@ export function nodeBounds(node: PartNode): Bounds {
 /**
  * Convert a world point to screen coordinates using view zoom/pan.
  */
-export function toScreen(worldX: number, worldY: number, view: ViewTransform): ScreenPoint {
+export function toScreen(
+  worldX: number,
+  worldY: number,
+  view: ViewTransform,
+): ScreenPoint {
   return {
     x: worldX * view.zoom + view.panX,
     y: worldY * view.zoom + view.panY,
@@ -41,7 +53,11 @@ export function toScreen(worldX: number, worldY: number, view: ViewTransform): S
 /**
  * Position of the rotation handle (above the bounding box).
  */
-export function rotationHandle(bounds: Bounds, view: ViewTransform, offsetY = 30): ScreenPoint {
+export function rotationHandle(
+  bounds: Bounds,
+  view: ViewTransform,
+  offsetY = 30,
+): ScreenPoint {
   const cx = bounds.x + bounds.w / 2;
   const topY = bounds.y;
   return toScreen(cx, topY - offsetY / view.zoom, view);

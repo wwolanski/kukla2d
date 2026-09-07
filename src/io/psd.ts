@@ -4,9 +4,9 @@
  * Returns only rasterized layers (those with pixel data). Group/folder nodes
  * are walked but not emitted as parts (M3 will add hierarchy).
  */
-import { loadPsdAdapter } from '@/platform/lazy/loadPsdAdapter.js';
+import { loadPsdAdapter } from "@/platform/lazy/loadPsdAdapter.js";
 
-import type { Layer, PixelData } from 'ag-psd';
+import type { Layer, PixelData } from "ag-psd";
 
 interface PsdImportLayer {
   name: string;
@@ -20,7 +20,7 @@ interface PsdImportLayer {
   visible: boolean;
 }
 
-export interface PsdImportResult {
+interface PsdImportResult {
   width: number;
   height: number;
   layers: PsdImportLayer[];
@@ -53,7 +53,10 @@ function toImageData(pixelData: PixelData): ImageData {
  */
 export async function importPsd(buffer: ArrayBuffer): Promise<PsdImportResult> {
   const { readPsd } = await loadPsdAdapter();
-  const psd = readPsd(buffer, { skipLayerImageData: false, useImageData: true });
+  const psd = readPsd(buffer, {
+    skipLayerImageData: false,
+    useImageData: true,
+  });
 
   const layers: PsdImportLayer[] = [];
 
@@ -68,35 +71,40 @@ export async function importPsd(buffer: ArrayBuffer): Promise<PsdImportResult> {
       // Only emit layers that have pixel content
       if (!layer.canvas && !layer.imageData) continue;
 
-      const left   = layer.left   ?? 0;
-      const top    = layer.top    ?? 0;
-      const right  = layer.right  ?? psd.width;
+      const left = layer.left ?? 0;
+      const top = layer.top ?? 0;
+      const right = layer.right ?? psd.width;
       const bottom = layer.bottom ?? psd.height;
-      const w = right  - left;
+      const w = right - left;
       const h = bottom - top;
       if (w <= 0 || h <= 0) continue;
 
       // Get imageData from the layer's canvas (ag-psd provides this)
       let imageData: ImageData | undefined;
       if (layer.canvas) {
-        const ctx = layer.canvas.getContext('2d');
+        const ctx = layer.canvas.getContext("2d");
         if (!ctx) continue;
-        imageData = ctx.getImageData(0, 0, layer.canvas.width, layer.canvas.height);
+        imageData = ctx.getImageData(
+          0,
+          0,
+          layer.canvas.width,
+          layer.canvas.height,
+        );
       } else {
         imageData = layer.imageData ? toImageData(layer.imageData) : undefined;
       }
       if (!imageData) continue;
 
       layers.push({
-        name:      layer.name || `Layer ${layers.length + 1}`,
-        x:         left,
-        y:         top,
-        width:     w,
-        height:    h,
+        name: layer.name || `Layer ${layers.length + 1}`,
+        x: left,
+        y: top,
+        width: w,
+        height: h,
         imageData,
-        blendMode: layer.blendMode ?? 'normal',
-        opacity:   layer.opacity !== undefined ? layer.opacity : 1,
-        visible:   !layer.hidden,
+        blendMode: layer.blendMode ?? "normal",
+        opacity: layer.opacity !== undefined ? layer.opacity : 1,
+        visible: !layer.hidden,
       });
     }
   }

@@ -1,34 +1,44 @@
-import { useRef, useEffect, useLayoutEffect, useState, useCallback, useMemo } from 'react';
+import {
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 
-import { getDefaultValue } from '@/domain/animationTargets';
+import { getDefaultValue } from "@/domain/animationTargets";
 
-import { createAnimationAuthoringApi } from '@/features/animation';
+import { createAnimationAuthoringApi } from "@/features/animation";
 
-import { AudioTrackList } from './AudioTrackList.jsx';
-import { EditableGraphEditor } from './EditableGraphEditor.jsx';
-import { KeyguideLabels } from './KeyframeGuide.jsx';
-import { MarkerDialog } from './MarkerDialog.jsx';
-import { PendingDraftBanner } from './PendingDraftBanner.jsx';
-import { Playhead } from './Playhead.jsx';
-import { Ruler } from './Ruler.jsx';
-import { SelectionBox } from './SelectionBox.jsx';
-import { LAYOUT } from './timelineLayout.js';
-import { TrackList } from './TrackList.jsx';
-import { TransportBar } from './TransportBar.jsx';
-import { flattenVisibleRows } from '../application/buildTimelineTrackRows.js';
-import { parseKeyframeAddress, keyframeAddressToString } from '../application/keyframeAddress.js';
-import { buildKeyguideFrames } from '../application/keyframeGuide.js';
-import { computeRulerTicks } from '../application/rulerTicks.js';
-import { useAnimationBootstrap } from '../application/useAnimationBootstrap.js';
-import { useAudioSync } from '../application/useAudioSync.js';
-import { useKeyframeActions } from '../application/useKeyframeActions.js';
-import { useKeyframeSelection } from '../application/useKeyframeSelection.js';
-import { useTimelineController } from '../application/useTimelineController.js';
-import { useTimelineGeometry } from '../application/useTimelineGeometry.js';
+import { toast } from "@/components/ui/use-toast";
 
+import { AudioTrackList } from "./AudioTrackList.jsx";
+import { EditableGraphEditor } from "./EditableGraphEditor.jsx";
+import { KeyguideLabels } from "./KeyframeGuide.jsx";
+import { MarkerDialog } from "./MarkerDialog.jsx";
+import { PendingDraftBanner } from "./PendingDraftBanner.jsx";
+import { Playhead } from "./Playhead.jsx";
+import { Ruler } from "./Ruler.jsx";
+import { SelectionBox } from "./SelectionBox.jsx";
+import { TrackList } from "./TrackList.jsx";
+import { TransportBar } from "./TransportBar.jsx";
+import { flattenVisibleRows } from "../application/buildTimelineTrackRows.js";
+import {
+  parseKeyframeAddress,
+  keyframeAddressToString,
+} from "../application/keyframeAddress.js";
+import { buildKeyguideFrames } from "../application/keyframeGuide.js";
+import { computeRulerTicks } from "../application/rulerTicks.js";
+import { useAnimationBootstrap } from "../application/useAnimationBootstrap.js";
+import { useAudioSync } from "../application/useAudioSync.js";
+import { useKeyframeActions } from "../application/useKeyframeActions.js";
+import { useKeyframeSelection } from "../application/useKeyframeSelection.js";
+import { useTimelineController } from "../application/useTimelineController.js";
+import { useTimelineGeometry } from "../application/useTimelineGeometry.js";
+import { LAYOUT } from "../domain/timelineLayout.js";
 
-
-export function TimelinePanel() {
+export function TimelinePanelView({ decodeAudioFile }) {
   const ctrl = useTimelineController();
 
   const trackAreaRef = useRef(null);
@@ -56,9 +66,9 @@ export function TimelinePanel() {
       setRulerWidth(Math.max(contentWidth, 100));
     };
     updateWidth(rulerElement.clientWidth);
-    if (typeof ResizeObserver === 'undefined') return undefined;
+    if (typeof ResizeObserver === "undefined") return undefined;
 
-    const ro = new ResizeObserver(entries => {
+    const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
         updateWidth(entry.contentRect.width);
       }
@@ -77,13 +87,15 @@ export function TimelinePanel() {
         left: rulerRect.left - guideRect.left + LAYOUT.TRACK_PAD,
         width: Math.max(rulerRect.width - 2 * LAYOUT.TRACK_PAD, 0),
       };
-      setGuideTrackGeometry(previous => (
-        previous?.left === next.left && previous?.width === next.width ? previous : next
-      ));
+      setGuideTrackGeometry((previous) =>
+        previous?.left === next.left && previous?.width === next.width
+          ? previous
+          : next,
+      );
     };
 
     updateGuideGeometry();
-    if (typeof ResizeObserver === 'undefined') return undefined;
+    if (typeof ResizeObserver === "undefined") return undefined;
 
     const ro = new ResizeObserver(updateGuideGeometry);
     ro.observe(rulerElement);
@@ -92,11 +104,16 @@ export function TimelinePanel() {
   }, [rulerElement, guideAreaElement]);
 
   const rulerTicks = useMemo(
-    () => computeRulerTicks({ startFrame: ctrl.startFrame, endFrame: ctrl.endFrame, widthPx: rulerWidth }),
+    () =>
+      computeRulerTicks({
+        startFrame: ctrl.startFrame,
+        endFrame: ctrl.endFrame,
+        widthPx: rulerWidth,
+      }),
     [ctrl.startFrame, ctrl.endFrame, rulerWidth],
   );
 
-  const [timelineMode, setTimelineMode] = useState('dope');
+  const [timelineMode, setTimelineMode] = useState("dope");
   const [expandedTargets, setExpandedTargets] = useState(() => new Set());
   const [markerDialogOpen, setMarkerDialogOpen] = useState(false);
   const authoringApi = useMemo(() => createAnimationAuthoringApi(), []);
@@ -129,14 +146,19 @@ export function TimelinePanel() {
   );
 
   const guideFrames = useMemo(
-    () => buildKeyguideFrames({
-      startFrame: ctrl.startFrame,
-      endFrame: ctrl.endFrame,
-      fps: ctrl.fps,
-      hasVisibleKeyframes: ctrl.trackRows.length > 0,
-    }),
+    () =>
+      buildKeyguideFrames({
+        startFrame: ctrl.startFrame,
+        endFrame: ctrl.endFrame,
+        fps: ctrl.fps,
+        hasVisibleKeyframes: ctrl.trackRows.length > 0,
+      }),
     [ctrl.startFrame, ctrl.endFrame, ctrl.fps, ctrl.trackRows.length],
   );
+
+  const handleMoveBlocked = useCallback((description) => {
+    toast({ variant: "destructive", title: "Keyframe not moved", description });
+  }, []);
 
   const {
     selectedKeyframes,
@@ -159,6 +181,7 @@ export function TimelinePanel() {
     seekFrame: ctrl.seekFrame,
     moveKeyframes: ctrl.moveKeyframes,
     flattenedRows,
+    onMoveBlocked: handleMoveBlocked,
   });
 
   const {
@@ -187,12 +210,15 @@ export function TimelinePanel() {
     currentFrame: ctrl.currentFrame,
   });
 
-  const handleMarkerConfirm = useCallback((label) => {
-    addMarker(label);
-  }, [addMarker]);
+  const handleMarkerConfirm = useCallback(
+    (label) => {
+      addMarker(label);
+    },
+    [addMarker],
+  );
 
   const onToggleTarget = useCallback((targetId) => {
-    setExpandedTargets(prev => {
+    setExpandedTargets((prev) => {
       const next = new Set(prev);
       if (next.has(targetId)) next.delete(targetId);
       else next.add(targetId);
@@ -205,35 +231,48 @@ export function TimelinePanel() {
   const activeClip = ctrl.activeClip;
   const trackRows = ctrl.trackRows;
 
-  const onGraphCommit = useCallback(({ animationId, edits }) => {
-    editKeyframes({ animationId, edits });
-  }, [editKeyframes]);
+  const onGraphCommit = useCallback(
+    ({ animationId, edits }) => {
+      editKeyframes({ animationId, edits });
+    },
+    [editKeyframes],
+  );
 
-  const onToggleBoomerang = useCallback((targetId) => {
-    if (!activeClip) return;
-    const row = trackRows.find(r => r.targetId === targetId);
-    const currentlyEnabled = row?.boomerangCutoff?.enabled ?? false;
-    setTargetBoomerang({ animationId: activeClip.id, targetId, enabled: !currentlyEnabled });
-  }, [activeClip, trackRows, setTargetBoomerang]);
+  const onToggleBoomerang = useCallback(
+    (targetId) => {
+      if (!activeClip) return;
+      const row = trackRows.find((r) => r.targetId === targetId);
+      const currentlyEnabled = row?.boomerangCutoff?.enabled ?? false;
+      setTargetBoomerang({
+        animationId: activeClip.id,
+        targetId,
+        enabled: !currentlyEnabled,
+      });
+    },
+    [activeClip, trackRows, setTargetBoomerang],
+  );
 
-  const onAddProperty = useCallback((targetId, property) => {
-    if (!ctrl.activeClip) return;
-    const defaultValue = getDefaultValue(property, null);
-    authoringApi.preview({
-      animationId: ctrl.activeClip.id,
-      targetId,
-      property,
-      value: defaultValue,
-      timeMs: currentTimeRef.current,
-      source: 'timeline',
-      phase: 'commit',
-    });
-    authoringApi.commit({ source: 'timeline-add-property' });
-  }, [ctrl.activeClip, authoringApi]);
+  const onAddProperty = useCallback(
+    (targetId, property) => {
+      if (!ctrl.activeClip) return;
+      const defaultValue = getDefaultValue(property, null);
+      authoringApi.preview({
+        animationId: ctrl.activeClip.id,
+        targetId,
+        property,
+        value: defaultValue,
+        timeMs: currentTimeRef.current,
+        source: "timeline",
+        phase: "commit",
+      });
+      authoringApi.commit({ source: "timeline-add-property" });
+    },
+    [ctrl.activeClip, authoringApi],
+  );
 
   useEffect(() => {
     if (ctrl.trackRows.length > 0 && expandedTargets.size === 0) {
-      setExpandedTargets(new Set(ctrl.trackRows.map(r => r.targetId)));
+      setExpandedTargets(new Set(ctrl.trackRows.map((r) => r.targetId)));
     }
   }, [ctrl.trackRows, expandedTargets.size]);
 
@@ -242,59 +281,82 @@ export function TimelinePanel() {
 
   const { setInteractionOwner: setTimelineOwner } = ctrl;
 
-  const handlePanelPointerDown = useCallback((e) => {
-    if (e.target?.tagName === 'INPUT' || e.target?.tagName === 'TEXTAREA' || e.target?.isContentEditable) return;
-    setTimelineOwner('timeline');
-  }, [setTimelineOwner]);
+  const handlePanelPointerDown = useCallback(
+    (e) => {
+      if (
+        e.target?.tagName === "INPUT" ||
+        e.target?.tagName === "TEXTAREA" ||
+        e.target?.isContentEditable
+      )
+        return;
+      setTimelineOwner("timeline");
+    },
+    [setTimelineOwner],
+  );
 
   const handlePanelFocus = useCallback(() => {
-    setTimelineOwner('timeline');
+    setTimelineOwner("timeline");
   }, [setTimelineOwner]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
       const target = e.target;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      )
+        return;
       if (document.querySelector('[role="dialog"][data-state="open"]')) return;
-      if (ctrl.interactionOwner !== 'timeline') return;
+      if (ctrl.interactionOwner !== "timeline") return;
 
       const isMod = e.ctrlKey || e.metaKey;
 
-      if (isMod && e.key.toLowerCase() === 'a') {
+      if (isMod && e.key.toLowerCase() === "a") {
         e.preventDefault();
         if (!ctrl.activeClip) return;
         const allAddresses = new Set();
         for (const track of ctrl.activeClip.tracks) {
           for (const kf of track.keyframes) {
-            allAddresses.add(keyframeAddressToString({
-              targetId: track.targetId,
-              property: track.property,
-              timeMs: kf.time,
-            }));
+            allAddresses.add(
+              keyframeAddressToString({
+                targetId: track.targetId,
+                property: track.property,
+                timeMs: kf.time,
+              }),
+            );
           }
         }
         setSelectedKeyframes(allAddresses);
         return;
       }
 
-      if (e.key === 'Backspace' || e.key === 'Delete') {
+      if (e.key === "Backspace" || e.key === "Delete") {
         e.preventDefault();
         deleteSelectedKeyframes();
       } else if (isMod) {
-        if (e.key === 'c') {
+        if (e.key === "c") {
           if (selectedKeyframes.size > 0) {
             const first = selectedKeyframes.values().next().value;
             const address = parseKeyframeAddress(first);
             if (address) copyKeyframe(address.targetId, address.timeMs);
           }
-        } else if (e.key === 'v') {
+        } else if (e.key === "v") {
           pasteKeyframes();
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [deleteSelectedKeyframes, selectedKeyframes, copyKeyframe, pasteKeyframes, ctrl.interactionOwner, ctrl.activeClip, setSelectedKeyframes]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    deleteSelectedKeyframes,
+    selectedKeyframes,
+    copyKeyframe,
+    pasteKeyframes,
+    ctrl.interactionOwner,
+    ctrl.activeClip,
+    setSelectedKeyframes,
+  ]);
 
   return (
     <div
@@ -338,7 +400,7 @@ export function TimelinePanel() {
 
       <PendingDraftBanner />
 
-      {timelineMode === 'graph' && (
+      {timelineMode === "graph" && (
         <EditableGraphEditor
           rows={ctrl.trackRows}
           selectedKeyframes={selectedKeyframes}
@@ -359,7 +421,10 @@ export function TimelinePanel() {
       >
         {ctrl.trackRows.length === 0 && audioTrackCount === 0 ? (
           ctrl.hasAnimation && guideFrames.length > 0 ? (
-            <div ref={setGuideAreaElementRef} className="relative h-full min-h-0 w-full min-w-0">
+            <div
+              ref={setGuideAreaElementRef}
+              className="relative h-full min-h-0 w-full min-w-0"
+            >
               <Ruler
                 startFrame={ctrl.startFrame}
                 endFrame={ctrl.endFrame}
@@ -370,7 +435,10 @@ export function TimelinePanel() {
                 rulerRef={setRulerElementRef}
                 rulerTicks={rulerTicks}
               />
-              <div className="absolute bottom-0" style={{ top: LAYOUT.RULER_H, ...guideTrackGeometry }}>
+              <div
+                className="absolute bottom-0"
+                style={{ top: LAYOUT.RULER_H, ...guideTrackGeometry }}
+              >
                 {guideTrackGeometry && (
                   <KeyguideLabels
                     frames={guideFrames}
@@ -393,8 +461,14 @@ export function TimelinePanel() {
             </div>
           )
         ) : (
-          <div className="relative w-full min-w-0 isolate" style={{ minHeight: LAYOUT.RULER_H + (visibleRowCount + audioTrackCount) * LAYOUT.ROW_H }}>
-
+          <div
+            className="relative w-full min-w-0 isolate"
+            style={{
+              minHeight:
+                LAYOUT.RULER_H +
+                (visibleRowCount + audioTrackCount) * LAYOUT.ROW_H,
+            }}
+          >
             {selectionBox && (
               <SelectionBox
                 x={selectionBox.x}
@@ -416,9 +490,15 @@ export function TimelinePanel() {
               rulerTicks={rulerTicks}
             />
 
-            <div className="absolute inset-0 pointer-events-none" style={{ top: LAYOUT.RULER_H, left: LAYOUT.LABEL_W }}>
-              <div className="absolute inset-y-0" style={{ left: LAYOUT.TRACK_PAD, right: LAYOUT.TRACK_PAD }}>
-                {rulerTicks.map(t => (
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ top: LAYOUT.RULER_H, left: LAYOUT.LABEL_W }}
+            >
+              <div
+                className="absolute inset-y-0"
+                style={{ left: LAYOUT.TRACK_PAD, right: LAYOUT.TRACK_PAD }}
+              >
+                {rulerTicks.map((t) => (
                   <div
                     key={t.frame}
                     className="absolute top-0 bottom-0 w-px bg-border/10"
@@ -452,6 +532,7 @@ export function TimelinePanel() {
             />
 
             <AudioTrackList
+              decodeAudioFile={decodeAudioFile}
               tracks={ctrl.activeClip?.audioTracks ?? []}
               animationId={ctrl.activeClip?.id ?? null}
               timelineDurationMs={ctrl.activeClip?.duration ?? 2000}

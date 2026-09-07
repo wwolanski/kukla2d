@@ -1,9 +1,14 @@
-import type { Animation, AnimationId, AnimationTargetId, ProjectDocument } from '@kukla2d/contracts';
+import type {
+  Animation,
+  AnimationId,
+  AnimationTargetId,
+  ProjectDocument,
+} from "@kukla2d/contracts";
 
-import { ANIMATION_DEFAULTS } from './animationDefaults.js';
-import { frameToTime } from './animationTransport.js';
+import { ANIMATION_DEFAULTS } from "./animationDefaults.js";
+import { frameToTime } from "./animationTransport.js";
 
-export interface AnimationSession {
+interface AnimationSession {
   activeAnimationId: AnimationId | null;
   currentTimeMs: number;
   playing: boolean;
@@ -35,20 +40,29 @@ export interface AnimationSession {
  */
 
 function deriveLoopWindow(durationMs: number, fps: number) {
-  const safeFps = Number.isFinite(fps) && fps > 0 ? fps : ANIMATION_DEFAULTS.fps;
-  const duration = Number.isFinite(durationMs) && durationMs >= 0
-    ? durationMs
-    : (ANIMATION_DEFAULTS.frameCount / ANIMATION_DEFAULTS.fps) * 1000;
+  const safeFps =
+    Number.isFinite(fps) && fps > 0 ? fps : ANIMATION_DEFAULTS.fps;
+  const duration =
+    Number.isFinite(durationMs) && durationMs >= 0
+      ? durationMs
+      : (ANIMATION_DEFAULTS.frameCount / ANIMATION_DEFAULTS.fps) * 1000;
   return {
     startFrame: 0,
     endFrame: Math.max(1, Math.round((duration / 1000) * safeFps)),
   };
 }
 
-function clampSessionTiming(session: AnimationSession, fps: number): AnimationSession {
-  const safeFps = Number.isFinite(fps) && fps > 0 ? fps : ANIMATION_DEFAULTS.fps;
+function clampSessionTiming(
+  session: AnimationSession,
+  fps: number,
+): AnimationSession {
+  const safeFps =
+    Number.isFinite(fps) && fps > 0 ? fps : ANIMATION_DEFAULTS.fps;
   const startMs = frameToTime(session.loopStartFrame, safeFps);
-  const endMs = frameToTime(Math.max(session.loopStartFrame + 1, session.loopEndFrame), safeFps);
+  const endMs = frameToTime(
+    Math.max(session.loopStartFrame + 1, session.loopEndFrame),
+    safeFps,
+  );
 
   let currentTimeMs = session.currentTimeMs;
   if (currentTimeMs < startMs) currentTimeMs = startMs;
@@ -72,10 +86,15 @@ function clampSessionTiming(session: AnimationSession, fps: number): AnimationSe
  * Create initial session state from a clip.
  * Returns idle shape when clip is null/undefined.
  */
-export function activateAnimationSession(clip: Animation | null | undefined): AnimationSession {
+export function activateAnimationSession(
+  clip: Animation | null | undefined,
+): AnimationSession {
   if (!clip) return resetAnimationSession();
 
-  const fps = Number.isFinite(clip.fps) && clip.fps > 0 ? clip.fps : ANIMATION_DEFAULTS.fps;
+  const fps =
+    Number.isFinite(clip.fps) && clip.fps > 0
+      ? clip.fps
+      : ANIMATION_DEFAULTS.fps;
   const { startFrame, endFrame } = deriveLoopWindow(clip.duration, fps);
 
   return {
@@ -95,10 +114,16 @@ export function activateAnimationSession(clip: Animation | null | undefined): An
  * Synchronize session timing when clip changes.
  * Clamps playhead and loop window to valid range.
  */
-export function synchronizeAnimationSession(session: AnimationSession, clip: Animation | null | undefined): AnimationSession {
+export function synchronizeAnimationSession(
+  session: AnimationSession,
+  clip: Animation | null | undefined,
+): AnimationSession {
   if (!clip) return session;
 
-  const fps = Number.isFinite(clip.fps) && clip.fps > 0 ? clip.fps : ANIMATION_DEFAULTS.fps;
+  const fps =
+    Number.isFinite(clip.fps) && clip.fps > 0
+      ? clip.fps
+      : ANIMATION_DEFAULTS.fps;
   const { startFrame, endFrame } = deriveLoopWindow(clip.duration, fps);
 
   const synchronized = {
@@ -131,7 +156,9 @@ export function resetAnimationSession(): AnimationSession {
 /**
  * Select a stable snapshot of the session (K4 shape).
  */
-export function selectAnimationSessionSnapshot(session: AnimationSession): AnimationSession {
+export function selectAnimationSessionSnapshot(
+  session: AnimationSession,
+): AnimationSession {
   return {
     activeAnimationId: session.activeAnimationId,
     currentTimeMs: session.currentTimeMs,
@@ -153,7 +180,10 @@ export function selectAnimationSessionSnapshot(session: AnimationSession): Anima
  * @param {Object} session - current session state (K4 shape)
  * @returns {Object} reconciled session (K4 shape)
  */
-export function reconcileAnimationSession(project: ProjectDocument | null | undefined, session: AnimationSession): AnimationSession {
+export function reconcileAnimationSession(
+  project: ProjectDocument | null | undefined,
+  session: AnimationSession,
+): AnimationSession {
   const animations = project?.animations ?? [];
   const activeId = session.activeAnimationId;
 

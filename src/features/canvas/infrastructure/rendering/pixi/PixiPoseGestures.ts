@@ -1,26 +1,25 @@
 import {
   buildRotatedBoneBranch,
   updatePoseHandleDrag,
-} from '@/features/canvas/domain/poseHandle.js';
+} from "@/features/canvas/domain/poseHandle.js";
 
-import { getEffectiveBones, getEffectiveNodes } from './PixiInputState.js';
+import { getEffectiveBones, getEffectiveNodes } from "./PixiInputState.js";
 import {
   canStartAnimationGesture,
   previewPosePartial,
   usesPoseDraft,
-} from './PixiPosePreview.js';
+} from "./PixiPosePreview.js";
 
-import type { DragState, PixiInteractionSystem, PointerInput } from './PixiInteractionSystem.js';
+import type { PointerInput } from "./pixiInteractionContracts.types.js";
+import type { DragState } from "./pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+import type { PoseHandleFrame } from "./PixiPoseGestures.types.js";
 
-export interface PoseHandleFrame {
-  boneId: string;
-  pivot: { x: number; y: number };
-  rotation?: number;
-  minRadius: number;
-  maxRadius: number;
-}
-
-export function startPoseHandleDrag(adapter: PixiInteractionSystem, event: PointerInput, frame: PoseHandleFrame): void {
+export function startPoseHandleDrag(
+  adapter: PixiInteractionSystem,
+  event: PointerInput,
+  frame: PoseHandleFrame,
+): void {
   if (!frame?.boneId) return;
   if (!canStartAnimationGesture(adapter)) return;
   const world = adapter._eventWorldPosition(event);
@@ -38,10 +37,12 @@ export function startPoseHandleDrag(adapter: PixiInteractionSystem, event: Point
     editor,
     animation: adapter.animationRef.current,
   });
-  const bone = effectiveBones.find(candidate => candidate.id === frame.boneId);
+  const bone = effectiveBones.find(
+    (candidate) => candidate.id === frame.boneId,
+  );
   if (!bone) return;
   adapter._sendWorkflow({
-    type: 'SELECT_RIG_HIT',
+    type: "SELECT_RIG_HIT",
     elementIds: [],
     boneIds: [bone.id],
     constraintIds: [],
@@ -57,20 +58,25 @@ export function startPoseHandleDrag(adapter: PixiInteractionSystem, event: Point
     rigSelectionAnchor: bone.id,
   };
   const useDraftPose = usesPoseDraft(editor);
-  if (!useDraftPose) adapter._beginCommandBatch({ name: 'Pose bone', type: 'pose' });
-  const isAnimMode = editor.editorMode === 'animation';
-  const gestureId = isAnimMode && useDraftPose
-    ? adapter.animationAuthoringAdapter?.beginGesture()
-    : null;
+  if (!useDraftPose)
+    adapter._beginCommandBatch({ name: "Pose bone", type: "pose" });
+  const isAnimMode = editor.editorMode === "animation";
+  const gestureId =
+    isAnimMode && useDraftPose
+      ? adapter.animationAuthoringAdapter?.beginGesture()
+      : null;
   adapter._setDragState({
-    type: 'poseHandle',
+    type: "poseHandle",
     boneId: bone.id,
     pivot: frame.pivot,
     startRotation: bone.setup?.rotation ?? frame.rotation ?? 0,
-    startPointerAngle: Math.atan2(world.y - frame.pivot.y, world.x - frame.pivot.x),
+    startPointerAngle: Math.atan2(
+      world.y - frame.pivot.y,
+      world.x - frame.pivot.x,
+    ),
     minRadius: frame.minRadius,
     maxRadius: frame.maxRadius,
-    startBones: effectiveBones.map(candidate => ({
+    startBones: effectiveBones.map((candidate) => ({
       ...candidate,
       setup: { ...(candidate.setup ?? {}) },
     })),
@@ -79,13 +85,17 @@ export function startPoseHandleDrag(adapter: PixiInteractionSystem, event: Point
     gestureId,
   });
   adapter._sendWorkflow({
-    type: 'START_TRANSFORM_DRAG',
-    payload: { mode: 'poseHandle', boneId: frame.boneId },
+    type: "START_TRANSFORM_DRAG",
+    payload: { mode: "poseHandle", boneId: frame.boneId },
   });
 }
 
-export function handlePoseHandleDrag(adapter: PixiInteractionSystem, event: PointerInput, drag: DragState): boolean {
-  if (drag.type !== 'poseHandle') return false;
+export function handlePoseHandleDrag(
+  adapter: PixiInteractionSystem,
+  event: PointerInput,
+  drag: DragState,
+): boolean {
+  if (drag.type !== "poseHandle") return false;
   const world = adapter._eventWorldPosition(event);
   if (!world) return true;
   const next = updatePoseHandleDrag({
@@ -107,22 +117,28 @@ export function handlePoseHandleDrag(adapter: PixiInteractionSystem, event: Poin
     const gestureId = drag.gestureId;
     for (const [boneId, partial] of branch) {
       const isRoot = boneId === drag.boneId;
-      const meta = gestureId ? {
-        gestureId,
-        role: isRoot ? 'authored' : 'derived',
-        source: 'pose.rotate',
-      } : undefined;
+      const meta = gestureId
+        ? {
+            gestureId,
+            role: isRoot ? "authored" : "derived",
+            source: "pose.rotate",
+          }
+        : undefined;
       previewPosePartial(adapter, boneId, partial, meta);
     }
   } else {
     adapter._executeCommand({
-      type: 'updateProject',
-      payload: { mutator: project => {
-        for (const [boneId, partial] of branch) {
-          const bone = project.bones?.find(candidate => candidate.id === boneId);
-          if (bone) Object.assign(bone.setup, partial);
-        }
-      } },
+      type: "updateProject",
+      payload: {
+        mutator: (project) => {
+          for (const [boneId, partial] of branch) {
+            const bone = project.bones?.find(
+              (candidate) => candidate.id === boneId,
+            );
+            if (bone) Object.assign(bone.setup, partial);
+          }
+        },
+      },
     });
   }
   adapter.markDirty();

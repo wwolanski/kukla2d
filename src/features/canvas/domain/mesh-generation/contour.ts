@@ -19,7 +19,7 @@
  * @param {number}            radius    - Dilation radius in pixels (0 = no change)
  * @returns {Uint8Array}                 Binary mask (1 = inside after dilation)
  */
-export type Point2D = readonly [number, number];
+import type { Point2D } from "./contour.types.js";
 
 export function dilateAlphaMask(
   data: Uint8ClampedArray,
@@ -69,7 +69,16 @@ export function dilateAlphaMask(
 
 // ─── Multi-region contour tracing ─────────────────────────────────────────────
 
-const DIRS: readonly Point2D[] = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
+const DIRS: readonly Point2D[] = [
+  [1, 0],
+  [1, 1],
+  [0, 1],
+  [-1, 1],
+  [-1, 0],
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+];
 
 /**
  * Trace a single closed boundary starting at (startX, startY).
@@ -94,7 +103,8 @@ function traceSingleContour(
   const contour: Point2D[] = [[startX, startY]];
   visited[startY * width + startX] = 1;
 
-  let curX = startX, curY = startY;
+  let curX = startX,
+    curY = startY;
   let prevDir = 6; // start by looking left (same convention as before)
 
   const maxSteps = width * height * 2;
@@ -103,7 +113,8 @@ function traceSingleContour(
     for (let i = 0; i < 8; i++) {
       const dir = (prevDir + 6 + i) % 8;
       const [dx, dy] = DIRS[dir]!;
-      const nx = curX + dx, ny = curY + dy;
+      const nx = curX + dx,
+        ny = curY + dy;
       if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
       if (mask[ny * width + nx]) {
         prevDir = dir;
@@ -131,7 +142,11 @@ function traceSingleContour(
  * @param {number}     height
  * @returns {Array<Array<[number,number]>>}  Array of closed contour point lists
  */
-export function traceAllContours(mask: Uint8Array, width: number, height: number): Point2D[][] {
+export function traceAllContours(
+  mask: Uint8Array,
+  width: number,
+  height: number,
+): Point2D[][] {
   const visited = new Uint8Array(width * height);
   const contours: Point2D[][] = [];
 
@@ -158,7 +173,10 @@ export function traceAllContours(mask: Uint8Array, width: number, height: number
  * @param {number}                 numPoints - Target sample count
  * @returns {Array<[number,number]>}
  */
-export function resampleContour(contour: readonly Point2D[], numPoints: number): Point2D[] {
+export function resampleContour(
+  contour: readonly Point2D[],
+  numPoints: number,
+): Point2D[] {
   if (contour.length < 2) return contour.slice();
 
   const arcLengths: number[] = [0];
@@ -183,11 +201,17 @@ export function resampleContour(contour: readonly Point2D[], numPoints: number):
 
   for (let i = 0; i < numPoints; i++) {
     const targetLen = i * step;
-    while (seg < arcLengths.length - 1 && arcLengths[seg + 1]! < targetLen) seg++;
+    while (seg < arcLengths.length - 1 && arcLengths[seg + 1]! < targetLen)
+      seg++;
 
-    const t = (seg < arcLengths.length - 1)
-      ? Math.min(1, (targetLen - arcLengths[seg]!) / (arcLengths[seg + 1]! - arcLengths[seg]!))
-      : 0;
+    const t =
+      seg < arcLengths.length - 1
+        ? Math.min(
+            1,
+            (targetLen - arcLengths[seg]!) /
+              (arcLengths[seg + 1]! - arcLengths[seg]!),
+          )
+        : 0;
 
     const p0 = contour[seg]!;
     const p1 = contour[(seg + 1) % contour.length]!;
@@ -206,13 +230,19 @@ export function resampleContour(contour: readonly Point2D[], numPoints: number):
  * @param {number}                 numPasses
  * @returns {Array<[number,number]>}
  */
-export function smoothContour(points: readonly Point2D[], numPasses = 0): Point2D[] {
+export function smoothContour(
+  points: readonly Point2D[],
+  numPasses = 0,
+): Point2D[] {
   let result = points.slice();
   for (let p = 0; p < numPasses; p++) {
     result = result.map((pt, i) => {
       const prev = result[(i - 1 + result.length) % result.length]!;
       const next = result[(i + 1) % result.length]!;
-      return [(prev[0] + pt[0] * 2 + next[0]) / 4, (prev[1] + pt[1] * 2 + next[1]) / 4];
+      return [
+        (prev[0] + pt[0] * 2 + next[0]) / 4,
+        (prev[1] + pt[1] * 2 + next[1]) / 4,
+      ];
     });
   }
   return result;

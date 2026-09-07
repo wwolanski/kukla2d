@@ -12,9 +12,15 @@
  * @param {number}            [gridSpacing=30]
  * @returns {Array<[number,number]>}
  */
-import type { Point2D } from './contour.js';
+import type { Point2D } from "./contour.types.js";
 
-export function sampleInterior(data: Uint8ClampedArray, width: number, height: number, alphaThreshold = 5, gridSpacing = 30): Point2D[] {
+export function sampleInterior(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  alphaThreshold = 5,
+  gridSpacing = 30,
+): Point2D[] {
   const points: Point2D[] = [];
   const jitter = gridSpacing * 0.4;
 
@@ -41,9 +47,13 @@ export function sampleInterior(data: Uint8ClampedArray, width: number, height: n
  * @param {number}                 minDistance
  * @returns {Array<[number,number]>}
  */
-export function filterByEdgePadding(interiorPts: readonly Point2D[], edgePts: readonly Point2D[], minDistance: number): Point2D[] {
+export function filterByEdgePadding(
+  interiorPts: readonly Point2D[],
+  edgePts: readonly Point2D[],
+  minDistance: number,
+): Point2D[] {
   const minDist2 = minDistance * minDistance;
-  return interiorPts.filter(pt => {
+  return interiorPts.filter((pt) => {
     for (const ep of edgePts) {
       const dx = pt[0] - ep[0];
       const dy = pt[1] - ep[1];

@@ -9,19 +9,29 @@
  *   'x' | 'y' | 'rotation' | 'scaleX' | 'scaleY' | 'opacity' | 'visible' | 'mesh_verts' | 'blendShape:{id}'
  */
 
-import type { Animation, BlendShape, Keyframe, Transform } from '@kukla2d/contracts';
+import type {
+  Animation,
+  BlendShape,
+  Keyframe,
+  Transform,
+} from "@kukla2d/contracts";
 
-import { lerp } from '@/lib/math';
+import { lerp } from "@/lib/math";
 
-import { getBoomerangSourceTime } from './animationBoomerang.js';
-import { getTrackValueCategory, TRACK_VALUE_CATEGORIES } from './animationProperties.js';
-import { sampleTimeAtFps } from './animationTransport.js';
+import { getBoomerangSourceTime } from "./animationBoomerang.js";
+import {
+  getTrackValueCategory,
+  TRACK_VALUE_CATEGORIES,
+} from "./animationProperties.js";
+import { sampleTimeAtFps } from "./animationTransport.js";
 
-import type { AnimationEasing } from './animationCommandTypes.js';
+import type { AnimationEasing } from "./animationCommandTypes.types.js";
+import type { PoseOverrides } from "./animationEngine.types.js";
 
-
-export interface Point2D { x: number; y: number }
-export type PoseOverrides = Map<string, Record<string, unknown>>;
+interface Point2D {
+  x: number;
+  y: number;
+}
 
 function bezier1D(t: number, startTension: number, endTension: number): number {
   const t2 = t * t;
@@ -34,7 +44,13 @@ function bezier1D(t: number, startTension: number, endTension: number): number {
 /**
  * 1D Cubic Bezier Solver (X -> Y)
  */
-export function evaluateCubicBezier(x: number, cx1: number, cy1: number, cx2: number, cy2: number): number {
+export function evaluateCubicBezier(
+  x: number,
+  cx1: number,
+  cy1: number,
+  cx2: number,
+  cy2: number,
+): number {
   if (x <= 0) return 0;
   if (x >= 1) return 1;
   if (cx1 === cy1 && cx2 === cy2) return x; // Linear shortcut
@@ -43,7 +59,7 @@ export function evaluateCubicBezier(x: number, cx1: number, cy1: number, cx2: nu
   let lower = 0;
   let upper = 1;
   let t = x;
-  
+
   for (let i = 0; i < 12; i++) {
     const currentX = bezier1D(t, cx1, cx2);
     if (Math.abs(currentX - x) < 0.0001) break;
@@ -51,7 +67,7 @@ export function evaluateCubicBezier(x: number, cx1: number, cy1: number, cx2: nu
     else upper = t;
     t = (lower + upper) / 2;
   }
-  
+
   return bezier1D(t, cy1, cy2);
 }
 
@@ -59,18 +75,18 @@ export function evaluateCubicBezier(x: number, cx1: number, cy1: number, cx2: nu
  * Evaluate a given easing shape
  */
 export function evaluateEasing(t: number, easing?: AnimationEasing): number {
-  if (easing === 'linear') return t;
-  if (!easing || easing === 'ease' || easing === 'ease-both') {
+  if (easing === "linear") return t;
+  if (!easing || easing === "ease" || easing === "ease-both") {
     // defaults to standard smooth curve (Ease Both)
     return evaluateCubicBezier(t, 0.42, 0, 0.58, 1);
   }
-  if (easing === 'ease-in') {
+  if (easing === "ease-in") {
     return evaluateCubicBezier(t, 0.42, 0, 1, 1);
   }
-  if (easing === 'ease-out') {
+  if (easing === "ease-out") {
     return evaluateCubicBezier(t, 0, 0, 0.58, 1);
   }
-  if (easing === 'stepped') return 0;
+  if (easing === "stepped") return 0;
   if (Array.isArray(easing) && easing.length === 4) {
     return evaluateCubicBezier(t, easing[0], easing[1], easing[2], easing[3]);
   }
@@ -93,14 +109,14 @@ export function interpolateTrack(
   const firstKeyframe = keyframes[0]!;
   const lastKeyframe = keyframes[keyframes.length - 1]!;
   if (timeMs <= firstKeyframe.time) return firstKeyframe.value;
-  
+
   if (timeMs >= lastKeyframe.time) {
     if (loopKeyframes && timeMs < endMs && keyframes.length > 0) {
       const kLast = lastKeyframe;
       const kFirst = firstKeyframe;
       const t = (timeMs - kLast.time) / (endMs - kLast.time);
       const te = evaluateEasing(t, kLast.easing);
-      return typeof kLast.value === 'number' && typeof kFirst.value === 'number'
+      return typeof kLast.value === "number" && typeof kFirst.value === "number"
         ? lerp(kLast.value, kFirst.value, te)
         : kLast.value;
     }
@@ -118,26 +134,30 @@ export function interpolateTrack(
 
   const kA = keyframes[lo]!;
   const kB = keyframes[lo + 1]!;
-  const t  = (timeMs - kA.time) / (kB.time - kA.time);
+  const t = (timeMs - kA.time) / (kB.time - kA.time);
   const te = evaluateEasing(t, kA.easing); // Easing from the *start* keyframe of the segment
 
-  if (typeof kA.value === 'boolean') {
+  if (typeof kA.value === "boolean") {
     // Discrete step interpolation for boolean properties like 'visible'
     return kA.value;
   }
 
-  return typeof kA.value === 'number' && typeof kB.value === 'number'
+  return typeof kA.value === "number" && typeof kB.value === "number"
     ? lerp(kA.value, kB.value, te)
     : kA.value;
 }
 
 function isPointArray(value: unknown): value is Point2D[] {
-  return Array.isArray(value) && value.every(point => (
-    point !== null
-    && typeof point === 'object'
-    && typeof (point as Point2D).x === 'number'
-    && typeof (point as Point2D).y === 'number'
-  ));
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (point) =>
+        point !== null &&
+        typeof point === "object" &&
+        typeof (point as Point2D).x === "number" &&
+        typeof (point as Point2D).y === "number",
+    )
+  );
 }
 
 /**
@@ -153,7 +173,8 @@ export function interpolateMeshVerts(
   if (!keyframes || keyframes.length === 0) return undefined;
   const firstKeyframe = keyframes[0]!;
   const lastKeyframe = keyframes[keyframes.length - 1]!;
-  if (!isPointArray(firstKeyframe.value) || !isPointArray(lastKeyframe.value)) return undefined;
+  if (!isPointArray(firstKeyframe.value) || !isPointArray(lastKeyframe.value))
+    return undefined;
   const firstValue = firstKeyframe.value;
   const lastValue = lastKeyframe.value;
   if (timeMs <= firstKeyframe.time) return firstValue;
@@ -186,7 +207,7 @@ export function interpolateMeshVerts(
   if (!isPointArray(kA.value) || !isPointArray(kB.value)) return undefined;
   const valueA = kA.value;
   const valueB = kB.value;
-  const t  = (timeMs - kA.time) / (kB.time - kA.time);
+  const t = (timeMs - kA.time) / (kB.time - kA.time);
   const te = evaluateEasing(t, kA.easing); // Easing from the *start* keyframe of the segment
 
   return valueA.map((vA, i) => {
@@ -222,15 +243,29 @@ export function computePoseOverrides(
     const category = getTrackValueCategory(track.property);
     if (!category || category === TRACK_VALUE_CATEGORIES.EVENT) continue;
 
-    const { mappedTimeMs } = getBoomerangSourceTime(animation, targetId, sampledTimeMs);
+    const { mappedTimeMs } = getBoomerangSourceTime(
+      animation,
+      targetId,
+      sampledTimeMs,
+    );
 
     let value: unknown;
-    if (track.property === 'mesh_verts') {
-      value = interpolateMeshVerts(track.keyframes, mappedTimeMs, loopKeyframes, endMs);
+    if (track.property === "mesh_verts") {
+      value = interpolateMeshVerts(
+        track.keyframes,
+        mappedTimeMs,
+        loopKeyframes,
+        endMs,
+      );
     } else {
-      value = interpolateTrack(track.keyframes, mappedTimeMs, loopKeyframes, endMs);
-      if (track.property === 'drawOrder') {
-        if (typeof value === 'number') value = Math.round(value);
+      value = interpolateTrack(
+        track.keyframes,
+        mappedTimeMs,
+        loopKeyframes,
+        endMs,
+      );
+      if (track.property === "drawOrder") {
+        if (typeof value === "number") value = Math.round(value);
       }
     }
     if (value === undefined) continue;
@@ -258,7 +293,11 @@ export function computePoseOverrides(
  */
 export function evaluateAnimationPose(
   clip: Animation | null | undefined,
-  { timeMs = 0, loopKeyframes = false, endMs = 0 }: {
+  {
+    timeMs = 0,
+    loopKeyframes = false,
+    endMs = 0,
+  }: {
     timeMs?: number;
     loopKeyframes?: boolean;
     endMs?: number;
@@ -275,11 +314,11 @@ export function upsertKeyframe(
   keyframes: Keyframe[],
   timeMs: number,
   value: unknown,
-  easing: AnimationEasing = 'ease-both',
+  easing: AnimationEasing = "ease-both",
 ): void {
-  const existing = keyframes.find(kf => kf.time === timeMs);
+  const existing = keyframes.find((kf) => kf.time === timeMs);
   if (existing) {
-    existing.value  = value;
+    existing.value = value;
     existing.easing = easing;
   } else {
     keyframes.push({ time: timeMs, value, easing });
@@ -288,20 +327,28 @@ export function upsertKeyframe(
 }
 
 /** All keyframeable transform properties (in display order) */
-export const KEYFRAME_PROPS = ['x', 'y', 'rotation', 'scaleX', 'scaleY', 'opacity', 'visible'] as const;
+export const KEYFRAME_PROPS = [
+  "x",
+  "y",
+  "rotation",
+  "scaleX",
+  "scaleY",
+  "opacity",
+  "visible",
+] as const;
 
 /** Prefix for blend shape influence track properties */
-export const BLEND_SHAPE_TRACK_PREFIX = 'blendShape:';
+export const BLEND_SHAPE_TRACK_PREFIX = "blendShape:";
 
 /** Human-readable labels */
 export const PROP_LABELS = {
-  x:        'X',
-  y:        'Y',
-  rotation: 'Rotation',
-  scaleX:   'Scale X',
-  scaleY:   'Scale Y',
-  opacity:  'Opacity',
-  visible:  'Visible',
+  x: "X",
+  y: "Y",
+  rotation: "Rotation",
+  scaleX: "Scale X",
+  scaleY: "Scale Y",
+  opacity: "Opacity",
+  visible: "Visible",
 };
 
 /**
@@ -309,26 +356,29 @@ export const PROP_LABELS = {
  * Reads from transform for transform props, directly from node for opacity.
  * Handles blend shape influences via blendShape:{shapeId} property names.
  */
-export function getNodePropertyValue(node: {
-  opacity?: number;
-  visible?: boolean;
-  transform?: Partial<Transform>;
-  blendShapeValues?: Record<string, number>;
-}, property: string): unknown {
-  if (property === 'opacity') return node.opacity ?? 1;
-  if (property === 'visible') return node.visible ?? true;
+export function getNodePropertyValue(
+  node: {
+    opacity?: number;
+    visible?: boolean;
+    transform?: Partial<Transform>;
+    blendShapeValues?: Record<string, number>;
+  },
+  property: string,
+): unknown {
+  if (property === "opacity") return node.opacity ?? 1;
+  if (property === "visible") return node.visible ?? true;
   if (property.startsWith(BLEND_SHAPE_TRACK_PREFIX)) {
     const shapeId = property.slice(BLEND_SHAPE_TRACK_PREFIX.length);
     return node.blendShapeValues?.[shapeId] ?? 0;
   }
   if (!node.transform) return 0;
-  if (property === 'x') return node.transform.x ?? 0;
-  if (property === 'y') return node.transform.y ?? 0;
-  if (property === 'rotation') return node.transform.rotation ?? 0;
-  if (property === 'scaleX') return node.transform.scaleX ?? 1;
-  if (property === 'scaleY') return node.transform.scaleY ?? 1;
-  if (property === 'pivotX') return node.transform.pivotX ?? 0;
-  if (property === 'pivotY') return node.transform.pivotY ?? 0;
+  if (property === "x") return node.transform.x ?? 0;
+  if (property === "y") return node.transform.y ?? 0;
+  if (property === "rotation") return node.transform.rotation ?? 0;
+  if (property === "scaleX") return node.transform.scaleX ?? 1;
+  if (property === "scaleY") return node.transform.scaleY ?? 1;
+  if (property === "pivotX") return node.transform.pivotX ?? 0;
+  if (property === "pivotY") return node.transform.pivotY ?? 0;
   return 0;
 }
 
@@ -337,8 +387,9 @@ export function applyBlendShapeDeltas(
   blendShapes: readonly BlendShape[] | null | undefined,
   blendShapeValues: Readonly<Record<string, number>> | null | undefined,
 ): readonly Point2D[] | null | undefined {
-  if (!baseVertices?.length || !blendShapes?.length || !blendShapeValues) return baseVertices;
-  const out = baseVertices.map(v => ({ x: v.x, y: v.y }));
+  if (!baseVertices?.length || !blendShapes?.length || !blendShapeValues)
+    return baseVertices;
+  const out = baseVertices.map((v) => ({ x: v.x, y: v.y }));
   for (const shape of blendShapes) {
     const influence = blendShapeValues[shape.id] ?? 0;
     if (influence <= 0 || !shape.deltas) continue;

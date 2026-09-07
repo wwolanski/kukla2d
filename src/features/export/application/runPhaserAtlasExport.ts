@@ -1,15 +1,27 @@
-import type { BakeReportEntry, CapturedFrame, EncodeResult, PackageOptions } from '@kukla2d/adapter-phaser-atlas';
-import type { PhaserAtlasExportPlan } from '@kukla2d/contracts';
+import type {
+  BakeReportEntry,
+  CapturedFrame,
+  EncodeResult,
+  PackageOptions,
+} from "@kukla2d/adapter-phaser-atlas";
+import type { PhaserAtlasExportPlan } from "@kukla2d/contracts";
 
-import type { ProjectReadinessReport } from '@/domain/projectReadiness.js';
+import type { ProjectReadinessReport } from "@/domain/projectReadiness.types.js";
 
-import { captureRasterFrames } from './captureRasterFrames.js';
-import { errorMessage } from './exportApplicationTypes.js';
+import { captureRasterFrames } from "./captureRasterFrames.js";
+import { errorMessage } from "./exportApplicationTypes.js";
 
-import type { CaptureFrame, ExportOutputSink, ExportProgress, ExportRunResult } from './exportApplicationTypes.js';
+import type {
+  ExportOutputSink,
+  ExportProgress,
+  ExportRunResult,
+} from "./exportApplicationTypes.types.js";
+import type { CaptureFrame } from "../domain/frameCaptureTypes.types.js";
 
-
-type PhaserAtlasAdapter = (frames: readonly CapturedFrame[], options: PackageOptions) => Promise<EncodeResult>;
+type PhaserAtlasAdapter = (
+  frames: readonly CapturedFrame[],
+  options: PackageOptions,
+) => Promise<EncodeResult>;
 
 interface RunPhaserAtlasExportOptions {
   plan: Readonly<PhaserAtlasExportPlan>;
@@ -31,32 +43,40 @@ export async function runPhaserAtlasExport({
   signal,
 }: RunPhaserAtlasExportOptions): Promise<ExportRunResult> {
   try {
-    onProgress?.({ current: 0, total: plan.frameSpecs.length, label: 'Preparing...' });
+    onProgress?.({
+      current: 0,
+      total: plan.frameSpecs.length,
+      label: "Preparing...",
+    });
 
     const captureResult = await captureRasterFrames({
       plan,
       captureFrame,
-      format: 'png',
+      format: "png",
       onProgress: (p) => {
         if (p) {
-          onProgress?.({ current: p.current, total: p.total, label: `Capturing: ${p.label}` });
+          onProgress?.({
+            current: p.current,
+            total: p.total,
+            label: `Capturing: ${p.label}`,
+          });
         }
       },
       ...(signal ? { signal } : {}),
     });
 
     if (!captureResult.ok) {
-      if ('cancelled' in captureResult) return { ok: false, cancelled: true };
+      if ("cancelled" in captureResult) return { ok: false, cancelled: true };
       return { ok: false, error: captureResult.error };
     }
 
     const capturedFrames = captureResult.frames;
     if (signal?.aborted) return { ok: false, cancelled: true };
 
-    onProgress?.({ current: 0, total: 1, label: 'Trimming & packing...' });
+    onProgress?.({ current: 0, total: 1, label: "Trimming & packing..." });
 
     const adapterInput: CapturedFrame[] = capturedFrames.map((f) => ({
-      identity: `${f.animationName}-${f.animationId}/${String(f.frameIndex).padStart(4, '0')}`,
+      identity: `${f.animationName}-${f.animationId}/${String(f.frameIndex).padStart(4, "0")}`,
       animId: f.animationId,
       animName: f.animationName,
       frameIndex: f.frameIndex,
@@ -85,11 +105,11 @@ export async function runPhaserAtlasExport({
       bakeIssues: [
         ...(readinessReport?.errors ?? []).map((entry): BakeReportEntry => ({
           ...entry,
-          classification: entry.classification ?? 'blocked',
+          classification: entry.classification ?? "blocked",
         })),
         ...(readinessReport?.warnings ?? []).map((entry): BakeReportEntry => ({
           ...entry,
-          classification: entry.classification ?? 'warning',
+          classification: entry.classification ?? "warning",
         })),
       ],
       ...(signal ? { signal } : {}),
@@ -99,18 +119,28 @@ export async function runPhaserAtlasExport({
     });
 
     if (!adapterResult.ok) {
-      if (adapterResult.code === 'PHASER_ATLAS_CANCELLED') return { ok: false, cancelled: true };
-      return { ok: false, error: { code: adapterResult.code, message: adapterResult.message } };
+      if (adapterResult.code === "PHASER_ATLAS_CANCELLED")
+        return { ok: false, cancelled: true };
+      return {
+        ok: false,
+        error: { code: adapterResult.code, message: adapterResult.message },
+      };
     }
 
     const artifacts = adapterResult.artifacts;
     if (!artifacts || artifacts.length === 0) {
-      return { ok: false, error: { code: 'EMPTY_PACKAGE', message: 'Adapter produced no artifacts' } };
+      return {
+        ok: false,
+        error: {
+          code: "EMPTY_PACKAGE",
+          message: "Adapter produced no artifacts",
+        },
+      };
     }
 
     if (signal?.aborted) return { ok: false, cancelled: true };
 
-    onProgress?.({ current: 0, total: 1, label: 'Writing output...' });
+    onProgress?.({ current: 0, total: 1, label: "Writing output..." });
 
     const sinkResult = await outputSink(artifacts, {
       destination: plan.destination,
@@ -118,19 +148,25 @@ export async function runPhaserAtlasExport({
     });
 
     if (sinkResult?.ok === false) {
-      if ('cancelled' in sinkResult) return { ok: false, cancelled: true };
+      if ("cancelled" in sinkResult) return { ok: false, cancelled: true };
       return {
         ok: false,
         error: sinkResult.error ?? {
-          code: 'OUTPUT_FAILED',
-          message: 'Failed to write export artifacts',
+          code: "OUTPUT_FAILED",
+          message: "Failed to write export artifacts",
         },
       };
     }
 
-    onProgress?.({ current: 1, total: 1, label: 'Done' });
+    onProgress?.({ current: 1, total: 1, label: "Done" });
     return { ok: true, artifacts };
   } catch (err) {
-    return { ok: false, error: { code: 'EXPORT_FAILED', message: errorMessage(err, 'Export failed') } };
+    return {
+      ok: false,
+      error: {
+        code: "EXPORT_FAILED",
+        message: errorMessage(err, "Export failed"),
+      },
+    };
   }
 }

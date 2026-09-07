@@ -3,9 +3,9 @@
  *
  * Pixi is the sole supported canvas renderer.
  */
-export type CanvasRendererKind = 'pixi';
+type CanvasRendererKind = "pixi";
 
-export const CANVAS_RENDERER_PIXI: CanvasRendererKind = 'pixi';
+export const CANVAS_RENDERER_PIXI: CanvasRendererKind = "pixi";
 
 /**
  * Runtime canvas renderer backend. Pixi is the sole canvas

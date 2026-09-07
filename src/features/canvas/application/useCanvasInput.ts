@@ -1,13 +1,15 @@
-import { useCallback } from 'react';
+import { useCallback } from "react";
 
-import { isLibraryAssetDrag } from '@/domain/libraryAssetDrag.js';
+import { isLibraryAssetDrag } from "@/domain/libraryAssetDrag.js";
 
-import { useWorkflowActor } from '@/features/canvas/application/useWorkflowActor.js';
-import type { ScreenRect, WorkflowSelectionTarget } from '@/features/canvas/domain/workflowContracts.js';
+import { useWorkflowActor } from "@/features/canvas/application/useWorkflowActor.js";
+import type { ScreenRect } from "@/features/canvas/domain/workflowContracts.types.js";
 
-import type { DragEvent, MouseEvent, RefObject, WheelEvent } from 'react';
+import type { DragEvent, MouseEvent, RefObject, WheelEvent } from "react";
 
-export interface CanvasInputController {
+type WorkflowSelectionTarget = "all" | "element" | "rig";
+
+interface CanvasInputController {
   handlers: {
     onWheel: (event: WheelEvent<HTMLElement>) => void;
     onContextMenu: (event: MouseEvent<HTMLElement>) => void;
@@ -18,7 +20,6 @@ export interface CanvasInputController {
   };
   refs: Record<never, never>;
 }
-
 
 /**
  * Canvas input hook — Pixi-only runtime.
@@ -31,27 +32,34 @@ export interface CanvasInputController {
  */
 export function useCanvasInput({
   fileInputRef,
-}: { fileInputRef: RefObject<HTMLInputElement | null> }): CanvasInputController {
+}: {
+  fileInputRef: RefObject<HTMLInputElement | null>;
+}): CanvasInputController {
   const { send: sendWorkflowEvent } = useWorkflowActor();
 
   const onDragOver = useCallback((e: DragEvent<HTMLElement>) => {
     e.preventDefault();
     if (isLibraryAssetDrag(e.dataTransfer)) {
-      e.dataTransfer.dropEffect = 'copy';
+      e.dataTransfer.dropEffect = "copy";
     }
   }, []);
 
-  const onDragEnter = useCallback((e: DragEvent<HTMLElement>) => {
-    e.preventDefault();
-    if (isLibraryAssetDrag(e.dataTransfer)) return;
-    sendWorkflowEvent({ type: 'DRAG_FILES_ENTER' });
-  }, [sendWorkflowEvent]);
+  const onDragEnter = useCallback(
+    (e: DragEvent<HTMLElement>) => {
+      e.preventDefault();
+      if (isLibraryAssetDrag(e.dataTransfer)) return;
+      sendWorkflowEvent({ type: "DRAG_FILES_ENTER" });
+    },
+    [sendWorkflowEvent],
+  );
 
   const onDragLeave = useCallback(() => {
-    sendWorkflowEvent({ type: 'DRAG_FILES_LEAVE' });
+    sendWorkflowEvent({ type: "DRAG_FILES_LEAVE" });
   }, [sendWorkflowEvent]);
 
-  const onContextMenu = useCallback((e: MouseEvent<HTMLElement>) => { e.preventDefault(); }, []);
+  const onContextMenu = useCallback((e: MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+  }, []);
 
   const onWheel = useCallback((e: WheelEvent<HTMLElement>) => {
     e.preventDefault();
@@ -86,10 +94,21 @@ export function shouldStartMarquee({
   ctrlOrMetaKey,
   selectionTarget,
   alphaHit,
-}: { activeTool: string; meshEditMode: boolean; weightPaintMode: boolean; shiftKey: boolean; ctrlOrMetaKey: boolean; selectionTarget: WorkflowSelectionTarget; alphaHit: string | null }): boolean {
-  const canMarquee = activeTool === 'select'
-    && !meshEditMode && !weightPaintMode
-    && !shiftKey && !ctrlOrMetaKey;
+}: {
+  activeTool: string;
+  meshEditMode: boolean;
+  weightPaintMode: boolean;
+  shiftKey: boolean;
+  ctrlOrMetaKey: boolean;
+  selectionTarget: WorkflowSelectionTarget;
+  alphaHit: string | null;
+}): boolean {
+  const canMarquee =
+    activeTool === "select" &&
+    !meshEditMode &&
+    !weightPaintMode &&
+    !shiftKey &&
+    !ctrlOrMetaKey;
   if (!canMarquee) return false;
-  return selectionTarget === 'rig' || !alphaHit;
+  return selectionTarget === "rig" || !alphaHit;
 }

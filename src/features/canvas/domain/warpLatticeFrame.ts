@@ -8,12 +8,19 @@
  * @param {Array}  args.gridPoints  - current grid points [{x, y}, ...]
  * @returns {Object} warp lattice frame
  */
-import type { WarpDeformerNode } from '@kukla2d/contracts';
+import type { WarpDeformerNode } from "@kukla2d/contracts";
 
-interface Point { x: number; y: number }
-export interface WarpLatticeFrame { gridPoints: Point[]; col: number; row: number; stride: number; visible: boolean }
+import type { WarpLatticeFrame } from "./warpLatticeFrame.types.js";
 
-export function buildWarpLatticeFrame({ wdNode, gridPoints }: {
+interface Point {
+  x: number;
+  y: number;
+}
+
+export function buildWarpLatticeFrame({
+  wdNode,
+  gridPoints,
+}: {
   wdNode: WarpDeformerNode | null | undefined;
   gridPoints: readonly Point[] | null | undefined;
 }): WarpLatticeFrame {
@@ -26,7 +33,7 @@ export function buildWarpLatticeFrame({ wdNode, gridPoints }: {
   const stride = col + 1;
 
   return {
-    gridPoints: gridPoints.map(pt => ({ x: pt.x, y: pt.y })),
+    gridPoints: gridPoints.map((pt) => ({ x: pt.x, y: pt.y })),
     col,
     row,
     stride,

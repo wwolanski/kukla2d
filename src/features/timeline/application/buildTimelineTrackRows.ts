@@ -1,36 +1,33 @@
-import { toAnimationTargetId } from '@kukla2d/contracts';
+import { toAnimationTargetId } from "@kukla2d/contracts";
 import type {
   Animation,
   AnimationTargetId,
   Keyframe,
   Track,
-} from '@kukla2d/contracts';
+} from "@kukla2d/contracts";
 
 import {
   checkBoomerangEligibility,
   getBoomerangCutoff,
-} from '@/domain/animationBoomerang';
+} from "@/domain/animationBoomerang";
 import {
   getTrackValueCategory,
   getAllAnimationPropertySpecs,
-} from '@/domain/animationProperties';
+} from "@/domain/animationProperties";
 import type {
   AnimationPropertySpec,
   TrackValueCategory,
-} from '@/domain/animationProperties';
-import {
-  isTimelineVisibleKeyframe,
-} from '@/domain/keyframeProvenance';
+} from "@/domain/animationProperties.types.js";
+import { isTimelineVisibleKeyframe } from "@/domain/keyframeProvenance";
 
+const EASING_DEFAULT = "ease-both" as const;
 
-const EASING_DEFAULT = 'ease-both' as const;
-type TimelineEasing = NonNullable<Keyframe['easing']>;
+import type {
+  TimelineTargetDescriptor,
+  VisibleTimelineRow,
+} from "./buildTimelineTrackRows.types.js";
 
-export interface TimelineTargetDescriptor {
-  id: AnimationTargetId;
-  name: string;
-  kind?: string | null;
-}
+type TimelineEasing = NonNullable<Keyframe["easing"]>;
 
 interface TimelinePropertyRow {
   id: string;
@@ -56,7 +53,7 @@ interface TimelineSemanticRow {
   keyframes?: Keyframe[];
 }
 
-export interface TimelineTargetRow {
+interface TimelineTargetRow {
   targetId: AnimationTargetId;
   name: string;
   kind: string | null;
@@ -69,21 +66,24 @@ export interface TimelineTargetRow {
   boomerangEligibility: ReturnType<typeof checkBoomerangEligibility>;
 }
 
-export type VisibleTimelineRow =
-  | { type: 'target'; row: TimelineTargetRow }
-  | { type: 'property'; row: TimelineSemanticRow; parentRow: TimelineTargetRow };
-
 const SEMANTIC_GROUPS = [
-  { id: 'position', label: 'Position', properties: ['x', 'y'] },
-  { id: 'scale', label: 'Scale', properties: ['scaleX', 'scaleY'] },
-  { id: 'ik-target', label: 'IK Target', properties: ['targetX', 'targetY'] },
+  { id: "position", label: "Position", properties: ["x", "y"] },
+  { id: "scale", label: "Scale", properties: ["scaleX", "scaleY"] },
+  { id: "ik-target", label: "IK Target", properties: ["targetX", "targetY"] },
 ] as const;
 
-function trackTargetId(track: Track): AnimationTargetId { return track.targetId; }
+function trackTargetId(track: Track): AnimationTargetId {
+  return track.targetId;
+}
 
-function buildPropertyRow(targetId: AnimationTargetId, track: Track): TimelinePropertyRow {
-  const keyframes = [...track.keyframes].filter(isTimelineVisibleKeyframe).sort((a, b) => a.time - b.time);
-  const times = keyframes.map(kf => kf.time);
+function buildPropertyRow(
+  targetId: AnimationTargetId,
+  track: Track,
+): TimelinePropertyRow {
+  const keyframes = [...track.keyframes]
+    .filter(isTimelineVisibleKeyframe)
+    .sort((a, b) => a.time - b.time);
+  const times = keyframes.map((kf) => kf.time);
   const easingByTime: Record<number, TimelineEasing> = {};
   for (const kf of keyframes) {
     easingByTime[kf.time] = kf.easing || EASING_DEFAULT;
@@ -103,27 +103,31 @@ function buildSemanticRows(
   targetId: AnimationTargetId,
   propertyRows: TimelinePropertyRow[],
 ): TimelineSemanticRow[] {
-  const byProperty = new Map(propertyRows.map(row => [row.property, row]));
+  const byProperty = new Map(propertyRows.map((row) => [row.property, row]));
   const consumed = new Set<string>();
   const rows: TimelineSemanticRow[] = [];
 
   for (const group of SEMANTIC_GROUPS) {
     const components = group.properties
-      .map(property => byProperty.get(property))
+      .map((property) => byProperty.get(property))
       .filter((row): row is TimelinePropertyRow => row !== undefined);
     if (components.length === 0) continue;
-    components.forEach(row => consumed.add(row.property));
-    const times = [...new Set(components.flatMap(row => row.times))].sort((a, b) => a - b);
+    components.forEach((row) => consumed.add(row.property));
+    const times = [...new Set(components.flatMap((row) => row.times))].sort(
+      (a, b) => a - b,
+    );
     const easingByTime: Record<number, TimelineEasing> = {};
     for (const time of times) {
-      const component = components.find(row => row.easingByTime[time] !== undefined);
+      const component = components.find(
+        (row) => row.easingByTime[time] !== undefined,
+      );
       easingByTime[time] = component?.easingByTime[time] ?? EASING_DEFAULT;
     }
     rows.push({
       id: `${targetId}:group:${group.id}`,
       targetId,
       label: group.label,
-      properties: components.map(row => row.property),
+      properties: components.map((row) => row.property),
       propertyRows: components,
       times,
       easingByTime,
@@ -173,7 +177,9 @@ export function buildTimelineTrackRows(
   return Array.from(byTarget.entries())
     .map(([targetId, tracks]) => {
       const visibleKeyframeTimes = new Set(
-        tracks.flatMap(t => t.keyframes.filter(isTimelineVisibleKeyframe).map(kf => kf.time))
+        tracks.flatMap((t) =>
+          t.keyframes.filter(isTimelineVisibleKeyframe).map((kf) => kf.time),
+        ),
       );
       if (visibleKeyframeTimes.size === 0) return null;
 
@@ -182,7 +188,9 @@ export function buildTimelineTrackRows(
       const easingByTime: Record<number, TimelineEasing> = {};
       for (const time of times) {
         for (const t of tracks) {
-          const kf = t.keyframes.find(k => k.time === time && isTimelineVisibleKeyframe(k));
+          const kf = t.keyframes.find(
+            (k) => k.time === time && isTimelineVisibleKeyframe(k),
+          );
           if (kf) {
             easingByTime[time] = kf.easing || EASING_DEFAULT;
             break;
@@ -191,15 +199,26 @@ export function buildTimelineTrackRows(
       }
 
       const propertyRows = tracks
-        .filter(t => t.property && t.keyframes.some(isTimelineVisibleKeyframe))
-        .map(t => buildPropertyRow(toAnimationTargetId(targetId), t));
+        .filter(
+          (t) => t.property && t.keyframes.some(isTimelineVisibleKeyframe),
+        )
+        .map((t) => buildPropertyRow(toAnimationTargetId(targetId), t));
 
       if (propertyRows.length === 0) return null;
 
-      const semanticRows = buildSemanticRows(toAnimationTargetId(targetId), propertyRows);
+      const semanticRows = buildSemanticRows(
+        toAnimationTargetId(targetId),
+        propertyRows,
+      );
 
-      const boomerangCutoff = getBoomerangCutoff(clip, toAnimationTargetId(targetId));
-      const boomerangEligibility = checkBoomerangEligibility(clip, toAnimationTargetId(targetId));
+      const boomerangCutoff = getBoomerangCutoff(
+        clip,
+        toAnimationTargetId(targetId),
+      );
+      const boomerangEligibility = checkBoomerangEligibility(
+        clip,
+        toAnimationTargetId(targetId),
+      );
 
       return {
         targetId,
@@ -217,9 +236,13 @@ export function buildTimelineTrackRows(
     .filter((row): row is TimelineTargetRow => row !== null);
 }
 
-export function getAuthorablePropertiesForTarget(targetKind: string): AnimationPropertySpec[] {
+export function getAuthorablePropertiesForTarget(
+  targetKind: string,
+): AnimationPropertySpec[] {
   const specs = getAllAnimationPropertySpecs();
-  return specs.filter(spec => spec.authorable && spec.targetKinds.includes(targetKind));
+  return specs.filter(
+    (spec) => spec.authorable && spec.targetKinds.includes(targetKind),
+  );
 }
 
 export function getMissingProperties(
@@ -228,7 +251,7 @@ export function getMissingProperties(
 ): AnimationPropertySpec[] {
   const authorable = getAuthorablePropertiesForTarget(targetKind);
   const existing = new Set(existingProperties);
-  return authorable.filter(spec => !existing.has(spec.property));
+  return authorable.filter((spec) => !existing.has(spec.property));
 }
 
 export function flattenVisibleRows(
@@ -237,10 +260,10 @@ export function flattenVisibleRows(
 ): VisibleTimelineRow[] {
   const result: VisibleTimelineRow[] = [];
   for (const row of trackRows) {
-    result.push({ type: 'target', row });
+    result.push({ type: "target", row });
     if (expandedSet.has(row.targetId)) {
       for (const propRow of row.semanticRows) {
-        result.push({ type: 'property', row: propRow, parentRow: row });
+        result.push({ type: "property", row: propRow, parentRow: row });
       }
     }
   }

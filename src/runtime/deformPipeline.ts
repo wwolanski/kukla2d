@@ -4,29 +4,35 @@ import type {
   BoneId,
   Node,
   NodeId,
-} from '@kukla2d/contracts';
+} from "@kukla2d/contracts";
 
-import { isRecord } from '@/lib/guards';
-import { clamp01, finiteNumberOr, isFiniteNumber } from '@/lib/math';
+import { isRecord } from "@/lib/guards";
+import { clamp01, finiteNumberOr, isFiniteNumber } from "@/lib/math";
 
-import { computeBoneWorldMatrices, computeInverseBindMatrices } from './skeleton.js';
-import { linearBlendSkinning } from './skin.js';
+import {
+  computeBoneWorldMatrices,
+  computeInverseBindMatrices,
+} from "./skeleton.js";
+import { linearBlendSkinning } from "./skin.js";
 
-import type { BoneTransformOverride, PoseOverrideMap } from './pose.js';
-import type { Matrix3 } from '../domain/transforms.js';
+import type { BoneTransformOverride, PoseOverrideMap } from "./pose.types.js";
+import type { Matrix3 } from "../domain/transforms.types.js";
 
 interface DeformDrawItem {
   nodeId: NodeId;
   /** Pipeline owns this mutable buffer; consumers must not mutate it. */
   vertices: Float32Array | null;
-  blendMode: 'normal';
+  blendMode: "normal";
   opacity: number;
   drawOrder: number;
 }
 
-interface ClipRegion { maskNodeId: string; targetNodeId: NodeId }
+interface ClipRegion {
+  maskNodeId: string;
+  targetNodeId: NodeId;
+}
 
-export interface DeformPipelineResult {
+interface DeformPipelineResult {
   drawList: readonly DeformDrawItem[];
   clipRegions: readonly ClipRegion[];
   boneWorldMatrices: ReadonlyMap<BoneId, Matrix3>;
@@ -34,15 +40,18 @@ export interface DeformPipelineResult {
 }
 
 type DeformDiagnostic =
-  | { code: 'INVALID_VERTEX_BUFFER'; nodeId: NodeId }
-  | { code: 'INVALID_WARP_LATTICE'; nodeId: NodeId };
+  | { code: "INVALID_VERTEX_BUFFER"; nodeId: NodeId }
+  | { code: "INVALID_WARP_LATTICE"; nodeId: NodeId };
 
 interface DeformProject {
   bones: readonly Bone[];
   nodes: readonly Node[];
 }
 
-interface WarpPoint { dx: number; dy: number }
+interface WarpPoint {
+  dx: number;
+  dy: number;
+}
 interface WarpState {
   lattice: readonly WarpPoint[];
   gridX: number;
@@ -59,35 +68,53 @@ export function executeDeformPipeline(
 ): DeformPipelineResult {
   const effectiveBones = applyBoneOverrides(project.bones, animationOverrides);
   const boneWorldMatrices = computeBoneWorldMatrices(effectiveBones);
-  const inverseBindMatrices = computeInverseBindMatrices(computeBoneWorldMatrices(project.bones));
+  const inverseBindMatrices = computeInverseBindMatrices(
+    computeBoneWorldMatrices(project.bones),
+  );
   const drawList: DeformDrawItem[] = [];
   const clipRegions: ClipRegion[] = [];
   const diagnostics: DeformDiagnostic[] = [];
 
   for (const node of project.nodes) {
-    if (node.type !== 'part' || node.visible === false) continue;
+    if (node.type !== "part" || node.visible === false) continue;
     let vertices = node.mesh ? flattenVertexSource(node.mesh.vertices) : null;
-    if (node.mesh && !vertices) diagnostics.push({ code: 'INVALID_VERTEX_BUFFER', nodeId: node.id });
+    if (node.mesh && !vertices)
+      diagnostics.push({ code: "INVALID_VERTEX_BUFFER", nodeId: node.id });
 
     if (vertices && node.mesh?.influences) {
-      vertices = linearBlendSkinning(vertices, node.mesh.influences, boneWorldMatrices, inverseBindMatrices);
+      vertices = linearBlendSkinning(
+        vertices,
+        node.mesh.influences,
+        boneWorldMatrices,
+        inverseBindMatrices,
+      );
     }
     if (vertices && node.blendShapes && node.blendShapeValues) {
-      vertices = applyBlendShapes(vertices, node.blendShapes, node.blendShapeValues);
+      vertices = applyBlendShapes(
+        vertices,
+        node.blendShapes,
+        node.blendShapeValues,
+      );
     }
     if (vertices) {
-      const warpValue = getWarpOverride(node.id, project.nodes, animationOverrides);
+      const warpValue = getWarpOverride(
+        node.id,
+        project.nodes,
+        animationOverrides,
+      );
       if (warpValue !== undefined) {
         const warpState = parseWarpState(warpValue);
         if (warpState) vertices = applyWarpDeformation(vertices, warpState);
-        else diagnostics.push({ code: 'INVALID_WARP_LATTICE', nodeId: node.id });
+        else
+          diagnostics.push({ code: "INVALID_WARP_LATTICE", nodeId: node.id });
       }
     }
-    if (node.clip_mask) clipRegions.push({ maskNodeId: node.clip_mask, targetNodeId: node.id });
+    if (node.clip_mask)
+      clipRegions.push({ maskNodeId: node.clip_mask, targetNodeId: node.id });
     drawList.push({
       nodeId: node.id,
       vertices,
-      blendMode: 'normal',
+      blendMode: "normal",
       opacity: node.opacity ?? 1,
       drawOrder: node.draw_order ?? 0,
     });
@@ -96,9 +123,12 @@ export function executeDeformPipeline(
   return { drawList, clipRegions, boneWorldMatrices, diagnostics };
 }
 
-function applyBoneOverrides(bones: readonly Bone[], overrides?: PoseOverrideMap | null): Bone[] {
+function applyBoneOverrides(
+  bones: readonly Bone[],
+  overrides?: PoseOverrideMap | null,
+): Bone[] {
   if (!overrides) return [...bones];
-  return bones.map(bone => {
+  return bones.map((bone) => {
     const value = overrides.get(bone.id);
     if (!value) return bone;
     const override = parseBoneOverride(value);
@@ -125,8 +155,17 @@ function applyBlendShapes(
   const vertexCount = Math.floor(output.length / 2);
   for (const shape of blendShapes) {
     const influence = values[shape.id] ?? 0;
-    if (!Number.isFinite(influence) || influence <= 0 || !Array.isArray(shape.deltas)) continue;
-    for (let index = 0; index < Math.min(vertexCount, shape.deltas.length); index += 1) {
+    if (
+      !Number.isFinite(influence) ||
+      influence <= 0 ||
+      !Array.isArray(shape.deltas)
+    )
+      continue;
+    for (
+      let index = 0;
+      index < Math.min(vertexCount, shape.deltas.length);
+      index += 1
+    ) {
       const delta = shape.deltas[index];
       if (!delta) continue;
       output[index * 2] = output[index * 2]! + delta.dx * influence;
@@ -141,13 +180,23 @@ function getWarpOverride(
   nodes: readonly Node[],
   overrides?: PoseOverrideMap | null,
 ): unknown {
-  const warp = nodes.find(node => node.type === 'warpDeformer' && node.parent === nodeId);
+  const warp = nodes.find(
+    (node) => node.type === "warpDeformer" && node.parent === nodeId,
+  );
   return warp ? overrides?.get(`warp:${warp.id}`) : undefined;
 }
 
-function applyWarpDeformation(vertices: Float32Array, state: WarpState): Float32Array {
+function applyWarpDeformation(
+  vertices: Float32Array,
+  state: WarpState,
+): Float32Array {
   const output = new Float32Array(vertices);
-  if (state.col < 2 || state.row < 2 || state.lattice.length < state.col * state.row) return output;
+  if (
+    state.col < 2 ||
+    state.row < 2 ||
+    state.lattice.length < state.col * state.row
+  )
+    return output;
   const vertexCount = Math.floor(output.length / 2);
   for (let index = 0; index < vertexCount; index += 1) {
     const x = output[index * 2]!;
@@ -163,8 +212,26 @@ function applyWarpDeformation(vertices: Float32Array, state: WarpState): Float32
     const bottomLeft = state.lattice[(row + 1) * state.col + column];
     const bottomRight = state.lattice[(row + 1) * state.col + column + 1];
     if (!topLeft || !topRight || !bottomLeft || !bottomRight) continue;
-    output[index * 2] = x + bilerp(topLeft.dx, topRight.dx, bottomLeft.dx, bottomRight.dx, localU, localV);
-    output[index * 2 + 1] = y + bilerp(topLeft.dy, topRight.dy, bottomLeft.dy, bottomRight.dy, localU, localV);
+    output[index * 2] =
+      x +
+      bilerp(
+        topLeft.dx,
+        topRight.dx,
+        bottomLeft.dx,
+        bottomRight.dx,
+        localU,
+        localV,
+      );
+    output[index * 2 + 1] =
+      y +
+      bilerp(
+        topLeft.dy,
+        topRight.dy,
+        bottomLeft.dy,
+        bottomRight.dy,
+        localU,
+        localV,
+      );
   }
   return output;
 }
@@ -173,7 +240,12 @@ function parseWarpState(value: unknown): WarpState | null {
   if (!isRecord(value) || !Array.isArray(value.lattice)) return null;
   const lattice: WarpPoint[] = [];
   for (const point of value.lattice) {
-    if (!isRecord(point) || !isFiniteNumber(point.dx) || !isFiniteNumber(point.dy)) return null;
+    if (
+      !isRecord(point) ||
+      !isFiniteNumber(point.dx) ||
+      !isFiniteNumber(point.dy)
+    )
+      return null;
     lattice.push({ dx: point.dx, dy: point.dy });
   }
   const col = finiteNumberOr(value.col, 0);
@@ -195,14 +267,21 @@ function flattenVertexSource(value: unknown): Float32Array | null {
   const output = new Float32Array(value.length * 2);
   for (let index = 0; index < value.length; index += 1) {
     const vertex: unknown = value[index];
-    if (!isRecord(vertex) || !isFiniteNumber(vertex.x) || !isFiniteNumber(vertex.y)) return null;
+    if (
+      !isRecord(vertex) ||
+      !isFiniteNumber(vertex.x) ||
+      !isFiniteNumber(vertex.y)
+    )
+      return null;
     output[index * 2] = vertex.x;
     output[index * 2 + 1] = vertex.y;
   }
   return output;
 }
 
-function parseBoneOverride(value: Readonly<Record<string, unknown>>): BoneTransformOverride {
+function parseBoneOverride(
+  value: Readonly<Record<string, unknown>>,
+): BoneTransformOverride {
   return {
     ...(isFiniteNumber(value.x) ? { x: value.x } : {}),
     ...(isFiniteNumber(value.y) ? { y: value.y } : {}),
@@ -212,8 +291,17 @@ function parseBoneOverride(value: Readonly<Record<string, unknown>>): BoneTransf
   };
 }
 
-function bilerp(a: number, b: number, c: number, d: number, u: number, v: number): number {
+function bilerp(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  u: number,
+  v: number,
+): number {
   return (1 - u) * (1 - v) * a + u * (1 - v) * b + (1 - u) * v * c + u * v * d;
 }
 
-function nonZero(value: number): number { return value === 0 ? 1 : value; }
+function nonZero(value: number): number {
+  return value === 0 ? 1 : value;
+}

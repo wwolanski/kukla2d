@@ -1,12 +1,21 @@
-import type { Mesh, ProjectDocument, ProjectResourceOwner } from '@kukla2d/contracts';
+import type {
+  Mesh,
+  ProjectDocument,
+  ProjectResourceOwner,
+} from "@kukla2d/contracts";
 
-import { computeAlphaContours } from './imageUtils.js';
+import { computeAlphaContours } from "./imageUtils.js";
 
-export interface WorkspaceCommitPort {
+import type {
+  ResourceRegistry,
+  WorkspaceLoadStage,
+} from "./workspaceLoadTransaction.types.js";
+
+interface WorkspaceCommitPort {
   commitProject(project: ProjectDocument): void;
 }
 
-export interface StagedRendererResources {
+interface StagedRendererResources {
   uploadTexture(partId: string, img: HTMLImageElement): void;
   uploadMesh(partId: string, mesh: Mesh): void;
   uploadQuadFallback(partId: string, width: number, height: number): void;
@@ -15,27 +24,33 @@ export interface StagedRendererResources {
   resources: ResourceRegistry;
 }
 
-export interface ResourceRegistry {
-  disposeAll(): void;
-}
-
-export interface SceneGatewayLoadPort {
+interface WorkspaceSceneGateway {
   createStagedResources?(): StagedRendererResources | null | undefined;
   swapResources(resources: ResourceRegistry): ResourceRegistry;
 }
 
-export interface WorkspaceLoadStage {
-  project: ProjectDocument;
-  stagedImageData: Map<string, ImageData>;
-  stagedResources: StagedRendererResources | null;
+interface StageWorkspaceLoadParams {
+  loadedProject: ProjectDocument;
+  images: Map<string, HTMLImageElement>;
+  sceneGateway?: WorkspaceSceneGateway | null;
+}
+
+interface CommitWorkspaceLoadParams {
+  stagedLoad: WorkspaceLoadStage;
+  commitPort: WorkspaceCommitPort;
+  sceneGateway?: WorkspaceSceneGateway | null;
+  imageDataMap: Map<string, ImageData>;
+  resourceOwnerRef: { current: ProjectResourceOwner };
+  resources: ProjectResourceOwner;
 }
 
 function extractImageData(img: HTMLImageElement): ImageData {
-  const off = document.createElement('canvas');
+  const off = document.createElement("canvas");
   off.width = img.width;
   off.height = img.height;
-  const ctx = off.getContext('2d');
-  if (!ctx) throw new Error('Failed to get 2d context for image data extraction');
+  const ctx = off.getContext("2d");
+  if (!ctx)
+    throw new Error("Failed to get 2d context for image data extraction");
   ctx.drawImage(img, 0, 0);
   return ctx.getImageData(0, 0, img.width, img.height);
 }
@@ -54,7 +69,7 @@ function uploadProjectResources(
 ): void {
   if (!stagedResources) return;
   for (const node of project.nodes) {
-    if (node.type !== 'part') continue;
+    if (node.type !== "part") continue;
     const img = images.get(node.textureId ?? node.id);
     if (img) {
       stagedResources.uploadTexture(node.id, img);
@@ -62,15 +77,13 @@ function uploadProjectResources(
     if (node.mesh) {
       stagedResources.uploadMesh(node.id, node.mesh);
     } else if (node.imageWidth && node.imageHeight) {
-      stagedResources.uploadQuadFallback(node.id, node.imageWidth, node.imageHeight);
+      stagedResources.uploadQuadFallback(
+        node.id,
+        node.imageWidth,
+        node.imageHeight,
+      );
     }
   }
-}
-
-export interface StageWorkspaceLoadParams {
-  loadedProject: ProjectDocument;
-  images: Map<string, HTMLImageElement>;
-  sceneGateway?: SceneGatewayLoadPort | null;
 }
 
 export function stageWorkspaceLoad({
@@ -82,7 +95,7 @@ export function stageWorkspaceLoad({
   try {
     const stagedImageData = new Map<string, ImageData>();
     for (const node of loadedProject.nodes) {
-      if (node.type !== 'part') continue;
+      if (node.type !== "part") continue;
       const img = images.get(node.textureId ?? node.id);
       if (!img) continue;
       const imageData = extractImageData(img);
@@ -97,15 +110,6 @@ export function stageWorkspaceLoad({
     stagedResources?.dispose?.();
     throw err;
   }
-}
-
-export interface CommitWorkspaceLoadParams {
-  stagedLoad: WorkspaceLoadStage;
-  commitPort: WorkspaceCommitPort;
-  sceneGateway?: SceneGatewayLoadPort | null;
-  imageDataMap: Map<string, ImageData>;
-  resourceOwnerRef: { current: ProjectResourceOwner };
-  resources: ProjectResourceOwner;
 }
 
 export function commitWorkspaceLoad({

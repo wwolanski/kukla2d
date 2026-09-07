@@ -1,5 +1,14 @@
-interface ColorStop { readonly t: number; readonly r: number; readonly g: number; readonly b: number }
-export interface WeightColor { color: number; alpha: number }
+interface WeightColor {
+  color: number;
+  alpha: number;
+}
+
+interface ColorStop {
+  readonly t: number;
+  readonly r: number;
+  readonly g: number;
+  readonly b: number;
+}
 
 const COLOR_STOPS = [
   { t: 0.0, r: 26, g: 58, b: 92 },

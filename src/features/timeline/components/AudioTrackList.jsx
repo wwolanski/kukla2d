@@ -1,6 +1,7 @@
-import { AudioTrackRow } from './AudioTrackRow.jsx';
+import { AudioTrackRow } from "./AudioTrackRow.jsx";
 
 export function AudioTrackList({
+  decodeAudioFile,
   tracks,
   animationId,
   timelineDurationMs,
@@ -17,6 +18,7 @@ export function AudioTrackList({
     <>
       {tracks.map((audioTrack) => (
         <AudioTrackRow
+          decodeAudioFile={decodeAudioFile}
           key={audioTrack.id}
           track={audioTrack}
           animationId={animationId}

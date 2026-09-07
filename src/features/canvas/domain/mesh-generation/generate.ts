@@ -6,34 +6,22 @@
  * This is a pure module — no DOM, no classes.
  * Designed to run both on the main thread and inside a Web Worker.
  */
-import type { Vertex } from '@kukla2d/contracts';
+import type { Vertex } from "@kukla2d/contracts";
 
-import { dilateAlphaMask, traceAllContours, resampleContour, smoothContour } from './contour.js';
-import { triangulate } from './delaunay.js';
-import { sampleInterior, filterByEdgePadding } from './sample.js';
+import {
+  dilateAlphaMask,
+  traceAllContours,
+  resampleContour,
+  smoothContour,
+} from "./contour.js";
+import { triangulate } from "./delaunay.js";
+import { sampleInterior, filterByEdgePadding } from "./sample.js";
 
-import type { Point2D } from './contour.js';
-import type { Triangle } from './delaunay.js';
-
-export interface MeshGenerationOptions {
-  alphaThreshold?: number;
-  smoothPasses?: number;
-  gridSpacing?: number;
-  edgePadding?: number;
-  numEdgePoints?: number;
-}
-
-export interface GeneratedVertex extends Vertex {
-  restX: number;
-  restY: number;
-}
-
-export interface MeshGenerationResult<TVertex extends Vertex = GeneratedVertex> {
-  vertices: TVertex[];
-  uvs: Float32Array;
-  triangles: Triangle[];
-  edgeIndices: Set<number>;
-}
+import type { Point2D } from "./contour.types.js";
+import type {
+  MeshGenerationOptions,
+  MeshGenerationResult,
+} from "./generate.types.js";
 
 /**
  * Re-triangulate existing vertices without changing them.
@@ -45,13 +33,17 @@ export interface MeshGenerationResult<TVertex extends Vertex = GeneratedVertex> 
  * @param {Set<number>} edgeIndices - which vertices are on the boundary (preserved)
  * @returns {MeshResult}
  */
-export function retriangulate<TVertex extends Vertex>(vertices: TVertex[], uvs: Float32Array, edgeIndices: Set<number>): MeshGenerationResult<TVertex> {
+export function retriangulate<TVertex extends Vertex>(
+  vertices: TVertex[],
+  uvs: Float32Array,
+  edgeIndices: Set<number>,
+): MeshGenerationResult<TVertex> {
   if (vertices.length < 3) {
     return { vertices, uvs, triangles: [], edgeIndices };
   }
 
   // Extract [x, y] points from existing vertices
-  const points: Point2D[] = vertices.map(v => [v.x, v.y]);
+  const points: Point2D[] = vertices.map((v) => [v.x, v.y]);
 
   // Triangulate
   const triangles = triangulate(points);
@@ -90,10 +82,10 @@ export function generateMesh(
 ): MeshGenerationResult {
   const {
     alphaThreshold = 5,
-    smoothPasses   = 0,
-    gridSpacing    = 30,
-    edgePadding    = 8,
-    numEdgePoints  = 80,
+    smoothPasses = 0,
+    gridSpacing = 30,
+    edgePadding = 8,
+    numEdgePoints = 80,
   } = opts;
 
   // 1. Dilate alpha mask by 2px so edge vertices land just outside the visual boundary.
@@ -106,10 +98,11 @@ export function generateMesh(
   // 3. Distribute numEdgePoints across contours proportionally by perimeter
   const edgePts: Point2D[] = [];
   if (contours.length > 0) {
-    const perimeters = contours.map(c => {
+    const perimeters = contours.map((c) => {
       let p = 0;
       for (let i = 0; i < c.length; i++) {
-        const a = c[i]!, b = c[(i + 1) % c.length]!;
+        const a = c[i]!,
+          b = c[(i + 1) % c.length]!;
         p += Math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2);
       }
       return p;
@@ -118,7 +111,10 @@ export function generateMesh(
 
     for (let ci = 0; ci < contours.length; ci++) {
       const contour = contours[ci]!;
-      const share = Math.max(3, Math.round(numEdgePoints * perimeters[ci]! / totalPerimeter));
+      const share = Math.max(
+        3,
+        Math.round((numEdgePoints * perimeters[ci]!) / totalPerimeter),
+      );
       let pts = resampleContour(contour, Math.min(share, contour.length));
       pts = smoothContour(pts, smoothPasses);
       edgePts.push(...pts);
@@ -126,7 +122,13 @@ export function generateMesh(
   }
 
   // 4. Interior grid — sampled from original alpha so all regions are filled
-  let interiorPts = sampleInterior(data, width, height, alphaThreshold, Math.max(6, gridSpacing));
+  let interiorPts = sampleInterior(
+    data,
+    width,
+    height,
+    alphaThreshold,
+    Math.max(6, gridSpacing),
+  );
   if (edgePadding > 0 && edgePts.length > 0) {
     interiorPts = filterByEdgePadding(interiorPts, edgePts, edgePadding);
   }
@@ -142,8 +144,12 @@ export function generateMesh(
     const [px, py] = allPts[i]!;
     let dup = false;
     for (const [dx, dy] of deduped) {
-      const ex = px - dx, ey = py - dy;
-      if (ex * ex + ey * ey < MIN_DIST2) { dup = true; break; }
+      const ex = px - dx,
+        ey = py - dy;
+      if (ex * ex + ey * ey < MIN_DIST2) {
+        dup = true;
+        break;
+      }
     }
     if (!dup) {
       if (i < rawEdgeCount) edgeSet.add(deduped.length);
@@ -156,14 +162,15 @@ export function generateMesh(
 
   // 7. Build output arrays
   const vertices = deduped.map(([x, y]) => ({
-    x, y,
+    x,
+    y,
     restX: x,
     restY: y,
   }));
 
   const uvs = new Float32Array(deduped.length * 2);
   for (let i = 0; i < deduped.length; i++) {
-    uvs[i * 2]     = deduped[i]![0] / width;
+    uvs[i * 2] = deduped[i]![0] / width;
     uvs[i * 2 + 1] = deduped[i]![1] / height;
   }
 

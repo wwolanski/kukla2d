@@ -1,25 +1,9 @@
-export interface DecodedPng {
-  rgba: Uint8ClampedArray;
-  width: number;
-  height: number;
-}
+import type { DecodedPng, PageComposeSource } from "./browserImage.types.js";
 
-export interface CropSource {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-export interface PageComposeSource {
-  rgba: Uint8ClampedArray;
-  srcWidth: number;
-  crop: CropSource;
-  dstX: number;
-  dstY: number;
-}
-
-export async function decodePngDataUrl(dataUrl: string, signal?: AbortSignal): Promise<DecodedPng> {
+export async function decodePngDataUrl(
+  dataUrl: string,
+  signal?: AbortSignal,
+): Promise<DecodedPng> {
   if (signal?.aborted) throw new AbortError();
   const res = await fetch(dataUrl);
   if (signal?.aborted) throw new AbortError();
@@ -31,7 +15,7 @@ export async function decodePngDataUrl(dataUrl: string, signal?: AbortSignal): P
     const w = bitmap.width;
     const h = bitmap.height;
     const canvas = new OffscreenCanvas(w, h);
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext("2d")!;
     ctx.drawImage(bitmap, 0, 0);
     const imageData = ctx.getImageData(0, 0, w, h);
     return { rgba: imageData.data, width: w, height: h };
@@ -48,7 +32,7 @@ export async function composePageBlob(
 ): Promise<Blob> {
   if (signal?.aborted) throw new AbortError();
   const canvas = new OffscreenCanvas(width, height);
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, width, height);
 
   for (const s of sources) {
@@ -58,22 +42,28 @@ export async function composePageBlob(
     const sh = Math.floor(s.rgba.length / (sw * 4));
     if (sw <= 0 || sh <= 0) continue;
     const srcCanvas = new OffscreenCanvas(sw, sh);
-    const srcCtx = srcCanvas.getContext('2d')!;
+    const srcCtx = srcCanvas.getContext("2d")!;
     const imgData = new ImageData(new Uint8ClampedArray(s.rgba), sw, sh);
     srcCtx.putImageData(imgData, 0, 0);
     ctx.drawImage(
       srcCanvas,
-      s.crop.x, s.crop.y, s.crop.w, s.crop.h,
-      s.dstX, s.dstY, s.crop.w, s.crop.h,
+      s.crop.x,
+      s.crop.y,
+      s.crop.w,
+      s.crop.h,
+      s.dstX,
+      s.dstY,
+      s.crop.w,
+      s.crop.h,
     );
   }
 
-  return canvas.convertToBlob({ type: 'image/png' });
+  return canvas.convertToBlob({ type: "image/png" });
 }
 
 export class AbortError extends Error {
   constructor() {
-    super('Aborted');
-    this.name = 'AbortError';
+    super("Aborted");
+    this.name = "AbortError";
   }
 }

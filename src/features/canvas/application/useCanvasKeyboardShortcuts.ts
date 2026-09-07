@@ -1,25 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
-import { toAnimationTargetId, type ProjectDocument } from '@kukla2d/contracts';
+import { toAnimationTargetId, type ProjectDocument } from "@kukla2d/contracts";
 
-import { useAnimationStore } from '@/store/animationStore';
-import { useEditorStore } from '@/store/editorStore';
-import type { EditorActions } from '@/store/editorStoreTypes';
+import { useAnimationStore } from "@/store/animationStore";
+import { useEditorStore } from "@/store/editorStore";
+import type { EditorActions } from "@/store/editorStoreTypes.types.js";
 
-import { editorModePolicy, ACTION_IDS } from '@/domain/editorModePolicy';
+import { editorModePolicy, ACTION_IDS } from "@/domain/editorModePolicy";
 
-import { createAnimationAuthoringApi } from '@/features/animation';
+import { createAnimationAuthoringApi } from "@/features/animation";
 
-import { toast } from '@/components/ui/use-toast';
+import { toast } from "@/components/ui/use-toast";
 
-import type { CanvasEditorSnapshot } from './canvasApplicationTypes.js';
-import type { WorkflowEvent } from '../domain/workflowContracts.js';
-import type { RefObject } from 'react';
+import type { CanvasEditorSnapshot } from "./canvasApplication.types.js";
+import type { WorkflowEvent } from "../domain/workflowContracts.types.js";
+import type { RefObject } from "react";
 
-
-
-type ToolShortcutKey = 'b' | 'c' | 'w';
-type MeshTool = 'meshDeform' | 'meshAdjust' | 'meshAddVertex' | 'meshRemoveVertex';
+type ToolShortcutKey = "b" | "c" | "w";
+type MeshTool =
+  "meshDeform" | "meshAdjust" | "meshAddVertex" | "meshRemoveVertex";
 
 const KEY_TOOL_MAP: Readonly<Record<ToolShortcutKey, string>> = {
   b: ACTION_IDS.BONE_CREATE,
@@ -37,19 +36,31 @@ const MESH_TOOL_ACTION_MAP: Readonly<Record<MeshTool, string>> = {
 interface CanvasKeyboardShortcutsOptions {
   editorRef: RefObject<CanvasEditorSnapshot>;
   projectRef: RefObject<ProjectDocument>;
-  setBrush: EditorActions['setBrush'];
+  setBrush: EditorActions["setBrush"];
   sendWorkflowEvent: (event: WorkflowEvent) => void;
   onRequestDelete: () => void;
 }
 
-function hasSelectedMesh(editorState: CanvasEditorSnapshot, project: ProjectDocument): boolean {
+function hasSelectedMesh(
+  editorState: CanvasEditorSnapshot,
+  project: ProjectDocument,
+): boolean {
   const selectedId = editorState.selection?.[0];
-  return !!project.nodes?.find(node => node.id === selectedId && node.type === 'part' && node.mesh?.vertices?.length);
+  return !!project.nodes?.find(
+    (node) =>
+      node.id === selectedId &&
+      node.type === "part" &&
+      node.mesh?.vertices?.length,
+  );
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
-  return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+  return (
+    target.tagName === "INPUT" ||
+    target.tagName === "TEXTAREA" ||
+    target.isContentEditable
+  );
 }
 
 function isDialogOpen(): boolean {
@@ -57,7 +68,9 @@ function isDialogOpen(): boolean {
 }
 
 export function useCanvasKeyboardShortcuts({
-  editorRef, projectRef, setBrush,
+  editorRef,
+  projectRef,
+  setBrush,
   sendWorkflowEvent,
   onRequestDelete,
 }: CanvasKeyboardShortcutsOptions): void {
@@ -67,23 +80,25 @@ export function useCanvasKeyboardShortcuts({
       if (isDialogOpen()) return;
 
       const interactionOwner = useEditorStore.getState().interactionOwner;
-      if (interactionOwner !== 'canvas') return;
+      if (interactionOwner !== "canvas") return;
 
       const isMod = e.ctrlKey || e.metaKey;
 
-      if (isMod && e.key.toLowerCase() === 'a') {
+      if (isMod && e.key.toLowerCase() === "a") {
         e.preventDefault();
         const editorState = editorRef.current;
         const project = projectRef.current;
-        const selectionTarget = editorState.selectionTarget ?? 'all';
+        const selectionTarget = editorState.selectionTarget ?? "all";
 
-        const nodeIds = (project.nodes ?? []).filter((n) => n.visible !== false).map((n) => n.id);
+        const nodeIds = (project.nodes ?? [])
+          .filter((n) => n.visible !== false)
+          .map((n) => n.id);
         const boneIds = (project.bones ?? []).map((b) => b.id);
         const constraintIds = (project.constraints ?? []).map((c) => c.id);
 
-        if (selectionTarget === 'element') {
+        if (selectionTarget === "element") {
           useEditorStore.getState().setElementSelection(nodeIds);
-        } else if (selectionTarget === 'rig') {
+        } else if (selectionTarget === "rig") {
           useEditorStore.getState().setRigSelection({
             elementIds: [],
             boneIds,
@@ -103,74 +118,88 @@ export function useCanvasKeyboardShortcuts({
         return;
       }
 
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault();
-        if (typeof onRequestDelete === 'function') onRequestDelete();
+        if (typeof onRequestDelete === "function") onRequestDelete();
         return;
       }
 
-      if (e.key === 'Alt' && !e.repeat) {
+      if (e.key === "Alt" && !e.repeat) {
         e.preventDefault();
-        sendWorkflowEvent({ type: 'CYCLE_SELECTION_TARGET' });
+        sendWorkflowEvent({ type: "CYCLE_SELECTION_TARGET" });
         return;
       }
 
       const key = e.key.toLowerCase();
-      if (key === 's') {
+      if (key === "s") {
         e.preventDefault();
-        sendWorkflowEvent({ type: 'SET_TOOL', tool: 'select' });
-      } else if (key === 'v') {
+        sendWorkflowEvent({ type: "SET_TOOL", tool: "select" });
+      } else if (key === "v") {
         e.preventDefault();
-        sendWorkflowEvent({ type: 'SET_TOOL', tool: 'transform' });
-      } else if (key === 'p') {
+        sendWorkflowEvent({ type: "SET_TOOL", tool: "transform" });
+      } else if (key === "p") {
         e.preventDefault();
-        sendWorkflowEvent({ type: 'SET_TOOL', tool: 'pose' });
-      } else if (['m', 'a', '+', '='].includes(key)) {
+        sendWorkflowEvent({ type: "SET_TOOL", tool: "pose" });
+      } else if (["m", "a", "+", "="].includes(key)) {
         if (!hasSelectedMesh(editorRef.current, projectRef.current)) return;
-        const tool = key === 'm' ? 'meshDeform' : key === 'a' ? 'meshAdjust' : 'meshAddVertex';
+        const tool =
+          key === "m"
+            ? "meshDeform"
+            : key === "a"
+              ? "meshAdjust"
+              : "meshAddVertex";
         const decision = editorModePolicy({
           mode: editorRef.current.editorMode,
           actionId: MESH_TOOL_ACTION_MAP[tool],
-          targetKind: 'tool',
+          targetKind: "tool",
         });
         if (!decision.allowed) return;
         e.preventDefault();
-        sendWorkflowEvent({ type: 'SET_TOOL', tool });
-      } else if (key === '-') {
+        sendWorkflowEvent({ type: "SET_TOOL", tool });
+      } else if (key === "-") {
         if (!hasSelectedMesh(editorRef.current, projectRef.current)) return;
         const decision = editorModePolicy({
           mode: editorRef.current.editorMode,
           actionId: MESH_TOOL_ACTION_MAP.meshRemoveVertex,
-          targetKind: 'tool',
+          targetKind: "tool",
         });
         if (!decision.allowed) return;
         e.preventDefault();
-        sendWorkflowEvent({ type: 'SET_TOOL', tool: 'meshRemoveVertex' });
-      } else if (key === 'b' || key === 'c' || key === 'w') {
+        sendWorkflowEvent({ type: "SET_TOOL", tool: "meshRemoveVertex" });
+      } else if (key === "b" || key === "c" || key === "w") {
         const actionId = KEY_TOOL_MAP[key];
         const editorMode = editorRef.current.editorMode;
-        const decision = editorModePolicy({ mode: editorMode, actionId, targetKind: 'tool' });
+        const decision = editorModePolicy({
+          mode: editorMode,
+          actionId,
+          targetKind: "tool",
+        });
         if (!decision.allowed) return;
-        if (key === 'w') {
+        if (key === "w") {
           if (!hasSelectedMesh(editorRef.current, projectRef.current)) return;
           const firstBoneId = projectRef.current.bones?.[0]?.id ?? null;
           if (!firstBoneId) return;
           const editorStore = useEditorStore.getState();
-          if (!editorStore.weightPaintBoneId) editorStore.setWeightPaintBoneId(firstBoneId);
+          if (!editorStore.weightPaintBoneId)
+            editorStore.setWeightPaintBoneId(firstBoneId);
         }
         e.preventDefault();
-        const toolMap: Readonly<Record<ToolShortcutKey, string>> = { b: 'drawBone', c: 'drawIk', w: 'weightPaint' };
-        sendWorkflowEvent({ type: 'SET_TOOL', tool: toolMap[key] });
-      } else if (e.key === 'Escape') {
+        const toolMap: Readonly<Record<ToolShortcutKey, string>> = {
+          b: "drawBone",
+          c: "drawIk",
+          w: "weightPaint",
+        };
+        sendWorkflowEvent({ type: "SET_TOOL", tool: toolMap[key] });
+      } else if (e.key === "Escape") {
         e.preventDefault();
-        sendWorkflowEvent({ type: 'CLEAR_SELECTION' });
-        sendWorkflowEvent({ type: 'SET_TOOL', tool: 'select' });
+        sendWorkflowEvent({ type: "CLEAR_SELECTION" });
+        sendWorkflowEvent({ type: "SET_TOOL", tool: "select" });
       }
     };
 
-    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
     return () => {
-      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener("keydown", onKeyDown);
     };
   }, [editorRef, onRequestDelete, projectRef, sendWorkflowEvent]);
 
@@ -179,17 +208,19 @@ export function useCanvasKeyboardShortcuts({
       if (isEditableTarget(e.target)) return;
       if (isDialogOpen()) return;
       const interactionOwner = useEditorStore.getState().interactionOwner;
-      if (interactionOwner !== 'canvas') return;
+      if (interactionOwner !== "canvas") return;
 
-      const { meshEditMode, meshSubMode, blendShapeEditMode, brushSize } = editorRef.current;
-      if (e.key === '[' || e.key === ']') {
-        if ((!meshEditMode || meshSubMode !== 'deform') && !blendShapeEditMode) return;
-        if (e.key === '[') setBrush({ brushSize: Math.max(5, brushSize - 5) });
+      const { meshEditMode, meshSubMode, blendShapeEditMode, brushSize } =
+        editorRef.current;
+      if (e.key === "[" || e.key === "]") {
+        if ((!meshEditMode || meshSubMode !== "deform") && !blendShapeEditMode)
+          return;
+        if (e.key === "[") setBrush({ brushSize: Math.max(5, brushSize - 5) });
         else setBrush({ brushSize: Math.min(300, brushSize + 5) });
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, [editorRef, setBrush]);
 
   useEffect(() => {
@@ -197,8 +228,15 @@ export function useCanvasKeyboardShortcuts({
 
     const handler = (e: KeyboardEvent) => {
       const key = e.key;
-      const isFrameStep = e.code === 'Comma' || e.code === 'Period';
-      if (key !== 'k' && key !== 'K' && key !== 'i' && key !== 'I' && !isFrameStep) return;
+      const isFrameStep = e.code === "Comma" || e.code === "Period";
+      if (
+        key !== "k" &&
+        key !== "K" &&
+        key !== "i" &&
+        key !== "I" &&
+        !isFrameStep
+      )
+        return;
       if (e.repeat) return;
       if (isEditableTarget(e.target)) return;
       if (isDialogOpen()) return;
@@ -207,28 +245,45 @@ export function useCanvasKeyboardShortcuts({
       const project = projectRef.current;
       if (project.animations.length === 0) return;
 
-      const animId = animationState.activeAnimationId ?? project.animations[0]?.id;
+      const animId =
+        animationState.activeAnimationId ?? project.animations[0]?.id;
       if (!animId) return;
 
       if (isFrameStep) {
         if (e.ctrlKey || e.metaKey) return;
-        const nextFrame = e.code === 'Comma'
-          ? Math.max(animationState.startFrame, Math.round(animationState.currentTime / 1000 * animationState.fps) - 1)
-          : Math.min(animationState.endFrame, Math.round(animationState.currentTime / 1000 * animationState.fps) + 1);
+        const nextFrame =
+          e.code === "Comma"
+            ? Math.max(
+                animationState.startFrame,
+                Math.round(
+                  (animationState.currentTime / 1000) * animationState.fps,
+                ) - 1,
+              )
+            : Math.min(
+                animationState.endFrame,
+                Math.round(
+                  (animationState.currentTime / 1000) * animationState.fps,
+                ) + 1,
+              );
         e.preventDefault();
         useAnimationStore.getState().seekFrame(nextFrame);
         return;
       }
 
       const interactionOwner = useEditorStore.getState().interactionOwner;
-      if (interactionOwner !== 'canvas') return;
+      if (interactionOwner !== "canvas") return;
       const editorState = editorRef.current;
-      if (editorState.editorMode !== 'animation') return;
+      if (editorState.editorMode !== "animation") return;
 
-      if (key === 'i' || key === 'I') {
-        if (!authoringApi.hasActiveGesture() || !animationState.draftDirty || animationState.draftPose.size === 0) return;
+      if (key === "i" || key === "I") {
+        if (
+          !authoringApi.hasActiveGesture() ||
+          !animationState.draftDirty ||
+          animationState.draftPose.size === 0
+        )
+          return;
         e.preventDefault();
-        authoringApi.commitAndContinueGesture({ source: 'in-air-key' });
+        authoringApi.commitAndContinueGesture({ source: "in-air-key" });
         return;
       }
 
@@ -236,28 +291,43 @@ export function useCanvasKeyboardShortcuts({
       if (selectedIds.length === 0) return;
 
       if (editorState.activeConstraintId) {
-        selectedIds = Array.from(new Set([...selectedIds, editorState.activeConstraintId]));
+        selectedIds = Array.from(
+          new Set([...selectedIds, editorState.activeConstraintId]),
+        );
       }
 
       const result = authoringApi.keySelected({
         targetIds: selectedIds.map(toAnimationTargetId),
-        source: 'manual-key',
+        source: "manual-key",
       });
       if (result?.changed) {
-        const frame = Math.round(animationState.currentTime / 1000 * animationState.fps);
-        const channels = [...new Set((result.committedAddresses ?? []).map((address) => (
-          address.split('::')[1]?.split('@')[0]
-        )).filter((channel): channel is string => Boolean(channel)))];
+        const frame = Math.round(
+          (animationState.currentTime / 1000) * animationState.fps,
+        );
+        const channels = [
+          ...new Set(
+            (result.committedAddresses ?? [])
+              .map((address) => address.split("::")[1]?.split("@")[0])
+              .filter((channel): channel is string => Boolean(channel)),
+          ),
+        ];
         toast({
           title: `Key added at frame ${frame}`,
-          description: channels.length > 0 ? `Keyed: ${channels.join(', ')}` : 'Selected animation channels keyed.',
+          description:
+            channels.length > 0
+              ? `Keyed: ${channels.join(", ")}`
+              : "Selected animation channels keyed.",
         });
       } else if (result?.error) {
-        toast({ variant: 'destructive', title: 'Key not added', description: result.error });
+        toast({
+          variant: "destructive",
+          title: "Key not added",
+          description: result.error,
+        });
       }
     };
 
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, [editorRef, projectRef]);
 }

@@ -1,14 +1,20 @@
 import {
   isAuthorableProperty,
   isPropertyAllowedForTargetKind,
-} from './animationProperties.js';
+} from "./animationProperties.js";
 
-import type { AnimationTargetKind } from './animationProperties.js';
+import type { AnimationTargetKind } from "./animationProperties.types.js";
 
-type PolicyTargetKind = AnimationTargetKind | 'image' | 'tool' | 'navigation' | 'modeTransition';
-type EditorActionChannel = 'animation-channel' | 'setup-structure' | 'navigation' | 'blocked' | 'mode-transition';
+type PolicyTargetKind =
+  AnimationTargetKind | "image" | "tool" | "navigation" | "modeTransition";
+type EditorActionChannel =
+  | "animation-channel"
+  | "setup-structure"
+  | "navigation"
+  | "blocked"
+  | "mode-transition";
 
-export interface EditorActionDecision {
+interface EditorActionDecision {
   allowed: boolean;
   mode: string;
   actionId: string;
@@ -18,7 +24,7 @@ export interface EditorActionDecision {
   suggestedAction?: string;
 }
 
-export interface EditorModePolicyInput {
+interface EditorModePolicyInput {
   mode: string;
   actionId: string;
   targetKind?: PolicyTargetKind;
@@ -47,54 +53,54 @@ export interface EditorModePolicyInput {
  */
 export const ACTION_IDS = Object.freeze({
   // Node transform
-  NODE_MOVE: 'node.move',
-  NODE_ROTATE: 'node.rotate',
-  NODE_SCALE: 'node.scale',
+  NODE_MOVE: "node.move",
+  NODE_ROTATE: "node.rotate",
+  NODE_SCALE: "node.scale",
   // Node appearance
-  NODE_OPACITY: 'node.opacity',
-  NODE_VISIBLE: 'node.visible',
-  NODE_DRAW_ORDER: 'node.drawOrder',
+  NODE_OPACITY: "node.opacity",
+  NODE_VISIBLE: "node.visible",
+  NODE_DRAW_ORDER: "node.drawOrder",
   // Node mesh
-  NODE_MESH_DEFORM: 'node.meshDeform',
-  NODE_BLEND_SHAPE: 'node.blendShape',
+  NODE_MESH_DEFORM: "node.meshDeform",
+  NODE_BLEND_SHAPE: "node.blendShape",
   // Bone transform
-  BONE_MOVE: 'bone.move',
-  BONE_ROTATE: 'bone.rotate',
-  BONE_SCALE: 'bone.scale',
+  BONE_MOVE: "bone.move",
+  BONE_ROTATE: "bone.rotate",
+  BONE_SCALE: "bone.scale",
   // Bone setup-only
-  BONE_LENGTH: 'bone.length',
-  BONE_PIVOT: 'bone.pivot',
+  BONE_LENGTH: "bone.length",
+  BONE_PIVOT: "bone.pivot",
   // Constraint
-  CONSTRAINT_EDIT: 'constraint.edit',
+  CONSTRAINT_EDIT: "constraint.edit",
   // Structure — bones
-  BONE_CREATE: 'bone.create',
-  BONE_DELETE: 'bone.delete',
-  BONE_REPARENT: 'bone.reparent',
-  BONE_RENAME: 'bone.rename',
+  BONE_CREATE: "bone.create",
+  BONE_DELETE: "bone.delete",
+  BONE_REPARENT: "bone.reparent",
+  BONE_RENAME: "bone.rename",
   // Structure — IK
-  IK_CREATE: 'ik.create',
-  IK_ASSIGN: 'ik.assign',
+  IK_CREATE: "ik.create",
+  IK_ASSIGN: "ik.assign",
   // Structure — topology / weights
-  REMESH: 'remesh',
-  WEIGHTS_EDIT: 'weights.edit',
+  REMESH: "remesh",
+  WEIGHTS_EDIT: "weights.edit",
   // Structure — links
-  LINK_TOGGLE: 'link.toggle',
-  BIND_TOGGLE: 'bind.toggle',
+  LINK_TOGGLE: "link.toggle",
+  BIND_TOGGLE: "bind.toggle",
   // Slots
-  SLOT_CREATE: 'slot.create',
-  SLOT_DELETE: 'slot.delete',
+  SLOT_CREATE: "slot.create",
+  SLOT_DELETE: "slot.delete",
   // Hierarchy
-  HIERARCHY_REORDER: 'hierarchy.reorder',
+  HIERARCHY_REORDER: "hierarchy.reorder",
   // Library organization (R13 — allowed in both modes)
-  RENAME: 'rename',
-  LIBRARY_ORGANIZE: 'library.organize',
+  RENAME: "rename",
+  LIBRARY_ORGANIZE: "library.organize",
   // Navigation — always allowed
-  SELECTION: 'selection',
-  ZOOM: 'zoom',
-  PAN: 'pan',
-  PLAYBACK: 'playback',
+  SELECTION: "selection",
+  ZOOM: "zoom",
+  PAN: "pan",
+  PLAYBACK: "playback",
   // Mode transition
-  MODE_SWITCH: 'mode.switch',
+  MODE_SWITCH: "mode.switch",
 });
 
 /** @typedef {keyof typeof ACTION_IDS} ActionId */
@@ -104,14 +110,14 @@ export const ACTION_IDS = Object.freeze({
  * K5: each code maps to exactly one feedback entry.
  */
 export const REASON_CODES = Object.freeze({
-  ACTIVE_CLIP_REQUIRED: 'ACTIVE_CLIP_REQUIRED',
-  ANIMATION_CHANNEL_UNSUPPORTED: 'ANIMATION_CHANNEL_UNSUPPORTED',
-  STAGING_ONLY_STRUCTURE: 'STAGING_ONLY_STRUCTURE',
-  STAGING_ONLY_BONE_LENGTH: 'STAGING_ONLY_BONE_LENGTH',
-  STAGING_ONLY_PIVOT: 'STAGING_ONLY_PIVOT',
-  DIRTY_DRAFT: 'DIRTY_DRAFT',
-  POSE_MUST_BE_RESOLVED: 'POSE_MUST_BE_RESOLVED',
-  UNKNOWN_ACTION: 'UNKNOWN_ACTION',
+  ACTIVE_CLIP_REQUIRED: "ACTIVE_CLIP_REQUIRED",
+  ANIMATION_CHANNEL_UNSUPPORTED: "ANIMATION_CHANNEL_UNSUPPORTED",
+  STAGING_ONLY_STRUCTURE: "STAGING_ONLY_STRUCTURE",
+  STAGING_ONLY_BONE_LENGTH: "STAGING_ONLY_BONE_LENGTH",
+  STAGING_ONLY_PIVOT: "STAGING_ONLY_PIVOT",
+  DIRTY_DRAFT: "DIRTY_DRAFT",
+  POSE_MUST_BE_RESOLVED: "POSE_MUST_BE_RESOLVED",
+  UNKNOWN_ACTION: "UNKNOWN_ACTION",
 });
 
 /**
@@ -241,9 +247,11 @@ const ANIMATION_BLOCK_REASON: Readonly<Record<string, string>> = Object.freeze({
  * @returns {boolean}
  */
 function isPropertyAction(actionId: string): boolean {
-  return actionId.startsWith('node.')
-    || actionId.startsWith('bone.')
-    || actionId === ACTION_IDS.CONSTRAINT_EDIT;
+  return (
+    actionId.startsWith("node.") ||
+    actionId.startsWith("bone.") ||
+    actionId === ACTION_IDS.CONSTRAINT_EDIT
+  );
 }
 
 /**
@@ -253,22 +261,25 @@ function isPropertyAction(actionId: string): boolean {
  * @param {TargetKind} targetKind
  * @returns {string|null}
  */
-function actionToProperty(actionId: string, targetKind?: PolicyTargetKind): string | null {
-  if (targetKind === 'constraint') return 'targetX';
+function actionToProperty(
+  actionId: string,
+  targetKind?: PolicyTargetKind,
+): string | null {
+  if (targetKind === "constraint") return "targetX";
 
   const map: Readonly<Record<string, string>> = {
-    [ACTION_IDS.NODE_MOVE]: 'x',
-    [ACTION_IDS.NODE_ROTATE]: 'rotation',
-    [ACTION_IDS.NODE_SCALE]: 'scaleX',
-    [ACTION_IDS.NODE_OPACITY]: 'opacity',
-    [ACTION_IDS.NODE_VISIBLE]: 'visible',
-    [ACTION_IDS.NODE_DRAW_ORDER]: 'drawOrder',
-    [ACTION_IDS.NODE_MESH_DEFORM]: 'mesh_verts',
-    [ACTION_IDS.BONE_MOVE]: 'x',
-    [ACTION_IDS.BONE_ROTATE]: 'rotation',
-    [ACTION_IDS.BONE_SCALE]: 'scaleX',
-    [ACTION_IDS.BONE_LENGTH]: 'length',
-    [ACTION_IDS.BONE_PIVOT]: 'pivotX',
+    [ACTION_IDS.NODE_MOVE]: "x",
+    [ACTION_IDS.NODE_ROTATE]: "rotation",
+    [ACTION_IDS.NODE_SCALE]: "scaleX",
+    [ACTION_IDS.NODE_OPACITY]: "opacity",
+    [ACTION_IDS.NODE_VISIBLE]: "visible",
+    [ACTION_IDS.NODE_DRAW_ORDER]: "drawOrder",
+    [ACTION_IDS.NODE_MESH_DEFORM]: "mesh_verts",
+    [ACTION_IDS.BONE_MOVE]: "x",
+    [ACTION_IDS.BONE_ROTATE]: "rotation",
+    [ACTION_IDS.BONE_SCALE]: "scaleX",
+    [ACTION_IDS.BONE_LENGTH]: "length",
+    [ACTION_IDS.BONE_PIVOT]: "pivotX",
   };
   return map[actionId] ?? null;
 }
@@ -293,19 +304,19 @@ export function editorModePolicy({
   property,
   draftDirty,
 }: EditorModePolicyInput): EditorActionDecision {
-  if (mode !== 'staging' && mode !== 'animation') {
+  if (mode !== "staging" && mode !== "animation") {
     return {
       allowed: false,
       mode,
       actionId,
-      channel: 'blocked',
+      channel: "blocked",
       reasonCode: REASON_CODES.UNKNOWN_ACTION,
       message: `Unknown editor mode "${mode}".`,
-      suggestedAction: 'Reload the editor.',
+      suggestedAction: "Reload the editor.",
     };
   }
 
-  const table = mode === 'staging' ? STAGING_ALLOWED : ANIMATION_ALLOWED;
+  const table = mode === "staging" ? STAGING_ALLOWED : ANIMATION_ALLOWED;
   const allowedInMode = table[actionId];
 
   if (allowedInMode === undefined) {
@@ -313,39 +324,40 @@ export function editorModePolicy({
       allowed: false,
       mode,
       actionId,
-      channel: 'blocked',
+      channel: "blocked",
       reasonCode: REASON_CODES.UNKNOWN_ACTION,
       message: `Unknown action "${actionId}".`,
-      suggestedAction: 'Report this as a bug.',
+      suggestedAction: "Report this as a bug.",
     };
   }
 
   if (!allowedInMode) {
-    const reasonCode = ANIMATION_BLOCK_REASON[actionId]
-      ?? REASON_CODES.ANIMATION_CHANNEL_UNSUPPORTED;
+    const reasonCode =
+      ANIMATION_BLOCK_REASON[actionId] ??
+      REASON_CODES.ANIMATION_CHANNEL_UNSUPPORTED;
     return {
       allowed: false,
       mode,
       actionId,
-      channel: 'blocked',
+      channel: "blocked",
       reasonCode,
     };
   }
 
   // Animation-specific guards for allowed actions
-  if (mode === 'animation') {
+  if (mode === "animation") {
     // Navigation actions are always allowed when in the table
     if (
-      actionId === ACTION_IDS.SELECTION
-      || actionId === ACTION_IDS.ZOOM
-      || actionId === ACTION_IDS.PAN
-      || actionId === ACTION_IDS.PLAYBACK
+      actionId === ACTION_IDS.SELECTION ||
+      actionId === ACTION_IDS.ZOOM ||
+      actionId === ACTION_IDS.PAN ||
+      actionId === ACTION_IDS.PLAYBACK
     ) {
       return {
         allowed: true,
         mode,
         actionId,
-        channel: 'navigation',
+        channel: "navigation",
       };
     }
 
@@ -355,7 +367,7 @@ export function editorModePolicy({
         allowed: false,
         mode,
         actionId,
-        channel: 'blocked',
+        channel: "blocked",
         reasonCode: REASON_CODES.DIRTY_DRAFT,
       };
     }
@@ -368,21 +380,24 @@ export function editorModePolicy({
           allowed: false,
           mode,
           actionId,
-          channel: 'blocked',
+          channel: "blocked",
           reasonCode: REASON_CODES.ANIMATION_CHANNEL_UNSUPPORTED,
         };
       }
       if (
-        animProperty
-        && targetKind
-        && (targetKind === 'node' || targetKind === 'bone' || targetKind === 'constraint' || targetKind === 'slot')
-        && !isPropertyAllowedForTargetKind(animProperty, targetKind)
+        animProperty &&
+        targetKind &&
+        (targetKind === "node" ||
+          targetKind === "bone" ||
+          targetKind === "constraint" ||
+          targetKind === "slot") &&
+        !isPropertyAllowedForTargetKind(animProperty, targetKind)
       ) {
         return {
           allowed: false,
           mode,
           actionId,
-          channel: 'blocked',
+          channel: "blocked",
           reasonCode: REASON_CODES.ANIMATION_CHANNEL_UNSUPPORTED,
         };
       }
@@ -392,7 +407,7 @@ export function editorModePolicy({
       allowed: true,
       mode,
       actionId,
-      channel: 'animation-channel',
+      channel: "animation-channel",
     };
   }
 
@@ -401,6 +416,6 @@ export function editorModePolicy({
     allowed: true,
     mode,
     actionId,
-    channel: 'setup-structure',
+    channel: "setup-structure",
   };
 }

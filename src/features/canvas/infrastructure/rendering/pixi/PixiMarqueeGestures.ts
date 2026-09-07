@@ -1,17 +1,22 @@
-import { computeWorldMatrices } from '@/domain/transforms';
+import { computeWorldMatrices } from "@/domain/transforms";
 
 import {
   selectBonesInRect,
   selectConstraintsInRect,
   selectElementsInRect,
-} from '@/features/canvas/domain/picking.js';
-import type { ModifierState } from '@/features/canvas/domain/workflowContracts.js';
+} from "@/features/canvas/domain/picking.js";
+import type { ModifierState } from "@/features/canvas/domain/workflowContracts.types.js";
 
-import { getAdapterEffectiveRigState } from './PixiInputState.js';
+import { getAdapterEffectiveRigState } from "./PixiInputState.js";
 
-import type { DragState, EditorRuntimePort, PixiInteractionSystem, PointerInput } from './PixiInteractionSystem.js';
+import type {
+  EditorRuntimePort,
+  PointerInput,
+} from "./pixiInteractionContracts.types.js";
+import type { DragState } from "./pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
 
-type MarqueeDrag = Extract<DragState, { type: 'marquee' }>;
+type MarqueeDrag = Extract<DragState, { type: "marquee" }>;
 
 interface WorldPoint {
   x: number;
@@ -23,12 +28,14 @@ export function shouldStartMarquee(
   event: PointerInput,
   alphaHit: string | null,
 ): boolean {
-  return ['select', 'transform', 'pose'].includes(editorState.activeTool ?? '')
-    && !editorState.meshEditMode
-    && !editorState.weightPaintMode
-    && !event.shiftKey
-    && !(event.ctrlKey || event.metaKey)
-    && !alphaHit;
+  return (
+    ["select", "transform", "pose"].includes(editorState.activeTool ?? "") &&
+    !editorState.meshEditMode &&
+    !editorState.weightPaintMode &&
+    !event.shiftKey &&
+    !(event.ctrlKey || event.metaKey) &&
+    !alphaHit
+  );
 }
 
 export function startMarquee(
@@ -39,8 +46,8 @@ export function startMarquee(
   const editorState = adapter.editorRef.current;
   const screen = screenPoint(event, world, editorState.view);
   adapter._setDragState({
-    type: 'marquee',
-    target: editorState.selectionTarget ?? 'element',
+    type: "marquee",
+    target: editorState.selectionTarget ?? "element",
     startWorldX: world.x,
     startWorldY: world.y,
     curWorldX: world.x,
@@ -49,9 +56,9 @@ export function startMarquee(
     startScreenY: screen.y,
   });
   adapter._sendWorkflow({
-    type: 'START_MARQUEE',
+    type: "START_MARQUEE",
     origin: screen,
-    target: editorState.selectionTarget ?? 'element',
+    target: editorState.selectionTarget ?? "element",
     modifiers: pointerModifiers(event),
   });
 }
@@ -66,7 +73,7 @@ export function updateMarquee(
   drag.curWorldX = world.x;
   drag.curWorldY = world.y;
   adapter._sendWorkflow({
-    type: 'UPDATE_MARQUEE',
+    type: "UPDATE_MARQUEE",
     box: {
       x: Math.min(drag.startScreenX, screen.x),
       y: Math.min(drag.startScreenY, screen.y),
@@ -77,30 +84,38 @@ export function updateMarquee(
   adapter.markDirty?.();
 }
 
-export function commitMarquee(adapter: PixiInteractionSystem, drag: MarqueeDrag): void {
+export function commitMarquee(
+  adapter: PixiInteractionSystem,
+  drag: MarqueeDrag,
+): void {
   const minX = Math.min(drag.startWorldX, drag.curWorldX);
   const minY = Math.min(drag.startWorldY, drag.curWorldY);
   const maxX = Math.max(drag.startWorldX, drag.curWorldX);
   const maxY = Math.max(drag.startWorldY, drag.curWorldY);
   if ((maxX - minX) * (maxY - minY) < 16) {
-    adapter._executeCommand({ type: 'clearSelection', payload: {} });
+    adapter._executeCommand({ type: "clearSelection", payload: {} });
     return;
   }
   const project = adapter.projectRef.current;
   const { nodes, bones, poseOverrides } = getAdapterEffectiveRigState(adapter);
-  const constraints = (project.constraints ?? []).map(constraint => ({
+  const constraints = (project.constraints ?? []).map((constraint) => ({
     ...constraint,
     ...(poseOverrides?.get?.(constraint.id) ?? {}),
   }));
-  if (drag.target === 'rig' || drag.target === 'all') {
+  if (drag.target === "rig" || drag.target === "all") {
     const rect = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
     const boneIds = selectBonesInRect({ bones, rect });
     const constraintIds = selectConstraintsInRect({ constraints, bones, rect });
-    const elementIds = drag.target === 'all'
-      ? selectElementsInRect({ nodes, worldMatrices: computeWorldMatrices(nodes), rect })
-      : [];
+    const elementIds =
+      drag.target === "all"
+        ? selectElementsInRect({
+            nodes,
+            worldMatrices: computeWorldMatrices(nodes),
+            rect,
+          })
+        : [];
     adapter._executeCommand({
-      type: 'setRigSelection',
+      type: "setRigSelection",
       payload: {
         elementIds,
         boneIds,
@@ -117,7 +132,7 @@ export function commitMarquee(adapter: PixiInteractionSystem, drag: MarqueeDrag)
     worldMatrices: computeWorldMatrices(nodes),
     rect: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
   });
-  adapter._executeCommand({ type: 'setSelection', payload: { ids } });
+  adapter._executeCommand({ type: "setSelection", payload: { ids } });
 }
 
 function pointerModifiers(event: PointerInput): ModifierState {
@@ -132,10 +147,11 @@ function pointerModifiers(event: PointerInput): ModifierState {
 function screenPoint(
   event: PointerInput,
   world: WorldPoint,
-  view: EditorRuntimePort['view'],
+  view: EditorRuntimePort["view"],
 ): WorldPoint {
   const global = event.global;
-  if (global && Number.isFinite(global.x) && Number.isFinite(global.y)) return { x: global.x, y: global.y };
+  if (global && Number.isFinite(global.x) && Number.isFinite(global.y))
+    return { x: global.x, y: global.y };
   return {
     x: world.x * (view?.zoom || 1) + (view?.panX || 0),
     y: world.y * (view?.zoom || 1) + (view?.panY || 0),

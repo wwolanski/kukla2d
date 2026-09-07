@@ -4,11 +4,11 @@ import type {
   ModularSpriteDocument,
   Node,
   Texture,
-} from '@kukla2d/contracts';
+} from "@kukla2d/contracts";
 
-import { buildUniqueTextureNameMap } from '@/domain/libraryAssetNames';
+import { buildUniqueTextureNameMap } from "@/domain/libraryAssetNames";
 
-export interface LibraryTreeInput {
+interface LibraryTreeInput {
   libraryFolders?: readonly LibraryFolder[];
   assetPlacements?: readonly AssetPlacement[];
   textures: readonly Texture[];
@@ -17,16 +17,16 @@ export interface LibraryTreeInput {
 }
 
 interface LibraryFolderRow {
-  kind: 'folder';
+  kind: "folder";
   id: string;
   name: string;
   sourceFileName: string | null;
-  origin: LibraryFolder['origin'] | null;
+  origin: LibraryFolder["origin"] | null;
   children: LibraryTreeRow[];
 }
 
 interface LibraryAssetRow {
-  kind: 'asset';
+  kind: "asset";
   id: string;
   name: string;
   sourceFileName: string | null;
@@ -35,13 +35,13 @@ interface LibraryAssetRow {
   isInUse: boolean;
   size: number | null | undefined;
   modularSpriteId: string | null;
-  modularKind: 'source' | 'part' | null;
+  modularKind: "source" | "part" | null;
   partKey: string | null;
 }
 
-export type LibraryTreeRow = LibraryFolderRow | LibraryAssetRow;
+type LibraryTreeRow = LibraryFolderRow | LibraryAssetRow;
 
-type FolderEntry = { kind: 'folder'; folder: LibraryFolder };
+type FolderEntry = { kind: "folder"; folder: LibraryFolder };
 
 export function buildLibraryTree({
   libraryFolders,
@@ -52,14 +52,25 @@ export function buildLibraryTree({
 }: LibraryTreeInput): LibraryTreeRow[] {
   const folders = libraryFolders ?? [];
   const placements = assetPlacements ?? [];
-  const texMap = new Map<string, Texture>(textures.map(t => [t.id, t]));
-  const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]));
+  const texMap = new Map<string, Texture>(textures.map((t) => [t.id, t]));
+  const nodeMap = new Map<string, Node>(nodes.map((n) => [n.id, n]));
   const displayNames = buildUniqueTextureNameMap(textures, nodes);
-  const modularByAssetId = new Map<string, { id: string; kind: 'source' | 'part'; partKey: string | null }>();
+  const modularByAssetId = new Map<
+    string,
+    { id: string; kind: "source" | "part"; partKey: string | null }
+  >();
   for (const modularSprite of modularSprites ?? []) {
-    modularByAssetId.set(modularSprite.sourceAssetId, { id: modularSprite.id, kind: 'source', partKey: null });
+    modularByAssetId.set(modularSprite.sourceAssetId, {
+      id: modularSprite.id,
+      kind: "source",
+      partKey: null,
+    });
     for (const part of modularSprite.parts) {
-      modularByAssetId.set(part.assetId, { id: modularSprite.id, kind: 'part', partKey: part.partKey });
+      modularByAssetId.set(part.assetId, {
+        id: modularSprite.id,
+        kind: "part",
+        partKey: part.partKey,
+      });
     }
   }
   const childrenByParent = new Map<string | null, FolderEntry[]>();
@@ -67,7 +78,7 @@ export function buildLibraryTree({
   for (const folder of folders) {
     const pid = folder.parentId ?? null;
     const entries = childrenByParent.get(pid) ?? [];
-    entries.push({ kind: 'folder', folder });
+    entries.push({ kind: "folder", folder });
     childrenByParent.set(pid, entries);
   }
 
@@ -79,14 +90,14 @@ export function buildLibraryTree({
     assetsByFolder.set(fid, assetIds);
   }
 
-  const assetIdsInFolder = new Set(placements.map(p => p.assetId));
+  const assetIdsInFolder = new Set(placements.map((p) => p.assetId));
 
   function buildChildren(parentId: string | null): LibraryTreeRow[] {
     const result: LibraryTreeRow[] = [];
     const foldersHere = childrenByParent.get(parentId) ?? [];
     for (const { folder } of foldersHere) {
       result.push({
-        kind: 'folder',
+        kind: "folder",
         id: folder.id,
         name: folder.name,
         sourceFileName: folder.sourceFileName ?? null,
@@ -103,14 +114,18 @@ export function buildLibraryTree({
       const sourceName = tex.fileName ?? null;
       const modular = modularByAssetId.get(assetId);
       result.push({
-        kind: 'asset',
+        kind: "asset",
         id: assetId,
         name: localName,
         sourceFileName: sourceName,
         texture: tex,
         node,
-        isInUse: nodes.some(candidate => candidate.type === 'part'
-          && (String(candidate.id) === assetId || candidate.textureId === assetId)),
+        isInUse: nodes.some(
+          (candidate) =>
+            candidate.type === "part" &&
+            (String(candidate.id) === assetId ||
+              candidate.textureId === assetId),
+        ),
         size: tex.fileSize,
         modularSpriteId: modular?.id ?? null,
         modularKind: modular?.kind ?? null,
@@ -130,14 +145,18 @@ export function buildLibraryTree({
     const sourceName = tex.fileName ?? null;
     const modular = modularByAssetId.get(tex.id);
     looseAssets.push({
-      kind: 'asset',
+      kind: "asset",
       id: tex.id,
       name: localName,
       sourceFileName: sourceName,
       texture: tex,
       node,
-      isInUse: nodes.some(candidate => candidate.type === 'part'
-          && (String(candidate.id) === String(tex.id) || candidate.textureId === tex.id)),
+      isInUse: nodes.some(
+        (candidate) =>
+          candidate.type === "part" &&
+          (String(candidate.id) === String(tex.id) ||
+            candidate.textureId === tex.id),
+      ),
       size: tex.fileSize,
       modularSpriteId: modular?.id ?? null,
       modularKind: modular?.kind ?? null,
@@ -148,11 +167,13 @@ export function buildLibraryTree({
   return [...rootFolders, ...looseAssets];
 }
 
-export function flattenLibraryTree(rows: readonly LibraryTreeRow[]): LibraryTreeRow[] {
+export function flattenLibraryTree(
+  rows: readonly LibraryTreeRow[],
+): LibraryTreeRow[] {
   const result: LibraryTreeRow[] = [];
   for (const row of rows) {
     result.push(row);
-    if (row.kind === 'folder') {
+    if (row.kind === "folder") {
       result.push(...flattenLibraryTree(row.children));
     }
   }
