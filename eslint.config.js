@@ -9,6 +9,7 @@ import { importX } from "eslint-plugin-import-x";
 import tseslint from "typescript-eslint";
 
 import noPassThroughPublicApi from "./eslint-rules/no-pass-through-public-api.js";
+import noInternalReExports from "./eslint-rules/no-internal-reexports.js";
 import noPublicApiExportAlias from "./eslint-rules/no-public-api-export-alias.js";
 import noPublicApiWildcardExport from "./eslint-rules/no-public-api-wildcard-export.js";
 import noTypesTypesFile from "./eslint-rules/no-types-types-file.js";
@@ -49,6 +50,7 @@ const tsManifest = [
 ];
 const localArchitectureRules = {
   rules: {
+    "no-internal-reexports": noInternalReExports,
     "no-pass-through-public-api": noPassThroughPublicApi,
     "no-public-api-export-alias": noPublicApiExportAlias,
     "no-public-api-wildcard-export": noPublicApiWildcardExport,
@@ -82,12 +84,14 @@ export default [
     },
     plugins: {
       "import-x": importX,
+      local: localArchitectureRules,
       "relative-import-extension": {
         rules: { "require-extension": relativeImportExtensionRule },
       },
     },
     rules: {
       "import-x/no-unresolved": "error",
+      "local/no-internal-reexports": "error",
       "import-x/order": [
         "error",
         {

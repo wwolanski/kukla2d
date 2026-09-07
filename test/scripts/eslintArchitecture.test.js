@@ -20,6 +20,21 @@ function architectureMessages(messages) {
 }
 
 describe("ESLint feature boundaries", () => {
+  it("rejects internal forwarding exports with ARCH-019", async () => {
+    const messages = await lintFixture(
+      "src/features/layers/domain/__eslintArchitectureFixture.jsx",
+      "export { Button } from '@/components/ui/button'\n",
+    );
+
+    expect(
+      architectureMessages(messages).map((message) => message.message),
+    ).toContainEqual(
+      expect.stringContaining(
+        'ARCH-019: Non-public-API file re-exports "Button" from another module.',
+      ),
+    );
+  });
+
   it("fails a cross-feature internal import with an actionable ARCH-007 message", async () => {
     const messages = await lintFixture(
       "src/features/layers/components/__eslintArchitectureFixture.jsx",

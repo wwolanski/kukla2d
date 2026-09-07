@@ -387,6 +387,25 @@ export const architectureMessages = {
     ],
   }),
 
+  internalReExport: defineMessage({
+    code: "ARCH-019",
+    summary: 'Non-public-API file re-exports "{{symbol}}" from another module.',
+    reason:
+      "Re-exports are reserved for designated public API boundaries. Internal code should import symbols directly from their owner.",
+    details: [
+      "Forwarding file: {{forwardingFile}}",
+      "Imported from: {{source}}",
+    ],
+    fix: 'Remove the forwarding export and update consumers to import "{{symbol}}" directly from its owner. If it belongs to the public API, export it from the designated feature or package entrypoint.',
+    executors: [
+      {
+        kind: "custom-eslint-rule",
+        rule: "local/no-internal-reexports",
+        file: "eslint-rules/no-internal-reexports.js",
+      },
+    ],
+  }),
+
   innerLayerToComposition: defineMessage({
     code: "ARCH-015",
     summary: "Inner feature layers must not depend on Composition.",

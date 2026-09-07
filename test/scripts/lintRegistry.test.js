@@ -40,6 +40,12 @@ describe("lint message registry", () => {
         ),
       },
     );
+    expect(lintMessageRegistry.architecture.internalReExport).toMatchObject({
+      code: "ARCH-019",
+      message: expect.stringContaining(
+        'Non-public-API file re-exports "{{symbol}}" from another module.',
+      ),
+    });
   });
 
   it("keeps project-owned message codes unique", () => {

@@ -1,0 +1,11 @@
+{
+  "name": "@fixture/example",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/public.ts",
+      "import": "./src/public.ts"
+    }
+  }
+}
