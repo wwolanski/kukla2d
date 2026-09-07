@@ -1,54 +1,44 @@
 import type {
+  MeshData,
+  MeshImageData,
+  MeshWorkerRequest,
+} from "./workerProtocol.types.js";
+import type {
   MeshGenerationOptions,
   MeshGenerationResult,
-} from '../../domain/mesh-generation/generate.js';
+} from "../../domain/mesh-generation/generate.types.js";
 
-export interface MeshImageData {
-  data: Uint8ClampedArray;
-  width: number;
-  height: number;
-}
-
-interface MeshPayload {
-  imageData: MeshImageData;
-  opts?: MeshGenerationOptions;
-}
-
-interface MeshTaskRequest {
-  requestId: string;
-  kind?: 'mesh.generate';
-  projectRevision?: number;
-  payload: MeshPayload;
-}
-
-export interface LegacyMeshRequest extends MeshPayload {
-  partId?: string;
-}
-
-export interface MeshData {
-  ok: true;
-  vertices: MeshGenerationResult['vertices'];
-  uvs: Float32Array;
-  triangles: MeshGenerationResult['triangles'];
-  edgeIndices: number[];
-}
-
-export type LegacyMeshResponse = MeshData | { ok: false; error: string };
+type MeshTaskRequest = Extract<MeshWorkerRequest, { requestId: string }>;
 type MeshTaskResponse =
-  | { type: 'result'; data: { requestId: string; projectRevision?: number; data: MeshData } }
-  | { type: 'error'; data: { requestId: string; code: 'MESH_GENERATION_FAILED'; message: string; retryable: false } };
+  | {
+      type: "result";
+      data: { requestId: string; projectRevision?: number; data: MeshData };
+    }
+  | {
+      type: "error";
+      data: {
+        requestId: string;
+        code: "MESH_GENERATION_FAILED";
+        message: string;
+        retryable: false;
+      };
+    };
+type MeshWorkerResponse =
+  MeshTaskResponse | MeshData | { ok: false; error: string };
+type GenerateMesh = (
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  opts?: MeshGenerationOptions,
+) => MeshGenerationResult;
 
-export type MeshWorkerRequest = MeshTaskRequest | LegacyMeshRequest;
-type MeshWorkerResponse = MeshTaskResponse | LegacyMeshResponse;
-type GenerateMesh = (data: Uint8ClampedArray, width: number, height: number, opts?: MeshGenerationOptions) => MeshGenerationResult;
-
-export interface MeshTaskResult {
+interface MeshTaskResult {
   response: MeshWorkerResponse;
   transferables: Transferable[];
 }
 
 function isTaskRequest(request: MeshWorkerRequest): request is MeshTaskRequest {
-  return 'requestId' in request && typeof request.requestId === 'string';
+  return "requestId" in request && typeof request.requestId === "string";
 }
 
 function errorMessage(error: unknown): string {
@@ -60,17 +50,28 @@ export function handleMeshTask(
   dependencies: { generateMesh?: GenerateMesh },
 ): MeshTaskResult {
   if (!eventData) {
-    return { response: { ok: false, error: 'no data' }, transferables: [] };
+    return { response: { ok: false, error: "no data" }, transferables: [] };
   }
 
   const taskRequest = isTaskRequest(eventData);
   const requestId = taskRequest ? eventData.requestId : undefined;
   const projectRevision = taskRequest ? eventData.projectRevision : undefined;
-  const { imageData, opts } = taskRequest ? eventData.payload : eventData;
+  const {
+    imageData,
+    opts,
+  }: { imageData: MeshImageData; opts?: MeshGenerationOptions } = taskRequest
+    ? eventData.payload
+    : eventData;
 
   try {
-    if (!dependencies.generateMesh) throw new Error('generateMesh dependency is required');
-    const result = dependencies.generateMesh(imageData.data, imageData.width, imageData.height, opts);
+    if (!dependencies.generateMesh)
+      throw new Error("generateMesh dependency is required");
+    const result = dependencies.generateMesh(
+      imageData.data,
+      imageData.width,
+      imageData.height,
+      opts,
+    );
     const data: MeshData = {
       ok: true,
       vertices: result.vertices,
@@ -80,7 +81,7 @@ export function handleMeshTask(
     };
     const response: MeshWorkerResponse = taskRequest
       ? {
-          type: 'result',
+          type: "result",
           data: {
             requestId: requestId!,
             ...(projectRevision === undefined ? {} : { projectRevision }),
@@ -94,8 +95,13 @@ export function handleMeshTask(
     return {
       response: taskRequest
         ? {
-            type: 'error',
-            data: { requestId: requestId!, code: 'MESH_GENERATION_FAILED', message, retryable: false },
+            type: "error",
+            data: {
+              requestId: requestId!,
+              code: "MESH_GENERATION_FAILED",
+              message,
+              retryable: false,
+            },
           }
         : { ok: false, error: message },
       transferables: [],

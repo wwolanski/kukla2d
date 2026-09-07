@@ -1,30 +1,55 @@
-import { useCallback } from 'react';
+import { useCallback } from "react";
 
-import { useAnimationStore } from '@/store/animationStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useAnimationStore } from "@/store/animationStore";
+import { useProjectStore } from "@/store/projectStore";
 
-import { useExportReadinessGate } from '@/features/export/application/useExportReadinessGate';
-import { usePhaserAtlasExportForm } from '@/features/export/application/usePhaserAtlasExportForm';
-import { usePhaserAtlasExportJob } from '@/features/export/application/usePhaserAtlasExportJob';
-import { useRasterExportForm } from '@/features/export/application/useRasterExportForm';
-import { useRasterExportJob } from '@/features/export/application/useRasterExportJob';
-import { ExportProgress } from '@/features/export/components/ExportProgress';
-import { ExportTypeOptions } from '@/features/export/components/ExportTypeOptions';
-import { FrameExportOptions } from '@/features/export/components/FrameExportOptions';
-import { PhaserAtlasExportOptions } from '@/features/export/components/PhaserAtlasExportOptions';
-import { resolveActiveExportVariant } from '@/features/export/domain/exportVariantRegistry';
+import { useExportReadinessGate } from "@/features/export/application/useExportReadinessGate";
+import { usePhaserAtlasExportForm } from "@/features/export/application/usePhaserAtlasExportForm";
+import { usePhaserAtlasExportJob } from "@/features/export/application/usePhaserAtlasExportJob";
+import { useRasterExportForm } from "@/features/export/application/useRasterExportForm";
+import { useRasterExportJob } from "@/features/export/application/useRasterExportJob";
+import { ExportProgress } from "@/features/export/components/ExportProgress";
+import { ExportTypeOptions } from "@/features/export/components/ExportTypeOptions";
+import { FrameExportOptions } from "@/features/export/components/FrameExportOptions";
+import { PhaserAtlasExportOptions } from "@/features/export/components/PhaserAtlasExportOptions";
+import { resolveActiveExportVariant } from "@/features/export/domain/exportVariantRegistry";
 
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-export function ExportModal({ open, onClose, captureRef, projectName, projectId }) {
-  const project = useProjectStore(s => s.project);
+export function ExportModal({
+  open,
+  onClose,
+  captureRef,
+  projectName,
+  projectId,
+  resolveEncoder,
+  phaserAtlasAdapter,
+  writeArtifacts,
+}) {
+  const project = useProjectStore((s) => s.project);
   const animStore = useAnimationStore();
 
-  const raster = useRasterExportForm({ open, project, animStore, projectName, projectId });
-  const phaser = usePhaserAtlasExportForm({ open, project, animStore, projectName });
+  const raster = useRasterExportForm({
+    open,
+    project,
+    animStore,
+    projectName,
+    projectId,
+  });
+  const phaser = usePhaserAtlasExportForm({
+    open,
+    project,
+    animStore,
+    projectName,
+  });
 
-  const isPhaser = raster.frame.type === 'phaser_atlas';
+  const isPhaser = raster.frame.type === "phaser_atlas";
   const activeStatus = isPhaser ? phaser.status : raster.status;
 
   const handleRasterExport = useRasterExportJob({
@@ -42,6 +67,8 @@ export function ExportModal({ open, onClose, captureRef, projectName, projectId 
     setProgress: raster.status.setProgress,
     setIsExporting: raster.status.setIsExporting,
     setExportError: raster.status.setExportError,
+    resolveEncoder,
+    writeArtifacts,
   });
 
   const handlePhaserExport = usePhaserAtlasExportJob({
@@ -54,11 +81,13 @@ export function ExportModal({ open, onClose, captureRef, projectName, projectId 
     padding: phaser.frame.padding,
     maxPageSize: phaser.frame.maxPageSize,
     loop: phaser.frame.loop,
-    outputName: projectName ?? 'phaser-export',
+    outputName: projectName ?? "phaser-export",
     exportDest: phaser.frame.exportDest,
     setProgress: phaser.status.setProgress,
     setIsExporting: phaser.status.setIsExporting,
     setExportError: phaser.status.setExportError,
+    adapter: phaserAtlasAdapter,
+    writeArtifacts,
   });
 
   const handleExport = isPhaser ? handlePhaserExport : handleRasterExport;
@@ -81,7 +110,7 @@ export function ExportModal({ open, onClose, captureRef, projectName, projectId 
     try {
       resolveActiveExportVariant(raster.frame.variantId);
     } catch {
-      activeStatus.setExportError('UNSUPPORTED_FORMAT');
+      activeStatus.setExportError("UNSUPPORTED_FORMAT");
       return;
     }
     readinessGate.runWithGate(handleExport);
@@ -90,7 +119,7 @@ export function ExportModal({ open, onClose, captureRef, projectName, projectId 
   return (
     <Dialog
       open={open}
-      onOpenChange={v => {
+      onOpenChange={(v) => {
         if (!v && !activeStatus.isExporting) handleClose();
       }}
     >
@@ -104,7 +133,7 @@ export function ExportModal({ open, onClose, captureRef, projectName, projectId 
             type={raster.frame.type}
             format={raster.frame.format}
             isExporting={activeStatus.isExporting}
-            onTypeChange={v => {
+            onTypeChange={(v) => {
               readinessGate.cancelPending();
               raster.frame.setType(v);
               activeStatus.setExportError(null);
@@ -113,9 +142,15 @@ export function ExportModal({ open, onClose, captureRef, projectName, projectId 
           />
 
           {isPhaser ? (
-            <PhaserAtlasExportOptions frame={phaser.frame} animations={project?.animations ?? []} />
+            <PhaserAtlasExportOptions
+              frame={phaser.frame}
+              animations={project?.animations ?? []}
+            />
           ) : (
-            <FrameExportOptions frame={raster.frame} animations={project?.animations ?? []} />
+            <FrameExportOptions
+              frame={raster.frame}
+              animations={project?.animations ?? []}
+            />
           )}
         </div>
 
@@ -142,27 +177,33 @@ export function ExportModal({ open, onClose, captureRef, projectName, projectId 
 }
 
 function ExportReadinessIssues({ decision, onCancel, onContinue, onClose }) {
-  const issues = decision.kind === 'blocked' ? decision.report.errors : decision.report.warnings;
-  const isBlocked = decision.kind === 'blocked';
+  const issues =
+    decision.kind === "blocked"
+      ? decision.report.errors
+      : decision.report.warnings;
+  const isBlocked = decision.kind === "blocked";
   return (
     <div className="space-y-2 rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
       <div className="font-medium">
-        {isBlocked ? 'Export blocked' : 'Export warnings'}
+        {isBlocked ? "Export blocked" : "Export warnings"}
       </div>
       <ul className="space-y-1">
         {issues.map((issue, index) => (
           <li key={`${issue.code}-${issue.path}-${index}`}>
-            <span className="font-mono">{issue.code}</span>
-            {' '}
+            <span className="font-mono">{issue.code}</span>{" "}
             <span className="font-mono">{issue.path}</span>
-            {': '}
+            {": "}
             {issue.message}
           </li>
         ))}
       </ul>
       <div className="flex justify-end gap-2">
-        <Button variant="outline" size="sm" onClick={isBlocked ? onClose : onCancel}>
-          {isBlocked ? 'Close' : 'Cancel'}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={isBlocked ? onClose : onCancel}
+        >
+          {isBlocked ? "Close" : "Cancel"}
         </Button>
         {!isBlocked && (
           <Button size="sm" onClick={onContinue}>

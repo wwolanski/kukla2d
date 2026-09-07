@@ -1,18 +1,18 @@
-import { canNavigate } from './animationAuthoring.js';
+import { canNavigate } from "./animationAuthoring.js";
 
-type EditorMode = 'staging' | 'animation';
-type TransitionResult = 'changed' | 'unchanged' | 'blocked-draft';
+type EditorMode = "staging" | "animation";
+type TransitionResult = "changed" | "unchanged" | "blocked-draft";
+
+interface EditorModeTransitionResult {
+  result: TransitionResult;
+  reason?: string;
+}
 
 interface EditorModeTransitionInput {
   currentMode: EditorMode;
   nextMode: EditorMode;
   draftState?: { dirty: boolean; values: { size: number } | null };
   hasActiveClip?: boolean;
-}
-
-export interface EditorModeTransitionResult {
-  result: TransitionResult;
-  reason?: string;
 }
 
 /**
@@ -34,24 +34,24 @@ export function requestEditorMode({
   draftState,
 }: EditorModeTransitionInput): EditorModeTransitionResult {
   if (currentMode === nextMode) {
-    return { result: 'unchanged' };
+    return { result: "unchanged" };
   }
 
-  if (nextMode === 'animation') {
-    return { result: 'changed' };
+  if (nextMode === "animation") {
+    return { result: "changed" };
   }
 
-  if (nextMode === 'staging') {
+  if (nextMode === "staging") {
     if (draftState) {
       const nav = canNavigate(draftState);
       if (!nav.allowed) {
         return nav.reason
-          ? { result: 'blocked-draft', reason: nav.reason }
-          : { result: 'blocked-draft' };
+          ? { result: "blocked-draft", reason: nav.reason }
+          : { result: "blocked-draft" };
       }
     }
-    return { result: 'changed' };
+    return { result: "changed" };
   }
 
-  return { result: 'unchanged' };
+  return { result: "unchanged" };
 }

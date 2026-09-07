@@ -1,17 +1,17 @@
-import type { Bone, BoneId, Node } from '@kukla2d/contracts';
+import type { Bone, BoneId, Node } from "@kukla2d/contracts";
 
-import { editorModePolicy, ACTION_IDS } from '@/domain/editorModePolicy';
-import { computeWorldMatrices } from '@/domain/transforms';
+import { editorModePolicy, ACTION_IDS } from "@/domain/editorModePolicy";
+import { computeWorldMatrices } from "@/domain/transforms";
 
-import { getNextBoneName } from '@/features/canvas/domain/boneNaming.js';
-import { refreshIkTopology } from '@/features/canvas/domain/ikConstraintCreation.js';
-import { findAlphaHit } from '@/features/canvas/domain/picking.js';
-import { findSmartBoneAssignmentCandidate } from '@/features/canvas/domain/smartBoneAssignment.js';
+import { getNextBoneName } from "@/features/canvas/domain/boneNaming.js";
+import { refreshIkTopology } from "@/features/canvas/domain/ikConstraintCreation.js";
+import { findAlphaHit } from "@/features/canvas/domain/picking.js";
+import { findSmartBoneAssignmentCandidate } from "@/features/canvas/domain/smartBoneAssignment.js";
 
+import type { DragState } from "./pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
 
-import type { DragState, PixiInteractionSystem } from './PixiInteractionSystem.js';
-
-type DrawBoneDrag = Extract<DragState, { type: 'drawBone' }>;
+type DrawBoneDrag = Extract<DragState, { type: "drawBone" }>;
 
 interface AssignmentCandidatesInput {
   nodes: readonly Node[];
@@ -32,7 +32,7 @@ export function findDrawnBoneAssignmentCandidates({
   endWorldY,
   samples = 9,
 }: AssignmentCandidatesInput): string[] {
-  const parts = nodes.filter(node => node.type === 'part');
+  const parts = nodes.filter((node) => node.type === "part");
   const worldMatrices = computeWorldMatrices(nodes);
   const candidateIds = new Set<string>();
   for (let i = 0; i < samples; i++) {
@@ -49,53 +49,80 @@ export function findDrawnBoneAssignmentCandidates({
   return [...candidateIds];
 }
 
-export function commitDrawnBone(adapter: PixiInteractionSystem, drag: DrawBoneDrag): void {
+export function commitDrawnBone(
+  adapter: PixiInteractionSystem,
+  drag: DrawBoneDrag,
+): void {
   const editor = adapter.editorRef.current;
-  const decision = editorModePolicy({ mode: editor.editorMode, actionId: ACTION_IDS.BONE_CREATE, targetKind: 'bone' });
+  const decision = editorModePolicy({
+    mode: editor.editorMode,
+    actionId: ACTION_IDS.BONE_CREATE,
+    targetKind: "bone",
+  });
   if (!decision.allowed) {
     adapter._executeCommand({
-      type: 'setInteraction',
+      type: "setInteraction",
       payload: {
-        interaction: { kind: 'canvasNotice', message: decision.message || 'Structure changes are locked in Animation mode.' },
+        interaction: {
+          kind: "canvasNotice",
+          message:
+            decision.message ||
+            "Structure changes are locked in Animation mode.",
+        },
       },
     });
     adapter.markDirty?.();
     return;
   }
-  if (Math.hypot(drag.endWorldX - drag.startWorldX, drag.endWorldY - drag.startWorldY) < 10) return;
+  if (
+    Math.hypot(
+      drag.endWorldX - drag.startWorldX,
+      drag.endWorldY - drag.startWorldY,
+    ) < 10
+  )
+    return;
   const id = createBoneId();
   adapter._executeCommand({
-    type: 'updateProject',
-    payload: { mutator: project => {
-      project.bones ??= [];
-      project.bones.push(createBone(id, getNextBoneName(project.bones), drag));
-      refreshIkTopology(project);
-    } },
+    type: "updateProject",
+    payload: {
+      mutator: (project) => {
+        project.bones ??= [];
+        project.bones.push(
+          createBone(id, getNextBoneName(project.bones), drag),
+        );
+        refreshIkTopology(project);
+      },
+    },
   });
   adapter._executeCommand({
-    type: 'setRigSelection',
+    type: "setRigSelection",
     payload: { boneIds: [id], activeBoneId: id, anchor: id },
   });
   if (!editor.drawBoneAutoAssign) return;
-  const candidateNodeIds = editor.drawBoneAutoAssignMode === 'smart'
-    ? (() => {
-        const result = findSmartBoneAssignmentCandidate({
+  const candidateNodeIds =
+    editor.drawBoneAutoAssignMode === "smart"
+      ? (() => {
+          const result = findSmartBoneAssignmentCandidate({
+            nodes: adapter.projectRef.current.nodes,
+            imageDataByPartId: adapter.imageDataByPartId,
+            ...drag,
+          });
+          return result.nodeId ? [result.nodeId] : [];
+        })()
+      : findDrawnBoneAssignmentCandidates({
           nodes: adapter.projectRef.current.nodes,
           imageDataByPartId: adapter.imageDataByPartId,
           ...drag,
         });
-        return result.nodeId ? [result.nodeId] : [];
-      })()
-    : findDrawnBoneAssignmentCandidates({
-        nodes: adapter.projectRef.current.nodes,
-        imageDataByPartId: adapter.imageDataByPartId,
-        ...drag,
-      });
   if (candidateNodeIds.length > 0) {
     adapter._executeCommand({
-      type: 'setInteraction',
+      type: "setInteraction",
       payload: {
-        interaction: { kind: 'pendingAssignBone', boneId: id, candidateNodeIds },
+        interaction: {
+          kind: "pendingAssignBone",
+          boneId: id,
+          candidateNodeIds,
+        },
       },
     });
   }
@@ -109,11 +136,11 @@ function createBone(id: BoneId, name: string, drag: DrawBoneDrag): Bone {
     name,
     parentId: drag.parentId ?? null,
     nodeId: null,
-    inherit: 'normal',
+    inherit: "normal",
     setup: {
       x: drag.startWorldX,
       y: drag.startWorldY,
-      rotation: Math.atan2(dy, dx) * 180 / Math.PI,
+      rotation: (Math.atan2(dy, dx) * 180) / Math.PI,
       scaleX: 1,
       scaleY: 1,
       shearX: 0,

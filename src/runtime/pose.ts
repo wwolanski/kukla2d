@@ -1,22 +1,24 @@
-import type { Bone, BoneId, Node, NodeId, ProjectDocument, Vertex } from '@kukla2d/contracts';
+import type {
+  Bone,
+  Node,
+  NodeId,
+  ProjectDocument,
+  Vertex,
+} from "@kukla2d/contracts";
 
-import { isFiniteNumber } from '@/lib/math';
+import { isFiniteNumber } from "@/lib/math";
 
-import { computeBoneWorldMatrices, computeInverseBindMatrices } from './skeleton.js';
-import { linearBlendSkinning } from './skin.js';
+import {
+  computeBoneWorldMatrices,
+  computeInverseBindMatrices,
+} from "./skeleton.js";
+import { linearBlendSkinning } from "./skin.js";
 
-import type { Matrix3 } from '../domain/transforms.js';
-
-
-export interface BoneTransformOverride {
-  x?: number;
-  y?: number;
-  rotation?: number;
-  scaleX?: number;
-  scaleY?: number;
-}
-
-export type PoseOverrideMap = ReadonlyMap<string, Readonly<Record<string, unknown>>>;
+import type {
+  BoneTransformOverride,
+  EvaluatedPose,
+  PoseOverrideMap,
+} from "./pose.types.js";
 
 interface SkinnedMesh {
   nodeId: NodeId;
@@ -24,33 +26,31 @@ interface SkinnedMesh {
   vertices: Float32Array;
 }
 
-export interface EvaluatedPose {
-  skinnedMeshes: readonly SkinnedMesh[];
-  /** Runtime owns matrices; consumers must treat them as readonly. */
-  boneMatrices: ReadonlyMap<BoneId, Matrix3>;
-}
-
-export interface PoseProject {
+interface PoseProject {
   bones: readonly Bone[];
   nodes: readonly Node[];
-  defaultPose?: ProjectDocument['defaultPose'];
+  defaultPose?: ProjectDocument["defaultPose"];
 }
 
 export function evaluatePose(
   project: PoseProject,
   animationOverrides?: PoseOverrideMap | null,
 ): EvaluatedPose {
-  const effectiveBones = project.bones.map(bone => applyBonePose(
-    bone,
-    project.defaultPose?.[bone.id],
-    animationOverrides?.get(bone.id),
-  ));
+  const effectiveBones = project.bones.map((bone) =>
+    applyBonePose(
+      bone,
+      project.defaultPose?.[bone.id],
+      animationOverrides?.get(bone.id),
+    ),
+  );
   const boneWorldMatrices = computeBoneWorldMatrices(effectiveBones);
-  const inverseBindMatrices = computeInverseBindMatrices(computeBoneWorldMatrices(project.bones));
+  const inverseBindMatrices = computeInverseBindMatrices(
+    computeBoneWorldMatrices(project.bones),
+  );
   const skinnedMeshes: SkinnedMesh[] = [];
 
   for (const node of project.nodes) {
-    if (node.type !== 'part' || !node.mesh?.influences) continue;
+    if (node.type !== "part" || !node.mesh?.influences) continue;
     const baseVertices = flattenVertices(node.mesh.vertices);
     skinnedMeshes.push({
       nodeId: node.id,
@@ -90,7 +90,9 @@ function applyBonePose(
   };
 }
 
-function finiteTransformValues(value: Readonly<Record<string, unknown>> | undefined): BoneTransformOverride {
+function finiteTransformValues(
+  value: Readonly<Record<string, unknown>> | undefined,
+): BoneTransformOverride {
   if (!value) return {};
   return {
     ...(isFiniteNumber(value.x) ? { x: value.x } : {}),
@@ -100,7 +102,6 @@ function finiteTransformValues(value: Readonly<Record<string, unknown>> | undefi
     ...(isFiniteNumber(value.scaleY) ? { scaleY: value.scaleY } : {}),
   };
 }
-
 
 function flattenVertices(vertices: readonly Vertex[]): Float32Array {
   const result = new Float32Array(vertices.length * 2);

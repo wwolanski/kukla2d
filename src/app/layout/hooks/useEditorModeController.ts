@@ -1,20 +1,24 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from "react";
 
-import { useAnimationStore } from '@/store/animationStore';
-import { useEditorStore } from '@/store/editorStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useAnimationStore } from "@/store/animationStore";
+import { useEditorStore } from "@/store/editorStore";
+import { useProjectStore } from "@/store/projectStore";
 
-import { requestEditorMode } from '@/domain/editorModeTransition.js';
+import { requestEditorMode } from "@/domain/editorModeTransition.js";
 
-import { createAnimationAuthoringApi, type AnimationAuthoringApi } from '@/features/animation';
+import {
+  createAnimationAuthoringApi,
+  type AnimationAuthoringApi,
+} from "@/features/animation";
 
 interface ModeTransitionState {
-  nextMode: 'staging' | 'animation';
+  nextMode: "staging" | "animation";
   reason?: string;
   error?: string;
 }
-export interface EditorModeController {
-  requestMode: (nextMode: 'staging' | 'animation') => void;
+
+interface EditorModeController {
+  requestMode: (nextMode: "staging" | "animation") => void;
   transitionState: ModeTransitionState | null;
   confirmCommit: () => void;
   confirmDiscard: () => void;
@@ -39,7 +43,8 @@ export function useEditorModeController(): EditorModeController {
   const animations = useProjectStore((s) => s.project.animations);
   const pause = useAnimationStore((s) => s.pause);
 
-  const [transitionState, setTransitionState] = useState<ModeTransitionState | null>(null);
+  const [transitionState, setTransitionState] =
+    useState<ModeTransitionState | null>(null);
 
   const hasActiveClip = useMemo(() => {
     if (!activeAnimationId) return false;
@@ -48,21 +53,24 @@ export function useEditorModeController(): EditorModeController {
 
   const completeExitToStaging = useCallback(() => {
     pause();
-    setEditorMode('staging');
+    setEditorMode("staging");
     setTransitionState(null);
   }, [pause, setEditorMode]);
 
   const showTransitionError = useCallback((error: unknown) => {
-    const message = typeof error === 'string'
-      ? error
-      : error instanceof Error
-        ? error.message
-        : 'Unable to update animation changes.';
-    setTransitionState((state) => state ? { ...state, error: message } : state);
+    const message =
+      typeof error === "string"
+        ? error
+        : error instanceof Error
+          ? error.message
+          : "Unable to update animation changes.";
+    setTransitionState((state) =>
+      state ? { ...state, error: message } : state,
+    );
   }, []);
 
   const requestMode = useCallback(
-    (nextMode: 'staging' | 'animation') => {
+    (nextMode: "staging" | "animation") => {
       const draftState = { dirty: draftDirty, values: { size: draftPoseSize } };
       const { result, reason } = requestEditorMode({
         currentMode: mode,
@@ -71,9 +79,9 @@ export function useEditorModeController(): EditorModeController {
         hasActiveClip,
       });
 
-      if (result === 'unchanged') return;
+      if (result === "unchanged") return;
 
-      if (result === 'blocked-draft') {
+      if (result === "blocked-draft") {
         setTransitionState({
           nextMode,
           ...(reason !== undefined ? { reason } : {}),
@@ -81,13 +89,13 @@ export function useEditorModeController(): EditorModeController {
         return;
       }
 
-      if (nextMode === 'animation') {
-        setEditorMode('animation');
+      if (nextMode === "animation") {
+        setEditorMode("animation");
         captureRestPose(nodes);
         return;
       }
 
-      if (nextMode === 'staging') {
+      if (nextMode === "staging") {
         completeExitToStaging();
       }
     },
@@ -105,7 +113,9 @@ export function useEditorModeController(): EditorModeController {
 
   const confirmCommit = useCallback(() => {
     try {
-      const result = getAnimationAuthoringApi().commit({ source: 'mode-transition' });
+      const result = getAnimationAuthoringApi().commit({
+        source: "mode-transition",
+      });
       if (result.changed) {
         completeExitToStaging();
         return;
@@ -115,7 +125,9 @@ export function useEditorModeController(): EditorModeController {
         completeExitToStaging();
         return;
       }
-      showTransitionError(result.error ?? 'Unable to commit animation changes.');
+      showTransitionError(
+        result.error ?? "Unable to commit animation changes.",
+      );
     } catch (error) {
       showTransitionError(error);
     }

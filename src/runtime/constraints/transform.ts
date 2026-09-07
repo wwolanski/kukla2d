@@ -1,14 +1,14 @@
-import type { Bone, BoneId, ConstraintId } from '@kukla2d/contracts';
+import type { Bone, BoneId, ConstraintId } from "@kukla2d/contracts";
 
-import type { BoneOverride } from './ik.js';
+import type { BoneOverride } from "./ik.types.js";
 
-export interface TransformConstraint {
+interface TransformConstraint {
   id?: ConstraintId;
-  type?: 'transform';
+  type?: "transform";
   targetBoneId?: BoneId | null;
   affectedBoneIds?: readonly BoneId[];
   mix?: number;
-  mode?: 'local' | 'world';
+  mode?: "local" | "world";
   copyX?: boolean;
   copyY?: boolean;
   copyRotation?: boolean;
@@ -43,10 +43,13 @@ export function solveTransformConstraint(
     if (constraint.copyX ?? true) override.x = mixValue(targetX, sourceX, mix);
     if (constraint.copyY ?? true) override.y = mixValue(targetY, sourceY, mix);
     if (constraint.copyRotation ?? true) {
-      override.rotation = targetRotation + shortestAngle(sourceRotation - targetRotation) * mix;
+      override.rotation =
+        targetRotation + shortestAngle(sourceRotation - targetRotation) * mix;
     }
-    if (constraint.copyScaleX ?? true) override.scaleX = mixValue(targetScaleX, sourceScaleX, mix);
-    if (constraint.copyScaleY ?? true) override.scaleY = mixValue(targetScaleY, sourceScaleY, mix);
+    if (constraint.copyScaleX ?? true)
+      override.scaleX = mixValue(targetScaleX, sourceScaleX, mix);
+    if (constraint.copyScaleY ?? true)
+      override.scaleY = mixValue(targetScaleY, sourceScaleY, mix);
     overrides.set(boneId, override);
   }
   return overrides;

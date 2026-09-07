@@ -1,12 +1,4 @@
-export interface TrimResult {
-  cropX: number;
-  cropY: number;
-  cropW: number;
-  cropH: number;
-  sourceWidth: number;
-  sourceHeight: number;
-  empty: boolean;
-}
+import type { TrimResult } from "./phaserAtlasTrim.types.js";
 
 export function scanAlphaBounds(
   width: number,
@@ -22,7 +14,9 @@ export function scanAlphaBounds(
   }
   const expectedLength = width * height * 4;
   if (rgba.length !== expectedLength) {
-    throw new Error(`RGBA buffer length ${rgba.length} does not match ${width}×${height}×4 = ${expectedLength}`);
+    throw new Error(
+      `RGBA buffer length ${rgba.length} does not match ${width}×${height}×4 = ${expectedLength}`,
+    );
   }
 
   if (!trim) {

@@ -1,29 +1,35 @@
-import type { Bone, BoneId, Constraint, GroupNode, Node } from '@kukla2d/contracts';
+import type {
+  Bone,
+  BoneId,
+  Constraint,
+  GroupNode,
+  Node,
+} from "@kukla2d/contracts";
 
-import { resolveVisibleHoverHit } from '@/domain/hoverPolicy.js';
-import { mat3Identity } from '@/domain/transforms.js';
-import type { Matrix3 } from '@/domain/transforms.js';
+import { resolveVisibleHoverHit } from "@/domain/hoverPolicy.js";
+import { mat3Identity } from "@/domain/transforms.js";
+import type { Matrix3 } from "@/domain/transforms.types.js";
 
-import { clamp } from '@/lib/math';
+import { clamp } from "@/lib/math";
 
-import { getBoneSegment } from './picking.js';
-import { buildPoseHandle } from './poseHandle.js';
+import { getBoneSegment } from "./picking.js";
+import { buildPoseHandle } from "./poseHandle.js";
 
 const SKELETON_CONNECTIONS: readonly (readonly [string, string])[] = [
-  ['torso', 'neck'],
-  ['neck', 'head'],
-  ['torso', 'leftArm'],
-  ['leftArm', 'leftElbow'],
-  ['torso', 'rightArm'],
-  ['rightArm', 'rightElbow'],
-  ['torso', 'leftLeg'],
-  ['leftLeg', 'leftKnee'],
-  ['torso', 'rightLeg'],
-  ['rightLeg', 'rightKnee'],
-  ['leftArm', 'bothArms'],
-  ['rightArm', 'bothArms'],
-  ['leftLeg', 'bothLegs'],
-  ['rightLeg', 'bothLegs'],
+  ["torso", "neck"],
+  ["neck", "head"],
+  ["torso", "leftArm"],
+  ["leftArm", "leftElbow"],
+  ["torso", "rightArm"],
+  ["rightArm", "rightElbow"],
+  ["torso", "leftLeg"],
+  ["leftLeg", "leftKnee"],
+  ["torso", "rightLeg"],
+  ["rightLeg", "rightKnee"],
+  ["leftArm", "bothArms"],
+  ["rightArm", "bothArms"],
+  ["leftLeg", "bothLegs"],
+  ["rightLeg", "bothLegs"],
 ];
 
 /**
@@ -50,9 +56,36 @@ interface SkeletonEditorState {
   hoverHit?: string | null;
   hoverSource?: string | null;
 }
-interface BoneLine { x1: number; y1: number; x2: number; y2: number; boneId: string; name: string; isActive: boolean; isSelected: boolean; isMultiSelected: boolean; isHovered: boolean }
-interface SkeletonConnection { x1: number; y1: number; x2: number; y2: number; fromRole: string; toRole: string }
-interface SkeletonJoint { x: number; y: number; boneId: string; name: string; isActive: boolean; isSelected: boolean; isMultiSelected: boolean; isHovered: boolean }
+interface BoneLine {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  boneId: string;
+  name: string;
+  isActive: boolean;
+  isSelected: boolean;
+  isMultiSelected: boolean;
+  isHovered: boolean;
+}
+interface SkeletonConnection {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  fromRole: string;
+  toRole: string;
+}
+interface SkeletonJoint {
+  x: number;
+  y: number;
+  boneId: string;
+  name: string;
+  isActive: boolean;
+  isSelected: boolean;
+  isMultiSelected: boolean;
+  isHovered: boolean;
+}
 interface BoneTransformFrame {
   boneId: BoneId;
   start: { x: number; y: number };
@@ -90,7 +123,7 @@ export function buildSkeletonFrame({
 }): SkeletonFrame {
   const boneNodes: Record<string, GroupNode> = {};
   for (const n of effectiveNodes) {
-    if (n.type === 'group' && n.boneRole) boneNodes[n.boneRole] = n;
+    if (n.type === "group" && n.boneRole) boneNodes[n.boneRole] = n;
   }
 
   function worldPivotPos(node: GroupNode): { x: number; y: number } {
@@ -102,11 +135,14 @@ export function buildSkeletonFrame({
   }
 
   const boneLines: BoneLine[] = [];
-  const boneMap = new Map<string, Bone>(effectiveBones.map(bone => [bone.id, bone]));
+  const boneMap = new Map<string, Bone>(
+    effectiveBones.map((bone) => [bone.id, bone]),
+  );
   const activeBoneId = editorState?.activeBoneId ?? null;
   const selection = editorState?.selection ?? [];
-  const isDrawingBone = editorState?.activeTool === 'drawBone'
-    && editorState?.drawBonePreview != null;
+  const isDrawingBone =
+    editorState?.activeTool === "drawBone" &&
+    editorState?.drawBonePreview != null;
   const hoverHit: unknown = resolveVisibleHoverHit(editorState);
   const hoveredBoneIds = resolveHoveredBoneIds(hoverHit, constraints);
   const weightPaintBoneId = editorState?.weightPaintBoneId ?? null;
@@ -118,7 +154,8 @@ export function buildSkeletonFrame({
     const isActive = activeBoneId === bone.id;
     const isSelected = inSelection && !isDrawingBone;
     const isMultiSelected = inSelection && isMulti && !isDrawingBone;
-    const isHovered = hoveredBoneIds.has(bone.id) || weightPaintBoneId === bone.id;
+    const isHovered =
+      hoveredBoneIds.has(bone.id) || weightPaintBoneId === bone.id;
     boneLines.push({
       x1: seg.x1,
       y1: seg.y1,
@@ -141,9 +178,12 @@ export function buildSkeletonFrame({
     const p1 = worldPivotPos(from);
     const p2 = worldPivotPos(to);
     connections.push({
-      x1: p1.x, y1: p1.y,
-      x2: p2.x, y2: p2.y,
-      fromRole, toRole,
+      x1: p1.x,
+      y1: p1.y,
+      x2: p2.x,
+      y2: p2.y,
+      fromRole,
+      toRole,
     });
   }
 
@@ -184,13 +224,21 @@ export function buildSkeletonFrame({
   };
 }
 
-export function resolveHoveredBoneIds(hoverHit: unknown, constraints: readonly Constraint[] = []): Set<string> {
-  if (typeof hoverHit !== 'string') return new Set<string>();
-  if (hoverHit.startsWith('bone:')) return new Set([hoverHit.slice('bone:'.length)]);
-  if (!hoverHit.startsWith('constraint:')) return new Set<string>();
-  const constraintId = hoverHit.slice('constraint:'.length);
-  const constraint = constraints.find(candidate => candidate.id === constraintId);
-  return constraint?.assignedBoneId ? new Set([constraint.assignedBoneId]) : new Set<string>();
+export function resolveHoveredBoneIds(
+  hoverHit: unknown,
+  constraints: readonly Constraint[] = [],
+): Set<string> {
+  if (typeof hoverHit !== "string") return new Set<string>();
+  if (hoverHit.startsWith("bone:"))
+    return new Set([hoverHit.slice("bone:".length)]);
+  if (!hoverHit.startsWith("constraint:")) return new Set<string>();
+  const constraintId = hoverHit.slice("constraint:".length);
+  const constraint = constraints.find(
+    (candidate) => candidate.id === constraintId,
+  );
+  return constraint?.assignedBoneId
+    ? new Set([constraint.assignedBoneId])
+    : new Set<string>();
 }
 
 export function buildPoseHandleFrame({
@@ -202,16 +250,21 @@ export function buildPoseHandleFrame({
   editorState?: SkeletonEditorState | null;
   poseHandleExtensions?: ReadonlyMap<string, number> | null;
 }): ReturnType<typeof buildPoseHandle> | null {
-  if (editorState?.activeTool !== 'pose') return null;
+  if (editorState?.activeTool !== "pose") return null;
   const hoverHit: unknown = resolveVisibleHoverHit(editorState);
-  const hoveredBoneId = typeof hoverHit === 'string'
-    && hoverHit.startsWith('bone:')
-    ? hoverHit.slice('bone:'.length)
-    : null;
-  const activeBoneId = hoveredBoneId
-    ?? editorState?.activeBoneId
-    ?? editorState?.selection?.find(id => effectiveBones?.some(bone => bone.id === id));
-  const bone = effectiveBones?.find(candidate => candidate.id === activeBoneId);
+  const hoveredBoneId =
+    typeof hoverHit === "string" && hoverHit.startsWith("bone:")
+      ? hoverHit.slice("bone:".length)
+      : null;
+  const activeBoneId =
+    hoveredBoneId ??
+    editorState?.activeBoneId ??
+    editorState?.selection?.find((id) =>
+      effectiveBones?.some((bone) => bone.id === id),
+    );
+  const bone = effectiveBones?.find(
+    (candidate) => candidate.id === activeBoneId,
+  );
   if (!bone) return null;
   return buildPoseHandle({
     bone,
@@ -244,25 +297,35 @@ const LEN_RADIUS = 7;
  * @param {Object} args.editorState
  * @param {Map}    args.boneMap
  */
-export function buildBoneTransformFrame({ effectiveBones, editorState = null, boneMap }: {
+export function buildBoneTransformFrame({
+  effectiveBones,
+  editorState = null,
+  boneMap,
+}: {
   effectiveBones: readonly Bone[];
   editorState?: SkeletonEditorState | null;
   boneMap?: ReadonlyMap<string, Bone> | null;
 }): BoneTransformFrame | null {
   if (!effectiveBones?.length) return null;
-  if (!['all', 'rig'].includes(editorState?.selectionTarget ?? '')) return null;
-  if (editorState?.activeTool !== 'transform') return null;
-  if (editorState?.riggingTool && editorState.riggingTool !== 'select') return null;
+  if (!["all", "rig"].includes(editorState?.selectionTarget ?? "")) return null;
+  if (editorState?.activeTool !== "transform") return null;
+  if (editorState?.riggingTool && editorState.riggingTool !== "select")
+    return null;
   const activeBoneId = editorState?.activeBoneId ?? null;
   const selection = editorState?.selection ?? [];
   const target = activeBoneId
-    ? effectiveBones.find(b => b.id === activeBoneId)
-    : selection.find(id => effectiveBones.some(b => b.id === id))
-      ? effectiveBones.find(b => b.id === selection.find(id => effectiveBones.some(b => b.id === id)))
+    ? effectiveBones.find((b) => b.id === activeBoneId)
+    : selection.find((id) => effectiveBones.some((b) => b.id === id))
+      ? effectiveBones.find(
+          (b) =>
+            b.id ===
+            selection.find((id) => effectiveBones.some((b) => b.id === id)),
+        )
       : null;
   if (!target) return null;
   if (selection.length > 1 && !selection.includes(target.id)) return null;
-  const map = boneMap ?? new Map<string, Bone>(effectiveBones.map(b => [b.id, b]));
+  const map =
+    boneMap ?? new Map<string, Bone>(effectiveBones.map((b) => [b.id, b]));
   const seg = getBoneSegment(target, map);
   const dx = seg.x2 - seg.x1;
   const dy = seg.y2 - seg.y1;
@@ -277,7 +340,7 @@ export function buildBoneTransformFrame({ effectiveBones, editorState = null, bo
     x: seg.x1 + px * offR,
     y: seg.y1 + py * offR,
   };
-  const isLengthAllowed = editorState?.editorMode !== 'animation';
+  const isLengthAllowed = editorState?.editorMode !== "animation";
   return {
     boneId: target.id,
     start: { x: seg.x1, y: seg.y1 },

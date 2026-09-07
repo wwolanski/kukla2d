@@ -1,13 +1,11 @@
-import type { Bone } from '@kukla2d/contracts';
+import type { Bone } from "@kukla2d/contracts";
 
-interface Point { x: number; y: number }
-interface PoseHandleInput { bone: Bone | null | undefined; extension?: number | null; minRadius?: number; maxRadius?: number }
-interface PoseHandleDragInput {
-  pivot: Point; pointer: Point; startRotation: number; startPointerAngle: number;
-  minRadius: number; maxRadius?: number; snap?: boolean;
+interface Point {
+  x: number;
+  y: number;
 }
-export interface PoseHandleFrame {
-  boneId: Bone['id'];
+interface PoseHandleFrame {
+  boneId: Bone["id"];
   pivot: Point;
   rotation: number;
   boneLength: number;
@@ -16,6 +14,21 @@ export interface PoseHandleFrame {
   maxRadius: number;
   handle: Point;
   boneTip: Point;
+}
+interface PoseHandleInput {
+  bone: Bone | null | undefined;
+  extension?: number | null;
+  minRadius?: number;
+  maxRadius?: number;
+}
+interface PoseHandleDragInput {
+  pivot: Point;
+  pointer: Point;
+  startRotation: number;
+  startPointerAngle: number;
+  minRadius: number;
+  maxRadius?: number;
+  snap?: boolean;
 }
 
 const MIN_HANDLE_RADIUS = 24;
@@ -41,8 +54,11 @@ export function buildPoseHandle({
   };
   const rotation = bone.setup?.rotation ?? 0;
   const boneLength = Math.max(minRadius, bone.setup?.length ?? 80);
-  const radius = Math.min(maxRadius, Math.max(boneLength, extension ?? boneLength));
-  const radians = rotation * Math.PI / 180;
+  const radius = Math.min(
+    maxRadius,
+    Math.max(boneLength, extension ?? boneLength),
+  );
+  const radians = (rotation * Math.PI) / 180;
   return {
     boneId: bone.id,
     pivot,
@@ -74,7 +90,9 @@ export function updatePoseHandleDrag({
   const dx = pointer.x - pivot.x;
   const dy = pointer.y - pivot.y;
   const pointerAngle = Math.atan2(dy, dx);
-  let delta = normalizeAngleDegrees((pointerAngle - startPointerAngle) * 180 / Math.PI);
+  let delta = normalizeAngleDegrees(
+    ((pointerAngle - startPointerAngle) * 180) / Math.PI,
+  );
   if (snap) delta = Math.round(delta / 15) * 15;
   return {
     rotation: startRotation + delta,
@@ -82,8 +100,12 @@ export function updatePoseHandleDrag({
   };
 }
 
-export function buildRotatedBoneBranch(bones: readonly Bone[], rootBoneId: string, deltaDegrees: number): Map<string, Partial<Bone['setup']>> {
-  const root = (bones ?? []).find(bone => bone.id === rootBoneId);
+export function buildRotatedBoneBranch(
+  bones: readonly Bone[],
+  rootBoneId: string,
+  deltaDegrees: number,
+): Map<string, Partial<Bone["setup"]>> {
+  const root = (bones ?? []).find((bone) => bone.id === rootBoneId);
   if (!root || !Number.isFinite(deltaDegrees)) return new Map();
   const branchIds = new Set<string>();
   const visit = (boneId: string): void => {
@@ -96,15 +118,15 @@ export function buildRotatedBoneBranch(bones: readonly Bone[], rootBoneId: strin
 
   const pivotX = root.setup?.x ?? 0;
   const pivotY = root.setup?.y ?? 0;
-  const radians = deltaDegrees * Math.PI / 180;
+  const radians = (deltaDegrees * Math.PI) / 180;
   const cos = Math.cos(radians);
   const sin = Math.sin(radians);
-  const overrides = new Map<string, Partial<Bone['setup']>>();
+  const overrides = new Map<string, Partial<Bone["setup"]>>();
   for (const bone of bones) {
     if (!branchIds.has(bone.id)) continue;
     const x = bone.setup?.x ?? 0;
     const y = bone.setup?.y ?? 0;
-    const partial: Partial<Bone['setup']> = {
+    const partial: Partial<Bone["setup"]> = {
       rotation: (bone.setup?.rotation ?? 0) + deltaDegrees,
     };
     if (bone.id !== rootBoneId) {

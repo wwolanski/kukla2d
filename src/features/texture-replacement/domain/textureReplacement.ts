@@ -1,11 +1,11 @@
-import type { PartNode, ProjectDocument, Texture } from '@kukla2d/contracts';
+import type { PartNode, ProjectDocument, Texture } from "@kukla2d/contracts";
 
-export interface ImageDimensions {
+interface ImageDimensions {
   width: number;
   height: number;
 }
 
-export interface TextureReplacementSource {
+interface TextureReplacementSource {
   nodeId: string;
   name: string;
   textureId: string;
@@ -13,42 +13,54 @@ export interface TextureReplacementSource {
   height?: number;
 }
 
-export interface TextureReplacementCandidate {
+interface TextureReplacementCandidate {
   textureId: string;
   name: string;
   width?: number;
   height?: number;
 }
 
-export interface TextureReplacementPair {
+interface TextureReplacementPair {
   nodeId: string;
   textureId: string | null;
   enabled: boolean;
-  reason?: 'exact-name' | 'similar-name' | 'same-size';
+  reason?: "exact-name" | "similar-name" | "same-size";
 }
 
-export interface TextureReplacementOptions {
+interface TextureReplacementOptions {
   preserveDeformation: boolean;
   autoFit: boolean;
 }
 
-export interface TextureReplacementResult {
+interface TextureReplacementResult {
   replacedNodeIds: string[];
   skippedNodeIds: string[];
 }
 
-const NAME_STOP_WORDS = new Set(['copy', 'image', 'img', 'layer', 'part', 'texture', 'tex']);
+const NAME_STOP_WORDS = new Set([
+  "copy",
+  "image",
+  "img",
+  "layer",
+  "part",
+  "texture",
+  "tex",
+]);
 
 function normalizedName(value: string): string {
   return value
-    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/\.[a-z0-9]+$/i, "")
     .toLocaleLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/[^a-z0-9]+/g, " ")
     .trim();
 }
 
 function nameTokens(value: string): Set<string> {
-  return new Set(normalizedName(value).split(/\s+/).filter(token => token.length > 1 && !NAME_STOP_WORDS.has(token)));
+  return new Set(
+    normalizedName(value)
+      .split(/\s+/)
+      .filter((token) => token.length > 1 && !NAME_STOP_WORDS.has(token)),
+  );
 }
 
 function tokenSimilarity(left: string, right: string): number {
@@ -61,28 +73,40 @@ function tokenSimilarity(left: string, right: string): number {
 }
 
 function sameSize(
-  left: Pick<TextureReplacementSource, 'width' | 'height'>,
-  right: Pick<TextureReplacementCandidate, 'width' | 'height'>,
+  left: Pick<TextureReplacementSource, "width" | "height">,
+  right: Pick<TextureReplacementCandidate, "width" | "height">,
 ): boolean {
-  return !!left.width && !!left.height && left.width === right.width && left.height === right.height;
+  return (
+    !!left.width &&
+    !!left.height &&
+    left.width === right.width &&
+    left.height === right.height
+  );
 }
 
-function matchScore(source: TextureReplacementSource, candidate: TextureReplacementCandidate): {
+function matchScore(
+  source: TextureReplacementSource,
+  candidate: TextureReplacementCandidate,
+): {
   score: number;
-  reason?: TextureReplacementPair['reason'];
+  reason?: TextureReplacementPair["reason"];
 } {
   const sourceName = normalizedName(source.name);
   const candidateName = normalizedName(candidate.name);
-  if (sourceName && sourceName === candidateName) return { score: 10_000, reason: 'exact-name' };
+  if (sourceName && sourceName === candidateName)
+    return { score: 10_000, reason: "exact-name" };
 
   const similarity = tokenSimilarity(source.name, candidate.name);
   if (similarity > 0) {
     return {
-      score: 1_000 + Math.round(similarity * 100) + (sameSize(source, candidate) ? 20 : 0),
-      reason: 'similar-name',
+      score:
+        1_000 +
+        Math.round(similarity * 100) +
+        (sameSize(source, candidate) ? 20 : 0),
+      reason: "similar-name",
     };
   }
-  if (sameSize(source, candidate)) return { score: 100, reason: 'same-size' };
+  if (sameSize(source, candidate)) return { score: 100, reason: "same-size" };
   return { score: 0 };
 }
 
@@ -91,20 +115,28 @@ export function autoPairTextures(
   sources: readonly TextureReplacementSource[],
   candidates: readonly TextureReplacementCandidate[],
 ): TextureReplacementPair[] {
-  const remaining = new Map(candidates.map(candidate => [candidate.textureId, candidate]));
-  return sources.map(source => {
+  const remaining = new Map(
+    candidates.map((candidate) => [candidate.textureId, candidate]),
+  );
+  return sources.map((source) => {
     let best: TextureReplacementCandidate | null = null;
     let bestScore = 0;
-    let bestReason: TextureReplacementPair['reason'];
+    let bestReason: TextureReplacementPair["reason"];
     for (const candidate of remaining.values()) {
       const { score, reason } = matchScore(source, candidate);
-      if (score > bestScore || (score === bestScore && best && candidate.name.localeCompare(best.name) < 0)) {
+      if (
+        score > bestScore ||
+        (score === bestScore &&
+          best &&
+          candidate.name.localeCompare(best.name) < 0)
+      ) {
         best = candidate;
         bestScore = score;
         bestReason = reason;
       }
     }
-    if (!best || bestScore === 0) return { nodeId: source.nodeId, textureId: null, enabled: false };
+    if (!best || bestScore === 0)
+      return { nodeId: source.nodeId, textureId: null, enabled: false };
     remaining.delete(best.textureId);
     return {
       nodeId: source.nodeId,
@@ -115,12 +147,18 @@ export function autoPairTextures(
   });
 }
 
-export function collectTextureReplacementSources(project: ProjectDocument): TextureReplacementSource[] {
+export function collectTextureReplacementSources(
+  project: ProjectDocument,
+): TextureReplacementSource[] {
   return project.nodes
-    .filter((node): node is PartNode => node.type === 'part')
-    .filter(node => project.textures.some(texture => texture.id === (node.textureId ?? node.id)))
+    .filter((node): node is PartNode => node.type === "part")
+    .filter((node) =>
+      project.textures.some(
+        (texture) => texture.id === (node.textureId ?? node.id),
+      ),
+    )
     .sort((left, right) => right.draw_order - left.draw_order)
-    .map(node => ({
+    .map((node) => ({
       nodeId: node.id,
       name: node.name || node.id,
       textureId: node.textureId ?? node.id,
@@ -129,11 +167,18 @@ export function collectTextureReplacementSources(project: ProjectDocument): Text
     }));
 }
 
-export function collectTextureReplacementCandidates(project: ProjectDocument): TextureReplacementCandidate[] {
-  const usedTextureIds = new Set(collectTextureReplacementSources(project).map(source => source.textureId));
+export function collectTextureReplacementCandidates(
+  project: ProjectDocument,
+): TextureReplacementCandidate[] {
+  const usedTextureIds = new Set(
+    collectTextureReplacementSources(project).map((source) => source.textureId),
+  );
   return project.textures
-    .filter(texture => !usedTextureIds.has(texture.id))
-    .map(texture => ({ textureId: texture.id, name: texture.name ?? texture.fileName ?? texture.id }));
+    .filter((texture) => !usedTextureIds.has(texture.id))
+    .map((texture) => ({
+      textureId: texture.id,
+      name: texture.name ?? texture.fileName ?? texture.id,
+    }));
 }
 
 function clearMeshDependencies(project: ProjectDocument, node: PartNode): void {
@@ -141,18 +186,26 @@ function clearMeshDependencies(project: ProjectDocument, node: PartNode): void {
   node.blendShapes = [];
   node.blendShapeValues = {};
   const defaultPose = project.defaultPose?.[node.id];
-  if (defaultPose && 'mesh_verts' in defaultPose) delete defaultPose.mesh_verts;
+  if (defaultPose && "mesh_verts" in defaultPose) delete defaultPose.mesh_verts;
   for (const animation of project.animations ?? []) {
-    animation.tracks = (animation.tracks ?? []).filter(track => (
-      track.targetId !== node.id || track.property !== 'mesh_verts'
-    ));
+    animation.tracks = (animation.tracks ?? []).filter(
+      (track) => track.targetId !== node.id || track.property !== "mesh_verts",
+    );
   }
 }
 
-function updateNativeImageFrame(node: PartNode, dimensions: ImageDimensions): void {
+function updateNativeImageFrame(
+  node: PartNode,
+  dimensions: ImageDimensions,
+): void {
   node.imageWidth = dimensions.width;
   node.imageHeight = dimensions.height;
-  node.imageBounds = { minX: 0, minY: 0, maxX: dimensions.width, maxY: dimensions.height };
+  node.imageBounds = {
+    minX: 0,
+    minY: 0,
+    maxX: dimensions.width,
+    maxY: dimensions.height,
+  };
   node.alphaContours = [];
 }
 
@@ -163,8 +216,12 @@ export function applyTextureReplacements(
   dimensions: ReadonlyMap<string, ImageDimensions>,
   options: TextureReplacementOptions,
 ): TextureReplacementResult {
-  const textureIds = new Set<string>(project.textures.map((texture: Texture) => texture.id));
-  const nodeMap = new Map<string, ProjectDocument['nodes'][number]>(project.nodes.map(node => [node.id, node]));
+  const textureIds = new Set<string>(
+    project.textures.map((texture: Texture) => texture.id),
+  );
+  const nodeMap = new Map<string, ProjectDocument["nodes"][number]>(
+    project.nodes.map((node) => [node.id, node]),
+  );
   const replacedNodeIds: string[] = [];
   const skippedNodeIds: string[] = [];
 
@@ -172,7 +229,11 @@ export function applyTextureReplacements(
     if (!pair.enabled || !pair.textureId) continue;
     const node = nodeMap.get(pair.nodeId);
     const nextDimensions = dimensions.get(pair.textureId);
-    if (node?.type !== 'part' || !textureIds.has(pair.textureId) || !nextDimensions) {
+    if (
+      node?.type !== "part" ||
+      !textureIds.has(pair.textureId) ||
+      !nextDimensions
+    ) {
       skippedNodeIds.push(pair.nodeId);
       continue;
     }

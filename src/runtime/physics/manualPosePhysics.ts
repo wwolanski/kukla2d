@@ -1,37 +1,70 @@
-import type { Bone, BoneId, PhysicsRule, ProjectDocument } from '@kukla2d/contracts';
+import type {
+  Bone,
+  BoneId,
+  PhysicsRule,
+  ProjectDocument,
+} from "@kukla2d/contracts";
 
-import type { PoseOverrides } from '@/domain/animationEngine.js';
+import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 
-import { mapPhysicsRulesToRig } from './mapper.js';
-import { validatePhysicsRig } from './physicsRig.js';
-import { evaluatePhysicsOutputs, resetPhysics, stepPhysicsResult } from './solver.js';
+import { mapPhysicsRulesToRig } from "./mapper.js";
+import { validatePhysicsRig } from "./physicsRig.js";
+import {
+  evaluatePhysicsOutputs,
+  resetPhysics,
+  stepPhysicsResult,
+} from "./solver.js";
 
-import type { PhysicsRig, PhysicsRigDiagnostic, PhysicsOutput } from './physicsRig.js';
+import type {
+  PhysicsOutput,
+  PhysicsRig,
+  PhysicsRigDiagnostic,
+} from "./physicsRig.types.js";
 
-export interface ManualPosePhysicsArgs {
-  project: Pick<ProjectDocument, 'bones' | 'physics_groups' | 'physicsRules'>;
+interface ManualPosePhysicsArgs {
+  project: Pick<ProjectDocument, "bones" | "physics_groups" | "physicsRules">;
   effectiveBones: readonly Bone[];
   timestamp: number;
   enabled: boolean;
 }
 
-export type ManualPosePhysicsResult =
-  | { state: 'disabled'; active: false; overrides: null; diagnostics: readonly [] }
-  | { state: 'inactive'; active: false; overrides: null; diagnostics: readonly PhysicsRigDiagnostic[] }
-  | { state: 'active'; active: true; overrides: PoseOverrides; diagnostics: readonly PhysicsRigDiagnostic[] }
-  | { state: 'disposed'; active: false; overrides: null; diagnostics: readonly [] };
+type ManualPosePhysicsResult =
+  | {
+      state: "disabled";
+      active: false;
+      overrides: null;
+      diagnostics: readonly [];
+    }
+  | {
+      state: "inactive";
+      active: false;
+      overrides: null;
+      diagnostics: readonly PhysicsRigDiagnostic[];
+    }
+  | {
+      state: "active";
+      active: true;
+      overrides: PoseOverrides;
+      diagnostics: readonly PhysicsRigDiagnostic[];
+    }
+  | {
+      state: "disposed";
+      active: false;
+      overrides: null;
+      diagnostics: readonly [];
+    };
 
-export interface ManualPoseFrame {
+interface ManualPoseFrame {
   effectiveBones: readonly Bone[];
   poseOverrides: PoseOverrides | null;
 }
 
-export interface ManualPosePhysicsRuntime {
+interface ManualPosePhysicsRuntime {
   readonly disposed: boolean;
   evaluate(args: ManualPosePhysicsArgs): ManualPosePhysicsResult;
   applyToFrame<T extends ManualPoseFrame>(args: {
     baseFrame: T;
-    project: ManualPosePhysicsArgs['project'];
+    project: ManualPosePhysicsArgs["project"];
     editor: { activeTool?: string };
     timestamp: number;
   }): T & { physicsActive: boolean; poseOverrides: PoseOverrides | null };
@@ -39,16 +72,28 @@ export interface ManualPosePhysicsRuntime {
   dispose(): void;
 }
 
-interface RigBuildResult { rigs: PhysicsRig[]; diagnostics: PhysicsRigDiagnostic[] }
+interface RigBuildResult {
+  rigs: PhysicsRig[];
+  diagnostics: PhysicsRigDiagnostic[];
+}
 
-export function evaluateManualPosePhysics(args: ManualPosePhysicsArgs): ManualPosePhysicsResult {
+export function evaluateManualPosePhysics(
+  args: ManualPosePhysicsArgs,
+): ManualPosePhysicsResult {
   if (!args.enabled) return disabledResult();
   const build = buildRigsFromProject(args.project);
   if (build.rigs.length === 0) return inactiveResult(build.diagnostics);
-  const boneMap = new Map<BoneId, Bone>(args.effectiveBones.map(bone => [bone.id, bone]));
+  const boneMap = new Map<BoneId, Bone>(
+    args.effectiveBones.map((bone) => [bone.id, bone]),
+  );
   for (const rig of build.rigs) initializeAnchors(rig, boneMap);
   const evaluation = evaluateRigs(build.rigs, boneMap, 1 / 60);
-  return { state: 'active', active: true, overrides: evaluation.overrides, diagnostics: [...build.diagnostics, ...evaluation.diagnostics] };
+  return {
+    state: "active",
+    active: true,
+    overrides: evaluation.overrides,
+    diagnostics: [...build.diagnostics, ...evaluation.diagnostics],
+  };
 }
 
 export function createManualPosePhysicsRuntime(): ManualPosePhysicsRuntime {
@@ -60,14 +105,19 @@ export function createManualPosePhysicsRuntime(): ManualPosePhysicsRuntime {
   let lastTimestamp: number | null = null;
   let isDisposed = false;
 
-  function rebuild(project: ManualPosePhysicsArgs['project'], effectiveBones: readonly Bone[]): void {
+  function rebuild(
+    project: ManualPosePhysicsArgs["project"],
+    effectiveBones: readonly Bone[],
+  ): void {
     physicsGroupsRef = project.physics_groups;
     physicsRulesRef = project.physicsRules;
     bonesRef = project.bones;
     const build = buildRigsFromProject(project);
     rigs = build.rigs;
     buildDiagnostics = build.diagnostics;
-    const boneMap = new Map<BoneId, Bone>(effectiveBones.map(bone => [bone.id, bone]));
+    const boneMap = new Map<BoneId, Bone>(
+      effectiveBones.map((bone) => [bone.id, bone]),
+    );
     for (const rig of rigs) initializeAnchors(rig, boneMap);
     lastTimestamp = null;
   }
@@ -82,33 +132,53 @@ export function createManualPosePhysicsRuntime(): ManualPosePhysicsRuntime {
   }
 
   const runtime: ManualPosePhysicsRuntime = {
-    get disposed() { return isDisposed; },
+    get disposed() {
+      return isDisposed;
+    },
     evaluate(args): ManualPosePhysicsResult {
-      if (isDisposed) return { state: 'disposed', active: false, overrides: null, diagnostics: [] };
+      if (isDisposed)
+        return {
+          state: "disposed",
+          active: false,
+          overrides: null,
+          diagnostics: [],
+        };
       if (!args.enabled) {
         lastTimestamp = null;
         return disabledResult();
       }
-      if (physicsGroupsRef !== args.project.physics_groups
-        || physicsRulesRef !== args.project.physicsRules
-        || bonesRef !== args.project.bones) {
+      if (
+        physicsGroupsRef !== args.project.physics_groups ||
+        physicsRulesRef !== args.project.physicsRules ||
+        bonesRef !== args.project.bones
+      ) {
         rebuild(args.project, args.effectiveBones);
       }
       if (rigs.length === 0) return inactiveResult(buildDiagnostics);
-      const boneMap = new Map<BoneId, Bone>(args.effectiveBones.map(bone => [bone.id, bone]));
-      const deltaSeconds = lastTimestamp === null ? 1 / 60 : (args.timestamp - lastTimestamp) / 1000;
+      const boneMap = new Map<BoneId, Bone>(
+        args.effectiveBones.map((bone) => [bone.id, bone]),
+      );
+      const deltaSeconds =
+        lastTimestamp === null
+          ? 1 / 60
+          : (args.timestamp - lastTimestamp) / 1000;
       lastTimestamp = args.timestamp;
       const evaluation = evaluateRigs(rigs, boneMap, deltaSeconds);
       return {
-        state: 'active',
+        state: "active",
         active: true,
         overrides: evaluation.overrides,
         diagnostics: [...buildDiagnostics, ...evaluation.diagnostics],
       };
     },
-    applyToFrame<T extends ManualPoseFrame>({ baseFrame, project, editor, timestamp }: {
+    applyToFrame<T extends ManualPoseFrame>({
+      baseFrame,
+      project,
+      editor,
+      timestamp,
+    }: {
       baseFrame: T;
-      project: ManualPosePhysicsArgs['project'];
+      project: ManualPosePhysicsArgs["project"];
       editor: { activeTool?: string };
       timestamp: number;
     }): T & { physicsActive: boolean; poseOverrides: PoseOverrides | null } {
@@ -116,11 +186,14 @@ export function createManualPosePhysicsRuntime(): ManualPosePhysicsRuntime {
         project,
         effectiveBones: baseFrame.effectiveBones,
         timestamp,
-        enabled: editor.activeTool === 'pose',
+        enabled: editor.activeTool === "pose",
       });
       return {
         ...baseFrame,
-        poseOverrides: mergeOverrides(baseFrame.poseOverrides, result.overrides),
+        poseOverrides: mergeOverrides(
+          baseFrame.poseOverrides,
+          result.overrides,
+        ),
         physicsActive: result.active,
       };
     },
@@ -134,7 +207,9 @@ export function createManualPosePhysicsRuntime(): ManualPosePhysicsRuntime {
   return runtime;
 }
 
-function buildRigsFromProject(project: ManualPosePhysicsArgs['project']): RigBuildResult {
+function buildRigsFromProject(
+  project: ManualPosePhysicsArgs["project"],
+): RigBuildResult {
   const rigs: PhysicsRig[] = [];
   const diagnostics: PhysicsRigDiagnostic[] = [];
   for (const group of project.physics_groups) {
@@ -143,7 +218,9 @@ function buildRigsFromProject(project: ManualPosePhysicsArgs['project']): RigBui
     else diagnostics.push(...validation.diagnostics);
   }
   if (rigs.length === 0) {
-    const enabledRules = project.physicsRules.filter(rule => rule.enabled !== false && typeof rule.boneId === 'string');
+    const enabledRules = project.physicsRules.filter(
+      (rule) => rule.enabled !== false && typeof rule.boneId === "string",
+    );
     if (enabledRules.length > 0) {
       const mapped = mapPhysicsRulesToRig(enabledRules, project.bones).rig;
       const validation = validatePhysicsRig(mapped);
@@ -157,16 +234,19 @@ function buildRigsFromProject(project: ManualPosePhysicsArgs['project']): RigBui
 function cloneRig(rig: PhysicsRig): PhysicsRig {
   return {
     ...rig,
-    particles: rig.particles.map(particle => ({ ...particle })),
-    links: rig.links.map(link => ({ ...link })),
-    outputs: rig.outputs.map(output => ({ ...output })),
+    particles: rig.particles.map((particle) => ({ ...particle })),
+    links: rig.links.map((link) => ({ ...link })),
+    outputs: rig.outputs.map((output) => ({ ...output })),
     gravity: { ...rig.gravity },
     wind: { ...rig.wind },
     tags: [...rig.tags],
   };
 }
 
-function initializeAnchors(rig: PhysicsRig, boneMap: ReadonlyMap<BoneId, Bone>): void {
+function initializeAnchors(
+  rig: PhysicsRig,
+  boneMap: ReadonlyMap<BoneId, Bone>,
+): void {
   const initializedRoots = new Set<string>();
   for (const output of rig.outputs) {
     const bone = boneMap.get(output.boneId);
@@ -187,7 +267,10 @@ function initializeAnchors(rig: PhysicsRig, boneMap: ReadonlyMap<BoneId, Bone>):
   resetPhysics(rig);
 }
 
-function updateAnchors(rig: PhysicsRig, boneMap: ReadonlyMap<BoneId, Bone>): void {
+function updateAnchors(
+  rig: PhysicsRig,
+  boneMap: ReadonlyMap<BoneId, Bone>,
+): void {
   for (const output of rig.outputs) {
     const bone = boneMap.get(output.boneId);
     const root = findRoot(rig, output);
@@ -217,7 +300,9 @@ function evaluateRigs(
       const existing = overrides.get(boneId) ?? {};
       overrides.set(boneId, {
         ...existing,
-        ...(partial.rotation === undefined ? {} : { rotation: bone.setup.rotation + partial.rotation }),
+        ...(partial.rotation === undefined
+          ? {}
+          : { rotation: bone.setup.rotation + partial.rotation }),
         ...(partial.x === undefined ? {} : { x: bone.setup.x + partial.x }),
         ...(partial.y === undefined ? {} : { y: bone.setup.y + partial.y }),
       });
@@ -227,17 +312,31 @@ function evaluateRigs(
 }
 
 function chainParticleIds(rig: PhysicsRig, output: PhysicsOutput): Set<string> {
-  if (!output.rootParticleId) return new Set(rig.particles.map(particle => particle.id));
-  const prefix = output.rootParticleId.replace(/p0$/, '');
-  return new Set(rig.particles.filter(particle => particle.id.startsWith(prefix)).map(particle => particle.id));
+  if (!output.rootParticleId)
+    return new Set(rig.particles.map((particle) => particle.id));
+  const prefix = output.rootParticleId.replace(/p0$/, "");
+  return new Set(
+    rig.particles
+      .filter((particle) => particle.id.startsWith(prefix))
+      .map((particle) => particle.id),
+  );
 }
 
-function findRoot(rig: PhysicsRig, output: PhysicsOutput): PhysicsRig['particles'][number] | undefined {
-  return (output.rootParticleId ? rig.particles.find(particle => particle.id === output.rootParticleId) : undefined)
-    ?? rig.particles.find(particle => particle.pinned);
+function findRoot(
+  rig: PhysicsRig,
+  output: PhysicsOutput,
+): PhysicsRig["particles"][number] | undefined {
+  return (
+    (output.rootParticleId
+      ? rig.particles.find((particle) => particle.id === output.rootParticleId)
+      : undefined) ?? rig.particles.find((particle) => particle.pinned)
+  );
 }
 
-function mergeOverrides(base: PoseOverrides | null, extra: PoseOverrides | null): PoseOverrides | null {
+function mergeOverrides(
+  base: PoseOverrides | null,
+  extra: PoseOverrides | null,
+): PoseOverrides | null {
   if (!extra?.size) return base;
   if (!base?.size) return new Map(extra);
   const merged: PoseOverrides = new Map(base);
@@ -249,9 +348,11 @@ function mergeOverrides(base: PoseOverrides | null, extra: PoseOverrides | null)
 }
 
 function disabledResult(): ManualPosePhysicsResult {
-  return { state: 'disabled', active: false, overrides: null, diagnostics: [] };
+  return { state: "disabled", active: false, overrides: null, diagnostics: [] };
 }
 
-function inactiveResult(diagnostics: readonly PhysicsRigDiagnostic[]): ManualPosePhysicsResult {
-  return { state: 'inactive', active: false, overrides: null, diagnostics };
+function inactiveResult(
+  diagnostics: readonly PhysicsRigDiagnostic[],
+): ManualPosePhysicsResult {
+  return { state: "inactive", active: false, overrides: null, diagnostics };
 }

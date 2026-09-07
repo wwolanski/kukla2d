@@ -5,15 +5,30 @@
  * `meshWeights` exposes pure brush and influence normalization helpers.
  * Mesh generation delegates to the pure `mesh-generation/generate` module.
  */
-import type { BoneId, Mesh, NodeId, Vertex, VertexInfluence } from '@kukla2d/contracts';
+import type {
+  BoneId,
+  Mesh,
+  NodeId,
+  Vertex,
+  VertexInfluence,
+} from "@kukla2d/contracts";
 
-import { retriangulate } from './mesh-generation/generate.js';
-import { applyWeightBrush } from './meshWeighting.js';
+import { retriangulate } from "./mesh-generation/generate.js";
+import { applyWeightBrush } from "./meshWeighting.js";
 
-import type { GeneratedVertex, MeshGenerationOptions } from './mesh-generation/generate.js';
+import type { MeshGenerationOptions } from "./mesh-generation/generate.types.js";
 
-interface ImageBounds { minX: number; minY: number; maxX: number; maxY: number }
-type EditableMesh = Omit<Mesh, 'vertices' | 'edgeIndices'> & {
+interface ImageBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+interface GeneratedVertex extends Vertex {
+  restX: number;
+  restY: number;
+}
+type EditableMesh = Omit<Mesh, "vertices" | "edgeIndices"> & {
   vertices: GeneratedVertex[];
   edgeIndices: number[] | Set<number>;
   imageWidth?: number;
@@ -42,7 +57,9 @@ export const SMART_MESH_LIMITS = {
  * Compute smart mesh options based on part surface area.
  * Missing image bounds fall back to `SMART_MESH_DEFAULTS`.
  */
-export function computeSmartMeshOpts(imageBounds: ImageBounds | null | undefined): Required<MeshGenerationOptions> {
+export function computeSmartMeshOpts(
+  imageBounds: ImageBounds | null | undefined,
+): Required<MeshGenerationOptions> {
   if (!imageBounds) {
     return { ...SMART_MESH_DEFAULTS };
   }
@@ -54,12 +71,18 @@ export function computeSmartMeshOpts(imageBounds: ImageBounds | null | undefined
     smoothPasses: SMART_MESH_LIMITS.smoothPasses,
     gridSpacing: Math.max(
       SMART_MESH_LIMITS.gridSpacing.min,
-      Math.min(SMART_MESH_LIMITS.gridSpacing.max, Math.round(sqrtArea * SMART_MESH_LIMITS.gridSpacing.multiplier)),
+      Math.min(
+        SMART_MESH_LIMITS.gridSpacing.max,
+        Math.round(sqrtArea * SMART_MESH_LIMITS.gridSpacing.multiplier),
+      ),
     ),
     edgePadding: SMART_MESH_LIMITS.edgePadding,
     numEdgePoints: Math.max(
       SMART_MESH_LIMITS.numEdgePoints.min,
-      Math.min(SMART_MESH_LIMITS.numEdgePoints.max, Math.round(sqrtArea * SMART_MESH_LIMITS.numEdgePoints.multiplier)),
+      Math.min(
+        SMART_MESH_LIMITS.numEdgePoints.max,
+        Math.round(sqrtArea * SMART_MESH_LIMITS.numEdgePoints.multiplier),
+      ),
     ),
   };
 }
@@ -70,7 +93,11 @@ export function computeSmartMeshOpts(imageBounds: ImageBounds | null | undefined
  * Brush falloff weight. t = dist/radius (0=center, 1=edge).
  * hardness=1 → uniform weight=1; hardness=0 → smooth cosine falloff.
  */
-export function brushWeight(dist: number, radius: number, hardness: number): number {
+export function brushWeight(
+  dist: number,
+  radius: number,
+  hardness: number,
+): number {
   const t = dist / radius;
   if (t >= 1) return 0;
   const soft = 0.5 * (1 + Math.cos(Math.PI * t));
@@ -81,10 +108,13 @@ export function brushWeight(dist: number, radius: number, hardness: number): num
  * Normalize vertex influences: filter near-zero, keep top-4 by weight,
  * then renormalize the kept set so their weights sum to ~1.
  */
-export function normalizeVertexInfluences(influences: readonly VertexInfluence[] | null | undefined): VertexInfluence[] {
+export function normalizeVertexInfluences(
+  influences: readonly VertexInfluence[] | null | undefined,
+): VertexInfluence[] {
   const byBone = new Map<BoneId, number>();
   for (const inf of influences ?? []) {
-    if (!inf?.boneId || !Number.isFinite(inf.weight) || inf.weight <= 0.0001) continue;
+    if (!inf?.boneId || !Number.isFinite(inf.weight) || inf.weight <= 0.0001)
+      continue;
     byBone.set(inf.boneId, (byBone.get(inf.boneId) ?? 0) + inf.weight);
   }
   const top = Array.from(byBone, ([boneId, weight]) => ({ boneId, weight }))
@@ -92,7 +122,7 @@ export function normalizeVertexInfluences(influences: readonly VertexInfluence[]
     .slice(0, 4);
   const sum = top.reduce((acc, inf) => acc + inf.weight, 0);
   if (sum <= 0) return [];
-  return top.map(inf => ({ boneId: inf.boneId, weight: inf.weight / sum }));
+  return top.map((inf) => ({ boneId: inf.boneId, weight: inf.weight / sum }));
 }
 
 /**
@@ -109,7 +139,7 @@ export function paintMeshWeights(
   hardness: number,
   strength: number,
 ): void {
-  const node = project.nodes.find(n => n.id === partId);
+  const node = project.nodes.find((n) => n.id === partId);
   if (!node?.mesh?.vertices.length) return;
   applyWeightBrush({
     mesh: node.mesh,
@@ -118,7 +148,7 @@ export function paintMeshWeights(
     localY,
     radius,
     hardness,
-    settings: { mode: 'replace', strength: 1, targetWeight: strength },
+    settings: { mode: "replace", strength: 1, targetWeight: strength },
   });
 }
 
@@ -136,15 +166,35 @@ export function paintMeshWeights(
  * @param {number} args.imageHeight
  * @returns {Object} new mesh
  */
-export function buildAddVertexMesh({ mesh, localX, localY, imageWidth, imageHeight }: {
-  mesh: EditableMesh; localX: number; localY: number; imageWidth: number; imageHeight: number;
+export function buildAddVertexMesh({
+  mesh,
+  localX,
+  localY,
+  imageWidth,
+  imageHeight,
+}: {
+  mesh: EditableMesh;
+  localX: number;
+  localY: number;
+  imageWidth: number;
+  imageHeight: number;
 }): EditableMesh {
-  const verticesSnap = [...(mesh.vertices ?? []), { x: localX, y: localY, restX: localX, restY: localY }];
-  const result = retriangulate(verticesSnap, new Float32Array(mesh.uvs), edgeIndicesAsSet(mesh.edgeIndices, verticesSnap.length));
+  const verticesSnap = [
+    ...(mesh.vertices ?? []),
+    { x: localX, y: localY, restX: localX, restY: localY },
+  ];
+  const result = retriangulate(
+    verticesSnap,
+    new Float32Array(mesh.uvs),
+    edgeIndicesAsSet(mesh.edgeIndices, verticesSnap.length),
+  );
   return { ...mesh, ...result, imageWidth, imageHeight };
 }
 
-function edgeIndicesAsSet(edgeIndices: readonly number[] | Set<number> | null | undefined, length: number): Set<number> {
+function edgeIndicesAsSet(
+  edgeIndices: readonly number[] | Set<number> | null | undefined,
+  length: number,
+): Set<number> {
   if (edgeIndices instanceof Set) return edgeIndices;
   if (edgeIndices) return new Set<number>(edgeIndices);
   // fallback: all vertices are edge vertices
@@ -155,11 +205,25 @@ function edgeIndicesAsSet(edgeIndices: readonly number[] | Set<number> | null | 
  * Remove a vertex at `vertexIndex` and re-triangulate.
  * Returns a new mesh without mutating input.
  */
-export function buildRemoveVertexMesh({ mesh, vertexIndex, imageWidth, imageHeight }: {
-  mesh: EditableMesh; vertexIndex: number; imageWidth: number; imageHeight: number;
+export function buildRemoveVertexMesh({
+  mesh,
+  vertexIndex,
+  imageWidth,
+  imageHeight,
+}: {
+  mesh: EditableMesh;
+  vertexIndex: number;
+  imageWidth: number;
+  imageHeight: number;
 }): EditableMesh {
-  const verticesSnap = (mesh.vertices ?? []).filter((_, i) => i !== vertexIndex);
-  const result = retriangulate(verticesSnap, new Float32Array(mesh.uvs), edgeIndicesAsSet(mesh.edgeIndices, verticesSnap.length));
+  const verticesSnap = (mesh.vertices ?? []).filter(
+    (_, i) => i !== vertexIndex,
+  );
+  const result = retriangulate(
+    verticesSnap,
+    new Float32Array(mesh.uvs),
+    edgeIndicesAsSet(mesh.edgeIndices, verticesSnap.length),
+  );
   return { ...mesh, ...result, imageWidth, imageHeight };
 }
 
@@ -167,8 +231,16 @@ export function buildRemoveVertexMesh({ mesh, vertexIndex, imageWidth, imageHeig
  * Build new vertices after brush deform.
  * Pure helper; does not mutate input.
  */
-export function buildBrushVertices({ verticesSnap, affected, localDx, localDy }: {
-  verticesSnap: readonly Vertex[]; affected: readonly boolean[]; localDx: number; localDy: number;
+export function buildBrushVertices({
+  verticesSnap,
+  affected,
+  localDx,
+  localDy,
+}: {
+  verticesSnap: readonly Vertex[];
+  affected: readonly boolean[];
+  localDx: number;
+  localDy: number;
 }): Vertex[] {
   return verticesSnap.map((v, i) => {
     if (!affected[i]) return v;

@@ -1,8 +1,8 @@
-import type { Animation, Keyframe, Track } from '@kukla2d/contracts';
+import type { Animation, Keyframe, Track } from "@kukla2d/contracts";
 
-import { interpolateTrack, interpolateMeshVerts } from './animationEngine.js';
+import { interpolateTrack, interpolateMeshVerts } from "./animationEngine.js";
 
-import type { AnimationEasing } from './animationCommandTypes.js';
+import type { AnimationEasing } from "./animationCommandTypes.types.js";
 
 /**
  * Deep-clone a plain animation object (JSON-safe only; no functions/Map/Set).
@@ -11,26 +11,36 @@ function deepClone(animation: Animation): Animation {
   return JSON.parse(JSON.stringify(animation)) as Animation;
 }
 
-function reverseEasing(easing: Keyframe['easing']): AnimationEasing | undefined {
-  if (easing === 'ease-in') return 'ease-out';
-  if (easing === 'ease-out') return 'ease-in';
+function reverseEasing(
+  easing: Keyframe["easing"],
+): AnimationEasing | undefined {
+  if (easing === "ease-in") return "ease-out";
+  if (easing === "ease-out") return "ease-in";
   if (Array.isArray(easing) && easing.length === 4) {
     return [1 - easing[2], 1 - easing[3], 1 - easing[0], 1 - easing[1]];
   }
   return easing;
 }
 
-function getTrackInterpolator(track: Track): (
+function getTrackInterpolator(
+  track: Track,
+): (
   keyframes: readonly Keyframe[],
   timeMs: number,
   loopKeyframes?: boolean,
   endMs?: number,
 ) => unknown {
-  return track.property === 'mesh_verts' ? interpolateMeshVerts : interpolateTrack;
+  return track.property === "mesh_verts"
+    ? interpolateMeshVerts
+    : interpolateTrack;
 }
 
-function mapGeneratedTime(sourceTimeMs: number, sourceEndMs: number, duration: number): number {
-  return duration - (duration - sourceEndMs) * sourceTimeMs / sourceEndMs;
+function mapGeneratedTime(
+  sourceTimeMs: number,
+  sourceEndMs: number,
+  duration: number,
+): number {
+  return duration - ((duration - sourceEndMs) * sourceTimeMs) / sourceEndMs;
 }
 
 /**
@@ -38,7 +48,11 @@ function mapGeneratedTime(sourceTimeMs: number, sourceEndMs: number, duration: n
  * loses interior poses and easing whenever source and generated durations
  * differ. The temporary track instead mirrors every authored segment.
  */
-function expandTrackForBoomerang(track: Track, sourceEndMs: number, duration: number): void {
+function expandTrackForBoomerang(
+  track: Track,
+  sourceEndMs: number,
+  duration: number,
+): void {
   const interpolate = getTrackInterpolator(track);
   const source = track.keyframes
     .filter((keyframe) => keyframe.time <= sourceEndMs)
@@ -50,9 +64,10 @@ function expandTrackForBoomerang(track: Track, sourceEndMs: number, duration: nu
 
   const lastSource = source[source.length - 1]!;
   const hasSeamKey = lastSource.time === sourceEndMs;
-  const seamKey: Keyframe = lastSource.easing === undefined
-    ? { time: sourceEndMs, value: seamValue }
-    : { time: sourceEndMs, value: seamValue, easing: lastSource.easing };
+  const seamKey: Keyframe =
+    lastSource.easing === undefined
+      ? { time: sourceEndMs, value: seamValue }
+      : { time: sourceEndMs, value: seamValue, easing: lastSource.easing };
   const forward: Keyframe[] = hasSeamKey ? source : [...source, seamKey];
   const reverse: Keyframe[] = [];
 
@@ -64,18 +79,21 @@ function expandTrackForBoomerang(track: Track, sourceEndMs: number, duration: nu
       time: mapGeneratedTime(sourceKey.time, sourceEndMs, duration),
       value: sourceKey.value,
     };
-    const reversedEasing = sourceIndex > 0
-      ? reverseEasing(previousKey!.easing)
-      : finalKey.easing;
+    const reversedEasing =
+      sourceIndex > 0 ? reverseEasing(previousKey!.easing) : finalKey.easing;
     if (reversedEasing !== undefined) reverseKey.easing = reversedEasing;
     reverse.push(reverseKey);
   }
 
   // The seam key's outgoing easing controls the first reversed segment.
-  const expandedForward: Keyframe[] = forward.map((keyframe) => ({ ...keyframe }));
+  const expandedForward: Keyframe[] = forward.map((keyframe) => ({
+    ...keyframe,
+  }));
   if (reverse.length > 0) {
     const seamKey = expandedForward[expandedForward.length - 1]!;
-    const reversedSeamEasing = reverseEasing(forward[forward.length - 2]!.easing);
+    const reversedSeamEasing = reverseEasing(
+      forward[forward.length - 2]!.easing,
+    );
     if (reversedSeamEasing === undefined) delete seamKey.easing;
     else seamKey.easing = reversedSeamEasing;
     // No segment follows the terminal key. Preserve its authored easing for
@@ -100,8 +118,14 @@ function expandTrackForBoomerang(track: Track, sourceEndMs: number, duration: nu
  * If no targets have boomerang, the original animation reference is returned
  * (no clone).
  */
-export function expandAnimationForExport(animation: Animation | null | undefined): Animation | null | undefined {
-  if (!animation || !animation.boomerangTargets || Object.keys(animation.boomerangTargets).length === 0) {
+export function expandAnimationForExport(
+  animation: Animation | null | undefined,
+): Animation | null | undefined {
+  if (
+    !animation ||
+    !animation.boomerangTargets ||
+    Object.keys(animation.boomerangTargets).length === 0
+  ) {
     return animation;
   }
 

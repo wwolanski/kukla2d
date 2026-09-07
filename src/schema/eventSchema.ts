@@ -1,4 +1,6 @@
-import { z } from 'zod';
+import { z } from "zod";
+
+import type { EventKeyframe, EventValue } from "./eventSchema.types.js";
 
 export const EventDefinitionSchema = z.object({
   id: z.string().min(1),
@@ -18,14 +20,8 @@ export const EventKeyframeSchema = z.object({
     stringValue: z.string().optional(),
     audioRef: z.string().optional(),
   }),
-  easing: z.literal('step').default('step'),
+  easing: z.literal("step").default("step"),
 });
-
-export type EventDefinition = z.output<typeof EventDefinitionSchema>;
-
-export type EventKeyframe = z.output<typeof EventKeyframeSchema>;
-
-export type EventValue = EventKeyframe['value'];
 
 export function checkEventCrossing(
   prevTime: number,

@@ -1,34 +1,48 @@
-import { convertScmlToProject } from './convertScml.js';
-import { parseScml } from './parseScml.js';
+import { convertScmlToProject } from "./convertScml.js";
+import { parseScml } from "./parseScml.js";
 
-import type { ExternalProjectImporter } from '../types.js';
+import type { ExternalProjectImporter } from "../externalImport.types.js";
 
 function normalizedPath(file: File): string {
-  const relative = typeof file.webkitRelativePath === 'string' && file.webkitRelativePath
-    ? file.webkitRelativePath
-    : file.name;
-  return relative.replace(/\\/g, '/').replace(/^\.\//, '').toLowerCase();
+  const relative =
+    typeof file.webkitRelativePath === "string" && file.webkitRelativePath
+      ? file.webkitRelativePath
+      : file.name;
+  return relative.replace(/\\/g, "/").replace(/^\.\//, "").toLowerCase();
 }
 
 function findImage(files: readonly File[], declaredName: string): File | null {
-  const target = declaredName.replace(/\\/g, '/').replace(/^\.\//, '').toLowerCase();
-  const candidates = files.filter(file => {
+  const target = declaredName
+    .replace(/\\/g, "/")
+    .replace(/^\.\//, "")
+    .toLowerCase();
+  const candidates = files.filter((file) => {
     const path = normalizedPath(file);
     return path === target || path.endsWith(`/${target}`);
   });
   if (candidates.length === 0) return null;
-  return candidates.sort((a, b) => normalizedPath(a).length - normalizedPath(b).length)[0] ?? null;
+  return (
+    candidates.sort(
+      (a, b) => normalizedPath(a).length - normalizedPath(b).length,
+    )[0] ?? null
+  );
 }
 
 export const scmlImporter: ExternalProjectImporter = {
-  id: 'brashmonkey-spriter-scml',
-  label: 'BrashMonkey Spriter (.scml)',
+  id: "brashmonkey-spriter-scml",
+  label: "BrashMonkey Spriter (.scml)",
   canImport(files) {
-    return files.filter(file => file.name.toLowerCase().endsWith('.scml')).length === 1;
+    return (
+      files.filter((file) => file.name.toLowerCase().endsWith(".scml"))
+        .length === 1
+    );
   },
   async import(files) {
-    const scmlFiles = files.filter(file => file.name.toLowerCase().endsWith('.scml'));
-    if (scmlFiles.length !== 1) throw new Error('Select one .scml file and all image files used by it');
+    const scmlFiles = files.filter((file) =>
+      file.name.toLowerCase().endsWith(".scml"),
+    );
+    if (scmlFiles.length !== 1)
+      throw new Error("Select one .scml file and all image files used by it");
     const scmlFile = scmlFiles[0]!;
     const document = parseScml(await scmlFile.text());
     const urls: string[] = [];
@@ -41,7 +55,10 @@ export const scmlImporter: ExternalProjectImporter = {
         urls.push(url);
         sources.set(asset.key, { url, size: image.size });
       }
-      const project = convertScmlToProject(document, { sources, sourceFileName: scmlFile.name });
+      const project = convertScmlToProject(document, {
+        sources,
+        sourceFileName: scmlFile.name,
+      });
       return {
         project,
         dispose() {

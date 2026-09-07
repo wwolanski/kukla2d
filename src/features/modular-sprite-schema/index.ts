@@ -1,6 +1,5 @@
-export * from "./application/schemaMatchGateway.js";
-export type * from "./application/schemaMetadata.js";
-export type { LocalSchemaApi } from "./application/localSchemaApi.types.js";
+export { InMemorySchemaMatchGateway } from "@kukla2d/modular-sprite-schema";
+export type { NewSchemaMetadata } from "./application/schemaMetadata.types.js";
 export { localSchemaApi } from "./composition/composeLocalSchemaApi.js";
 export { SchemaComparisonSidebar } from "./components/SchemaComparisonSidebar.js";
 export { SchemaEditor } from "./components/SchemaEditor.js";

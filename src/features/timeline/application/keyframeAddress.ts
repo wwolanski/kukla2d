@@ -1,10 +1,10 @@
-import { toAnimationTargetId, type AnimationTargetId, type Track } from '@kukla2d/contracts';
+import {
+  toAnimationTargetId,
+  type AnimationTargetId,
+  type Track,
+} from "@kukla2d/contracts";
 
-export interface KeyframeAddress {
-  targetId: AnimationTargetId;
-  property: string;
-  timeMs: number;
-}
+import type { KeyframeAddress } from "./keyframeAddress.types.js";
 
 export function createKeyframeAddress(
   targetId: AnimationTargetId,
@@ -25,11 +25,18 @@ export function parseKeyframeAddress(address: string): KeyframeAddress | null {
   return { targetId: toAnimationTargetId(targetId), property, timeMs };
 }
 
-export function keyframeAddressToString({ targetId, property, timeMs }: KeyframeAddress): string {
+export function keyframeAddressToString({
+  targetId,
+  property,
+  timeMs,
+}: KeyframeAddress): string {
   return `${targetId}:${property}:${timeMs}`;
 }
 
-export function compareKeyframeAddresses(a: KeyframeAddress, b: KeyframeAddress): number {
+export function compareKeyframeAddresses(
+  a: KeyframeAddress,
+  b: KeyframeAddress,
+): number {
   if (a.targetId < b.targetId) return -1;
   if (a.targetId > b.targetId) return 1;
   if (a.property < b.property) return -1;
@@ -44,8 +51,15 @@ export function collectTrackKeyframeAddresses(
   timeMs: number,
 ): KeyframeAddress[] {
   return (tracks ?? [])
-    .filter((track) => track?.targetId && track?.property && track.keyframes?.some((keyframe) => keyframe.time === timeMs))
-    .map((track) => createKeyframeAddress(track.targetId, track.property, timeMs));
+    .filter(
+      (track) =>
+        track?.targetId &&
+        track?.property &&
+        track.keyframes?.some((keyframe) => keyframe.time === timeMs),
+    )
+    .map((track) =>
+      createKeyframeAddress(track.targetId, track.property, timeMs),
+    );
 }
 
 export function parseKeyframeAddressSet(

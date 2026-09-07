@@ -5,27 +5,43 @@
  * no DOM. Used by bone/image drag flows in `useSkeletonDrag` and
  * `useGizmoDrag` to keep link ON / OFF semantics consistent.
  */
-import type { Bone, BoneId, BoneSetup, Node, NodeId, PartNode, ProjectDocument, Transform } from '@kukla2d/contracts';
+import type {
+  Bone,
+  BoneId,
+  BoneSetup,
+  Node,
+  NodeId,
+  PartNode,
+  ProjectDocument,
+  Transform,
+} from "@kukla2d/contracts";
 
 import {
   computeWorldMatrices,
   decomposeAffineMatrix,
   mat3Inverse,
   mat3Mul,
-} from '@/domain/transforms.js';
-import type { Matrix3 } from '@/domain/transforms.js';
+} from "@/domain/transforms.js";
+import type { Matrix3 } from "@/domain/transforms.types.js";
 
-import {
-  isBoneLinkLocked,
-  isNodeAssignedToBone,
-} from './boneAssignment.js';
+import { isBoneLinkLocked, isNodeAssignedToBone } from "./boneAssignment.js";
 
-
-type RigProject = Pick<ProjectDocument, 'bones' | 'nodes'>;
-interface TranslationOptions { excludeNodeId?: NodeId | null }
-interface BoneLengthOptions { scaleLinkedNodes?: boolean }
-interface LinkedTranslationInput { boneId?: BoneId | null; nodeId?: NodeId | null; dx: number; dy: number }
-interface LinkedScaleOptions { pivotWorld?: { x: number; y: number } }
+type RigProject = Pick<ProjectDocument, "bones" | "nodes">;
+interface TranslationOptions {
+  excludeNodeId?: NodeId | null;
+}
+interface BoneLengthOptions {
+  scaleLinkedNodes?: boolean;
+}
+interface LinkedTranslationInput {
+  boneId?: BoneId | null;
+  nodeId?: NodeId | null;
+  dx: number;
+  dy: number;
+}
+interface LinkedScaleOptions {
+  pivotWorld?: { x: number; y: number };
+}
 
 const MIN_BONE_LENGTH = 10;
 
@@ -38,10 +54,13 @@ function getNodeList(project: RigProject): Node[] {
 }
 
 function getBoneById(project: RigProject, boneId: BoneId): Bone | null {
-  return getBoneList(project).find(b => b.id === boneId) ?? null;
+  return getBoneList(project).find((b) => b.id === boneId) ?? null;
 }
 
-function collectBoneBranchIds(bones: readonly Bone[], rootId: BoneId): Set<BoneId> {
+function collectBoneBranchIds(
+  bones: readonly Bone[],
+  rootId: BoneId,
+): Set<BoneId> {
   const children = new Map<BoneId, BoneId[]>();
   for (const bone of bones) {
     if (!bone.parentId) continue;
@@ -70,7 +89,10 @@ function ensureTransform(node: Node): Transform {
   return node.transform;
 }
 
-function resolveAssignedBone(project: RigProject, node: PartNode | null | undefined): Bone | null {
+function resolveAssignedBone(
+  project: RigProject,
+  node: PartNode | null | undefined,
+): Bone | null {
   if (!node) return null;
   if (node.boneId) {
     const direct = getBoneById(project, node.boneId);
@@ -78,7 +100,8 @@ function resolveAssignedBone(project: RigProject, node: PartNode | null | undefi
   }
   const meshBoneId = node.mesh?.jointBoneId;
   if (meshBoneId) {
-    const byMesh = getBoneList(project).find(bone => bone.id === meshBoneId) ?? null;
+    const byMesh =
+      getBoneList(project).find((bone) => bone.id === meshBoneId) ?? null;
     if (byMesh) return byMesh;
   }
   if (node.mesh?.influences) {
@@ -94,13 +117,22 @@ function resolveAssignedBone(project: RigProject, node: PartNode | null | undefi
   return null;
 }
 
-function findNodeLinkedBoneInBranch(project: RigProject, node: PartNode, boneIds: ReadonlySet<BoneId>): Bone | null {
+function findNodeLinkedBoneInBranch(
+  project: RigProject,
+  node: PartNode,
+  boneIds: ReadonlySet<BoneId>,
+): Bone | null {
   const assigned = resolveAssignedBone(project, node);
   if (!assigned) return null;
   return boneIds.has(assigned.id) ? assigned : null;
 }
 
-function rotateNodeAroundWorldPivot(node: Node, pivotX: number, pivotY: number, deltaDegrees: number): void {
+function rotateNodeAroundWorldPivot(
+  node: Node,
+  pivotX: number,
+  pivotY: number,
+  deltaDegrees: number,
+): void {
   const t = ensureTransform(node);
   // Project/Pixi position semantics: the rendered pivot is x+pivot, y+pivot.
   // Rotate that point, then convert it back to the stored x/y coordinates.
@@ -131,7 +163,13 @@ function rotateNodeAroundWorldPivot(node: Node, pivotX: number, pivotY: number, 
  * @param {Object} [options]
  * @param {string|null} [options.excludeNodeId]
  */
-export function translateLinkedBoneGroup(project: RigProject | null | undefined, boneId: BoneId, dx: number, dy: number, { excludeNodeId = null }: TranslationOptions = {}): void {
+export function translateLinkedBoneGroup(
+  project: RigProject | null | undefined,
+  boneId: BoneId,
+  dx: number,
+  dy: number,
+  { excludeNodeId = null }: TranslationOptions = {},
+): void {
   if (!project || !boneId) return;
   if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
   const bones = getBoneList(project);
@@ -146,7 +184,7 @@ export function translateLinkedBoneGroup(project: RigProject | null | undefined,
   }
   for (const node of getNodeList(project)) {
     if (excludeNodeId && node.id === excludeNodeId) continue;
-    if (node.type !== 'part') continue;
+    if (node.type !== "part") continue;
     if (!isBoneLinkLocked(node)) continue;
     if (!findNodeLinkedBoneInBranch(project, node, boneIds)) continue;
     const t = ensureTransform(node);
@@ -159,14 +197,20 @@ export function translateLinkedBoneGroup(project: RigProject | null | undefined,
  * Translate every selected bone branch once. Overlapping parent/child
  * selections are de-duplicated, as are linked nodes.
  */
-export function translateLinkedBoneSelection(project: RigProject | null | undefined, boneIds: readonly BoneId[], dx: number, dy: number): void {
+export function translateLinkedBoneSelection(
+  project: RigProject | null | undefined,
+  boneIds: readonly BoneId[],
+  dx: number,
+  dy: number,
+): void {
   if (!project || boneIds.length === 0) return;
   if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
   const bones = getBoneList(project);
   const movedBoneIds = new Set<BoneId>();
   for (const boneId of boneIds) {
     if (!getBoneById(project, boneId)) continue;
-    for (const branchId of collectBoneBranchIds(bones, boneId)) movedBoneIds.add(branchId);
+    for (const branchId of collectBoneBranchIds(bones, boneId))
+      movedBoneIds.add(branchId);
   }
   for (const bone of bones) {
     if (!movedBoneIds.has(bone.id)) continue;
@@ -175,7 +219,7 @@ export function translateLinkedBoneSelection(project: RigProject | null | undefi
     setup.y = (setup.y ?? 0) + dy;
   }
   for (const node of getNodeList(project)) {
-    if (node.type !== 'part' || !isBoneLinkLocked(node)) continue;
+    if (node.type !== "part" || !isBoneLinkLocked(node)) continue;
     if (!findNodeLinkedBoneInBranch(project, node, movedBoneIds)) continue;
     const t = ensureTransform(node);
     t.x = (t.x ?? 0) + dx;
@@ -197,7 +241,11 @@ export function translateLinkedBoneSelection(project: RigProject | null | undefi
  * @param {string} boneId
  * @param {number} deltaDegrees
  */
-export function rotateLinkedBone(project: RigProject | null | undefined, boneId: BoneId, deltaDegrees: number): void {
+export function rotateLinkedBone(
+  project: RigProject | null | undefined,
+  boneId: BoneId,
+  deltaDegrees: number,
+): void {
   if (!project || !boneId) return;
   if (!Number.isFinite(deltaDegrees)) return;
   const bone = getBoneById(project, boneId);
@@ -207,7 +255,7 @@ export function rotateLinkedBone(project: RigProject | null | undefined, boneId:
   const pivotY = setup.y ?? 0;
   setup.rotation = (setup.rotation ?? 0) + deltaDegrees;
   for (const node of getNodeList(project)) {
-    if (node.type !== 'part') continue;
+    if (node.type !== "part") continue;
     if (!isBoneLinkLocked(node)) continue;
     if (!isNodeAssignedToBone(node, bone)) continue;
     rotateNodeAroundWorldPivot(node, pivotX, pivotY, deltaDegrees);
@@ -218,20 +266,30 @@ export function rotateLinkedBone(project: RigProject | null | undefined, boneId:
  * Rotate selected bones and their linked nodes around the selection center.
  * Single selection keeps the established single-bone pivot semantics.
  */
-export function rotateLinkedBoneSelection(project: RigProject | null | undefined, boneIds: readonly BoneId[], deltaDegrees: number): void {
+export function rotateLinkedBoneSelection(
+  project: RigProject | null | undefined,
+  boneIds: readonly BoneId[],
+  deltaDegrees: number,
+): void {
   if (!project || !Number.isFinite(deltaDegrees)) return;
-  const selected = getBoneList(project).filter(bone => boneIds.includes(bone.id));
+  const selected = getBoneList(project).filter((bone) =>
+    boneIds.includes(bone.id),
+  );
   if (selected.length === 0) return;
   if (selected.length === 1) {
     rotateLinkedBone(project, selected[0]!.id, deltaDegrees);
     return;
   }
-  const pivotX = selected.reduce((sum, bone) => sum + (bone.setup?.x ?? 0), 0) / selected.length;
-  const pivotY = selected.reduce((sum, bone) => sum + (bone.setup?.y ?? 0), 0) / selected.length;
+  const pivotX =
+    selected.reduce((sum, bone) => sum + (bone.setup?.x ?? 0), 0) /
+    selected.length;
+  const pivotY =
+    selected.reduce((sum, bone) => sum + (bone.setup?.y ?? 0), 0) /
+    selected.length;
   const rad = (deltaDegrees * Math.PI) / 180;
   const cos = Math.cos(rad);
   const sin = Math.sin(rad);
-  const selectedIds = new Set(selected.map(bone => bone.id));
+  const selectedIds = new Set(selected.map((bone) => bone.id));
   for (const bone of selected) {
     const setup = ensureSetup(bone);
     const dx = (setup.x ?? 0) - pivotX;
@@ -241,7 +299,7 @@ export function rotateLinkedBoneSelection(project: RigProject | null | undefined
     setup.rotation = (setup.rotation ?? 0) + deltaDegrees;
   }
   for (const node of getNodeList(project)) {
-    if (node.type !== 'part' || !isBoneLinkLocked(node)) continue;
+    if (node.type !== "part" || !isBoneLinkLocked(node)) continue;
     const assigned = resolveAssignedBone(project, node);
     if (!assigned || !selectedIds.has(assigned.id)) continue;
     rotateNodeAroundWorldPivot(node, pivotX, pivotY, deltaDegrees);
@@ -257,7 +315,12 @@ export function rotateLinkedBoneSelection(project: RigProject | null | undefined
  * @param {string} boneId
  * @param {number} nextLength
  */
-export function setBoneLength(project: RigProject | null | undefined, boneId: BoneId, nextLength: number, { scaleLinkedNodes = true }: BoneLengthOptions = {}): void {
+export function setBoneLength(
+  project: RigProject | null | undefined,
+  boneId: BoneId,
+  nextLength: number,
+  { scaleLinkedNodes = true }: BoneLengthOptions = {},
+): void {
   if (!project || !boneId) return;
   if (!Number.isFinite(nextLength)) return;
   const bone = getBoneById(project, boneId);
@@ -270,23 +333,31 @@ export function setBoneLength(project: RigProject | null | undefined, boneId: Bo
   if (!scaleLinkedNodes) return;
   const factor = oldLength > 0 ? clamped / oldLength : 1;
   const nodes = getNodeList(project);
-  const linkedNodes = nodes.filter(node => (
-    node.type === 'part'
-    && isBoneLinkLocked(node)
-    && isNodeAssignedToBone(node, bone)
-  ));
+  const linkedNodes = nodes.filter(
+    (node) =>
+      node.type === "part" &&
+      isBoneLinkLocked(node) &&
+      isNodeAssignedToBone(node, bone),
+  );
   const worldMatrices = computeWorldMatrices(nodes);
   const pivotX = setup.x ?? 0;
   const pivotY = setup.y ?? 0;
   const scaleAroundBoneStart = new Float32Array([
-    factor, 0, 0,
-    0, factor, 0,
-    pivotX * (1 - factor), pivotY * (1 - factor), 1,
+    factor,
+    0,
+    0,
+    0,
+    factor,
+    0,
+    pivotX * (1 - factor),
+    pivotY * (1 - factor),
+    1,
   ]);
   const scaledWorldMatrices = new Map<string, Matrix3>();
   for (const node of linkedNodes) {
     const world = worldMatrices.get(node.id);
-    if (world) scaledWorldMatrices.set(node.id, mat3Mul(scaleAroundBoneStart, world));
+    if (world)
+      scaledWorldMatrices.set(node.id, mat3Mul(scaleAroundBoneStart, world));
   }
   for (const node of linkedNodes) {
     const t = ensureTransform(node);
@@ -302,11 +373,17 @@ export function setBoneLength(project: RigProject | null | undefined, boneId: Bo
   }
 }
 
-export function scaleBoneSelectionLengths(project: RigProject | null | undefined, startLengths: Readonly<Record<string, number>>, factor: number): void {
+export function scaleBoneSelectionLengths(
+  project: RigProject | null | undefined,
+  startLengths: Readonly<Record<string, number>>,
+  factor: number,
+): void {
   if (!project || !startLengths || !Number.isFinite(factor)) return;
   for (const [boneId, startLength] of Object.entries(startLengths)) {
     if (!Number.isFinite(startLength)) continue;
-    const bone = getBoneList(project).find(candidate => candidate.id === boneId);
+    const bone = getBoneList(project).find(
+      (candidate) => candidate.id === boneId,
+    );
     if (bone) setBoneLength(project, bone.id, startLength * factor);
   }
 }
@@ -321,15 +398,22 @@ export function scaleBoneSelectionLengths(project: RigProject | null | undefined
  * @param {number} dx
  * @param {number} dy
  */
-export function translateLinkedNodeGroup(project: RigProject | null | undefined, nodeId: NodeId, dx: number, dy: number): void {
+export function translateLinkedNodeGroup(
+  project: RigProject | null | undefined,
+  nodeId: NodeId,
+  dx: number,
+  dy: number,
+): void {
   if (!project || !nodeId) return;
   if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
-  const node = getNodeList(project).find(n => n.id === nodeId);
+  const node = getNodeList(project).find((n) => n.id === nodeId);
   if (!node) return;
-  if (node.type === 'part' && isBoneLinkLocked(node)) {
+  if (node.type === "part" && isBoneLinkLocked(node)) {
     const assigned = resolveAssignedBone(project, node);
     if (assigned) {
-      translateLinkedBoneGroup(project, assigned.id, dx, dy, { excludeNodeId: nodeId });
+      translateLinkedBoneGroup(project, assigned.id, dx, dy, {
+        excludeNodeId: nodeId,
+      });
     }
   }
   const t = ensureTransform(node);
@@ -341,13 +425,18 @@ export function translateLinkedNodeGroup(project: RigProject | null | undefined,
  * Rotate a linked node around its own pivot and apply the same rotation to
  * its bone. Other nodes linked to that bone follow the bone pivot.
  */
-export function rotateLinkedNodeGroup(project: RigProject | null | undefined, nodeId: NodeId, deltaDegrees: number): void {
+export function rotateLinkedNodeGroup(
+  project: RigProject | null | undefined,
+  nodeId: NodeId,
+  deltaDegrees: number,
+): void {
   if (!project || !nodeId || !Number.isFinite(deltaDegrees)) return;
-  const node = getNodeList(project).find(n => n.id === nodeId);
+  const node = getNodeList(project).find((n) => n.id === nodeId);
   if (!node) return;
-  const assigned = node.type === 'part' && isBoneLinkLocked(node)
-    ? resolveAssignedBone(project, node)
-    : null;
+  const assigned =
+    node.type === "part" && isBoneLinkLocked(node)
+      ? resolveAssignedBone(project, node)
+      : null;
   if (!assigned) {
     const t = ensureTransform(node);
     t.rotation = (t.rotation ?? 0) + deltaDegrees;
@@ -355,11 +444,12 @@ export function rotateLinkedNodeGroup(project: RigProject | null | undefined, no
   }
 
   const nodes = getNodeList(project);
-  const linkedNodes = nodes.filter(linkedNode => (
-    linkedNode.type === 'part'
-    && isBoneLinkLocked(linkedNode)
-    && isNodeAssignedToBone(linkedNode, assigned)
-  ));
+  const linkedNodes = nodes.filter(
+    (linkedNode) =>
+      linkedNode.type === "part" &&
+      isBoneLinkLocked(linkedNode) &&
+      isNodeAssignedToBone(linkedNode, assigned),
+  );
   const worldMatrices = computeWorldMatrices(nodes);
   const sourceWorld = worldMatrices.get(node.id);
   if (!sourceWorld) return;
@@ -367,14 +457,24 @@ export function rotateLinkedNodeGroup(project: RigProject | null | undefined, no
   const sourceTransform = ensureTransform(node);
   const localPivotX = sourceTransform.pivotX ?? 0;
   const localPivotY = sourceTransform.pivotY ?? 0;
-  const pivotX = sourceWorld[0] * localPivotX + sourceWorld[3] * localPivotY + sourceWorld[6];
-  const pivotY = sourceWorld[1] * localPivotX + sourceWorld[4] * localPivotY + sourceWorld[7];
+  const pivotX =
+    sourceWorld[0] * localPivotX +
+    sourceWorld[3] * localPivotY +
+    sourceWorld[6];
+  const pivotY =
+    sourceWorld[1] * localPivotX +
+    sourceWorld[4] * localPivotY +
+    sourceWorld[7];
   const radians = (deltaDegrees * Math.PI) / 180;
   const cos = Math.cos(radians);
   const sin = Math.sin(radians);
   const rotateAroundSourcePivot = new Float32Array([
-    cos, sin, 0,
-    -sin, cos, 0,
+    cos,
+    sin,
+    0,
+    -sin,
+    cos,
+    0,
     pivotX - cos * pivotX + sin * pivotY,
     pivotY - sin * pivotX - cos * pivotY,
     1,
@@ -394,7 +494,8 @@ export function rotateLinkedNodeGroup(project: RigProject | null | undefined, no
     const rotatedWorld = rotatedWorldMatrices.get(linkedNode.id);
     if (!rotatedWorld) continue;
     const parentWorld = linkedNode.parent
-      ? (rotatedWorldMatrices.get(linkedNode.parent) ?? worldMatrices.get(linkedNode.parent))
+      ? (rotatedWorldMatrices.get(linkedNode.parent) ??
+        worldMatrices.get(linkedNode.parent))
       : null;
     const rotatedLocal = parentWorld
       ? mat3Mul(mat3Inverse(parentWorld), rotatedWorld)
@@ -418,7 +519,8 @@ export function rotateLinkedNodeGroup(project: RigProject | null | undefined, no
   const nextEndY = sin * endX + cos * endY + rotateAroundSourcePivot[7]!;
   setup.x = nextStartX;
   setup.y = nextStartY;
-  setup.rotation = Math.atan2(nextEndY - nextStartY, nextEndX - nextStartX) * (180 / Math.PI);
+  setup.rotation =
+    Math.atan2(nextEndY - nextStartY, nextEndX - nextStartX) * (180 / Math.PI);
   setup.length = Math.hypot(nextEndX - nextStartX, nextEndY - nextStartY);
 }
 
@@ -426,14 +528,27 @@ export function rotateLinkedNodeGroup(project: RigProject | null | undefined, no
  * Scale a linked node group. Horizontal scale changes bone length; both axes
  * propagate to all images linked to that bone.
  */
-export function scaleLinkedNodeGroup(project: RigProject | null | undefined, nodeId: NodeId, factorX: number, factorY: number, options: LinkedScaleOptions = {}): void {
-  if (!project || !nodeId || !Number.isFinite(factorX) || !Number.isFinite(factorY)) return;
+export function scaleLinkedNodeGroup(
+  project: RigProject | null | undefined,
+  nodeId: NodeId,
+  factorX: number,
+  factorY: number,
+  options: LinkedScaleOptions = {},
+): void {
+  if (
+    !project ||
+    !nodeId ||
+    !Number.isFinite(factorX) ||
+    !Number.isFinite(factorY)
+  )
+    return;
   if (factorX === 0 || factorY === 0) return;
-  const node = getNodeList(project).find(n => n.id === nodeId);
+  const node = getNodeList(project).find((n) => n.id === nodeId);
   if (!node) return;
-  const assigned = node.type === 'part' && isBoneLinkLocked(node)
-    ? resolveAssignedBone(project, node)
-    : null;
+  const assigned =
+    node.type === "part" && isBoneLinkLocked(node)
+      ? resolveAssignedBone(project, node)
+      : null;
   if (!assigned) {
     const t = ensureTransform(node);
     t.scaleX = (t.scaleX ?? 1) * factorX;
@@ -442,11 +557,12 @@ export function scaleLinkedNodeGroup(project: RigProject | null | undefined, nod
   }
 
   const nodes = getNodeList(project);
-  const linkedNodes = nodes.filter(linkedNode => (
-    linkedNode.type === 'part'
-    && isBoneLinkLocked(linkedNode)
-    && isNodeAssignedToBone(linkedNode, assigned)
-  ));
+  const linkedNodes = nodes.filter(
+    (linkedNode) =>
+      linkedNode.type === "part" &&
+      isBoneLinkLocked(linkedNode) &&
+      isNodeAssignedToBone(linkedNode, assigned),
+  );
   const worldMatrices = computeWorldMatrices(nodes);
   const sourceWorld = worldMatrices.get(node.id);
   if (!sourceWorld) return;
@@ -454,8 +570,14 @@ export function scaleLinkedNodeGroup(project: RigProject | null | undefined, nod
   const sourceTransform = ensureTransform(node);
   const localPivotX = sourceTransform.pivotX ?? 0;
   const localPivotY = sourceTransform.pivotY ?? 0;
-  const sourcePivotX = sourceWorld[0] * localPivotX + sourceWorld[3] * localPivotY + sourceWorld[6];
-  const sourcePivotY = sourceWorld[1] * localPivotX + sourceWorld[4] * localPivotY + sourceWorld[7];
+  const sourcePivotX =
+    sourceWorld[0] * localPivotX +
+    sourceWorld[3] * localPivotY +
+    sourceWorld[6];
+  const sourcePivotY =
+    sourceWorld[1] * localPivotX +
+    sourceWorld[4] * localPivotY +
+    sourceWorld[7];
   const pivotWorld = options.pivotWorld;
   const pivotX = Number.isFinite(pivotWorld?.x) ? pivotWorld!.x : sourcePivotX;
   const pivotY = Number.isFinite(pivotWorld?.y) ? pivotWorld!.y : sourcePivotY;
@@ -467,8 +589,12 @@ export function scaleLinkedNodeGroup(project: RigProject | null | undefined, nod
   const m3 = m1;
   const m4 = sin * sin * factorX + cos * cos * factorY;
   const scaleAroundSourcePivot = new Float32Array([
-    m0, m1, 0,
-    m3, m4, 0,
+    m0,
+    m1,
+    0,
+    m3,
+    m4,
+    0,
     pivotX - m0 * pivotX - m3 * pivotY,
     pivotY - m1 * pivotX - m4 * pivotY,
     1,
@@ -488,7 +614,8 @@ export function scaleLinkedNodeGroup(project: RigProject | null | undefined, nod
     const scaledWorld = scaledWorldMatrices.get(linkedNode.id);
     if (!scaledWorld) continue;
     const parentWorld = linkedNode.parent
-      ? (scaledWorldMatrices.get(linkedNode.parent) ?? worldMatrices.get(linkedNode.parent))
+      ? (scaledWorldMatrices.get(linkedNode.parent) ??
+        worldMatrices.get(linkedNode.parent))
       : null;
     const scaledLocal = parentWorld
       ? mat3Mul(mat3Inverse(parentWorld), scaledWorld)
@@ -512,7 +639,8 @@ export function scaleLinkedNodeGroup(project: RigProject | null | undefined, nod
   const nextEndY = m1 * endX + m4 * endY + scaleAroundSourcePivot[7]!;
   setup.x = nextStartX;
   setup.y = nextStartY;
-  setup.rotation = Math.atan2(nextEndY - nextStartY, nextEndX - nextStartX) * (180 / Math.PI);
+  setup.rotation =
+    Math.atan2(nextEndY - nextStartY, nextEndX - nextStartX) * (180 / Math.PI);
   setup.length = Math.max(
     MIN_BONE_LENGTH,
     Math.hypot(nextEndX - nextStartX, nextEndY - nextStartY),
@@ -534,7 +662,10 @@ export function scaleLinkedNodeGroup(project: RigProject | null | undefined, nod
  * @param {number} args.dx
  * @param {number} args.dy
  */
-export function applyLinkedTranslation(project: RigProject | null | undefined, args: LinkedTranslationInput | null | undefined): void {
+export function applyLinkedTranslation(
+  project: RigProject | null | undefined,
+  args: LinkedTranslationInput | null | undefined,
+): void {
   if (!args) return;
   const { boneId = null, nodeId = null, dx, dy } = args;
   if (boneId) return translateLinkedBoneGroup(project, boneId, dx, dy);

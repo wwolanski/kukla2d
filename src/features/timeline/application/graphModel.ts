@@ -1,19 +1,17 @@
-import type { AnimationTargetId, Keyframe } from '@kukla2d/contracts';
+import type { AnimationTargetId, Keyframe } from "@kukla2d/contracts";
 
-import { evaluateCubicBezier } from '@/domain/animationEngine';
-import { getAnimationPropertySpec } from '@/domain/animationProperties';
+import { evaluateCubicBezier } from "@/domain/animationEngine";
+import { getAnimationPropertySpec } from "@/domain/animationProperties";
 
-const PADDING = 0.1;
+type CubicBezierTuple = [number, number, number, number];
+type TimelineEasing = Keyframe["easing"] | null;
 
-export type CubicBezierTuple = [number, number, number, number];
-export type TimelineEasing = Keyframe['easing'] | null;
-
-export interface ValueRange {
+interface ValueRange {
   min: number;
   max: number;
 }
 
-export interface GraphHandle {
+interface GraphHandle {
   x: number;
   y: number;
 }
@@ -22,28 +20,32 @@ interface NumericKeyframe extends Keyframe {
   value: number;
 }
 
-export interface NumericPropertyRow {
+interface NumericPropertyRow {
   targetId: AnimationTargetId;
   property: string;
   valueCategory: string | null;
   keyframes: NumericKeyframe[];
 }
 
-export interface GraphPoint {
+interface GraphPoint {
   timeMs: number;
   value: number;
-  easing: NonNullable<Keyframe['easing']>;
+  easing: NonNullable<Keyframe["easing"]>;
   x: number;
   y: number;
   address: string;
 }
 
-export function computeValueRange(keyframes: readonly Keyframe[] | null | undefined): ValueRange {
+const PADDING = 0.1;
+
+export function computeValueRange(
+  keyframes: readonly Keyframe[] | null | undefined,
+): ValueRange {
   if (!keyframes || keyframes.length === 0) return { min: 0, max: 1 };
   let min = Infinity;
   let max = -Infinity;
   for (const kf of keyframes) {
-    if (typeof kf.value !== 'number') continue;
+    if (typeof kf.value !== "number") continue;
     if (kf.value < min) min = kf.value;
     if (kf.value > max) max = kf.value;
   }
@@ -70,12 +72,23 @@ export function applyPropertyRange(
   return null;
 }
 
-export function valueToScreen(value: number, valueRange: ValueRange, graphHeight: number): number {
+export function valueToScreen(
+  value: number,
+  valueRange: ValueRange,
+  graphHeight: number,
+): number {
   if (valueRange.max === valueRange.min) return graphHeight / 2;
-  return graphHeight - ((value - valueRange.min) / (valueRange.max - valueRange.min)) * graphHeight;
+  return (
+    graphHeight -
+    ((value - valueRange.min) / (valueRange.max - valueRange.min)) * graphHeight
+  );
 }
 
-export function screenToValue(y: number, valueRange: ValueRange, graphHeight: number): number {
+export function screenToValue(
+  y: number,
+  valueRange: ValueRange,
+  graphHeight: number,
+): number {
   if (graphHeight <= 0) return valueRange.min;
   const t = 1 - y / graphHeight;
   return valueRange.min + t * (valueRange.max - valueRange.min);
@@ -122,13 +135,22 @@ export function clampValue(value: number, property: string): number {
   return v;
 }
 
-export function isNumericTrack(propertyRow: {
-  valueCategory?: string | null;
-  keyframes?: readonly Keyframe[];
-} | null | undefined): propertyRow is NumericPropertyRow {
+export function isNumericTrack(
+  propertyRow:
+    | {
+        valueCategory?: string | null;
+        keyframes?: readonly Keyframe[];
+      }
+    | null
+    | undefined,
+): propertyRow is NumericPropertyRow {
   if (!propertyRow || !propertyRow.keyframes) return false;
-  if (propertyRow.valueCategory !== 'numeric' && propertyRow.valueCategory !== 'blendShape') return false;
-  return propertyRow.keyframes.every(kf => typeof kf.value === 'number');
+  if (
+    propertyRow.valueCategory !== "numeric" &&
+    propertyRow.valueCategory !== "blendShape"
+  )
+    return false;
+  return propertyRow.keyframes.every((kf) => typeof kf.value === "number");
 }
 
 export function easingToCubicTuple(easing: TimelineEasing): CubicBezierTuple {
@@ -136,26 +158,38 @@ export function easingToCubicTuple(easing: TimelineEasing): CubicBezierTuple {
     return [easing[0], easing[1], easing[2], easing[3]];
   }
   switch (easing) {
-    case 'linear': return [0, 0, 1, 1];
-    case 'ease-in': return [0.42, 0, 1, 1];
-    case 'ease-out': return [0, 0, 0.58, 1];
-    case 'ease-both':
-    case 'ease':
+    case "linear":
+      return [0, 0, 1, 1];
+    case "ease-in":
+      return [0.42, 0, 1, 1];
+    case "ease-out":
+      return [0, 0, 0.58, 1];
+    case "ease-both":
+    case "ease":
     case undefined:
     case null:
       return [0.42, 0, 0.58, 1];
-    default: return [0.42, 0, 0.58, 1];
+    default:
+      return [0.42, 0, 0.58, 1];
   }
 }
 
 export function cubicTupleToEasing(
   tuple: readonly number[],
-): NonNullable<Keyframe['easing']> {
-  if (!Array.isArray(tuple) || tuple.length !== 4) return 'ease-both';
-  if (tuple[0] === tuple[1] && tuple[2] === tuple[3]) return 'linear';
-  if (tuple[0] === 0.42 && tuple[1] === 0 && tuple[2] === 1 && tuple[3] === 1) return 'ease-in';
-  if (tuple[0] === 0 && tuple[1] === 0 && tuple[2] === 0.58 && tuple[3] === 1) return 'ease-out';
-  if (tuple[0] === 0.42 && tuple[1] === 0 && tuple[2] === 0.58 && tuple[3] === 1) return 'ease-both';
+): NonNullable<Keyframe["easing"]> {
+  if (!Array.isArray(tuple) || tuple.length !== 4) return "ease-both";
+  if (tuple[0] === tuple[1] && tuple[2] === tuple[3]) return "linear";
+  if (tuple[0] === 0.42 && tuple[1] === 0 && tuple[2] === 1 && tuple[3] === 1)
+    return "ease-in";
+  if (tuple[0] === 0 && tuple[1] === 0 && tuple[2] === 0.58 && tuple[3] === 1)
+    return "ease-out";
+  if (
+    tuple[0] === 0.42 &&
+    tuple[1] === 0 &&
+    tuple[2] === 0.58 &&
+    tuple[3] === 1
+  )
+    return "ease-both";
   return [tuple[0]!, tuple[1]!, tuple[2]!, tuple[3]!];
 }
 
@@ -172,8 +206,14 @@ export function handlesFromTuple(
 ): { outHandle: GraphHandle; inHandle: GraphHandle } {
   const dx = x1 - x0;
   return {
-    outHandle: { x: x0 + clampHandleX(tuple[0]) * dx, y: y0 + tuple[1] * (y1 - y0) },
-    inHandle: { x: x0 + clampHandleX(tuple[2]) * dx, y: y0 + tuple[3] * (y1 - y0) },
+    outHandle: {
+      x: x0 + clampHandleX(tuple[0]) * dx,
+      y: y0 + tuple[1] * (y1 - y0),
+    },
+    inHandle: {
+      x: x0 + clampHandleX(tuple[2]) * dx,
+      y: y0 + tuple[3] * (y1 - y0),
+    },
   };
 }
 
@@ -202,7 +242,7 @@ export function buildSegmentPath(
   y1: number,
   easing: TimelineEasing,
 ): string {
-  if (easing === 'stepped') {
+  if (easing === "stepped") {
     return `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1}`;
   }
   const tuple = easingToCubicTuple(easing);
@@ -211,7 +251,7 @@ export function buildSegmentPath(
 }
 
 export function evaluateGraphCurve(x: number, easing: TimelineEasing): number {
-  if (easing === 'stepped') return 0;
+  if (easing === "stepped") return 0;
   const tuple = easingToCubicTuple(easing);
   return evaluateCubicBezier(x, tuple[0], tuple[1], tuple[2], tuple[3]);
 }
@@ -225,16 +265,19 @@ export function buildGraphPoints(
   graphHeight: number,
 ): GraphPoint[] {
   if (!propertyRow || !propertyRow.keyframes) return [];
-  return propertyRow.keyframes.map(kf => ({
+  return propertyRow.keyframes.map((kf) => ({
     timeMs: kf.time,
     value: kf.value,
-    easing: kf.easing ?? 'ease-both',
+    easing: kf.easing ?? "ease-both",
     x: timeToScreenX(kf.time, startFrame, totalFrames, fps),
     y: valueToScreen(kf.value, valueRange, graphHeight),
     address: `${propertyRow.targetId}:${propertyRow.property}:${kf.time}`,
   }));
 }
 
-export function buildSegmentPathForPoints(p0: GraphPoint, p1: GraphPoint): string {
+export function buildSegmentPathForPoints(
+  p0: GraphPoint,
+  p1: GraphPoint,
+): string {
   return buildSegmentPath(p0.x, p0.y, p1.x, p1.y, p0.easing);
 }

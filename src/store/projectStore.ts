@@ -1,30 +1,16 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-import { createEmptyProject } from '@/core/createEmptyProject';
+import { createEmptyProject } from "@/core/createEmptyProject";
 
-import {
-  composeProjectCapabilities,
-  createProjectAnimationCommands,
-  createProjectBaseCommands,
-  createProjectBlendShapeCommands,
-  createProjectControlMotionCommands,
-  createProjectLifecycleCommands,
-  createProjectNodeHierarchyCommands,
-  createProjectPhysicsRuleCommands,
-} from '@/store/project/projectCapabilityCreators';
-import type { ProjectStore } from '@/store/project/projectStoreTypes';
-
-export { DEFAULT_TRANSFORM, prepareLoadedProjectState } from '@/store/project/projectStoreShared';
-export { projectSelectors } from '@/store/project/projectStoreTypes';
-export type {
-  ProjectActions,
-  ProjectCommandErrorCode,
-  ProjectCommandResult,
-  ProjectOperationResult,
-  ProjectState,
-  ProjectStore,
-  ProjectVersionControl,
-} from '@/store/project/projectStoreTypes';
+import { createProjectAnimationCommands } from "@/store/project/projectAnimationCommands.js";
+import { createProjectBaseCommands } from "@/store/project/projectBaseCommands.js";
+import { createProjectBlendShapeCommands } from "@/store/project/projectBlendShapeCommands.js";
+import { composeProjectCapabilities } from "@/store/project/projectCapabilityCreators.js";
+import { createProjectControlMotionCommands } from "@/store/project/projectControlMotionCommands.js";
+import { createProjectLifecycleCommands } from "@/store/project/projectLifecycleCommands.js";
+import { createProjectNodeHierarchyCommands } from "@/store/project/projectNodeHierarchyCommands.js";
+import { createProjectPhysicsRuleCommands } from "@/store/project/projectPhysicsRuleCommands.js";
+import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
 
 // Runtime document composition root. Capability creators preserve flat public API.
 export const useProjectStore = create<ProjectStore>()((set, get) => ({

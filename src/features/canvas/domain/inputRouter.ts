@@ -20,7 +20,7 @@ interface PointerRouterEditorState {
   selection?: readonly string[];
 }
 
-export interface PointerDownInput {
+interface PointerDownInput {
   button: number;
   ctrlKey: boolean;
   editorState?: PointerRouterEditorState;
@@ -30,58 +30,71 @@ export interface PointerDownInput {
   alphaHit?: string | null;
 }
 
-export type PointerDownAction =
-  | { type: 'startDragZoom' }
-  | { type: 'startPan' }
-  | { type: 'startDrawBone' }
-  | { type: 'clearSelection' }
-  | { type: 'meshEditAddVertex' }
-  | { type: 'meshEditRemoveVertex' }
-  | { type: 'startBrushDrag' }
-  | { type: 'startVertexDrag' }
-  | { type: 'startWeightPaint' }
-  | { type: 'selectPart'; partId: string };
+type PointerDownAction =
+  | { type: "startDragZoom" }
+  | { type: "startPan" }
+  | { type: "startDrawBone" }
+  | { type: "clearSelection" }
+  | { type: "meshEditAddVertex" }
+  | { type: "meshEditRemoveVertex" }
+  | { type: "startBrushDrag" }
+  | { type: "startVertexDrag" }
+  | { type: "startWeightPaint" }
+  | { type: "selectPart"; partId: string };
 
 const PAN_BUTTONS: ReadonlySet<number> = new Set([1, 2]);
 const ZOOM_BUTTONS: ReadonlySet<number> = new Set([1, 2]);
 
 export function routePointerDown(input: PointerDownInput): PointerDownAction {
-  const { button, ctrlKey, editorState, toolMode, meshEditMode, weightPaintMode } = input;
+  const {
+    button,
+    ctrlKey,
+    editorState,
+    toolMode,
+    meshEditMode,
+    weightPaintMode,
+  } = input;
   const activeTool = editorState?.activeTool;
-  const selectionTarget = editorState?.selectionTarget ?? 'element';
+  const selectionTarget = editorState?.selectionTarget ?? "element";
 
   // 1) drag zoom wins over pan when ctrl is held
   if (ctrlKey && ZOOM_BUTTONS.has(button)) {
-    return { type: 'startDragZoom' };
+    return { type: "startDragZoom" };
   }
   // 2) pan
   if (PAN_BUTTONS.has(button)) {
-    return { type: 'startPan' };
+    return { type: "startPan" };
   }
   // 3) draw bone tool
-  if (activeTool === 'drawBone' || editorState?.toolMode === 'draw_bone' || toolMode === 'draw_bone') {
-    return { type: 'startDrawBone' };
+  if (
+    activeTool === "drawBone" ||
+    editorState?.toolMode === "draw_bone" ||
+    toolMode === "draw_bone"
+  ) {
+    return { type: "startDrawBone" };
   }
   // 4) rig selection owns rig hits; background click clears selection.
-  if (activeTool === 'drawIk' || selectionTarget === 'rig') return { type: 'clearSelection' };
+  if (activeTool === "drawIk" || selectionTarget === "rig")
+    return { type: "clearSelection" };
   // 5) mesh / weight edit when there's a selected part
   const selection = editorState?.selection ?? [];
   if ((meshEditMode || weightPaintMode) && selection.length > 0) {
     if (meshEditMode) {
-      if (toolMode === 'add_vertex') return { type: 'meshEditAddVertex' };
-      if (toolMode === 'remove_vertex') return { type: 'meshEditRemoveVertex' };
-      if (toolMode === 'deform' || toolMode === 'move') return { type: 'startBrushDrag' };
+      if (toolMode === "add_vertex") return { type: "meshEditAddVertex" };
+      if (toolMode === "remove_vertex") return { type: "meshEditRemoveVertex" };
+      if (toolMode === "deform" || toolMode === "move")
+        return { type: "startBrushDrag" };
       // default to vertex drag
-      return { type: 'startVertexDrag' };
+      return { type: "startVertexDrag" };
     }
     if (weightPaintMode) {
-      return { type: 'startWeightPaint' };
+      return { type: "startWeightPaint" };
     }
   }
   // 6) alpha picking
   if (input.alphaHit) {
-    return { type: 'selectPart', partId: input.alphaHit };
+    return { type: "selectPart", partId: input.alphaHit };
   }
   // 7) fallback
-  return { type: 'clearSelection' };
+  return { type: "clearSelection" };
 }

@@ -8,21 +8,10 @@
  * C7: metrics as BRAK DANYCH when not measured.
  */
 
-export interface PixiPerformanceCounters {
-  pointerEventsHandled: number;
-  pointerHandlerTotalMs: number;
-  renderCount: number;
-  renderTotalMs: number;
-  gpuUploadCount: number;
-  overlayRenderCount: number;
-}
-
-export interface PixiRuntimeStats {
-  pointerEventsHandled: number;
-  renderCount: number;
-  gpuUploadCount: number;
-  lastFrameDurationMs: number;
-}
+import type {
+  PixiPerformanceCounters,
+  PixiRuntimeStats,
+} from "./pixiPerformanceMetrics.types.js";
 
 /**
  * @returns {PixiPerformanceCounters}
@@ -45,7 +34,11 @@ export function createPerformanceCounters(): PixiPerformanceCounters {
  * @param {keyof PixiPerformanceCounters} field
  * @param {number} [delta=1]
  */
-export function incrementCounter(counters: PixiPerformanceCounters, field: keyof PixiPerformanceCounters, delta = 1): void {
+export function incrementCounter(
+  counters: PixiPerformanceCounters,
+  field: keyof PixiPerformanceCounters,
+  delta = 1,
+): void {
   counters[field] += delta;
 }
 
@@ -56,7 +49,11 @@ export function incrementCounter(counters: PixiPerformanceCounters, field: keyof
  * @param {'pointerHandlerTotalMs' | 'renderTotalMs'} field
  * @param {number} durationMs
  */
-export function recordTiming(counters: PixiPerformanceCounters, field: 'pointerHandlerTotalMs' | 'renderTotalMs', durationMs: number): void {
+export function recordTiming(
+  counters: PixiPerformanceCounters,
+  field: "pointerHandlerTotalMs" | "renderTotalMs",
+  durationMs: number,
+): void {
   counters[field] += durationMs;
 }
 
@@ -67,14 +64,17 @@ export function recordTiming(counters: PixiPerformanceCounters, field: 'pointerH
  * @param {PixiPerformanceCounters} counters
  * @returns {import('./pixiRuntimeContracts.js').PixiRuntimeStats}
  */
-export function snapshotStats(counters: PixiPerformanceCounters): PixiRuntimeStats {
+export function snapshotStats(
+  counters: PixiPerformanceCounters,
+): PixiRuntimeStats {
   return {
     pointerEventsHandled: counters.pointerEventsHandled,
     renderCount: counters.renderCount,
     gpuUploadCount: counters.gpuUploadCount,
-    lastFrameDurationMs: counters.renderCount > 0
-      ? counters.renderTotalMs / counters.renderCount
-      : 0,
+    lastFrameDurationMs:
+      counters.renderCount > 0
+        ? counters.renderTotalMs / counters.renderCount
+        : 0,
   };
 }
 
@@ -101,7 +101,10 @@ export function resetCounters(counters: PixiPerformanceCounters): void {
  * @param {(durationMs: number) => void} onMeasure
  * @returns {T}
  */
-export function measureSync<T>(fn: () => T, onMeasure: (durationMs: number) => void): T {
+export function measureSync<T>(
+  fn: () => T,
+  onMeasure: (durationMs: number) => void,
+): T {
   const start = performance.now();
   try {
     return fn();
@@ -121,11 +124,22 @@ export function measureSync<T>(fn: () => T, onMeasure: (durationMs: number) => v
  *
  * @returns {{ count: number, increment: () => void, reset: () => void }}
  */
-export function createRenderCounter(): { readonly count: number; increment(): void; reset(): void; _count: number } {
+export function createRenderCounter(): {
+  readonly count: number;
+  increment(): void;
+  reset(): void;
+  _count: number;
+} {
   return {
-    get count() { return this._count; },
+    get count() {
+      return this._count;
+    },
     _count: 0,
-    increment() { this._count++; },
-    reset() { this._count = 0; },
+    increment() {
+      this._count++;
+    },
+    reset() {
+      this._count = 0;
+    },
   };
 }

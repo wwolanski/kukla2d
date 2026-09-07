@@ -1,10 +1,15 @@
-import type { Bone, BoneId, PhysicsRule } from '@kukla2d/contracts';
+import type { Bone, BoneId, PhysicsRule } from "@kukla2d/contracts";
 
-import { isFiniteNumber } from '@/lib/math';
+import { isFiniteNumber } from "@/lib/math";
 
-import { createPendulumChain, type PhysicsRig } from './physicsRig.js';
+import { createPendulumChain } from "./physicsRig.js";
 
-export interface PhysicsMappingResult { rig: PhysicsRig; warnings: readonly string[] }
+import type { PhysicsRig } from "./physicsRig.types.js";
+
+interface PhysicsMappingResult {
+  rig: PhysicsRig;
+  warnings: readonly string[];
+}
 
 export function mapPhysicsRulesToRig(
   physicsRules: readonly PhysicsRule[],
@@ -12,8 +17,8 @@ export function mapPhysicsRulesToRig(
 ): PhysicsMappingResult {
   const warnings: string[] = [];
   const rig: PhysicsRig = {
-    id: 'mapped_rig',
-    name: 'Mapped from physicsRules',
+    id: "mapped_rig",
+    name: "Mapped from physicsRules",
     particles: [],
     links: [],
     outputs: [],
@@ -24,12 +29,15 @@ export function mapPhysicsRulesToRig(
   };
 
   for (const rule of physicsRules) {
-    const boneId = typeof rule.boneId === 'string' ? rule.boneId as BoneId : null;
+    const boneId =
+      typeof rule.boneId === "string" ? (rule.boneId as BoneId) : null;
     if (!boneId) {
-      warnings.push(`Rule "${rule.id ?? rule.name ?? 'unnamed'}": missing boneId, skipped`);
+      warnings.push(
+        `Rule "${rule.id ?? rule.name ?? "unnamed"}": missing boneId, skipped`,
+      );
       continue;
     }
-    const bone = bones.find(candidate => candidate.id === boneId);
+    const bone = bones.find((candidate) => candidate.id === boneId);
     const segmentCount = finiteIntegerOr(rule.segments, 3);
     const tags = stringArrayOrEmpty(rule.tags);
     const chain = createPendulumChain(
@@ -49,15 +57,22 @@ export function mapPhysicsRulesToRig(
     rig.particles.push(...chain.particles);
     rig.links.push(...chain.links);
     rig.outputs.push(...chain.outputs);
-    if (typeof rule.requireTag === 'string' && !tags.includes(rule.requireTag)) {
-      warnings.push(`Rule "${rule.id}": requireTag "${rule.requireTag}" not matched by tags [${tags.join(', ')}]`);
+    if (
+      typeof rule.requireTag === "string" &&
+      !tags.includes(rule.requireTag)
+    ) {
+      warnings.push(
+        `Rule "${rule.id}": requireTag "${rule.requireTag}" not matched by tags [${tags.join(", ")}]`,
+      );
     }
   }
   return { rig, warnings };
 }
 
 function stringArrayOrEmpty(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : [];
 }
 function finiteIntegerOr(value: unknown, fallback: number): number {
   return isFiniteNumber(value) ? Math.max(1, Math.floor(value)) : fallback;

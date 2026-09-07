@@ -1,12 +1,19 @@
-import type { Bone, BoneSetup, Node } from '@kukla2d/contracts';
+import type { Bone, BoneSetup, Node } from "@kukla2d/contracts";
 
 import {
   decomposeAffineMatrix,
   makeLocalMatrix,
   mat3Inverse,
   mat3Mul,
-} from '@/domain/transforms';
-import type { Matrix3 } from '@/domain/transforms';
+} from "@/domain/transforms";
+import type { Matrix3 } from "@/domain/transforms.types.js";
+
+type LinkedNodeAuthoringResult =
+  | {
+      valid: true;
+      transform: Pick<BoneSetup, "x" | "y" | "rotation" | "scaleX" | "scaleY">;
+    }
+  | { valid: false; reasonCode: "missing_node_or_bone" | "invalid_matrix" };
 
 interface LinkedNodeAuthoringInput {
   node: Node | null;
@@ -15,10 +22,6 @@ interface LinkedNodeAuthoringInput {
   preLinkedWorldMatrices: ReadonlyMap<string, Matrix3>;
   desiredDisplayedWorld: Matrix3 | null;
 }
-
-export type LinkedNodeAuthoringResult =
-  | { valid: true; transform: Pick<BoneSetup, 'x' | 'y' | 'rotation' | 'scaleX' | 'scaleY'> }
-  | { valid: false; reasonCode: 'missing_node_or_bone' | 'invalid_matrix' };
 
 /**
  * Resolve the authored (pre-link) node transform that, after the bone linked
@@ -42,11 +45,11 @@ export function resolveLinkedNodeAuthoredTransform({
   desiredDisplayedWorld,
 }: LinkedNodeAuthoringInput): LinkedNodeAuthoringResult {
   if (!node || !bone || !desiredDisplayedWorld) {
-    return { valid: false, reasonCode: 'missing_node_or_bone' };
+    return { valid: false, reasonCode: "missing_node_or_bone" };
   }
 
   const bind = bone.setup;
-  const posed = { ...(bind), ...(boneOverrides ?? {}) };
+  const posed = { ...bind, ...(boneOverrides ?? {}) };
   const boneDelta = mat3Mul(
     makeLocalMatrix(posed),
     mat3Inverse(makeLocalMatrix(bind)),
@@ -59,17 +62,22 @@ export function resolveLinkedNodeAuthoredTransform({
     ? (preLinkedWorldMatrices.get(node.parent) ?? null)
     : null;
   const parentInv = parentWorld ? mat3Inverse(parentWorld) : null;
-  const srcLocal = parentInv
-    ? mat3Mul(parentInv, srcWorld)
-    : srcWorld;
+  const srcLocal = parentInv ? mat3Mul(parentInv, srcWorld) : srcWorld;
 
-  const fallback = { pivotX: node.transform?.pivotX ?? 0, pivotY: node.transform?.pivotY ?? 0 };
+  const fallback = {
+    pivotX: node.transform?.pivotX ?? 0,
+    pivotY: node.transform?.pivotY ?? 0,
+  };
   const result = decomposeAffineMatrix(srcLocal, fallback);
 
-  if (!Number.isFinite(result.x) || !Number.isFinite(result.y)
-    || !Number.isFinite(result.rotation)
-    || !Number.isFinite(result.scaleX) || !Number.isFinite(result.scaleY)) {
-    return { valid: false, reasonCode: 'invalid_matrix' };
+  if (
+    !Number.isFinite(result.x) ||
+    !Number.isFinite(result.y) ||
+    !Number.isFinite(result.rotation) ||
+    !Number.isFinite(result.scaleX) ||
+    !Number.isFinite(result.scaleY)
+  ) {
+    return { valid: false, reasonCode: "invalid_matrix" };
   }
 
   return {

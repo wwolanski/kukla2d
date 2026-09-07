@@ -1,37 +1,39 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from "react";
 
-import type { ProjectDocument } from '@kukla2d/contracts';
+import type { ProjectDocument } from "@kukla2d/contracts";
 
-import { useAnimationStore } from '@/store/animationStore';
-import { useEditorStore } from '@/store/editorStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useAnimationStore } from "@/store/animationStore";
+import { useEditorStore } from "@/store/editorStore";
+import { useProjectStore } from "@/store/projectStore";
 
-import { canNavigate } from '@/domain/animationAuthoring.js';
+import { canNavigate } from "@/domain/animationAuthoring.js";
 
-import { buildTimelineTrackRows } from './buildTimelineTrackRows.js';
-import { createTimelineCommandApi } from './createTimelineCommandApi.js';
-import { frameToMs, msToFrame } from '../domain/timelineTime.js';
+import { buildTimelineTrackRows } from "./buildTimelineTrackRows.js";
+import { createTimelineCommandApi } from "./createTimelineCommandApi.js";
+import { frameToMs, msToFrame } from "../domain/timelineTime.js";
 
-import type { TimelineTargetDescriptor } from './buildTimelineTrackRows.js';
-import type { TimelineCommandApi } from './createTimelineCommandApi.js';
+import type { TimelineTargetDescriptor } from "./buildTimelineTrackRows.types.js";
+import type { TimelineCommandApi } from "./createTimelineCommandApi.types.js";
 
-const BONE_PREFIX = '\u{1F9B4} ';
+const BONE_PREFIX = "\u{1F9B4} ";
 
-function buildTargetDescriptors(project: ProjectDocument): TimelineTargetDescriptor[] {
+function buildTargetDescriptors(
+  project: ProjectDocument,
+): TimelineTargetDescriptor[] {
   const nodes = project.nodes.map((node) => ({
     id: node.id,
     name: node.name ?? node.id,
-    kind: 'node',
+    kind: "node",
   }));
   const bones = project.bones.map((bone) => ({
     id: bone.id,
     name: `${BONE_PREFIX}${bone.name ?? bone.id}`,
-    kind: 'bone',
+    kind: "bone",
   }));
   const constraints = project.constraints.map((constraint) => ({
     id: constraint.id,
-    name: `${constraint.type?.toUpperCase() ?? 'Constraint'} ${constraint.name ?? constraint.id}`,
-    kind: 'constraint',
+    name: `${constraint.type?.toUpperCase() ?? "Constraint"} ${constraint.name ?? constraint.id}`,
+    kind: "constraint",
   }));
 
   return [...nodes, ...bones, ...constraints];
@@ -49,7 +51,9 @@ function useTimelineControllerImpl() {
   const activeAnimationId = useAnimationStore((s) => s.activeAnimationId);
   // Timeline UI is frame-based. Subscribing to raw rAF time forced the full
   // panel to render ~60 times/s even when displayed frame had not changed.
-  const currentFrame = useAnimationStore((s) => msToFrame(s.currentTime, s.fps));
+  const currentFrame = useAnimationStore((s) =>
+    msToFrame(s.currentTime, s.fps),
+  );
   const fps = useAnimationStore((s) => s.fps);
   const startFrame = useAnimationStore((s) => s.startFrame);
   const endFrame = useAnimationStore((s) => s.endFrame);
@@ -79,7 +83,10 @@ function useTimelineControllerImpl() {
   const resolvedStartFrame = Math.max(0, startFrame);
   const totalFrames = Math.max(resolvedEndFrame - resolvedStartFrame, 1);
 
-  const targetDescriptors = useMemo(() => buildTargetDescriptors(project), [project]);
+  const targetDescriptors = useMemo(
+    () => buildTargetDescriptors(project),
+    [project],
+  );
   const trackRows = useMemo(
     () => buildTimelineTrackRows(activeClip, targetDescriptors),
     [activeClip, targetDescriptors],
@@ -91,90 +98,79 @@ function useTimelineControllerImpl() {
     return commands.ensureAnimationClip();
   }, [commands]);
 
-  const createClip = useCallback<TimelineCommandApi['createAnimationClip']>(
+  const createClip = useCallback<TimelineCommandApi["createAnimationClip"]>(
     (payload) => commands.createAnimationClip(payload),
     [commands],
   );
 
-  const renameClip = useCallback<TimelineCommandApi['renameAnimationClip']>(
+  const renameClip = useCallback<TimelineCommandApi["renameAnimationClip"]>(
     (animationId, name) => commands.renameAnimationClip(animationId, name),
     [commands],
   );
 
-  const deleteClip = useCallback<TimelineCommandApi['deleteAnimationClip']>(
+  const deleteClip = useCallback<TimelineCommandApi["deleteAnimationClip"]>(
     (animationId) => commands.deleteAnimationClip(animationId),
     [commands],
   );
 
-  const selectClip = useCallback<TimelineCommandApi['selectAnimationClip']>(
+  const selectClip = useCallback<TimelineCommandApi["selectAnimationClip"]>(
     (animationId) => commands.selectAnimationClip(animationId),
     [commands],
   );
 
-  const updateTiming = useCallback<TimelineCommandApi['updateAnimationTiming']>(
+  const updateTiming = useCallback<TimelineCommandApi["updateAnimationTiming"]>(
     (payload) => commands.updateAnimationTiming(payload),
     [commands],
   );
 
-  const upsertKeyframe = useCallback<TimelineCommandApi['upsertAnimationKeyframe']>(
-    (payload) => commands.upsertAnimationKeyframe(payload),
-    [commands],
-  );
+  const upsertKeyframe = useCallback<
+    TimelineCommandApi["upsertAnimationKeyframe"]
+  >((payload) => commands.upsertAnimationKeyframe(payload), [commands]);
 
-  const upsertKeyframes = useCallback<TimelineCommandApi['upsertAnimationKeyframes']>(
-    (payload) => commands.upsertAnimationKeyframes(payload),
-    [commands],
-  );
+  const upsertKeyframes = useCallback<
+    TimelineCommandApi["upsertAnimationKeyframes"]
+  >((payload) => commands.upsertAnimationKeyframes(payload), [commands]);
 
-  const moveKeyframes = useCallback<TimelineCommandApi['moveAnimationKeyframes']>(
-    (payload) => commands.moveAnimationKeyframes(payload),
-    [commands],
-  );
+  const moveKeyframes = useCallback<
+    TimelineCommandApi["moveAnimationKeyframes"]
+  >((payload) => commands.moveAnimationKeyframes(payload), [commands]);
 
-  const editKeyframes = useCallback<TimelineCommandApi['editAnimationKeyframes']>(
-    (payload) => commands.editAnimationKeyframes(payload),
-    [commands],
-  );
+  const editKeyframes = useCallback<
+    TimelineCommandApi["editAnimationKeyframes"]
+  >((payload) => commands.editAnimationKeyframes(payload), [commands]);
 
-  const deleteKeyframes = useCallback<TimelineCommandApi['deleteAnimationKeyframes']>(
-    (payload) => commands.deleteAnimationKeyframes(payload),
-    [commands],
-  );
+  const deleteKeyframes = useCallback<
+    TimelineCommandApi["deleteAnimationKeyframes"]
+  >((payload) => commands.deleteAnimationKeyframes(payload), [commands]);
 
-  const setEasing = useCallback<TimelineCommandApi['setAnimationKeyframeEasing']>(
-    (payload) => commands.setAnimationKeyframeEasing(payload),
-    [commands],
-  );
+  const setEasing = useCallback<
+    TimelineCommandApi["setAnimationKeyframeEasing"]
+  >((payload) => commands.setAnimationKeyframeEasing(payload), [commands]);
 
-  const addMarker = useCallback<TimelineCommandApi['addAnimationMarker']>(
+  const addMarker = useCallback<TimelineCommandApi["addAnimationMarker"]>(
     (payload) => commands.addAnimationMarker(payload),
     [commands],
   );
 
-  const addAudioTrack = useCallback<TimelineCommandApi['addAnimationAudioTrack']>(
-    (payload) => commands.addAnimationAudioTrack(payload),
-    [commands],
-  );
+  const addAudioTrack = useCallback<
+    TimelineCommandApi["addAnimationAudioTrack"]
+  >((payload) => commands.addAnimationAudioTrack(payload), [commands]);
 
-  const updateAudioTrack = useCallback<TimelineCommandApi['updateAnimationAudioTrack']>(
-    (payload) => commands.updateAnimationAudioTrack(payload),
-    [commands],
-  );
+  const updateAudioTrack = useCallback<
+    TimelineCommandApi["updateAnimationAudioTrack"]
+  >((payload) => commands.updateAnimationAudioTrack(payload), [commands]);
 
-  const removeAudioTrack = useCallback<TimelineCommandApi['removeAnimationAudioTrack']>(
-    (payload) => commands.removeAnimationAudioTrack(payload),
-    [commands],
-  );
+  const removeAudioTrack = useCallback<
+    TimelineCommandApi["removeAnimationAudioTrack"]
+  >((payload) => commands.removeAnimationAudioTrack(payload), [commands]);
 
-  const setTargetBoomerang = useCallback<TimelineCommandApi['setAnimationTargetBoomerang']>(
-    (payload) => commands.setAnimationTargetBoomerang(payload),
-    [commands],
-  );
+  const setTargetBoomerang = useCallback<
+    TimelineCommandApi["setAnimationTargetBoomerang"]
+  >((payload) => commands.setAnimationTargetBoomerang(payload), [commands]);
 
-  const beginAudioTrackGesture = useCallback<TimelineCommandApi['beginAudioTrackGesture']>(
-    (name) => commands.beginAudioTrackGesture(name),
-    [commands],
-  );
+  const beginAudioTrackGesture = useCallback<
+    TimelineCommandApi["beginAudioTrackGesture"]
+  >((name) => commands.beginAudioTrackGesture(name), [commands]);
 
   const endAudioTrackGesture = useCallback(
     () => commands.endAudioTrackGesture(),
@@ -183,7 +179,10 @@ function useTimelineControllerImpl() {
 
   const checkNav = useCallback(() => {
     const animationState = useAnimationStore.getState();
-    return canNavigate({ dirty: animationState.draftDirty, values: animationState.draftPose });
+    return canNavigate({
+      dirty: animationState.draftDirty,
+      values: animationState.draftPose,
+    });
   }, []);
 
   const play = useCallback(() => {
@@ -195,15 +194,30 @@ function useTimelineControllerImpl() {
     if (!checkNav().allowed) return;
     animStop();
   }, [checkNav, animStop]);
-  const seekFrame = useCallback((frame: number): boolean => {
-    if (!checkNav().allowed) return false;
-    animSeekFrame(frame);
-    return true;
-  }, [checkNav, animSeekFrame]);
-  const setLoop = useCallback((value: boolean) => animSetLoop(value), [animSetLoop]);
-  const setSpeed = useCallback((value: number) => animSetSpeed(value), [animSetSpeed]);
-  const setLoopKeyframes = useCallback((value: boolean) => animSetLoopKeyframes(value), [animSetLoopKeyframes]);
-  const setStartFrame = useCallback((value: number) => animSetStartFrame(value), [animSetStartFrame]);
+  const seekFrame = useCallback(
+    (frame: number): boolean => {
+      if (!checkNav().allowed) return false;
+      animSeekFrame(frame);
+      return true;
+    },
+    [checkNav, animSeekFrame],
+  );
+  const setLoop = useCallback(
+    (value: boolean) => animSetLoop(value),
+    [animSetLoop],
+  );
+  const setSpeed = useCallback(
+    (value: number) => animSetSpeed(value),
+    [animSetSpeed],
+  );
+  const setLoopKeyframes = useCallback(
+    (value: boolean) => animSetLoopKeyframes(value),
+    [animSetLoopKeyframes],
+  );
+  const setStartFrame = useCallback(
+    (value: number) => animSetStartFrame(value),
+    [animSetStartFrame],
+  );
 
   return {
     activeClip,
@@ -258,4 +272,6 @@ function useTimelineControllerImpl() {
   };
 }
 
-export const useTimelineController = (): ReturnType<typeof useTimelineControllerImpl> => useTimelineControllerImpl();
+export const useTimelineController = (): ReturnType<
+  typeof useTimelineControllerImpl
+> => useTimelineControllerImpl();

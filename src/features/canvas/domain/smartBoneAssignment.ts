@@ -1,11 +1,16 @@
-import type { Node, NodeId } from '@kukla2d/contracts';
+import type { Node, NodeId } from "@kukla2d/contracts";
 
-import { computeWorldMatrices, mat3Inverse } from '@/domain/transforms.js';
+import { computeWorldMatrices, mat3Inverse } from "@/domain/transforms.js";
 
-import { worldToLocal } from '@/features/canvas/domain/coordinates.js';
-import { sampleAlpha } from '@/features/canvas/domain/picking.js';
+import { worldToLocal } from "@/features/canvas/domain/coordinates.js";
+import { sampleAlpha } from "@/features/canvas/domain/picking.js";
 
 const ALPHA_THRESHOLD = 5;
+
+interface SmartAssignmentResult {
+  nodeId: NodeId | null;
+  coverage: number;
+}
 
 interface SmartAssignmentInput {
   nodes: readonly Node[];
@@ -16,8 +21,6 @@ interface SmartAssignmentInput {
   endWorldY: number;
   samples?: number;
 }
-
-export interface SmartAssignmentResult { nodeId: NodeId | null; coverage: number }
 
 export function findSmartBoneAssignmentCandidate({
   nodes,
@@ -30,7 +33,7 @@ export function findSmartBoneAssignmentCandidate({
 }: SmartAssignmentInput): SmartAssignmentResult {
   samples = Math.max(5, Math.min(25, samples));
 
-  const parts = nodes.filter(node => node.type === 'part');
+  const parts = nodes.filter((node) => node.type === "part");
   const worldMatrices = computeWorldMatrices(nodes);
 
   let bestNodeId: NodeId | null = null;

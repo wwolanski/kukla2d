@@ -1,9 +1,13 @@
-import { Texture, MeshGeometry, Mesh } from 'pixi.js';
+import { Texture, MeshGeometry, Mesh } from "pixi.js";
 
-import type { Vertex } from '@kukla2d/contracts';
+import type { Vertex } from "@kukla2d/contracts";
 
-import type { CanvasMeshData, CanvasTextureSource, RendererResourceRegistry } from '../rendererTypes.js';
-import type { Application, Container } from 'pixi.js';
+import type {
+  CanvasMeshData,
+  CanvasTextureSource,
+  RendererResourceRegistry,
+} from "../../../application/canvasRenderer.types.js";
+import type { Application, Container } from "pixi.js";
 
 interface PixiResourceRegistryOptions {
   app: Application;
@@ -59,7 +63,10 @@ export class PixiResourceRegistry implements RendererResourceRegistry {
 
     const uvs = new Float32Array(meshData.uvs);
 
-    const indexArr = meshData.indices ?? meshData.triangles?.flatMap((triangle) => triangle) ?? [];
+    const indexArr =
+      meshData.indices ??
+      meshData.triangles?.flatMap((triangle) => triangle) ??
+      [];
     const indices = new Uint32Array(indexArr);
 
     const oldMesh = this.meshesByPartId.get(partId);
@@ -91,11 +98,18 @@ export class PixiResourceRegistry implements RendererResourceRegistry {
         { x: 0, y: h },
       ],
       uvs: [0, 0, 1, 0, 1, 1, 0, 1],
-      triangles: [[0, 1, 2], [0, 2, 3]],
+      triangles: [
+        [0, 1, 2],
+        [0, 2, 3],
+      ],
     });
   }
 
-  uploadPositions(partId: string, vertices: Vertex[], uvs?: ArrayLike<number>): void {
+  uploadPositions(
+    partId: string,
+    vertices: Vertex[],
+    uvs?: ArrayLike<number>,
+  ): void {
     this.assertActive();
     const geometry = this.geometriesByPartId.get(partId);
     if (!geometry) return;
@@ -118,7 +132,7 @@ export class PixiResourceRegistry implements RendererResourceRegistry {
       positions[i * 2] = vertex.x;
       positions[i * 2 + 1] = vertex.y;
     }
-    geometry.getBuffer('aPosition').update();
+    geometry.getBuffer("aPosition").update();
 
     if (uvs && uvs.length === vertexCount * 2) {
       const uvData = geometry.uvs;
@@ -126,7 +140,7 @@ export class PixiResourceRegistry implements RendererResourceRegistry {
         const uv = uvs[i];
         if (uv !== undefined) uvData[i] = uv;
       }
-      geometry.getBuffer('aUV').update();
+      geometry.getBuffer("aUV").update();
     }
   }
 
@@ -140,12 +154,16 @@ export class PixiResourceRegistry implements RendererResourceRegistry {
       const a = indices[index];
       const b = indices[index + 1];
       const c = indices[index + 2];
-      if (a !== undefined && b !== undefined && c !== undefined) triangles.push([a, b, c]);
+      if (a !== undefined && b !== undefined && c !== undefined)
+        triangles.push([a, b, c]);
     }
     return triangles;
   }
 
-  ensureMaskMesh(sourceNodeId: string, targetPartId: string): Mesh<MeshGeometry> | null {
+  ensureMaskMesh(
+    sourceNodeId: string,
+    targetPartId: string,
+  ): Mesh<MeshGeometry> | null {
     const targetMesh = this.meshesByPartId.get(targetPartId);
     if (!targetMesh) return null;
 
@@ -158,13 +176,19 @@ export class PixiResourceRegistry implements RendererResourceRegistry {
     if (!maskMesh) {
       maskMesh = new Mesh({
         geometry: targetMesh.geometry,
-        texture: targetMesh.texture ?? this.texturesByPartId.get(targetPartId) ?? Texture.WHITE,
+        texture:
+          targetMesh.texture ??
+          this.texturesByPartId.get(targetPartId) ??
+          Texture.WHITE,
       });
       this.maskMeshesBySourceNodeId.set(sourceNodeId, maskMesh);
     }
 
     maskMesh.geometry = targetMesh.geometry;
-    maskMesh.texture = targetMesh.texture ?? this.texturesByPartId.get(targetPartId) ?? Texture.WHITE;
+    maskMesh.texture =
+      targetMesh.texture ??
+      this.texturesByPartId.get(targetPartId) ??
+      Texture.WHITE;
     this.maskTargetByMesh.set(maskMesh, targetPartId);
 
     return maskMesh;
@@ -187,13 +211,22 @@ export class PixiResourceRegistry implements RendererResourceRegistry {
     for (const maskMesh of this.maskMeshesBySourceNodeId.values()) {
       if (this.maskTargetByMesh.get(maskMesh) !== targetPartId) continue;
       maskMesh.geometry = targetMesh.geometry;
-      maskMesh.texture = targetMesh.texture ?? this.texturesByPartId.get(targetPartId) ?? Texture.WHITE;
+      maskMesh.texture =
+        targetMesh.texture ??
+        this.texturesByPartId.get(targetPartId) ??
+        Texture.WHITE;
     }
   }
 
   disposePart(partId: string): void {
-    for (const [sourceNodeId, maskMesh] of this.maskMeshesBySourceNodeId.entries()) {
-      if (sourceNodeId === partId || this.maskTargetByMesh.get(maskMesh) === partId) {
+    for (const [
+      sourceNodeId,
+      maskMesh,
+    ] of this.maskMeshesBySourceNodeId.entries()) {
+      if (
+        sourceNodeId === partId ||
+        this.maskTargetByMesh.get(maskMesh) === partId
+      ) {
         this.disposeMaskMesh(sourceNodeId);
       }
     }
@@ -241,6 +274,6 @@ export class PixiResourceRegistry implements RendererResourceRegistry {
   }
 
   private assertActive(): void {
-    if (this.disposed) throw new Error('Pixi resource registry is disposed');
+    if (this.disposed) throw new Error("Pixi resource registry is disposed");
   }
 }

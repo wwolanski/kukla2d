@@ -23,10 +23,16 @@ import type {
   KeyframeAuthoringMeta,
   Node,
   ProjectDocument,
-} from '@kukla2d/contracts';
+} from "@kukla2d/contracts";
 
-import type { UpsertAnimationKeyframePayload } from './animationCommandTypes.js';
-import type { AnimationDraft } from './animationDraftState.js';
+import type { UpsertAnimationKeyframePayload } from "./animationCommandTypes.types.js";
+import type { AnimationDraft } from "./animationDraftState.types.js";
+
+interface AnimationCommitBatch {
+  edits: UpsertAnimationKeyframePayload[];
+  committedAddresses: string[];
+  materializedCount?: number;
+}
 
 type RestPose = ReadonlyMap<AnimationTargetId, object>;
 type PoseOverrides = Map<AnimationTargetId, Record<string, unknown>>;
@@ -44,12 +50,6 @@ interface KeyframeEditBuildInput {
   bone?: Bone;
   constraint?: Constraint;
   restPose?: RestPose | null;
-}
-
-export interface AnimationCommitBatch {
-  edits: UpsertAnimationKeyframePayload[];
-  committedAddresses: string[];
-  materializedCount?: number;
 }
 
 /**
@@ -91,7 +91,14 @@ export function buildKeyframeEdits({
   const edits: UpsertAnimationKeyframePayload[] = [];
   let baseline: UpsertAnimationKeyframePayload | null = null;
 
-  const fallbackValue = getDefaultValue(property, node, bone, constraint, restPose, targetId);
+  const fallbackValue = getDefaultValue(
+    property,
+    node,
+    bone,
+    constraint,
+    restPose,
+    targetId,
+  );
 
   const valueToKey = currentValue !== undefined ? currentValue : fallbackValue;
 
@@ -101,7 +108,7 @@ export function buildKeyframeEdits({
     property,
     timeMs,
     value: valueToKey,
-    easing: 'linear',
+    easing: "linear",
   });
 
   if (timeMs > loopStartMs) {
@@ -111,7 +118,7 @@ export function buildKeyframeEdits({
       property,
       timeMs: loopStartMs,
       value: fallbackValue,
-      easing: 'linear',
+      easing: "linear",
     };
   }
 
@@ -131,8 +138,13 @@ export function buildKeyframeEdits({
  * @param {Map<string, Record<string, Object>>} [args.draftAuthoring] - parallel provenance map
  * @returns {{ edits: Array, committedAddresses: string[], materializedCount?: number }}
  */
-export function buildCommitBatch({ draft, project, loopStartMs, draftAuthoring }: {
-  draft: Pick<AnimationDraft, 'context' | 'values'>;
+export function buildCommitBatch({
+  draft,
+  project,
+  loopStartMs,
+  draftAuthoring,
+}: {
+  draft: Pick<AnimationDraft, "context" | "values">;
   project: ProjectDocument;
   loopStartMs: number;
   draftAuthoring?: Map<string, Record<string, KeyframeAuthoringMeta>>;
@@ -142,7 +154,9 @@ export function buildCommitBatch({ draft, project, loopStartMs, draftAuthoring }
   let materializedCount = 0;
 
   const draftContext = draft.context;
-  const animation = project.animations?.find((a) => a.id === draftContext?.animationId);
+  const animation = project.animations?.find(
+    (a) => a.id === draftContext?.animationId,
+  );
   if (!animation || !draftContext) return { edits, committedAddresses };
 
   const timeMs = draftContext.timeMs;
@@ -155,7 +169,14 @@ export function buildCommitBatch({ draft, project, loopStartMs, draftAuthoring }
 
       if (!node && !bone && !constraint) continue;
 
-      const fallbackValue = getDefaultValue(property, node, bone, constraint, null, targetId);
+      const fallbackValue = getDefaultValue(
+        property,
+        node,
+        bone,
+        constraint,
+        null,
+        targetId,
+      );
       const valueToKey = value ?? fallbackValue;
 
       const meta = draftAuthoring?.get(targetId)?.[property] || null;
@@ -166,15 +187,24 @@ export function buildCommitBatch({ draft, project, loopStartMs, draftAuthoring }
         property,
         timeMs,
         value: valueToKey,
-        easing: 'linear',
+        easing: "linear",
         ...(meta ? { authoring: { ...meta } } : {}),
       });
 
       committedAddresses.push(`${targetId}::${property}@${timeMs}`);
 
-      if (shouldMaterializeSupport(animation, targetId, property, timeMs, loopStartMs, meta)) {
+      if (
+        shouldMaterializeSupport(
+          animation,
+          targetId,
+          property,
+          timeMs,
+          loopStartMs,
+          meta,
+        )
+      ) {
         const supportMeta: KeyframeAuthoringMeta | null = meta
-          ? { gestureId: meta.gestureId, role: 'support', source: meta.source }
+          ? { gestureId: meta.gestureId, role: "support", source: meta.source }
           : null;
         edits.push({
           animationId: animation.id,
@@ -182,7 +212,7 @@ export function buildCommitBatch({ draft, project, loopStartMs, draftAuthoring }
           property,
           timeMs: loopStartMs,
           value: fallbackValue,
-          easing: 'linear',
+          easing: "linear",
           ...(supportMeta ? { authoring: supportMeta } : {}),
         });
         materializedCount++;
@@ -220,7 +250,7 @@ export function buildManualKeyBatch({
   keyframeOverrides,
   restPose,
   gestureId,
-  source = 'manual-key',
+  source = "manual-key",
 }: {
   animationId: AnimationId;
   targetIds: readonly AnimationTargetId[];
@@ -235,7 +265,9 @@ export function buildManualKeyBatch({
   const edits: UpsertAnimationKeyframePayload[] = [];
   const committedAddresses: string[] = [];
   let materializedCount = 0;
-  const animation = project.animations?.find(candidate => candidate.id === animationId);
+  const animation = project.animations?.find(
+    (candidate) => candidate.id === animationId,
+  );
 
   for (const targetId of targetIds) {
     const node = project.nodes?.find((n) => n.id === targetId);
@@ -246,15 +278,29 @@ export function buildManualKeyBatch({
 
     const target = node || bone || constraint;
     if (!target) continue;
-    const properties = getManualKeyProperties(target, node, bone, constraint, animation, targetId);
+    const properties = getManualKeyProperties(
+      target,
+      node,
+      bone,
+      constraint,
+      animation,
+      targetId,
+    );
 
     const authoring: KeyframeAuthoringMeta | undefined = gestureId
-      ? { gestureId, role: 'authored', source }
+      ? { gestureId, role: "authored", source }
       : undefined;
 
     for (const property of properties) {
       const existingValue = keyframeOverrides?.get(targetId)?.[property];
-      const fallbackValue = getDefaultValue(property, node, bone, constraint, restPose, targetId);
+      const fallbackValue = getDefaultValue(
+        property,
+        node,
+        bone,
+        constraint,
+        restPose,
+        targetId,
+      );
       const value = existingValue !== undefined ? existingValue : fallbackValue;
 
       edits.push({
@@ -263,15 +309,24 @@ export function buildManualKeyBatch({
         property,
         timeMs,
         value,
-        easing: 'linear',
+        easing: "linear",
         ...(authoring ? { authoring } : {}),
       });
 
       committedAddresses.push(`${targetId}::${property}@${timeMs}`);
 
-      if (shouldMaterializeSupport(animation, targetId, property, timeMs, loopStartMs, authoring)) {
+      if (
+        shouldMaterializeSupport(
+          animation,
+          targetId,
+          property,
+          timeMs,
+          loopStartMs,
+          authoring,
+        )
+      ) {
         const supportAuthoring: KeyframeAuthoringMeta | undefined = authoring
-          ? { gestureId: authoring.gestureId, role: 'support', source }
+          ? { gestureId: authoring.gestureId, role: "support", source }
           : undefined;
         edits.push({
           animationId,
@@ -279,7 +334,7 @@ export function buildManualKeyBatch({
           property,
           timeMs: loopStartMs,
           value: fallbackValue,
-          easing: 'linear',
+          easing: "linear",
           ...(supportAuthoring ? { authoring: supportAuthoring } : {}),
         });
         materializedCount++;
@@ -304,32 +359,52 @@ function shouldMaterializeSupport(
 ): boolean {
   if (timeMs <= loopStartMs) return false;
 
-  const track = animation?.tracks?.find(candidate => (
-    candidate.targetId === targetId && candidate.property === property
-  ));
-  const existingAtStart = track?.keyframes?.find(keyframe => keyframe.time === loopStartMs);
+  const track = animation?.tracks?.find(
+    (candidate) =>
+      candidate.targetId === targetId && candidate.property === property,
+  );
+  const existingAtStart = track?.keyframes?.find(
+    (keyframe) => keyframe.time === loopStartMs,
+  );
   if (!existingAtStart) return true;
 
   // A real key at the loop start is user data. Never replace it with a hidden
   // fallback generated while authoring a later frame.
-  if (existingAtStart.authoring?.role !== 'support') return false;
+  if (existingAtStart.authoring?.role !== "support") return false;
 
   // Re-keying an authored gesture removes that gesture's old support. Recreate
   // only that soon-to-be-removed support; preserve supports owned elsewhere.
-  const existingAtTime = track?.keyframes?.find(keyframe => keyframe.time === timeMs);
+  const existingAtTime = track?.keyframes?.find(
+    (keyframe) => keyframe.time === timeMs,
+  );
   const previousAuthoring = existingAtTime?.authoring;
-  const supersedesPreviousGesture = previousAuthoring?.role === 'authored'
-    && nextAuthoring?.role === 'authored'
-    && previousAuthoring.source === nextAuthoring.source
-    && previousAuthoring.gestureId !== nextAuthoring.gestureId;
+  const supersedesPreviousGesture =
+    previousAuthoring?.role === "authored" &&
+    nextAuthoring?.role === "authored" &&
+    previousAuthoring.source === nextAuthoring.source &&
+    previousAuthoring.gestureId !== nextAuthoring.gestureId;
 
-  return supersedesPreviousGesture
-    && existingAtStart.authoring?.gestureId === previousAuthoring.gestureId;
+  return (
+    supersedesPreviousGesture &&
+    existingAtStart.authoring?.gestureId === previousAuthoring.gestureId
+  );
 }
 
-const MANUAL_KEY_NODE_PROPERTIES = ['x', 'y', 'rotation', 'scaleX', 'scaleY'] as const;
-const MANUAL_KEY_BONE_PROPERTIES = ['x', 'y', 'rotation', 'scaleX', 'scaleY'] as const;
-const MANUAL_KEY_CONSTRAINT_PROPERTIES = ['targetX', 'targetY'] as const;
+const MANUAL_KEY_NODE_PROPERTIES = [
+  "x",
+  "y",
+  "rotation",
+  "scaleX",
+  "scaleY",
+] as const;
+const MANUAL_KEY_BONE_PROPERTIES = [
+  "x",
+  "y",
+  "rotation",
+  "scaleX",
+  "scaleY",
+] as const;
+const MANUAL_KEY_CONSTRAINT_PROPERTIES = ["targetX", "targetY"] as const;
 
 function getManualKeyProperties(
   _target: AnimationTarget,
@@ -348,16 +423,20 @@ function getManualKeyProperties(
   // Smart K: once a target has animation tracks, key only those channels.
   // Avoid creating unrelated position/scale overrides that can pin a child
   // bone instead of letting it inherit movement from its animated parent.
-  const animatedProperties = new Set((animation?.tracks ?? [])
-    .filter(track => track.targetId === targetId)
-    .map(track => track.property));
-  const existingCoreProperties = coreProperties.filter(property => animatedProperties.has(property));
+  const animatedProperties = new Set(
+    (animation?.tracks ?? [])
+      .filter((track) => track.targetId === targetId)
+      .map((track) => track.property),
+  );
+  const existingCoreProperties = coreProperties.filter((property) =>
+    animatedProperties.has(property),
+  );
   if (existingCoreProperties.length > 0) return existingCoreProperties;
 
   // Bone transforms are stored in world space. Full x/y/scale keys on a new
   // child would pin it and suppress parent inheritance. Rotation is the safe,
   // pose-oriented default; changed channels are still captured by Auto Key.
-  if (bone?.parentId) return ['rotation'];
+  if (bone?.parentId) return ["rotation"];
   return [...coreProperties];
 }
 
@@ -374,37 +453,39 @@ function getDefaultValue(
     if (rp[property] !== undefined) return rp[property];
   }
 
-  if (property === 'opacity') return node?.opacity ?? 1;
-  if (property === 'visible') return node?.visible ?? true;
-  if (property === 'mesh_verts') {
-    return node?.type === 'part' ? node.mesh?.vertices?.map((v) => ({ x: v.x, y: v.y })) ?? [] : [];
+  if (property === "opacity") return node?.opacity ?? 1;
+  if (property === "visible") return node?.visible ?? true;
+  if (property === "mesh_verts") {
+    return node?.type === "part"
+      ? (node.mesh?.vertices?.map((v) => ({ x: v.x, y: v.y })) ?? [])
+      : [];
   }
-  if (property.startsWith('blendShape:')) {
-    const shapeId = property.slice('blendShape:'.length);
-    return node?.type === 'part' ? node.blendShapeValues?.[shapeId] ?? 0 : 0;
+  if (property.startsWith("blendShape:")) {
+    const shapeId = property.slice("blendShape:".length);
+    return node?.type === "part" ? (node.blendShapeValues?.[shapeId] ?? 0) : 0;
   }
   if (constraint) {
-    if (property === 'order') return 0;
-    if (property === 'bendPositive') return true;
-    if (property === 'mix') return constraint.mix ?? 1;
-    if (property === 'fkIk') return constraint.fkIk ?? 1;
-    if (property === 'targetX') return constraint.targetX ?? 0;
-    if (property === 'targetY') return constraint.targetY ?? 0;
+    if (property === "order") return 0;
+    if (property === "bendPositive") return true;
+    if (property === "mix") return constraint.mix ?? 1;
+    if (property === "fkIk") return constraint.fkIk ?? 1;
+    if (property === "targetX") return constraint.targetX ?? 0;
+    if (property === "targetY") return constraint.targetY ?? 0;
     return 0;
   }
   if (bone) {
-    if (property === 'x') return bone.setup.x;
-    if (property === 'y') return bone.setup.y;
-    if (property === 'rotation') return bone.setup.rotation;
-    if (property === 'scaleX') return bone.setup.scaleX;
-    if (property === 'scaleY') return bone.setup.scaleY;
-    if (property === 'shearX') return bone.setup.shearX;
-    if (property === 'shearY') return bone.setup.shearY;
-    if (property === 'length') return bone.setup.length;
+    if (property === "x") return bone.setup.x;
+    if (property === "y") return bone.setup.y;
+    if (property === "rotation") return bone.setup.rotation;
+    if (property === "scaleX") return bone.setup.scaleX;
+    if (property === "scaleY") return bone.setup.scaleY;
+    if (property === "shearX") return bone.setup.shearX;
+    if (property === "shearY") return bone.setup.shearY;
+    if (property === "length") return bone.setup.length;
     return 0;
   }
   if (node) {
-    if (property === 'scaleX' || property === 'scaleY') return 1;
+    if (property === "scaleX" || property === "scaleY") return 1;
     return 0;
   }
   return 0;
@@ -416,9 +497,15 @@ function getDefaultValue(
  * @param {{ dirty: boolean, hasSelection: boolean }} opts
  * @returns {string|null}
  */
-export function describeKeyScope({ dirty, hasSelection }: { dirty: boolean; hasSelection: boolean }): string | null {
-  if (dirty) return 'Key changed channels';
-  if (hasSelection) return 'Key animated channels for selection';
+export function describeKeyScope({
+  dirty,
+  hasSelection,
+}: {
+  dirty: boolean;
+  hasSelection: boolean;
+}): string | null {
+  if (dirty) return "Key changed channels";
+  if (hasSelection) return "Key animated channels for selection";
   return null;
 }
 
@@ -430,12 +517,12 @@ export function describeKeyScope({ dirty, hasSelection }: { dirty: boolean; hasS
  * @param {{ dirty: boolean, values: { size: number } | null }} state
  * @returns {{ allowed: boolean, reason?: string }}
  */
-export function canNavigate(state: { dirty: boolean; values: { size: number } | null } | null | undefined):
-  | { allowed: true }
-  | { allowed: false; reason: 'pending-draft' } {
+export function canNavigate(
+  state: { dirty: boolean; values: { size: number } | null } | null | undefined,
+): { allowed: true } | { allowed: false; reason: "pending-draft" } {
   if (!state) return { allowed: true };
   if (state.dirty && state.values && state.values.size > 0) {
-    return { allowed: false, reason: 'pending-draft' };
+    return { allowed: false, reason: "pending-draft" };
   }
   return { allowed: true };
 }

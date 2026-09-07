@@ -1,62 +1,25 @@
-import { toAnimationTargetId, type AnimationId, type AnimationTargetId, type KeyframeAuthoringMeta } from '@kukla2d/contracts';
+import { toAnimationTargetId } from "@kukla2d/contracts";
 
-import { useAnimationStore } from '@/store/animationStore';
-import type { DraftPose } from '@/store/animationStoreTypes';
-import { useProjectStore } from '@/store/projectStore';
-import { transaction } from '@/store/undoHistory';
+import { useAnimationStore } from "@/store/animationStore";
+import { useProjectStore } from "@/store/projectStore";
+import { transaction } from "@/store/undoHistory";
 
 import {
   buildCommitBatch,
   buildManualKeyBatch,
   canNavigate,
-} from '@/domain/animationAuthoring.js';
-import { applyPreviewIntent } from '@/domain/animationDraftState.js';
-import { computePoseOverrides } from '@/domain/animationEngine.js';
-import { validateAnimationEditBatch } from '@/domain/animationKeyframeBatchCommands.js';
-import { normalizeKeyframeAuthoring } from '@/domain/keyframeProvenance.js';
+} from "@/domain/animationAuthoring.js";
+import { applyPreviewIntent } from "@/domain/animationDraftState.js";
+import { computePoseOverrides } from "@/domain/animationEngine.js";
+import { validateAnimationEditBatch } from "@/domain/animationKeyframeBatchCommands.js";
+import { normalizeKeyframeAuthoring } from "@/domain/keyframeProvenance.js";
 
-import { uid } from '@/lib/uid';
+import { uid } from "@/lib/uid";
 
-interface AnimationEditIntent {
-  animationId: AnimationId;
-  targetId: AnimationTargetId;
-  property: string;
-  value: unknown;
-  timeMs: number;
-  phase: 'preview';
-  source?: string;
-  gestureId?: string;
-  role?: KeyframeAuthoringMeta['role'];
-  allowContextTimeChange?: boolean;
-}
-
-export interface AnimationCommitResult {
-  changed: boolean;
-  affectedIds: string[];
-  committedAddresses: string[];
-  materializedCount?: number;
-  error?: string;
-  mode?: 'draft' | 'snapshot-core' | null;
-}
-
-export interface AnimationAuthoringApi {
-  beginGesture(options?: { gestureId?: string }): string;
-  preview(intent: AnimationEditIntent): { valid: boolean; error?: string };
-  commit(args?: { source?: string }): AnimationCommitResult;
-  commitAndContinueGesture(args?: { source?: string }): AnimationCommitResult;
-  hasActiveGesture(): boolean;
-  endGesture(): void;
-  keySelected(args?: { targetIds?: readonly AnimationTargetId[]; source?: string }): AnimationCommitResult;
-  discard(): void;
-  cancelGesture(): void;
-  checkNavigation(): { allowed: true } | { allowed: false; reason: 'pending-draft' };
-  getDraftState(): {
-    context: { animationId: AnimationId; timeMs: number } | null;
-    dirty: boolean;
-    revision: number;
-    pose: DraftPose;
-  };
-}
+import type {
+  AnimationAuthoringApi,
+  AnimationCommitResult,
+} from "./createAnimationAuthoringApi.types.js";
 
 let _gestureId: string | null = null;
 
@@ -101,7 +64,13 @@ export function createAnimationAuthoringApi(): AnimationAuthoringApi {
 
       // Only canvas's continuing pointer gesture may move a clean draft to a
       // new playhead. Other callers retain their established draft context.
-      if (!ctx || ctx.animationId !== intent.animationId || (intent.allowContextTimeChange && animationState.draftPose.size === 0 && ctx.timeMs !== intent.timeMs)) {
+      if (
+        !ctx ||
+        ctx.animationId !== intent.animationId ||
+        (intent.allowContextTimeChange &&
+          animationState.draftPose.size === 0 &&
+          ctx.timeMs !== intent.timeMs)
+      ) {
         useAnimationStore.getState().setDraftContext({
           animationId: intent.animationId,
           timeMs: intent.timeMs,
@@ -111,7 +80,7 @@ export function createAnimationAuthoringApi(): AnimationAuthoringApi {
       const intentWithMeta = {
         ...intent,
         gestureId: intent.gestureId || _gestureId || generateGestureId(),
-        role: intent.role || 'authored',
+        role: intent.role || "authored",
       };
 
       const draft = {
@@ -135,10 +104,12 @@ export function createAnimationAuthoringApi(): AnimationAuthoringApi {
         const meta = normalizeKeyframeAuthoring({
           gestureId: intentWithMeta.gestureId,
           role: intentWithMeta.role,
-          source: intentWithMeta.source || 'gesture',
+          source: intentWithMeta.source || "gesture",
         });
         if (meta) {
-          useAnimationStore.getState().setDraftAuthoring(intent.targetId, intent.property, meta);
+          useAnimationStore
+            .getState()
+            .setDraftAuthoring(intent.targetId, intent.property, meta);
         }
       }
 
@@ -153,7 +124,7 @@ export function createAnimationAuthoringApi(): AnimationAuthoringApi {
      * @param {string} [args.source] - 'auto-key' | 'manual-key' | 'gesture'
      * @returns {AnimationCommitResult}
      */
-    commit({ source = 'auto-key' } = {}) {
+    commit({ source = "auto-key" } = {}) {
       const animationState = useAnimationStore.getState();
       const project = useProjectStore.getState().project;
       const ctx = animationState.draftContext;
@@ -163,17 +134,20 @@ export function createAnimationAuthoringApi(): AnimationAuthoringApi {
         return { changed: false, affectedIds: [], committedAddresses: [] };
       }
 
-      const loopStartMs = (animationState.startFrame / animationState.fps) * 1000;
+      const loopStartMs =
+        (animationState.startFrame / animationState.fps) * 1000;
 
-      const { edits, committedAddresses, materializedCount } = buildCommitBatch({
-        draft: {
-          context: ctx,
-          values: animationState.draftPose,
+      const { edits, committedAddresses, materializedCount } = buildCommitBatch(
+        {
+          draft: {
+            context: ctx,
+            values: animationState.draftPose,
+          },
+          project,
+          loopStartMs,
+          draftAuthoring: animationState.draftAuthoring,
         },
-        project,
-        loopStartMs,
-        draftAuthoring: animationState.draftAuthoring,
-      });
+      );
 
       if (edits.length === 0) {
         _gestureId = null;
@@ -198,7 +172,7 @@ export function createAnimationAuthoringApi(): AnimationAuthoringApi {
         affectedIds: [],
         committedAddresses: [],
       };
-      transaction(`Authoring commit (${source})`, 'animation', () => {
+      transaction(`Authoring commit (${source})`, "animation", () => {
         useProjectStore.getState().upsertAnimationKeyframes({
           animationId: ctx.animationId,
           keyframes: edits,
@@ -227,7 +201,7 @@ export function createAnimationAuthoringApi(): AnimationAuthoringApi {
      * @param {string} [args.source='in-air-key']
      * @returns {AnimationCommitResult}
      */
-    commitAndContinueGesture({ source = 'in-air-key' } = {}) {
+    commitAndContinueGesture({ source = "in-air-key" } = {}) {
       const animationState = useAnimationStore.getState();
       const ctx = animationState.draftContext;
 
@@ -263,47 +237,76 @@ export function createAnimationAuthoringApi(): AnimationAuthoringApi {
      * @param {string} [args.source]
      * @returns {AnimationCommitResult}
      */
-    keySelected({ targetIds = [], source = 'manual-key' } = {}) {
+    keySelected({ targetIds = [], source = "manual-key" } = {}) {
       const animationState = useAnimationStore.getState();
 
       if (animationState.draftDirty && animationState.draftPose.size > 0) {
         const result = this.commit({ source });
-        return { ...result, mode: 'draft' };
+        return { ...result, mode: "draft" };
       }
 
       if (targetIds.length === 0) {
-        return { changed: false, affectedIds: [], committedAddresses: [], mode: null };
+        return {
+          changed: false,
+          affectedIds: [],
+          committedAddresses: [],
+          mode: null,
+        };
       }
 
       const gestureId = _gestureId || generateGestureId();
 
       const project = useProjectStore.getState().project;
-      const animId = animationState.activeAnimationId ?? project.animations?.[0]?.id;
+      const animId =
+        animationState.activeAnimationId ?? project.animations?.[0]?.id;
       if (!animId) {
-        return { changed: false, affectedIds: [], committedAddresses: [], mode: null };
+        return {
+          changed: false,
+          affectedIds: [],
+          committedAddresses: [],
+          mode: null,
+        };
       }
 
-      const loopStartMs = (animationState.startFrame / animationState.fps) * 1000;
+      const loopStartMs =
+        (animationState.startFrame / animationState.fps) * 1000;
       const endMs = (animationState.endFrame / animationState.fps) * 1000;
 
-      const activeAnimObj = project.animations.find((a) => a.id === animId) ?? null;
-      const keyframeOverrides = computePoseOverrides(activeAnimObj, animationState.currentTime, animationState.loopKeyframes, endMs);
+      const activeAnimObj =
+        project.animations.find((a) => a.id === animId) ?? null;
+      const keyframeOverrides = computePoseOverrides(
+        activeAnimObj,
+        animationState.currentTime,
+        animationState.loopKeyframes,
+        endMs,
+      );
 
-      const { edits, committedAddresses, materializedCount } = buildManualKeyBatch({
-        animationId: animId,
-        targetIds,
-        timeMs: animationState.currentTime,
-        loopStartMs,
-        project,
-        keyframeOverrides: new Map([...keyframeOverrides].map(([targetId, value]) => [toAnimationTargetId(targetId), value])),
-        restPose: animationState.restPose,
-        gestureId,
-        source,
-      });
+      const { edits, committedAddresses, materializedCount } =
+        buildManualKeyBatch({
+          animationId: animId,
+          targetIds,
+          timeMs: animationState.currentTime,
+          loopStartMs,
+          project,
+          keyframeOverrides: new Map(
+            [...keyframeOverrides].map(([targetId, value]) => [
+              toAnimationTargetId(targetId),
+              value,
+            ]),
+          ),
+          restPose: animationState.restPose,
+          gestureId,
+          source,
+        });
 
       if (edits.length === 0) {
         _gestureId = null;
-        return { changed: false, affectedIds: [], committedAddresses: [], mode: null };
+        return {
+          changed: false,
+          affectedIds: [],
+          committedAddresses: [],
+          mode: null,
+        };
       }
 
       const validation = validateAnimationEditBatch(project, edits);
@@ -323,7 +326,7 @@ export function createAnimationAuthoringApi(): AnimationAuthoringApi {
         affectedIds: [],
         committedAddresses: [],
       };
-      transaction(`Manual key (${source})`, 'animation', () => {
+      transaction(`Manual key (${source})`, "animation", () => {
         useProjectStore.getState().upsertAnimationKeyframes({
           animationId: animId,
           keyframes: edits,
@@ -333,7 +336,7 @@ export function createAnimationAuthoringApi(): AnimationAuthoringApi {
           affectedIds: [animId, ...targetIds],
           committedAddresses,
           materializedCount: materializedCount || 0,
-          mode: 'snapshot-core',
+          mode: "snapshot-core",
         };
       });
 
@@ -368,7 +371,10 @@ export function createAnimationAuthoringApi(): AnimationAuthoringApi {
      */
     checkNavigation() {
       const animationState = useAnimationStore.getState();
-      return canNavigate({ dirty: animationState.draftDirty, values: animationState.draftPose });
+      return canNavigate({
+        dirty: animationState.draftDirty,
+        values: animationState.draftPose,
+      });
     },
 
     /**

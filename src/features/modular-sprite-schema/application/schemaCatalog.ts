@@ -1,13 +1,23 @@
 import {
   BUILTIN_SEMANTIC_DEFINITIONS,
   SemanticCatalog,
+  type SemanticDefinition,
   type ModularSpriteSchema,
 } from "@kukla2d/modular-sprite-schema";
 
-import type {
-  SchemaCatalogCapability,
-  SchemaCatalogRepository,
-} from "./localSchemaApi.types.js";
+import type { SchemaCatalogCapability } from "./localSchemaApi.types.js";
+
+interface SchemaCatalogRepository {
+  list(): Promise<ModularSpriteSchema[]>;
+  put(schema: ModularSpriteSchema): Promise<void>;
+  putSemantic(definition: SemanticDefinition): Promise<void>;
+  listSemantics(): Promise<SemanticDefinition[]>;
+  setSyncState(state: {
+    sourceId: string;
+    revision: string;
+    updatedAt: string;
+  }): Promise<void>;
+}
 
 export class SchemaCatalog implements SchemaCatalogCapability {
   readonly semantics = new SemanticCatalog();

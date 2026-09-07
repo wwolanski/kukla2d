@@ -1,10 +1,10 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from "react";
 
-import { readRecovery, writeRecovery, clearRecovery } from '@/io/projectDb';
+import { readRecovery, writeRecovery, clearRecovery } from "@/io/projectDb";
 
-import type { RecoveryRecord } from '@/io/projectDb';
+import type { RecoveryRecord } from "@/io/projectDb.types.js";
 
-export interface RecoveryRepository {
+interface RecoveryRepository {
   read: () => Promise<RecoveryRecord | null>;
   write: (record: RecoveryRecord) => Promise<void>;
   clear: () => Promise<void>;
@@ -15,7 +15,7 @@ export function useRecoveryRepository(): RecoveryRepository {
     try {
       return await readRecovery();
     } catch (error) {
-      console.error('[Recovery] Failed to read recovery:', error);
+      console.error("[Recovery] Failed to read recovery:", error);
       return null;
     }
   }, []);

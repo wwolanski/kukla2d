@@ -4,8 +4,16 @@
  * Splits replace one PSD layer with several parts. Descending index order keeps
  * later replacements from shifting earlier targets.
  */
-export interface SplittableLayer { name: string; [property: string]: unknown }
-interface LayerSplitPiece { name?: string; tag?: string; [property: string]: unknown }
+interface SplittableLayer {
+  name: string;
+  [property: string]: unknown;
+}
+
+interface LayerSplitPiece {
+  name?: string;
+  tag?: string;
+  [property: string]: unknown;
+}
 interface LayerSplit {
   mergedIdx: number;
   pieces?: readonly LayerSplitPiece[];
@@ -18,8 +26,15 @@ interface ApplyLayerSplitsInput {
   createId: () => string;
 }
 
-export function applyLayerSplits({ layers, partIds, splits, createId }: ApplyLayerSplitsInput): { layers: SplittableLayer[]; partIds: string[] } {
-  const sorted = [...splits].sort((a, b) => (b.mergedIdx ?? 0) - (a.mergedIdx ?? 0));
+export function applyLayerSplits({
+  layers,
+  partIds,
+  splits,
+  createId,
+}: ApplyLayerSplitsInput): { layers: SplittableLayer[]; partIds: string[] } {
+  const sorted = [...splits].sort(
+    (a, b) => (b.mergedIdx ?? 0) - (a.mergedIdx ?? 0),
+  );
   const newLayers = [...layers];
   const newPartIds = [...partIds];
   for (const split of sorted) {
@@ -30,7 +45,7 @@ export function applyLayerSplits({ layers, partIds, splits, createId }: ApplyLay
     const pieces = (split.pieces ?? []).map((p) => ({
       ...orig,
       ...p,
-      name: p.name ?? `${orig?.name ?? 'Layer'} (${p.tag ?? 'split'})`,
+      name: p.name ?? `${orig?.name ?? "Layer"} (${p.tag ?? "split"})`,
     }));
     const pieceIds = pieces.map(() => createId());
     newLayers.splice(idx, 1, ...pieces);

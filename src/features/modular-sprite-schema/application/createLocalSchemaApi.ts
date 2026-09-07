@@ -1,15 +1,34 @@
 import type {
+  MatchProgressEvent,
   ModularSpriteSchema,
+  SchemaMatchRequest,
+  SchemaMatchResponse,
+  SemanticCatalog,
   SemanticDefinition,
 } from "@kukla2d/modular-sprite-schema";
 
 import type {
   CatalogAwareSchemaMatchGateway,
-  LocalSchemaApi,
   LocalSchemaRepository,
   SchemaCatalogCapability,
   StoredSchemaAsset,
 } from "./localSchemaApi.types.js";
+
+interface LocalSchemaApi {
+  readonly semantics: SemanticCatalog;
+  initialize(): Promise<void>;
+  list(): ModularSpriteSchema[];
+  match(
+    request: SchemaMatchRequest,
+    options?: {
+      signal?: AbortSignal;
+      onProgress?: (event: MatchProgressEvent) => void;
+    },
+  ): Promise<SchemaMatchResponse>;
+  save(schema: ModularSpriteSchema): Promise<void>;
+  saveAsset(asset: StoredSchemaAsset): Promise<void>;
+  saveSemantic(definition: SemanticDefinition): Promise<void>;
+}
 
 export function createLocalSchemaApi(dependencies: {
   catalog: SchemaCatalogCapability;

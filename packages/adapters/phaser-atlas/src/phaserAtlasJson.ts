@@ -1,28 +1,10 @@
-import type { PackedPage } from './domain/phaserAtlasPacker.js';
-
-export interface AtlasJsonRegion {
-  name: string;
-  frame: { x: number; y: number; w: number; h: number };
-  rotated: false;
-  trimmed: boolean;
-  spriteSourceSize: { x: number; y: number; w: number; h: number };
-  sourceSize: { w: number; h: number };
-}
-
-export interface SingleAtlasJson {
-  frames: Record<string, AtlasJsonRegion>;
-  meta: { app: string; version: string; image: string; format: string; scale: string };
-}
-
-export interface MultiAtlasPageEntry {
-  image: string;
-  frames: Array<{ filename: string } & AtlasJsonRegion>;
-}
-
-export interface MultiAtlasJson {
-  textures: MultiAtlasPageEntry[];
-  meta: { app: string; version: string; format: string; scale: string };
-}
+import type { PackedPage } from "./domain/phaserAtlasPacker.types.js";
+import type {
+  AtlasJsonRegion,
+  MultiAtlasJson,
+  MultiAtlasPageEntry,
+  SingleAtlasJson,
+} from "./phaserAtlasJson.types.js";
 
 export function buildSingleAtlasJson(
   page: PackedPage,
@@ -43,10 +25,10 @@ export function buildSingleAtlasJson(
   return {
     frames,
     meta: {
-      app: 'Kukla2D',
-      version: '1',
+      app: "Kukla2D",
+      version: "1",
       image: pageFileName,
-      format: 'RGBA8888',
+      format: "RGBA8888",
       scale,
     },
   };
@@ -74,9 +56,9 @@ export function buildMultiAtlasJson(
   return {
     textures,
     meta: {
-      app: 'Kukla2D',
-      version: '1',
-      format: 'RGBA8888',
+      app: "Kukla2D",
+      version: "1",
+      format: "RGBA8888",
       scale,
     },
   };

@@ -16,12 +16,9 @@
 
 const STAGING_SAMPLE = Object.freeze([{ animationId: null, timeMs: 0 }]);
 
-import type { ProjectDocument } from '@kukla2d/contracts';
+import type { ProjectDocument } from "@kukla2d/contracts";
 
-export interface ExportBoundsFrameSpec {
-  animationId: string | null;
-  timeMs: number;
-}
+import type { ExportBoundsFrameSpec } from "./exportAreaFitFrameSpecs.types.js";
 
 function roundMs(t: number): number {
   return Math.round(t * 1000) / 1000;
@@ -51,20 +48,23 @@ export function buildExportAreaFitFrameSpecs(
   project: ProjectDocument | null | undefined,
   { animationId }: { animationId?: string } = {},
 ): readonly ExportBoundsFrameSpec[] {
-  if (!project || typeof project !== 'object') {
+  if (!project || typeof project !== "object") {
     return STAGING_SAMPLE;
   }
-  const allAnimations = Array.isArray(project.animations) ? project.animations : [];
-  const animations = animationId === undefined
-    ? allAnimations
-    : allAnimations.filter(animation => animation?.id === animationId);
+  const allAnimations = Array.isArray(project.animations)
+    ? project.animations
+    : [];
+  const animations =
+    animationId === undefined
+      ? allAnimations
+      : allAnimations.filter((animation) => animation?.id === animationId);
   if (animations.length === 0) {
     return STAGING_SAMPLE;
   }
 
   const specs: ExportBoundsFrameSpec[] = [];
   for (const animation of animations) {
-    if (!animation || typeof animation !== 'object') continue;
+    if (!animation || typeof animation !== "object") continue;
     const duration = animation.duration ?? 0;
     const fps = animation.fps ?? 30;
     for (const timeMs of sampleAnimationTimes(duration, fps)) {

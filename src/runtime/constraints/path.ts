@@ -1,12 +1,15 @@
-import type { Bone, BoneId, ConstraintId } from '@kukla2d/contracts';
+import type { Bone, BoneId, ConstraintId } from "@kukla2d/contracts";
 
-import type { BoneOverride } from './ik.js';
+import type { BoneOverride } from "./ik.types.js";
 
-interface PathPoint { x: number; y: number }
+interface PathPoint {
+  x: number;
+  y: number;
+}
 
-export interface PathConstraint {
+interface PathConstraint {
   id?: ConstraintId;
-  type?: 'path';
+  type?: "path";
   affectedBoneIds?: readonly BoneId[];
   pathPoints?: readonly PathPoint[];
   position?: number;
@@ -18,7 +21,12 @@ export function solvePathConstraint(
   boneMap: ReadonlyMap<BoneId, Bone>,
 ): Map<BoneId, BoneOverride> {
   const overrides = new Map<BoneId, BoneOverride>();
-  const { affectedBoneIds = [], pathPoints = [], position = 0, mix = 1 } = constraint;
+  const {
+    affectedBoneIds = [],
+    pathPoints = [],
+    position = 0,
+    mix = 1,
+  } = constraint;
   if (pathPoints.length < 2 || affectedBoneIds.length === 0) return overrides;
   const totalLength = computePathLength(pathPoints);
   if (totalLength === 0) return overrides;
@@ -67,8 +75,12 @@ function interpolatePath(
     const deltaX = current.x - previous.x;
     const deltaY = current.y - previous.y;
     const segmentLength = Math.hypot(deltaX, deltaY);
-    if (accumulated + segmentLength >= targetDistance || index === points.length - 1) {
-      const localPosition = segmentLength > 0 ? (targetDistance - accumulated) / segmentLength : 0;
+    if (
+      accumulated + segmentLength >= targetDistance ||
+      index === points.length - 1
+    ) {
+      const localPosition =
+        segmentLength > 0 ? (targetDistance - accumulated) / segmentLength : 0;
       return {
         x: previous.x + deltaX * localPosition,
         y: previous.y + deltaY * localPosition,

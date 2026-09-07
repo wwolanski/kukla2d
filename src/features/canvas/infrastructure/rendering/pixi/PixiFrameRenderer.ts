@@ -1,11 +1,17 @@
-import { computeWorldMatrices, decomposeAffineMatrix } from '@/domain/transforms';
+import {
+  computeWorldMatrices,
+  decomposeAffineMatrix,
+} from "@/domain/transforms";
 
-import { applyNodeTransformToPixiDisplayObject } from './pixiTransform.js';
+import { applyNodeTransformToPixiDisplayObject } from "./pixiTransform.js";
 
-import type { CanvasFrame, DrawFrameOptions } from '../rendererTypes.js';
-import type { PixiResourceRegistry } from './PixiResourceRegistry.js';
-import type { PixiViewportBridge } from './PixiViewportBridge.js';
-import type { Container } from 'pixi.js';
+import type { PixiResourceRegistry } from "./PixiResourceRegistry.js";
+import type { PixiViewportBridge } from "./PixiViewportBridge.js";
+import type {
+  CanvasFrame,
+  DrawFrameOptions,
+} from "../../../application/canvasRenderer.types.js";
+import type { Container } from "pixi.js";
 
 interface PixiFrameRendererOptions {
   resources: PixiResourceRegistry;
@@ -20,7 +26,11 @@ export class PixiFrameRenderer {
   private drawnPartIds = new Set<string>();
   private maskedSourceIds = new Set<string>();
 
-  constructor({ resources, contentLayer, viewportBridge }: PixiFrameRendererOptions) {
+  constructor({
+    resources,
+    contentLayer,
+    viewportBridge,
+  }: PixiFrameRendererOptions) {
     this.resources = resources;
     this.contentLayer = contentLayer;
     this.viewportBridge = viewportBridge;
@@ -34,7 +44,11 @@ export class PixiFrameRenderer {
 
     if (view && this.viewportBridge) {
       const current = this.viewportBridge.readEditorView();
-      if (current.zoom !== view.zoom || current.panX !== view.panX || current.panY !== view.panY) {
+      if (
+        current.zoom !== view.zoom ||
+        current.panX !== view.panX ||
+        current.panY !== view.panY
+      ) {
         this.viewportBridge.applyEditorView(view);
       }
     }
@@ -43,7 +57,7 @@ export class PixiFrameRenderer {
     const currentMaskedSourceIds = new Set<string>();
 
     for (const node of nodes) {
-      if (node.type !== 'part') continue;
+      if (node.type !== "part") continue;
 
       const mesh = this.resources.meshesByPartId.get(node.id);
       if (!mesh) {
@@ -66,15 +80,22 @@ export class PixiFrameRenderer {
       mesh.alpha = node.opacity ?? 1;
 
       const worldMatrix = worldMatrices.get(node.id);
-      const renderTransform = node.parent && worldMatrix
-        ? decomposeAffineMatrix(worldMatrix, { pivotX: 0, pivotY: 0 })
-        : node.transform;
+      const renderTransform =
+        node.parent && worldMatrix
+          ? decomposeAffineMatrix(worldMatrix, { pivotX: 0, pivotY: 0 })
+          : node.transform;
       applyNodeTransformToPixiDisplayObject(mesh, renderTransform);
 
       mesh.zIndex = node.draw_order ?? 0;
 
-      const targetNode = node.clipToPartId ? nodesById.get(node.clipToPartId) : null;
-      if (!targetNode || targetNode.type !== 'part' || targetNode.id === node.id) {
+      const targetNode = node.clipToPartId
+        ? nodesById.get(node.clipToPartId)
+        : null;
+      if (
+        !targetNode ||
+        targetNode.type !== "part" ||
+        targetNode.id === node.id
+      ) {
         this._clearMaskForSource(node.id);
         continue;
       }
@@ -93,13 +114,14 @@ export class PixiFrameRenderer {
       maskMesh.alpha = targetNode.opacity ?? 1;
       maskMesh.zIndex = targetNode.draw_order ?? 0;
       const maskWorldMatrix = worldMatrices.get(targetNode.id);
-      const maskTransform = targetNode.parent && maskWorldMatrix
-        ? decomposeAffineMatrix(maskWorldMatrix, { pivotX: 0, pivotY: 0 })
-        : targetNode.transform;
+      const maskTransform =
+        targetNode.parent && maskWorldMatrix
+          ? decomposeAffineMatrix(maskWorldMatrix, { pivotX: 0, pivotY: 0 })
+          : targetNode.transform;
       applyNodeTransformToPixiDisplayObject(maskMesh, maskTransform);
 
-      if (typeof mesh.setMask === 'function') {
-        mesh.setMask({ mask: maskMesh, channel: 'alpha' });
+      if (typeof mesh.setMask === "function") {
+        mesh.setMask({ mask: maskMesh, channel: "alpha" });
       } else {
         mesh.mask = maskMesh;
       }

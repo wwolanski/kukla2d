@@ -1,5 +1,9 @@
-import { PixiSceneGateway, type PixiSceneGatewayOptions } from './PixiSceneGateway.js';
+import { PixiSceneGateway } from "./PixiSceneGateway.js";
 
-export function createPixiSceneGateway(options: PixiSceneGatewayOptions): PixiSceneGateway {
+import type { PixiSceneGatewayOptions } from "./PixiSceneGateway.types.js";
+
+export function createPixiSceneGateway(
+  options: PixiSceneGatewayOptions,
+): PixiSceneGateway {
   return new PixiSceneGateway(options);
 }

@@ -8,11 +8,18 @@
 /**
  * Convert a world-space point to image-space (scaled by view.zoom, translated by pan).
  */
-import type { ViewTransform } from '../../domain/coordinates.js';
+import type { ViewTransform } from "../../domain/coordinates.types.js";
 
-export interface OverlayPoint { x: number; y: number }
+interface OverlayPoint {
+  x: number;
+  y: number;
+}
 
-export function toImage(worldX: number, worldY: number, view: ViewTransform): OverlayPoint {
+export function toImage(
+  worldX: number,
+  worldY: number,
+  view: ViewTransform,
+): OverlayPoint {
   return {
     x: worldX * view.zoom + view.panX,
     y: worldY * view.zoom + view.panY,
@@ -23,7 +30,11 @@ export function toImage(worldX: number, worldY: number, view: ViewTransform): Ov
  * Build an SVG arc path between two screen points with a control offset.
  * Used to render bone influence arcs in the skeleton overlay.
  */
-export function arcPath(start: OverlayPoint, end: OverlayPoint, control: OverlayPoint): string {
+export function arcPath(
+  start: OverlayPoint,
+  end: OverlayPoint,
+  control: OverlayPoint,
+): string {
   return `M ${start.x} ${start.y} Q ${control.x} ${control.y} ${end.x} ${end.y}`;
 }
 
@@ -31,7 +42,11 @@ export function arcPath(start: OverlayPoint, end: OverlayPoint, control: Overlay
  * Position of the rotation handle for a bone: perpendicular to bone direction at end.
  * `length` controls how far the handle sticks out.
  */
-export function rotationHandlePoint(start: OverlayPoint, end: OverlayPoint, length = 30): OverlayPoint {
+export function rotationHandlePoint(
+  start: OverlayPoint,
+  end: OverlayPoint,
+  length = 30,
+): OverlayPoint {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   const len = Math.sqrt(dx * dx + dy * dy) || 1;

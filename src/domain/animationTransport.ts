@@ -1,6 +1,6 @@
-import { ANIMATION_DEFAULTS } from './animationDefaults.js';
+import { ANIMATION_DEFAULTS } from "./animationDefaults.js";
 
-export interface AnimationTransportState {
+interface AnimationTransportState {
   currentTime: number;
   isPlaying: boolean;
   loop: boolean;
@@ -11,13 +11,14 @@ export interface AnimationTransportState {
   lastTimestamp: number | null;
 }
 
-export type AnimationTransportResult = AnimationTransportState & {
+type AnimationTransportResult = AnimationTransportState & {
   advanced: boolean;
   loops?: number;
 };
 
 export function frameToTime(frame: number, fps: number): number {
-  const safeFps = Number.isFinite(fps) && fps > 0 ? fps : ANIMATION_DEFAULTS.fps;
+  const safeFps =
+    Number.isFinite(fps) && fps > 0 ? fps : ANIMATION_DEFAULTS.fps;
   return (Math.max(0, frame) / safeFps) * 1000;
 }
 
@@ -47,14 +48,20 @@ export function advanceAnimationTransport(
   const speed = Number.isFinite(state.speed) ? Math.max(0, state.speed) : 1;
   const deltaMs = Math.max(0, timestamp - (lastTimestamp ?? timestamp)) * speed;
   const startMs = frameToTime(state.startFrame, state.fps);
-  const endMs = frameToTime(Math.max(state.startFrame + 1, state.endFrame), state.fps);
+  const endMs = frameToTime(
+    Math.max(state.startFrame + 1, state.endFrame),
+    state.fps,
+  );
   const rangeMs = endMs - startMs;
 
   if (deltaMs === 0 || rangeMs <= 0) {
     return { ...state, lastTimestamp: timestamp, advanced: false };
   }
 
-  const currentTime = Math.max(startMs, Number.isFinite(state.currentTime) ? state.currentTime : startMs);
+  const currentTime = Math.max(
+    startMs,
+    Number.isFinite(state.currentTime) ? state.currentTime : startMs,
+  );
   const candidate = currentTime + deltaMs;
 
   if (!state.loop && candidate >= endMs) {

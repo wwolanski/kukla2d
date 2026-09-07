@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
-import type { ProjectStore } from '@/store/project/projectStoreTypes';
-import { useProjectStore } from '@/store/projectStore';
-import { undo, redo, applyPatches } from '@/store/undoHistory';
+import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
+import { useProjectStore } from "@/store/projectStore";
+import { undo, redo, applyPatches } from "@/store/undoHistory";
 
 export function useUndoRedo(): void {
   const projectRef = useRef<ProjectStore | null>(null);
@@ -15,8 +15,8 @@ export function useUndoRedo(): void {
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      const isZ = event.key === 'z' || event.key === 'Z';
-      const isY = event.key === 'y' || event.key === 'Y';
+      const isZ = event.key === "z" || event.key === "Z";
+      const isY = event.key === "y" || event.key === "Y";
       const ctrl = event.ctrlKey || event.metaKey;
 
       if (!ctrl) return;
@@ -37,7 +37,7 @@ export function useUndoRedo(): void {
         });
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 }

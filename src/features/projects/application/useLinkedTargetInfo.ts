@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
-import type { Bone, BoneId, NodeId } from '@kukla2d/contracts';
+import type { Bone, BoneId, NodeId } from "@kukla2d/contracts";
 
-import { useEditorStore } from '@/store/editorStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useEditorStore } from "@/store/editorStore";
+import { useProjectStore } from "@/store/projectStore";
 
-export interface LinkedTargetInfo {
+interface LinkedTargetInfo {
   nodeId: NodeId;
   nodeName: string;
   boneId: BoneId;
@@ -18,18 +18,28 @@ export function useLinkedTargetInfo(): LinkedTargetInfo | null {
   const project = useProjectStore((state) => state.project);
 
   return useMemo(() => {
-    if (mode !== 'animation' || selection.length !== 1) return null;
+    if (mode !== "animation" || selection.length !== 1) return null;
 
     const selectionId = selection[0]!;
-    const node = (project.nodes ?? []).find((candidate) => candidate.id === selectionId);
-    if (!node || node.type !== 'part' || node.boneLinkLocked === false) return null;
+    const node = (project.nodes ?? []).find(
+      (candidate) => candidate.id === selectionId,
+    );
+    if (!node || node.type !== "part" || node.boneLinkLocked === false)
+      return null;
 
     const linkedBoneId = node.boneId ?? node.mesh?.jointBoneId;
     if (!linkedBoneId) return null;
 
-    const bone = (project.bones ?? []).find((candidate: Bone) => candidate.id === linkedBoneId);
+    const bone = (project.bones ?? []).find(
+      (candidate: Bone) => candidate.id === linkedBoneId,
+    );
     if (!bone) return null;
 
-    return { nodeId: node.id, nodeName: node.name, boneId: bone.id, boneName: bone.name };
+    return {
+      nodeId: node.id,
+      nodeName: node.name,
+      boneId: bone.id,
+      boneName: bone.name,
+    };
   }, [mode, selection, project]);
 }

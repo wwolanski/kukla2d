@@ -1,34 +1,32 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-import { toAnimationTargetId, type Animation, type AnimationTargetId, type ProjectDocument } from '@kukla2d/contracts';
+import {
+  toAnimationTargetId,
+  type Animation,
+  type AnimationTargetId,
+  type ProjectDocument,
+} from "@kukla2d/contracts";
 
-import { loadAnimationSettings } from '@/platform/animationSettingsRepository.js';
+import { loadAnimationSettings } from "@/platform/animationSettingsRepository.js";
 
-import { useProjectStore } from '@/store/projectStore';
+import { useProjectStore } from "@/store/projectStore";
 
-import { onProjectChanged } from '@/domain/animationLifecycle.js';
+import { onProjectChanged } from "@/domain/animationLifecycle.js";
 import {
   activateAnimationSession,
   synchronizeAnimationSession,
   reconcileAnimationSession,
-} from '@/domain/animationSession.js';
-import { advanceAnimationTransport, frameToTime } from '@/domain/animationTransport.js';
-
-
-
+} from "@/domain/animationSession.js";
+import {
+  advanceAnimationTransport,
+  frameToTime,
+} from "@/domain/animationTransport.js";
 
 import {
   type AnimationState,
   type AnimationStore,
-  type AnimationSessionState,
-  type DraftAuthoring,
-  type DraftAuthoringByProperty,
-  type DraftAuthoringSnapshot,
-  type DraftPose,
-  type DraftPoseSnapshot,
   type DraftPoseValue,
-  type RestPose,
-} from './animationStoreTypes.js';
+} from "./animationStoreTypes.types.js";
 
 interface AnimationTransportState {
   currentTime: number;
@@ -50,9 +48,23 @@ const advanceTransport: (
   state: AnimationTransportState,
   timestamp: number,
 ) => AnimationTransportResult = advanceAnimationTransport;
-const activateSession: (
-  clip: Animation,
-) => AnimationSessionState = activateAnimationSession;
+
+type AnimationSessionState = ReturnType<typeof activateAnimationSession>;
+type RestPose = AnimationState["restPose"];
+type DraftPose = AnimationState["draftPose"];
+type DraftAuthoring = AnimationState["draftAuthoring"];
+type DraftAuthoringByProperty =
+  AnimationState["draftAuthoring"] extends Map<
+    AnimationTargetId,
+    infer Metadata
+  >
+    ? Metadata
+    : never;
+type DraftPoseSnapshot = Record<string, DraftPoseValue>;
+type DraftAuthoringSnapshot = Record<string, DraftAuthoringByProperty>;
+
+const activateSession: (clip: Animation) => AnimationSessionState =
+  activateAnimationSession;
 const synchronizeSessionState: (
   session: AnimationSessionState,
   clip: Animation | null | undefined,
@@ -67,14 +79,6 @@ function reconcileSessionState(
     draftPose: new Map(reconciled.draftPose),
   };
 }
-
-export { animationSelectors } from './animationStoreTypes.js';
-export type {
-  AnimationActions,
-  AnimationState,
-  AnimationStore,
-  DraftPoseValue,
-} from './animationStoreTypes.js';
 
 function createAnimationInitialState(): AnimationState {
   const settings = loadAnimationSettings();
@@ -113,10 +117,15 @@ function selectSessionState(state: AnimationStore): AnimationSessionState {
   };
 }
 
-function rememberActiveAnimation(id: AnimationState['activeAnimationId']): void {
-  useProjectStore.getState().updateProject((project) => {
-    project.lastActiveAnimationId = id;
-  }, { skipHistory: true });
+function rememberActiveAnimation(
+  id: AnimationState["activeAnimationId"],
+): void {
+  useProjectStore.getState().updateProject(
+    (project) => {
+      project.lastActiveAnimationId = id;
+    },
+    { skipHistory: true },
+  );
 }
 
 /**
@@ -143,69 +152,81 @@ export const useAnimationStore = create<AnimationStore>()((set, get) => ({
     for (const n of nodes) {
       const t = n.transform ?? {};
       rp.set(n.id, {
-        x:        t.x        ?? 0,
-        y:        t.y        ?? 0,
+        x: t.x ?? 0,
+        y: t.y ?? 0,
         rotation: t.rotation ?? 0,
-        scaleX:   t.scaleX   ?? 1,
-        scaleY:   t.scaleY   ?? 1,
-        opacity:  n.opacity  ?? 1,
+        scaleX: t.scaleX ?? 1,
+        scaleY: t.scaleY ?? 1,
+        opacity: n.opacity ?? 1,
       });
     }
     set({ restPose: rp });
   },
-  setFps:        (fps)   => set({ fps: Math.max(1, Math.round(fps)) }),
-  setSpeed:      (speed) => set({ speed: Math.max(0, Math.min(4, speed)) }),
-  setLoop:       (loop)  => set({ loop }),
+  setFps: (fps) => set({ fps: Math.max(1, Math.round(fps)) }),
+  setSpeed: (speed) => set({ speed: Math.max(0, Math.min(4, speed)) }),
+  setLoop: (loop) => set({ loop }),
   setLoopKeyframes: (loop) => set({ loopKeyframes: loop }),
 
-  setStartFrame: (f) => set((s) => ({
-    startFrame: Math.max(0, Math.round(f)),
-    // Clamp current time if needed
-    currentTime: Math.max((Math.max(0, Math.round(f)) / s.fps) * 1000, s.currentTime),
-  })),
+  setStartFrame: (f) =>
+    set((s) => ({
+      startFrame: Math.max(0, Math.round(f)),
+      // Clamp current time if needed
+      currentTime: Math.max(
+        (Math.max(0, Math.round(f)) / s.fps) * 1000,
+        s.currentTime,
+      ),
+    })),
 
-  setEndFrame: (f) => set((s) => ({
-    endFrame: Math.max(s.startFrame + 1, Math.round(f)),
-  })),
+  setEndFrame: (f) =>
+    set((s) => ({
+      endFrame: Math.max(s.startFrame + 1, Math.round(f)),
+    })),
 
   // ── Draft pose actions ────────────────────────────────────────────────────
 
   /** Merge props into the draft override for one node. */
-  setDraftPose: (nodeId, props) => set((s) => {
-    const next: DraftPose = new Map(s.draftPose);
-    next.set(nodeId, { ...(next.get(nodeId) ?? {}), ...props });
-    return { draftPose: next };
-  }),
+  setDraftPose: (nodeId, props) =>
+    set((s) => {
+      const next: DraftPose = new Map(s.draftPose);
+      next.set(nodeId, { ...(next.get(nodeId) ?? {}), ...props });
+      return { draftPose: next };
+    }),
 
   /** Remove one node's draft (called after K commits it). */
-  clearDraftPoseForNode: (nodeId) => set((s) => {
-    const next: DraftPose = new Map(s.draftPose);
-    next.delete(nodeId);
-    const authNext: DraftAuthoring = new Map(s.draftAuthoring);
-    authNext.delete(nodeId);
-    return { draftPose: next, draftAuthoring: authNext };
-  }),
+  clearDraftPoseForNode: (nodeId) =>
+    set((s) => {
+      const next: DraftPose = new Map(s.draftPose);
+      next.delete(nodeId);
+      const authNext: DraftAuthoring = new Map(s.draftAuthoring);
+      authNext.delete(nodeId);
+      return { draftPose: next, draftAuthoring: authNext };
+    }),
 
   /** Clear all drafts (called on seek / stop). */
-  clearDraftPose: () => set({ draftPose: new Map(), draftAuthoring: new Map() }),
+  clearDraftPose: () =>
+    set({ draftPose: new Map(), draftAuthoring: new Map() }),
 
   // ── Draft authoring metadata ─────────────────────────────────────────────
 
   /** Set provenance metadata for one target's property. */
-  setDraftAuthoring: (targetId, property, meta) => set((s) => {
-    const next: DraftAuthoring = new Map(s.draftAuthoring);
-    const targetMeta: DraftAuthoringByProperty = { ...(next.get(targetId) ?? {}) };
-    targetMeta[property] = meta;
-    next.set(targetId, targetMeta);
-    return { draftAuthoring: next };
-  }),
+  setDraftAuthoring: (targetId, property, meta) =>
+    set((s) => {
+      const next: DraftAuthoring = new Map(s.draftAuthoring);
+      const targetMeta: DraftAuthoringByProperty = {
+        ...(next.get(targetId) ?? {}),
+      };
+      targetMeta[property] = meta;
+      next.set(targetId, targetMeta);
+      return { draftAuthoring: next };
+    }),
 
   /** Clear draft authoring for a target. */
-  clearDraftAuthoringForNode: (targetId) => set((s) => {
-    const next: DraftAuthoring = new Map(s.draftAuthoring);
-    next.delete(targetId);
-    return { draftAuthoring: next };
-  }),
+  clearDraftAuthoringForNode: (targetId) =>
+    set((s) => {
+      const next: DraftAuthoring = new Map(s.draftAuthoring);
+      next.delete(targetId);
+      return { draftAuthoring: next };
+    }),
 
   /** Clear all draft authoring metadata. */
   clearDraftAuthoring: () => set({ draftAuthoring: new Map() }),
@@ -235,15 +256,17 @@ export const useAnimationStore = create<AnimationStore>()((set, get) => ({
   setDraftContext: (ctx) => set({ draftContext: ctx }),
 
   /** Mark draft as dirty and bump revision. */
-  markDraftDirty: () => set((s) => ({
-    draftDirty: true,
-    draftRevision: s.draftRevision + 1,
-  })),
+  markDraftDirty: () =>
+    set((s) => ({
+      draftDirty: true,
+      draftRevision: s.draftRevision + 1,
+    })),
 
-  restoreDraftMetadata: (draftDirty, draftRevision) => set({
-    draftDirty,
-    draftRevision,
-  }),
+  restoreDraftMetadata: (draftDirty, draftRevision) =>
+    set({
+      draftDirty,
+      draftRevision,
+    }),
 
   /** Snapshot the current draftPose for cancel/restore. */
   snapshotDraftPose: () => {
@@ -265,43 +288,52 @@ export const useAnimationStore = create<AnimationStore>()((set, get) => ({
   },
 
   /** Selective clear: remove committed channels from draft and authoring. */
-  clearDraftChannelsForTargets: (targetIds) => set((s) => {
-    const next: DraftPose = new Map(s.draftPose);
-    const authNext: DraftAuthoring = new Map(s.draftAuthoring);
-    for (const id of targetIds) {
-      next.delete(id);
-      authNext.delete(id);
-    }
-    return { draftPose: next, draftAuthoring: authNext, draftDirty: next.size > 0 };
-  }),
+  clearDraftChannelsForTargets: (targetIds) =>
+    set((s) => {
+      const next: DraftPose = new Map(s.draftPose);
+      const authNext: DraftAuthoring = new Map(s.draftAuthoring);
+      for (const id of targetIds) {
+        next.delete(id);
+        authNext.delete(id);
+      }
+      return {
+        draftPose: next,
+        draftAuthoring: authNext,
+        draftDirty: next.size > 0,
+      };
+    }),
 
   /** Full commit: clear context + draft + authoring. */
-  commitDraft: () => set({
-    draftContext: null,
-    draftDirty: false,
-    draftPose: new Map(),
-    draftAuthoring: new Map(),
-  }),
+  commitDraft: () =>
+    set({
+      draftContext: null,
+      draftDirty: false,
+      draftPose: new Map(),
+      draftAuthoring: new Map(),
+    }),
 
   // ── Transport ─────────────────────────────────────────────────────────────
 
   play: () => set({ isPlaying: true, _lastTimestamp: null }),
   pause: () => set({ isPlaying: false, _lastTimestamp: null }),
 
-  stop: () => set((s) => ({
-    isPlaying: false,
-    currentTime: frameToTime(s.startFrame, s.fps),
-    _lastTimestamp: null,
-    loopCount: 0,
-  })),
+  stop: () =>
+    set((s) => ({
+      isPlaying: false,
+      currentTime: frameToTime(s.startFrame, s.fps),
+      _lastTimestamp: null,
+      loopCount: 0,
+    })),
 
-  seekFrame: (frame) => set((s) => ({
-    currentTime: frameToTime(frame, s.fps),
-    _lastTimestamp: null,
-    loopCount: 0,
-  })),
+  seekFrame: (frame) =>
+    set((s) => ({
+      currentTime: frameToTime(frame, s.fps),
+      _lastTimestamp: null,
+      loopCount: 0,
+    })),
 
-  seekTime: (ms) => set({ currentTime: ms, _lastTimestamp: null, loopCount: 0 }),
+  seekTime: (ms) =>
+    set({ currentTime: ms, _lastTimestamp: null, loopCount: 0 }),
 
   // ── rAF tick ──────────────────────────────────────────────────────────────
   /**
@@ -311,16 +343,19 @@ export const useAnimationStore = create<AnimationStore>()((set, get) => ({
   tick: (timestamp) => {
     const s = get();
     if (!s.isPlaying) return false;
-    const next = advanceTransport({
-      currentTime: s.currentTime,
-      lastTimestamp: s._lastTimestamp,
-      isPlaying: s.isPlaying,
-      loop: s.loop,
-      speed: s.speed,
-      startFrame: s.startFrame,
-      endFrame: s.endFrame,
-      fps: s.fps,
-    }, timestamp);
+    const next = advanceTransport(
+      {
+        currentTime: s.currentTime,
+        lastTimestamp: s._lastTimestamp,
+        isPlaying: s.isPlaying,
+        loop: s.loop,
+        speed: s.speed,
+        startFrame: s.startFrame,
+        endFrame: s.endFrame,
+        fps: s.fps,
+      },
+      timestamp,
+    );
     set({
       currentTime: next.currentTime,
       isPlaying: next.isPlaying,
@@ -338,18 +373,18 @@ export const useAnimationStore = create<AnimationStore>()((set, get) => ({
     const session = activateSession(animation);
     set({
       activeAnimationId: session.activeAnimationId,
-      fps:               animation.fps ?? 24,
-      currentTime:       session.currentTimeMs,
-      isPlaying:         session.playing,
-      _lastTimestamp:    null,
-      draftPose:         session.draftPose,
-      draftAuthoring:    new Map(),
-      draftContext:      null,
-      draftDirty:        false,
-      draftRevision:     0,
-      loopCount:         0,
-      startFrame:        session.loopStartFrame,
-      endFrame:          session.loopEndFrame,
+      fps: animation.fps ?? 24,
+      currentTime: session.currentTimeMs,
+      isPlaying: session.playing,
+      _lastTimestamp: null,
+      draftPose: session.draftPose,
+      draftAuthoring: new Map(),
+      draftContext: null,
+      draftDirty: false,
+      draftRevision: 0,
+      loopCount: 0,
+      startFrame: session.loopStartFrame,
+      endFrame: session.loopEndFrame,
     });
     rememberActiveAnimation(session.activeAnimationId);
   },
@@ -369,12 +404,12 @@ export const useAnimationStore = create<AnimationStore>()((set, get) => ({
     const session = synchronizeSessionState(selectSessionState(s), clip);
     set({
       activeAnimationId: session.activeAnimationId,
-      currentTime:       session.currentTimeMs,
-      isPlaying:         session.playing,
-      fps:               clip?.fps ?? s.fps,
-      startFrame:        session.loopStartFrame,
-      endFrame:          session.loopEndFrame,
-      _lastTimestamp:     null,
+      currentTime: session.currentTimeMs,
+      isPlaying: session.playing,
+      fps: clip?.fps ?? s.fps,
+      startFrame: session.loopStartFrame,
+      endFrame: session.loopEndFrame,
+      _lastTimestamp: null,
     });
     rememberActiveAnimation(session.activeAnimationId);
   },
@@ -388,21 +423,27 @@ export const useAnimationStore = create<AnimationStore>()((set, get) => ({
     const s = get();
     const project = useProjectStore.getState().project;
     const session = reconcileSessionState(project, selectSessionState(s));
-    const activeClip = project.animations?.find((a) => a.id === session.activeAnimationId);
+    const activeClip = project.animations?.find(
+      (a) => a.id === session.activeAnimationId,
+    );
     const clipChanged = session.activeAnimationId !== s.activeAnimationId;
     const draftForeign = clipChanged && s.draftDirty && s.draftPose.size > 0;
     set({
       activeAnimationId: session.activeAnimationId,
-      currentTime:       session.currentTimeMs,
-      isPlaying:         session.playing,
-      fps:               activeClip?.fps ?? s.fps,
-      _lastTimestamp:    null,
-      draftPose:         draftForeign ? new Map<AnimationTargetId, DraftPoseValue>() : session.draftPose,
-      draftAuthoring:    draftForeign ? new Map<AnimationTargetId, DraftAuthoringByProperty>() : s.draftAuthoring,
-      draftContext:      draftForeign ? null : s.draftContext,
-      draftDirty:        draftForeign ? false : s.draftDirty,
-      startFrame:        session.loopStartFrame,
-      endFrame:          session.loopEndFrame,
+      currentTime: session.currentTimeMs,
+      isPlaying: session.playing,
+      fps: activeClip?.fps ?? s.fps,
+      _lastTimestamp: null,
+      draftPose: draftForeign
+        ? new Map<AnimationTargetId, DraftPoseValue>()
+        : session.draftPose,
+      draftAuthoring: draftForeign
+        ? new Map<AnimationTargetId, DraftAuthoringByProperty>()
+        : s.draftAuthoring,
+      draftContext: draftForeign ? null : s.draftContext,
+      draftDirty: draftForeign ? false : s.draftDirty,
+      startFrame: session.loopStartFrame,
+      endFrame: session.loopEndFrame,
     });
     rememberActiveAnimation(session.activeAnimationId);
   },

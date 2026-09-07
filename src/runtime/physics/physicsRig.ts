@@ -1,9 +1,14 @@
-import type { BoneId } from '@kukla2d/contracts';
+import type { BoneId } from "@kukla2d/contracts";
 
-import { isRecord } from '@/lib/guards';
-import { isFiniteNumber } from '@/lib/math';
+import { isRecord } from "@/lib/guards";
+import { isFiniteNumber } from "@/lib/math";
 
-export interface Vector2 { x: number; y: number }
+import type {
+  PhysicsOutput,
+  PhysicsRig,
+  PhysicsRigDiagnostic,
+  Vector2,
+} from "./physicsRig.types.js";
 
 interface PhysicsParticle {
   id: string;
@@ -23,39 +28,23 @@ interface PhysicsLink {
   stiffness: number;
 }
 
-export type PhysicsOutput =
-  | { type: 'rotation'; boneId: BoneId; mix: number; rootParticleId?: string; particleId: string }
-  | { type: 'translation'; boneId: BoneId; mix: number; rootParticleId?: string; particleId: string };
-
-export interface PhysicsRig {
-  id: string;
-  name: string;
-  particles: PhysicsParticle[];
-  links: PhysicsLink[];
-  outputs: PhysicsOutput[];
-  gravity: Vector2;
-  wind: Vector2;
-  iterations: number;
-  tags: string[];
-  /** Solver-owned fixed-step remainder. */
-  _accumulator?: number;
-}
-
-export type PhysicsRigDiagnostic =
-  | { code: 'EMPTY_RIG' }
-  | { code: 'DUPLICATE_PARTICLE_ID'; particleId: string }
-  | { code: 'MISSING_LINK_PARTICLE'; particleId: string }
-  | { code: 'MISSING_OUTPUT_PARTICLE'; particleId: string }
-  | { code: 'INVALID_NUMERIC_VALUE'; field: string };
-
-export type PhysicsRigValidation =
+type PhysicsRigValidation =
   | { ok: true; rig: PhysicsRig; diagnostics: readonly [] }
   | { ok: false; diagnostics: readonly PhysicsRigDiagnostic[] };
 
 export function validatePhysicsRig(value: unknown): PhysicsRigValidation {
-  if (!isRecord(value) || !Array.isArray(value.particles) || !Array.isArray(value.links)
-    || !Array.isArray(value.outputs) || typeof value.id !== 'string' || typeof value.name !== 'string') {
-    return { ok: false, diagnostics: [{ code: 'INVALID_NUMERIC_VALUE', field: 'rig shape' }] };
+  if (
+    !isRecord(value) ||
+    !Array.isArray(value.particles) ||
+    !Array.isArray(value.links) ||
+    !Array.isArray(value.outputs) ||
+    typeof value.id !== "string" ||
+    typeof value.name !== "string"
+  ) {
+    return {
+      ok: false,
+      diagnostics: [{ code: "INVALID_NUMERIC_VALUE", field: "rig shape" }],
+    };
   }
 
   const particles: PhysicsParticle[] = [];
@@ -64,10 +53,14 @@ export function validatePhysicsRig(value: unknown): PhysicsRigValidation {
   for (const candidate of value.particles) {
     const particle = parseParticle(candidate);
     if (!particle) {
-      diagnostics.push({ code: 'INVALID_NUMERIC_VALUE', field: 'particle' });
+      diagnostics.push({ code: "INVALID_NUMERIC_VALUE", field: "particle" });
       continue;
     }
-    if (particleIds.has(particle.id)) diagnostics.push({ code: 'DUPLICATE_PARTICLE_ID', particleId: particle.id });
+    if (particleIds.has(particle.id))
+      diagnostics.push({
+        code: "DUPLICATE_PARTICLE_ID",
+        particleId: particle.id,
+      });
     particleIds.add(particle.id);
     particles.push(particle);
   }
@@ -76,11 +69,12 @@ export function validatePhysicsRig(value: unknown): PhysicsRigValidation {
   for (const candidate of value.links) {
     const link = parseLink(candidate);
     if (!link) {
-      diagnostics.push({ code: 'INVALID_NUMERIC_VALUE', field: 'link' });
+      diagnostics.push({ code: "INVALID_NUMERIC_VALUE", field: "link" });
       continue;
     }
     for (const particleId of [link.fromParticleId, link.toParticleId]) {
-      if (!particleIds.has(particleId)) diagnostics.push({ code: 'MISSING_LINK_PARTICLE', particleId });
+      if (!particleIds.has(particleId))
+        diagnostics.push({ code: "MISSING_LINK_PARTICLE", particleId });
     }
     links.push(link);
   }
@@ -89,26 +83,37 @@ export function validatePhysicsRig(value: unknown): PhysicsRigValidation {
   for (const candidate of value.outputs) {
     const output = parseOutput(candidate);
     if (!output) {
-      diagnostics.push({ code: 'INVALID_NUMERIC_VALUE', field: 'output' });
+      diagnostics.push({ code: "INVALID_NUMERIC_VALUE", field: "output" });
       continue;
     }
     if (!particleIds.has(output.particleId)) {
-      diagnostics.push({ code: 'MISSING_OUTPUT_PARTICLE', particleId: output.particleId });
+      diagnostics.push({
+        code: "MISSING_OUTPUT_PARTICLE",
+        particleId: output.particleId,
+      });
     }
     outputs.push(output);
   }
 
   if (particles.length < 2 || links.length === 0 || outputs.length === 0) {
-    diagnostics.push({ code: 'EMPTY_RIG' });
+    diagnostics.push({ code: "EMPTY_RIG" });
   }
 
   const gravity = parseVector(value.gravity);
   const wind = parseVector(value.wind);
   const iterations = value.iterations;
   if (!gravity || !wind || !isFiniteNumber(iterations) || iterations < 1) {
-    diagnostics.push({ code: 'INVALID_NUMERIC_VALUE', field: 'solver settings' });
+    diagnostics.push({
+      code: "INVALID_NUMERIC_VALUE",
+      field: "solver settings",
+    });
   }
-  if (diagnostics.length > 0 || !gravity || !wind || !isFiniteNumber(iterations)) {
+  if (
+    diagnostics.length > 0 ||
+    !gravity ||
+    !wind ||
+    !isFiniteNumber(iterations)
+  ) {
     return { ok: false, diagnostics };
   }
   return {
@@ -124,7 +129,9 @@ export function validatePhysicsRig(value: unknown): PhysicsRigValidation {
       wind,
       iterations: Math.floor(iterations),
       tags: Array.isArray(value.tags) ? value.tags.filter(isString) : [],
-      ...(isFiniteNumber(value._accumulator) ? { _accumulator: value._accumulator } : {}),
+      ...(isFiniteNumber(value._accumulator)
+        ? { _accumulator: value._accumulator }
+        : {}),
     },
   };
 }
@@ -137,7 +144,10 @@ export function createPendulumChain(
   segments: number,
   tags: readonly string[],
 ): PhysicsRig {
-  const segmentCount = Math.max(1, Math.floor(Number.isFinite(segments) ? segments : 1));
+  const segmentCount = Math.max(
+    1,
+    Math.floor(Number.isFinite(segments) ? segments : 1),
+  );
   const segmentLength = boneLength / segmentCount;
   const particles: PhysicsParticle[] = [];
   const links: PhysicsLink[] = [];
@@ -166,13 +176,15 @@ export function createPendulumChain(
     name,
     particles,
     links,
-    outputs: [{
-      type: 'rotation',
-      boneId,
-      mix: 1,
-      rootParticleId: `${id}_p0`,
-      particleId: `${id}_p${segmentCount}`,
-    }],
+    outputs: [
+      {
+        type: "rotation",
+        boneId,
+        mix: 1,
+        rootParticleId: `${id}_p0`,
+        particleId: `${id}_p${segmentCount}`,
+      },
+    ],
     gravity: { x: 0, y: -980 },
     wind: { x: 0, y: 0 },
     iterations: 8,
@@ -181,10 +193,21 @@ export function createPendulumChain(
 }
 
 function parseParticle(value: unknown): PhysicsParticle | null {
-  if (!isRecord(value) || typeof value.id !== 'string' || typeof value.pinned !== 'boolean') return null;
-  if (!isFiniteNumber(value.x) || !isFiniteNumber(value.y)
-    || !isFiniteNumber(value.prevX) || !isFiniteNumber(value.prevY)
-    || !isFiniteNumber(value.mass) || !isFiniteNumber(value.damping)) return null;
+  if (
+    !isRecord(value) ||
+    typeof value.id !== "string" ||
+    typeof value.pinned !== "boolean"
+  )
+    return null;
+  if (
+    !isFiniteNumber(value.x) ||
+    !isFiniteNumber(value.y) ||
+    !isFiniteNumber(value.prevX) ||
+    !isFiniteNumber(value.prevY) ||
+    !isFiniteNumber(value.mass) ||
+    !isFiniteNumber(value.damping)
+  )
+    return null;
   return {
     id: value.id,
     x: value.x,
@@ -198,8 +221,14 @@ function parseParticle(value: unknown): PhysicsParticle | null {
 }
 
 function parseLink(value: unknown): PhysicsLink | null {
-  if (!isRecord(value) || typeof value.fromParticleId !== 'string' || typeof value.toParticleId !== 'string'
-    || !isFiniteNumber(value.restLength) || !isFiniteNumber(value.stiffness)) return null;
+  if (
+    !isRecord(value) ||
+    typeof value.fromParticleId !== "string" ||
+    typeof value.toParticleId !== "string" ||
+    !isFiniteNumber(value.restLength) ||
+    !isFiniteNumber(value.stiffness)
+  )
+    return null;
   return {
     fromParticleId: value.fromParticleId,
     toParticleId: value.toParticleId,
@@ -209,17 +238,25 @@ function parseLink(value: unknown): PhysicsLink | null {
 }
 
 function parseOutput(value: unknown): PhysicsOutput | null {
-  if (!isRecord(value) || (value.type !== 'rotation' && value.type !== 'translation')
-    || typeof value.boneId !== 'string' || typeof value.particleId !== 'string' || !isFiniteNumber(value.mix)) return null;
+  if (
+    !isRecord(value) ||
+    (value.type !== "rotation" && value.type !== "translation") ||
+    typeof value.boneId !== "string" ||
+    typeof value.particleId !== "string" ||
+    !isFiniteNumber(value.mix)
+  )
+    return null;
   const shared = {
     boneId: value.boneId as BoneId,
     mix: value.mix,
     particleId: value.particleId,
-    ...(typeof value.rootParticleId === 'string' ? { rootParticleId: value.rootParticleId } : {}),
+    ...(typeof value.rootParticleId === "string"
+      ? { rootParticleId: value.rootParticleId }
+      : {}),
   };
-  return value.type === 'rotation'
-    ? { type: 'rotation', ...shared }
-    : { type: 'translation', ...shared };
+  return value.type === "rotation"
+    ? { type: "rotation", ...shared }
+    : { type: "translation", ...shared };
 }
 
 function parseVector(value: unknown): Vector2 | null {
@@ -228,4 +265,6 @@ function parseVector(value: unknown): Vector2 | null {
     : null;
 }
 
-function isString(value: unknown): value is string { return typeof value === 'string'; }
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}

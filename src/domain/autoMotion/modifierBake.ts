@@ -1,19 +1,35 @@
-import { toAnimationTargetId, type Animation, type AnimationModifier } from '@kukla2d/contracts';
+import {
+  toAnimationTargetId,
+  type Animation,
+  type AnimationModifier,
+} from "@kukla2d/contracts";
 
-import { evaluateTimeDriver } from './modifierEvaluation.js';
+import { evaluateTimeDriver } from "./modifierEvaluation.js";
 
-import type { AnimationKeyframeInput } from '../animationCommandTypes.js';
+import type { AnimationKeyframeInput } from "../animationCommandTypes.types.js";
 
-const SUPPORTED_OUTPUT_KINDS = new Set(['blendShapeValue', 'nodeTransform', 'boneTransform']);
-const TRANSFORM_CHANNELS = ['x', 'y', 'rotation', 'scaleX', 'scaleY'];
+const SUPPORTED_OUTPUT_KINDS = new Set([
+  "blendShapeValue",
+  "nodeTransform",
+  "boneTransform",
+]);
+const TRANSFORM_CHANNELS = ["x", "y", "rotation", "scaleX", "scaleY"];
 
-export function createBakeKeyframes({ modifier, clip }: {
+export function createBakeKeyframes({
+  modifier,
+  clip,
+}: {
   modifier: AnimationModifier | null | undefined;
   clip: Animation | null | undefined;
 }): AnimationKeyframeInput[] {
   if (!modifier || !clip) return [];
-  if (modifier.driver?.kind !== 'time') return [];
-  if (!modifier.driver?.periodMs || !isFinite(modifier.driver.periodMs) || modifier.driver.periodMs <= 0) return [];
+  if (modifier.driver?.kind !== "time") return [];
+  if (
+    !modifier.driver?.periodMs ||
+    !isFinite(modifier.driver.periodMs) ||
+    modifier.driver.periodMs <= 0
+  )
+    return [];
   if (!clip.duration || clip.duration <= 0) return [];
 
   const period = modifier.driver.periodMs;
@@ -30,10 +46,10 @@ export function createBakeKeyframes({ modifier, clip }: {
 
       const driver01 = evaluateTimeDriver(modifier.driver, t);
 
-      for (const output of (modifier.outputs ?? [])) {
+      for (const output of modifier.outputs ?? []) {
         if (!SUPPORTED_OUTPUT_KINDS.has(output.kind)) continue;
 
-        if (output.kind === 'blendShapeValue') {
+        if (output.kind === "blendShapeValue") {
           if (!output.property) continue;
           const amount = modifier.params?.[output.property] ?? 1;
           const value = Math.max(0, Math.min(1, driver01 * amount * strength));
@@ -42,9 +58,9 @@ export function createBakeKeyframes({ modifier, clip }: {
             property: `blendShape:${output.property}`,
             timeMs: t,
             value,
-            easing: 'ease-both',
+            easing: "ease-both",
           });
-        } else if (output.kind === 'nodeTransform') {
+        } else if (output.kind === "nodeTransform") {
           if (!TRANSFORM_CHANNELS.includes(output.property)) continue;
           const amount = getTransformAmount(modifier.params, output.property);
           const value = driver01 * amount * strength;
@@ -53,9 +69,9 @@ export function createBakeKeyframes({ modifier, clip }: {
             property: output.property,
             timeMs: t,
             value,
-            easing: 'ease-both',
+            easing: "ease-both",
           });
-        } else if (output.kind === 'boneTransform') {
+        } else if (output.kind === "boneTransform") {
           if (!TRANSFORM_CHANNELS.includes(output.property)) continue;
           const amount = getTransformAmount(modifier.params, output.property);
           const value = driver01 * amount * strength;
@@ -64,7 +80,7 @@ export function createBakeKeyframes({ modifier, clip }: {
             property: output.property,
             timeMs: t,
             value,
-            easing: 'ease-both',
+            easing: "ease-both",
           });
         }
       }
@@ -75,11 +91,15 @@ export function createBakeKeyframes({ modifier, clip }: {
   return keyframes;
 }
 
-function getTransformAmount(params: Record<string, number> = {}, property: string): number {
+function getTransformAmount(
+  params: Record<string, number> = {},
+  property: string,
+): number {
   const pixelAmount = params[`${property}Px`];
   if (pixelAmount !== undefined) return pixelAmount;
   const directAmount = params[property];
   if (directAmount !== undefined) return directAmount;
-  if (property === 'y' && params.verticalLiftPx !== undefined) return params.verticalLiftPx;
+  if (property === "y" && params.verticalLiftPx !== undefined)
+    return params.verticalLiftPx;
   return 1;
 }

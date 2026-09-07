@@ -7,14 +7,15 @@ import type {
   ProjectDocument,
   TimeDriver,
   Vertex,
-} from '@kukla2d/contracts';
+} from "@kukla2d/contracts";
 
-import { clampFiniteNumber } from '@/lib/math';
+import { clampFiniteNumber } from "@/lib/math";
 
-import type { BoundingBox } from './autoMotionTypes.js';
+import type { BoundingBox } from "./autoMotionTypes.types.js";
+
+type ModifierPoseOverrides = Map<string, Record<string, unknown>>;
 
 type PosePartial = Record<string, Record<string, unknown>>;
-export type ModifierPoseOverrides = Map<string, Record<string, unknown>>;
 
 type OutputEvaluator = (
   output: ModifierOutput,
@@ -23,33 +24,40 @@ type OutputEvaluator = (
   project: ProjectDocument,
 ) => PosePartial | null;
 
-export function evaluateTimeDriver(driver: TimeDriver | null | undefined, timeMs: number): number {
-  if (!driver || driver.kind !== 'time') return 0;
+export function evaluateTimeDriver(
+  driver: TimeDriver | null | undefined,
+  timeMs: number,
+): number {
+  if (!driver || driver.kind !== "time") return 0;
   const { periodMs, phase, curve } = driver;
   if (!periodMs || !isFinite(periodMs) || periodMs <= 0) return 0;
   if (!isFinite(timeMs)) return 0;
 
   const phaseOffset = isFinite(phase) ? phase : 0;
-  const t = ((timeMs / periodMs) + (phaseOffset / (2 * Math.PI))) % 1;
+  const t = (timeMs / periodMs + phaseOffset / (2 * Math.PI)) % 1;
   const raw = (t + 1) % 1;
 
   switch (curve) {
-    case 'sine':
+    case "sine":
       return (Math.sin(raw * 2 * Math.PI - Math.PI / 2) + 1) / 2;
-    case 'triangle':
+    case "triangle":
       return raw < 0.5 ? raw * 2 : 2 - raw * 2;
-    case 'easeInOutSine':
+    case "easeInOutSine":
       return (Math.cos(raw * Math.PI) * -1 + 1) / 2;
     default:
       return raw;
   }
 }
 
-function isModifierActive(modifier: AnimationModifier, activeAnimationId: string | null | undefined): boolean {
+function isModifierActive(
+  modifier: AnimationModifier,
+  activeAnimationId: string | null | undefined,
+): boolean {
   if (modifier.enabled === false) return false;
   if (modifier.muted === true) return false;
-  if (modifier.scope === 'clip') {
-    if (!activeAnimationId || modifier.clipId !== activeAnimationId) return false;
+  if (modifier.scope === "clip") {
+    if (!activeAnimationId || modifier.clipId !== activeAnimationId)
+      return false;
   }
   return true;
 }
@@ -61,16 +69,22 @@ function evaluateBlendShapeOutput(
   project: ProjectDocument,
 ): PosePartial | null {
   const targetKey = output.targetId;
-  const targetNode = project.nodes.find((node): node is PartNode => node.id === targetKey && node.type === 'part');
+  const targetNode = project.nodes.find(
+    (node): node is PartNode => node.id === targetKey && node.type === "part",
+  );
   if (!targetNode) return null;
 
   const strength = modifier.params?.strength ?? 1;
-  const amount = output.property ? (modifier.params?.[output.property] ?? 1) : 1;
+  const amount = output.property
+    ? (modifier.params?.[output.property] ?? 1)
+    : 1;
   const additive = driver01 * amount * strength;
 
   if (!targetNode.blendShapes?.length) return null;
 
-  const shapeExists = targetNode.blendShapes.some(s => s.id === output.property);
+  const shapeExists = targetNode.blendShapes.some(
+    (s) => s.id === output.property,
+  );
   if (!shapeExists) return null;
 
   const existing = targetNode.blendShapeValues?.[output.property] ?? 0;
@@ -86,7 +100,7 @@ function evaluateNodeTransformOutput(
   project: ProjectDocument,
 ): PosePartial | null {
   const targetKey = output.targetId;
-  const targetNode = (project.nodes ?? []).find(n => n.id === targetKey);
+  const targetNode = (project.nodes ?? []).find((n) => n.id === targetKey);
   if (!targetNode) return null;
 
   const strength = modifier.params?.strength ?? 1;
@@ -94,22 +108,30 @@ function evaluateNodeTransformOutput(
   const amount = getTransformAmount(modifier.params, property);
   const additive = driver01 * amount * strength;
 
-  const transformProps = ['x', 'y', 'scaleX', 'scaleY', 'rotation'];
+  const transformProps = ["x", "y", "scaleX", "scaleY", "rotation"];
   if (!transformProps.includes(property)) return null;
 
   const partial: PosePartial = { [targetKey]: { [property]: additive } };
-  if (targetNode.type === 'part' && targetNode.boneId && ['x', 'y'].includes(property)) {
+  if (
+    targetNode.type === "part" &&
+    targetNode.boneId &&
+    ["x", "y"].includes(property)
+  ) {
     partial[targetNode.boneId] = { [property]: additive };
   }
   return partial;
 }
 
-function getTransformAmount(params: Record<string, number> = {}, property: string): number {
+function getTransformAmount(
+  params: Record<string, number> = {},
+  property: string,
+): number {
   const pixelAmount = params[`${property}Px`];
   if (pixelAmount !== undefined) return pixelAmount;
   const directAmount = params[property];
   if (directAmount !== undefined) return directAmount;
-  if (property === 'y' && params.verticalLiftPx !== undefined) return params.verticalLiftPx;
+  if (property === "y" && params.verticalLiftPx !== undefined)
+    return params.verticalLiftPx;
   return 1;
 }
 
@@ -122,7 +144,13 @@ function computeBBox(vertices: readonly Vertex[]): BoundingBox {
   for (const v of vertices) {
     const x = Number.isFinite(v.x) ? v.x : v.restX;
     const y = Number.isFinite(v.y) ? v.y : v.restY;
-    if (typeof x !== 'number' || !Number.isFinite(x) || typeof y !== 'number' || !Number.isFinite(y)) continue;
+    if (
+      typeof x !== "number" ||
+      !Number.isFinite(x) ||
+      typeof y !== "number" ||
+      !Number.isFinite(y)
+    )
+      continue;
     if (x < minX) minX = x;
     if (y < minY) minY = y;
     if (x > maxX) maxX = x;
@@ -143,8 +171,8 @@ function vertexXY(vertex: Vertex): { x: number; y: number } {
   const x = Number.isFinite(vertex.x) ? vertex.x : vertex.restX;
   const y = Number.isFinite(vertex.y) ? vertex.y : vertex.restY;
   return {
-    x: typeof x === 'number' && Number.isFinite(x) ? x : 0,
-    y: typeof y === 'number' && Number.isFinite(y) ? y : 0,
+    x: typeof x === "number" && Number.isFinite(x) ? x : 0,
+    y: typeof y === "number" && Number.isFinite(y) ? y : 0,
   };
 }
 
@@ -164,7 +192,7 @@ function evaluateIdleBreathingMesh(
   const centerX = (bbox.minX + bbox.maxX) / 2;
   const centerY = (bbox.minY + bbox.maxY) / 2;
 
-  return vertices.map(v => {
+  return vertices.map((v) => {
     const { x, y } = vertexXY(v);
     const nx = (x - centerX) / width;
     const ny = (y - centerY) / height;
@@ -189,14 +217,19 @@ function evaluateCheekJiggleMesh(
   const bbox = computeBBox(vertices);
   const width = bbox.maxX - bbox.minX || 1;
   const height = bbox.maxY - bbox.minY || 1;
-  const hasPoint = Number.isFinite(params.cheekPointX) && Number.isFinite(params.cheekPointY);
+  const hasPoint =
+    Number.isFinite(params.cheekPointX) && Number.isFinite(params.cheekPointY);
   const focusX = hasPoint ? params.cheekPointX! : bbox.minX + width * 0.68;
   const focusY = hasPoint ? params.cheekPointY! : bbox.minY + height * 0.58;
   const side = hasPoint
-    ? (focusX < bbox.minX + width * 0.45 ? -1 : (focusX > bbox.minX + width * 0.55 ? 1 : 0))
+    ? focusX < bbox.minX + width * 0.45
+      ? -1
+      : focusX > bbox.minX + width * 0.55
+        ? 1
+        : 0
     : resolveCheekSide(params.cheekSide ?? 1);
 
-  return vertices.map(v => {
+  return vertices.map((v) => {
     const { x, y } = vertexXY(v);
     const dx = (x - focusX) / width;
     const dy = (y - focusY) / height;
@@ -206,7 +239,13 @@ function evaluateCheekJiggleMesh(
     const direction = side === 0 ? (x < focusX ? -1 : 1) : side;
     return {
       x: x + direction * jigglePx * falloff * signal,
-      y: y + Math.max(0, 1 - Math.abs(dy) / radius) * jigglePx * 0.35 * falloff * signal,
+      y:
+        y +
+        Math.max(0, 1 - Math.abs(dy) / radius) *
+          jigglePx *
+          0.35 *
+          falloff *
+          signal,
     };
   });
 }
@@ -217,16 +256,27 @@ function evaluateMeshDeltaOutput(
   modifier: AnimationModifier,
   project: ProjectDocument,
 ): PosePartial | null {
-  const targetNode = project.nodes.find((node): node is PartNode => node.id === output.targetId && node.type === 'part');
+  const targetNode = project.nodes.find(
+    (node): node is PartNode =>
+      node.id === output.targetId && node.type === "part",
+  );
   const vertices = targetNode?.mesh?.vertices;
   if (!Array.isArray(vertices) || vertices.length < 3) return null;
 
-  if (modifier.presetId === 'builtin.idleBreathing') {
-    return { [output.targetId]: { mesh_verts: evaluateIdleBreathingMesh(vertices, driver01, modifier) } };
+  if (modifier.presetId === "builtin.idleBreathing") {
+    return {
+      [output.targetId]: {
+        mesh_verts: evaluateIdleBreathingMesh(vertices, driver01, modifier),
+      },
+    };
   }
 
-  if (modifier.presetId === 'builtin.headCheekJiggle') {
-    return { [output.targetId]: { mesh_verts: evaluateCheekJiggleMesh(vertices, driver01, modifier) } };
+  if (modifier.presetId === "builtin.headCheekJiggle") {
+    return {
+      [output.targetId]: {
+        mesh_verts: evaluateCheekJiggleMesh(vertices, driver01, modifier),
+      },
+    };
   }
 
   return null;
@@ -239,7 +289,7 @@ function evaluateBoneTransformOutput(
   project: ProjectDocument,
 ): PosePartial | null {
   const targetKey = output.targetId;
-  const targetBone = (project.bones ?? []).find(b => b.id === targetKey);
+  const targetBone = (project.bones ?? []).find((b) => b.id === targetKey);
   if (!targetBone) return null;
 
   const strength = modifier.params?.strength ?? 1;
@@ -249,14 +299,21 @@ function evaluateBoneTransformOutput(
   return { [targetKey]: { [output.property]: additive } };
 }
 
-const outputEvaluators: Partial<Record<ModifierOutput['kind'], OutputEvaluator>> = {
+const outputEvaluators: Partial<
+  Record<ModifierOutput["kind"], OutputEvaluator>
+> = {
   blendShapeValue: evaluateBlendShapeOutput,
   nodeTransform: evaluateNodeTransformOutput,
   boneTransform: evaluateBoneTransformOutput,
   meshDelta: evaluateMeshDeltaOutput,
 };
 
-export function evaluateAnimationModifiers({ project, activeAnimationId, timeMs, previewModifierDraft }: {
+export function evaluateAnimationModifiers({
+  project,
+  activeAnimationId,
+  timeMs,
+  previewModifierDraft,
+}: {
   project: ProjectDocument | null | undefined;
   activeAnimationId?: string | null;
   timeMs: number;
@@ -268,16 +325,24 @@ export function evaluateAnimationModifiers({ project, activeAnimationId, timeMs,
   const sortedModifiers: AnimationModifier[] = [];
   const allModifiers = [...(project.animationModifiers ?? [])];
 
-  if (previewModifierDraft && !allModifiers.some(m => m.id === previewModifierDraft.id)) {
+  if (
+    previewModifierDraft &&
+    !allModifiers.some((m) => m.id === previewModifierDraft.id)
+  ) {
     allModifiers.push(previewModifierDraft);
   }
 
   for (const modifier of allModifiers) {
     if (!isModifierActive(modifier, activeAnimationId)) continue;
 
-    if (modifier.category !== 'loop') continue;
-    if (modifier.driver?.kind !== 'time') continue;
-    if (!modifier.driver?.periodMs || !isFinite(modifier.driver.periodMs) || modifier.driver.periodMs <= 0) continue;
+    if (modifier.category !== "loop") continue;
+    if (modifier.driver?.kind !== "time") continue;
+    if (
+      !modifier.driver?.periodMs ||
+      !isFinite(modifier.driver.periodMs) ||
+      modifier.driver.periodMs <= 0
+    )
+      continue;
 
     sortedModifiers.push(modifier);
   }
@@ -285,10 +350,10 @@ export function evaluateAnimationModifiers({ project, activeAnimationId, timeMs,
   sortedModifiers.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   for (const modifier of sortedModifiers) {
-    if (modifier.driver.kind !== 'time') continue;
+    if (modifier.driver.kind !== "time") continue;
     const driver01 = evaluateTimeDriver(modifier.driver, timeMs);
 
-    for (const output of (modifier.outputs ?? [])) {
+    for (const output of modifier.outputs ?? []) {
       const evaluator = outputEvaluators[output.kind];
       if (!evaluator) continue;
       const partial = evaluator(output, driver01, modifier, project);
@@ -308,20 +373,24 @@ export function evaluateBoneMotionDriver(
   driver: BoneMotionDriver | null | undefined,
   effectiveBones: readonly Bone[] | null | undefined,
   project: ProjectDocument,
-  poseOverrides: ReadonlyMap<string, Record<string, unknown>> | null | undefined,
+  poseOverrides:
+    ReadonlyMap<string, Record<string, unknown>> | null | undefined,
 ): number {
-  if (!driver || driver.kind !== 'boneMotion') return 0;
+  if (!driver || driver.kind !== "boneMotion") return 0;
 
   const sourceBoneId = driver.sourceBoneId;
   if (!sourceBoneId) return 0;
 
-  const currentBone = effectiveBones?.find(b => b.id === sourceBoneId);
-  const restBone = project.bones?.find(b => b.id === sourceBoneId);
+  const currentBone = effectiveBones?.find((b) => b.id === sourceBoneId);
+  const restBone = project.bones?.find((b) => b.id === sourceBoneId);
   if (!currentBone || !restBone) return 0;
 
-  const axes = driver.axes ?? ['x', 'y'];
+  const axes = driver.axes ?? ["x", "y"];
   const gain = Number.isFinite(driver.gain) ? driver.gain : 1;
-  const deadZone = typeof driver.deadZone === 'number' && Number.isFinite(driver.deadZone) ? driver.deadZone : 0;
+  const deadZone =
+    typeof driver.deadZone === "number" && Number.isFinite(driver.deadZone)
+      ? driver.deadZone
+      : 0;
 
   let totalDisplacement = 0;
   for (const axis of axes) {
@@ -333,9 +402,12 @@ export function evaluateBoneMotionDriver(
   if (authoredOverride) {
     for (const axis of axes) {
       const authoredValue = authoredOverride[axis];
-      if (typeof authoredValue === 'number' && Number.isFinite(authoredValue)) {
+      if (typeof authoredValue === "number" && Number.isFinite(authoredValue)) {
         const rest = restBone.setup[axis] ?? 0;
-        totalDisplacement = Math.max(totalDisplacement, Math.abs(authoredValue - rest));
+        totalDisplacement = Math.max(
+          totalDisplacement,
+          Math.abs(authoredValue - rest),
+        );
       }
     }
   }
@@ -343,13 +415,19 @@ export function evaluateBoneMotionDriver(
   if (!isFinite(totalDisplacement) || totalDisplacement < 0) return 0;
   if (totalDisplacement < deadZone) return 0;
 
-  const curve = driver.curve ?? 'linear';
-  const signal = curve === 'abs' ? Math.abs(totalDisplacement) : totalDisplacement;
+  const curve = driver.curve ?? "linear";
+  const signal =
+    curve === "abs" ? Math.abs(totalDisplacement) : totalDisplacement;
 
   return signal * gain;
 }
 
-export function evaluateReactionModifiers({ project, activeAnimationId, effectiveBones, poseOverrides }: {
+export function evaluateReactionModifiers({
+  project,
+  activeAnimationId,
+  effectiveBones,
+  poseOverrides,
+}: {
   project: ProjectDocument | null | undefined;
   activeAnimationId?: string | null;
   effectiveBones?: readonly Bone[] | null;
@@ -362,19 +440,24 @@ export function evaluateReactionModifiers({ project, activeAnimationId, effectiv
 
   for (const modifier of project.animationModifiers ?? []) {
     if (!isModifierActive(modifier, activeAnimationId)) continue;
-    if (modifier.category !== 'reaction') continue;
-    if (modifier.driver?.kind !== 'boneMotion') continue;
+    if (modifier.category !== "reaction") continue;
+    if (modifier.driver?.kind !== "boneMotion") continue;
     sortedModifiers.push(modifier);
   }
 
   sortedModifiers.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   for (const modifier of sortedModifiers) {
-    if (modifier.driver.kind !== 'boneMotion') continue;
-    const signal = evaluateBoneMotionDriver(modifier.driver, effectiveBones, project, poseOverrides);
+    if (modifier.driver.kind !== "boneMotion") continue;
+    const signal = evaluateBoneMotionDriver(
+      modifier.driver,
+      effectiveBones,
+      project,
+      poseOverrides,
+    );
     if (signal === 0) continue;
 
-    for (const output of (modifier.outputs ?? [])) {
+    for (const output of modifier.outputs ?? []) {
       const evaluator = outputEvaluators[output.kind];
       if (!evaluator) continue;
       const partial = evaluator(output, signal, modifier, project);
@@ -390,14 +473,17 @@ export function evaluateReactionModifiers({ project, activeAnimationId, effectiv
   return result;
 }
 
-export function hasActiveTimeModifiers({ project, activeAnimationId }: {
+export function hasActiveTimeModifiers({
+  project,
+  activeAnimationId,
+}: {
   project: ProjectDocument | null | undefined;
   activeAnimationId?: string | null;
 }): boolean {
   if (!project?.animationModifiers?.length) return false;
-  return project.animationModifiers.some(m => {
+  return project.animationModifiers.some((m) => {
     if (m.enabled === false || m.muted === true) return false;
-    if (m.scope === 'clip' && m.clipId !== activeAnimationId) return false;
-    return m.category === 'loop' && m.driver?.kind === 'time';
+    if (m.scope === "clip" && m.clipId !== activeAnimationId) return false;
+    return m.category === "loop" && m.driver?.kind === "time";
   });
 }
