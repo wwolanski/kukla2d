@@ -1,11 +1,17 @@
 import {
   MODULAR_SPRITE_PROCESSING_CONFIG,
   resolveChromaRefinement,
+  type ModularSpriteEnclosedChromaMode,
   type ModularSpriteProcessingRecipe,
 } from "@kukla2d/contracts";
 
+import { detectEnclosedChroma } from "./enclosedChroma.js";
 import { rasterizeStroke } from "./maskStrokes.js";
-import { buildDetectionMask, squareMorphology } from "./morphology.js";
+import {
+  fillEnclosedHoles,
+  squareMorphology,
+  thresholdMatte,
+} from "./morphology.js";
 
 import type { RgbaImageData } from "../contracts.types.js";
 
@@ -20,6 +26,31 @@ const PROPAGATION_NEIGHBORS = [
   [1, 1],
 ] as const;
 
+interface PreparedInteriorMasks {
+  protectedCore: Uint8Array;
+  backgroundStrokeMask: Uint8Array;
+  enclosedChromaMask: Uint8Array;
+  enclosedChromaManualMask: Uint8Array;
+  mode: ModularSpriteEnclosedChromaMode;
+}
+
+interface ChromaRefinementResult {
+  protectedInteriorMask: Uint8Array;
+  enclosedChromaMask: Uint8Array;
+}
+
+function strokeMask(
+  recipe: ModularSpriteProcessingRecipe,
+  width: number,
+  height: number,
+  kind: "background" | "foreground",
+): Uint8Array {
+  const mask = new Uint8Array(width * height);
+  for (const stroke of recipe.strokes)
+    if (stroke.kind === kind) rasterizeStroke(mask, width, height, stroke, 1);
+  return mask;
+}
+
 function backgroundStrokeMask(
   recipe: ModularSpriteProcessingRecipe,
   width: number,
@@ -32,49 +63,163 @@ function backgroundStrokeMask(
   return locked;
 }
 
-function protectIslandInteriors(
+function prepareInteriorMasks(
   image: RgbaImageData,
   recipe: ModularSpriteProcessingRecipe,
   matte: Uint8ClampedArray,
-  rgba: Uint8ClampedArray,
-): void {
+): PreparedInteriorMasks {
+  const empty = new Uint8Array(image.width * image.height);
   const refinement = resolveChromaRefinement(recipe.background);
-  if (!refinement.protectIslandInteriors) return;
-  const { width, height } = image;
-  const detection = buildDetectionMask(matte, recipe, width, height);
-  const inset = refinement.interiorProtectionInset;
-  const protectedCore = squareMorphology(
+  const lockedBackground = backgroundStrokeMask(
+    recipe,
+    image.width,
+    image.height,
+  );
+  if (!refinement.protectIslandInteriors)
+    return {
+      protectedCore: empty,
+      backgroundStrokeMask: lockedBackground,
+      enclosedChromaMask: empty,
+      enclosedChromaManualMask: empty,
+      mode: refinement.enclosedChromaMode,
+    };
+
+  const detection = thresholdMatte(matte, recipe.detection.alphaThreshold);
+  const filledDetection = fillEnclosedHoles(
     detection,
-    width,
-    height,
-    inset,
+    image.width,
+    image.height,
+  );
+  const protectedCore = squareMorphology(
+    filledDetection,
+    image.width,
+    image.height,
+    refinement.interiorProtectionInset,
     false,
   );
-  const lockedBackground = backgroundStrokeMask(recipe, width, height);
+  const detectedEnclosed = detectEnclosedChroma(
+    image,
+    matte,
+    protectedCore,
+    recipe.detection.alphaThreshold,
+    recipe.background.color,
+    refinement.enclosedChromaSeeds,
+    lockedBackground,
+    strokeMask(recipe, image.width, image.height, "foreground"),
+    {
+      coreAlphaMax: refinement.enclosedChromaCoreAlphaMax,
+      coreColorTolerance: refinement.enclosedChromaCoreColorTolerance,
+      growthRadius: refinement.enclosedChromaGrowthRadius,
+      growthAlphaMax: refinement.enclosedChromaGrowthAlphaMax,
+      growthColorTolerance: refinement.enclosedChromaGrowthColorTolerance,
+      growthChromaTolerance: refinement.enclosedChromaGrowthChromaTolerance,
+      growthHueTolerance: refinement.enclosedChromaGrowthHueTolerance,
+      growthMinChromaRatio: refinement.enclosedChromaGrowthMinChromaRatio,
+    },
+  );
+  return {
+    protectedCore,
+    backgroundStrokeMask: lockedBackground,
+    enclosedChromaMask: detectedEnclosed.mask,
+    enclosedChromaManualMask: detectedEnclosed.manualMask,
+    mode: refinement.enclosedChromaMode,
+  };
+}
 
-  for (let pixelIndex = 0; pixelIndex < matte.length; pixelIndex += 1) {
-    if (lockedBackground[pixelIndex]) continue;
-    if (!protectedCore[pixelIndex]) continue;
+function restoreProtectedInterior(
+  image: RgbaImageData,
+  masks: PreparedInteriorMasks,
+  matte: Uint8ClampedArray,
+  rgba: Uint8ClampedArray,
+): Uint8Array {
+  const protection = new Uint8Array(image.width * image.height);
+  for (let pixelIndex = 0; pixelIndex < protection.length; pixelIndex += 1) {
+    if (masks.backgroundStrokeMask[pixelIndex]) continue;
+    if (!masks.protectedCore[pixelIndex]) continue;
+    if (masks.enclosedChromaMask[pixelIndex]) continue;
     const offset = pixelIndex * 4;
     const sourceAlpha = image.data[offset + 3] ?? 0;
+    if (sourceAlpha === 0) continue;
+    protection[pixelIndex] = 1;
     matte[pixelIndex] = sourceAlpha;
     rgba[offset] = image.data[offset] ?? 0;
     rgba[offset + 1] = image.data[offset + 1] ?? 0;
     rgba[offset + 2] = image.data[offset + 2] ?? 0;
     rgba[offset + 3] = sourceAlpha;
   }
+  return protection;
+}
+
+function applyEnclosedChroma(
+  image: RgbaImageData,
+  masks: PreparedInteriorMasks,
+  matte: Uint8ClampedArray,
+  rgba: Uint8ClampedArray,
+): void {
+  for (
+    let pixelIndex = 0;
+    pixelIndex < masks.enclosedChromaMask.length;
+    pixelIndex += 1
+  ) {
+    if (!masks.enclosedChromaMask[pixelIndex]) continue;
+    const offset = pixelIndex * 4;
+    if (
+      masks.mode === "transparent" ||
+      masks.enclosedChromaManualMask[pixelIndex]
+    ) {
+      matte[pixelIndex] = 0;
+      rgba[offset + 3] = 0;
+      continue;
+    }
+    const sourceAlpha = image.data[offset + 3] ?? 0;
+    matte[pixelIndex] = sourceAlpha;
+    rgba[offset + 3] = sourceAlpha;
+    if (masks.mode === "black") {
+      rgba[offset] = 0;
+      rgba[offset + 1] = 0;
+      rgba[offset + 2] = 0;
+      continue;
+    }
+    if (masks.mode === "desaturate") {
+      const gray = Math.round(
+        (image.data[offset] ?? 0) * 0.2126 +
+          (image.data[offset + 1] ?? 0) * 0.7152 +
+          (image.data[offset + 2] ?? 0) * 0.0722,
+      );
+      rgba[offset] = gray;
+      rgba[offset + 1] = gray;
+      rgba[offset + 2] = gray;
+      continue;
+    }
+    rgba[offset] = image.data[offset] ?? 0;
+    rgba[offset + 1] = image.data[offset + 1] ?? 0;
+    rgba[offset + 2] = image.data[offset + 2] ?? 0;
+  }
+}
+
+export function protectIslandInteriors(
+  image: RgbaImageData,
+  recipe: ModularSpriteProcessingRecipe,
+  matte: Uint8ClampedArray,
+  rgba: Uint8ClampedArray,
+): Uint8Array {
+  const masks = prepareInteriorMasks(image, recipe, matte);
+  applyEnclosedChroma(image, masks, matte, rgba);
+  return restoreProtectedInterior(image, masks, matte, rgba);
 }
 
 function chokeSoftMatte(
   recipe: ModularSpriteProcessingRecipe,
   matte: Uint8ClampedArray,
   rgba: Uint8ClampedArray,
+  skipMask?: Uint8Array,
 ): void {
   const choke = resolveChromaRefinement(recipe.background).matteChoke;
   if (choke <= 0) return;
   const { alphaByteMax } = MODULAR_SPRITE_PROCESSING_CONFIG.algorithm;
   const remaining = 1 - choke;
   for (let pixelIndex = 0; pixelIndex < matte.length; pixelIndex += 1) {
+    if (skipMask?.[pixelIndex]) continue;
     const current = matte[pixelIndex] ?? 0;
     if (current === 0 || current === alphaByteMax) continue;
     const alpha = current / alphaByteMax;
@@ -91,6 +236,7 @@ function recoverEdgeColors(
   rgba: Uint8ClampedArray,
   width: number,
   height: number,
+  skipMask?: Uint8Array,
 ): void {
   const refinement = resolveChromaRefinement(recipe.background);
   const recovery = refinement.edgeColorRecovery;
@@ -140,6 +286,7 @@ function recoverEdgeColors(
   }
 
   for (let pixelIndex = 0; pixelIndex < matte.length; pixelIndex += 1) {
+    if (skipMask?.[pixelIndex]) continue;
     const foregroundPixel = sourcePixel[pixelIndex] ?? -1;
     const alphaByte = matte[pixelIndex] ?? 0;
     if (foregroundPixel < 0 || alphaByte >= confidentForegroundAlpha) continue;
@@ -165,9 +312,36 @@ export function refineChromaKeyEdges(
   recipe: ModularSpriteProcessingRecipe,
   matte: Uint8ClampedArray,
   rgba: Uint8ClampedArray,
-): void {
-  if (recipe.background.mode !== "chroma") return;
-  protectIslandInteriors(image, recipe, matte, rgba);
-  chokeSoftMatte(recipe, matte, rgba);
-  recoverEdgeColors(recipe, matte, rgba, image.width, image.height);
+): Uint8Array {
+  return refineChromaKeyEdgesWithMasks(image, recipe, matte, rgba)
+    .protectedInteriorMask;
+}
+
+export function refineChromaKeyEdgesWithMasks(
+  image: RgbaImageData,
+  recipe: ModularSpriteProcessingRecipe,
+  matte: Uint8ClampedArray,
+  rgba: Uint8ClampedArray,
+): ChromaRefinementResult {
+  if (recipe.background.mode !== "chroma")
+    return {
+      protectedInteriorMask: new Uint8Array(image.width * image.height),
+      enclosedChromaMask: new Uint8Array(image.width * image.height),
+    };
+  const masks = prepareInteriorMasks(image, recipe, matte);
+  applyEnclosedChroma(image, masks, matte, rgba);
+  const protection = restoreProtectedInterior(image, masks, matte, rgba);
+  chokeSoftMatte(recipe, matte, rgba, masks.enclosedChromaMask);
+  recoverEdgeColors(
+    recipe,
+    matte,
+    rgba,
+    image.width,
+    image.height,
+    masks.enclosedChromaMask,
+  );
+  return {
+    protectedInteriorMask: protection,
+    enclosedChromaMask: masks.enclosedChromaMask,
+  };
 }

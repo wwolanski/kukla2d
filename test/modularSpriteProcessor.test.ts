@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertValidModularSpriteRecipe,
   DEFAULT_MODULAR_SPRITE_RECIPE,
+  type ModularSpriteEnclosedChromaMode,
 } from "@kukla2d/contracts";
 import {
   extractModularSpriteParts,
@@ -10,6 +11,11 @@ import {
   processModularSpriteAsync,
 } from "@/features/modular-sprite";
 import { handleModularSpriteTask } from "@/features/modular-sprite/infrastructure/workerTaskHandler";
+import {
+  blendEnclosedChromaMask,
+  blendProtectedInteriorMask,
+} from "@/features/modular-sprite/components/preview/ModularSpritePreviewCanvas";
+import { detectEnclosedChroma } from "@/features/modular-sprite/domain/processing/enclosedChroma";
 
 import type { ModularSpriteTaskRuntime } from "@/features/modular-sprite/infrastructure/workerTaskHandler.types";
 import type {
@@ -57,6 +63,42 @@ function alphaRecipe() {
   return recipe;
 }
 
+function setEnclosedChroma(
+  recipe: ReturnType<typeof alphaRecipe>,
+  mode: ModularSpriteEnclosedChromaMode,
+  seeds: { x: number; y: number }[] = [],
+): void {
+  recipe.background.enclosedChromaMode = mode;
+  recipe.background.enclosedChromaSeeds = seeds;
+}
+
+function enclosedHoleSource(hole = [0, 255, 0, 255]): RgbaImageData {
+  const source = image(11, 11, [0, 255, 0, 255]);
+  paint(source, 2, 2, 7, 7, [220, 30, 20, 255]);
+  paint(source, 4, 4, 3, 3, hole);
+  return source;
+}
+
+function softConnectedEnclosedHoleSource(): RgbaImageData {
+  const source = image(19, 19, [0, 255, 0, 255]);
+  paint(source, 3, 3, 13, 13, [220, 30, 20, 255]);
+  paint(source, 6, 6, 7, 7, [0, 255, 0, 255]);
+  paint(source, 13, 6, 3, 7, [80, 200, 20, 255]);
+  return source;
+}
+
+function chromaRecipe(): ReturnType<typeof alphaRecipe> {
+  const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+  recipe.background.tolerance = 0.2;
+  recipe.background.softness = 0.04;
+  recipe.background.matteChoke = 0;
+  recipe.background.edgeColorRecovery = 0;
+  recipe.detection.minimumRegionAreaRatio = 0;
+  recipe.detection.openingRadius = 0;
+  recipe.detection.closingRadius = 0;
+  return recipe;
+}
+
 function draft(
   partKey: string,
   regionIds: number[],
@@ -88,6 +130,42 @@ function createRuntime(
 }
 
 describe("modular sprite processor", () => {
+  it("blends the protection overlay only into marked pixels", () => {
+    const pixels = new Uint8ClampedArray([10, 20, 30, 255, 40, 50, 60, 128]);
+
+    const blended = blendProtectedInteriorMask(
+      pixels,
+      new Uint8Array([1, 0]),
+      [200, 100, 0],
+      0.5,
+    );
+
+    expect(Array.from(blended)).toEqual([105, 60, 15, 255, 40, 50, 60, 128]);
+    expect(Array.from(pixels)).toEqual([10, 20, 30, 255, 40, 50, 60, 128]);
+  });
+
+  it("makes an enclosed-chroma diagnostic visible over transparent result pixels", () => {
+    const blended = blendEnclosedChromaMask(
+      new Uint8ClampedArray([0, 0, 0, 0]),
+      new Uint8Array([1]),
+      [0, 200, 255],
+      0.5,
+    );
+
+    expect(Array.from(blended)).toEqual([0, 100, 128, 255]);
+  });
+
+  it("makes a diagnostic overlay visible over transparent result pixels", () => {
+    const blended = blendProtectedInteriorMask(
+      new Uint8ClampedArray([0, 255, 0, 0]),
+      new Uint8Array([1]),
+      [34, 211, 238],
+      0.5,
+    );
+
+    expect(blended[3]).toBe(255);
+  });
+
   it("rejects recipe values outside the shared processing contract", () => {
     const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
     recipe.background.edgeSearchRadius = 13;
@@ -122,6 +200,9 @@ describe("modular sprite processor", () => {
     expect(first.observation.components).toHaveLength(2);
     expect(first.observation.components[0]?.shapeMask.data).toBeInstanceOf(
       Uint8Array,
+    );
+    expect(first.protectedInteriorMask.every((value) => value === 0)).toBe(
+      true,
     );
   });
 
@@ -187,10 +268,10 @@ describe("modular sprite processor", () => {
     expect(result.regions).toHaveLength(1);
   });
 
-  it("protects island interiors from accidental partial keying by default", () => {
+  it("removes a fully keyed enclosed hole in the new default mode", () => {
     const source = image(9, 9, [0, 255, 0, 255]);
     paint(source, 2, 2, 5, 5, [220, 30, 20, 255]);
-    paint(source, 4, 4, 1, 1, [0, 220, 0, 255]);
+    paint(source, 4, 4, 1, 1, [0, 255, 0, 255]);
     const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
     recipe.background.tolerance = 0.02;
     recipe.background.softness = 0.04;
@@ -200,13 +281,363 @@ describe("modular sprite processor", () => {
     recipe.detection.openingRadius = 0;
     recipe.detection.closingRadius = 0;
 
-    const protectedResult = processModularSprite({ image: source, recipe });
+    const defaultResult = processModularSprite({ image: source, recipe });
     recipe.background.protectIslandInteriors = false;
     const unprotectedResult = processModularSprite({ image: source, recipe });
 
-    expect(protectedResult.matte[4 * 9 + 4]).toBe(255);
-    expect(unprotectedResult.matte[4 * 9 + 4]).toBeGreaterThan(0);
-    expect(unprotectedResult.matte[4 * 9 + 4]).toBeLessThan(255);
+    expect(defaultResult.matte[4 * 9 + 4]).toBe(0);
+    expect(defaultResult.rgba[(4 * 9 + 4) * 4 + 3]).toBe(0);
+    expect(defaultResult.protectedInteriorMask[4 * 9 + 4]).toBe(0);
+    expect(defaultResult.enclosedChromaMask[4 * 9 + 4]).toBe(1);
+    expect(unprotectedResult.matte[4 * 9 + 4]).toBe(0);
+    expect(unprotectedResult.protectedInteriorMask[4 * 9 + 4]).toBe(0);
+    expect(unprotectedResult.enclosedChromaMask[4 * 9 + 4]).toBe(0);
+  });
+
+  it("keeps island protection independent of detection closing", () => {
+    const source = image(9, 9, [0, 255, 0, 255]);
+    paint(source, 2, 2, 5, 5, [220, 30, 20, 255]);
+    paint(source, 4, 4, 1, 1, [0, 255, 0, 255]);
+    const withoutMorphology = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    withoutMorphology.background.tolerance = 0.02;
+    withoutMorphology.background.softness = 0.04;
+    withoutMorphology.background.matteChoke = 0;
+    withoutMorphology.background.edgeColorRecovery = 0;
+    withoutMorphology.detection.minimumRegionAreaRatio = 0;
+    withoutMorphology.detection.openingRadius = 0;
+    withoutMorphology.detection.closingRadius = 0;
+    const withMorphology = structuredClone(withoutMorphology);
+    withMorphology.detection.closingRadius = 1;
+
+    const baseline = processModularSprite({
+      image: source,
+      recipe: withoutMorphology,
+    });
+    const morphed = processModularSprite({
+      image: source,
+      recipe: withMorphology,
+    });
+
+    expect(Array.from(morphed.protectedInteriorMask)).toEqual(
+      Array.from(baseline.protectedInteriorMask),
+    );
+    expect(morphed.matte[4 * 9 + 4]).toBe(0);
+    expect(morphed.enclosedChromaMask[4 * 9 + 4]).toBe(1);
+  });
+
+  it("keeps an inconsistent green enclosed detail protected", () => {
+    const source = enclosedHoleSource([100, 150, 50, 255]);
+    for (const [x, y] of [
+      [4, 4],
+      [5, 4],
+      [6, 4],
+      [4, 5],
+    ])
+      paint(source, x, y, 1, 1, [0, 255, 0, 255]);
+    const result = processModularSprite({
+      image: source,
+      recipe: chromaRecipe(),
+    });
+    const center = 5 * source.width + 5;
+
+    expect(result.matte[center]).toBe(255);
+    expect(result.rgba[center * 4 + 3]).toBe(255);
+    expect(result.protectedInteriorMask[center]).toBe(1);
+    expect(result.enclosedChromaMask[center]).toBe(0);
+  });
+
+  it("excludes foreground-colored pixels from a qualifying chroma component", () => {
+    const source = image(9, 9, [220, 30, 20, 255]);
+    const matte = new Uint8ClampedArray(9 * 9);
+    matte.fill(255);
+    for (let y = 2; y <= 6; y += 1) {
+      for (let x = 2; x <= 6; x += 1) {
+        paint(source, x, y, 1, 1, [0, 255, 0, 255]);
+        matte[y * 9 + x] = 0;
+      }
+    }
+    paint(source, 4, 4, 1, 1, [255, 220, 0, 255]);
+
+    const detected = detectEnclosedChroma(
+      source,
+      matte,
+      new Uint8Array(9 * 9).fill(1),
+      10,
+      { r: 0, g: 255, b: 0 },
+      [],
+      new Uint8Array(9 * 9),
+      new Uint8Array(9 * 9),
+    );
+
+    expect(detected.mask[4 * 9 + 3]).toBe(1);
+    expect(detected.mask[4 * 9 + 4]).toBe(0);
+  });
+
+  it("bounds soft-edge expansion instead of flooding across an object", () => {
+    const source = image(15, 7, [220, 30, 20, 255]);
+    const matte = new Uint8ClampedArray(15 * 7);
+    matte.fill(255);
+    paint(source, 4, 3, 9, 1, [0, 255, 0, 255]);
+    matte[3 * 15 + 4] = 0;
+    for (let x = 5; x <= 12; x += 1) matte[3 * 15 + x] = 128;
+
+    const detected = detectEnclosedChroma(
+      source,
+      matte,
+      new Uint8Array(15 * 7).fill(1),
+      10,
+      { r: 0, g: 255, b: 0 },
+      [],
+      new Uint8Array(15 * 7),
+      new Uint8Array(15 * 7),
+    );
+
+    expect(detected.mask[3 * 15 + 6]).toBe(1);
+    expect(detected.mask[3 * 15 + 7]).toBe(0);
+  });
+
+  it("requires a confident low-alpha core before classifying a hole", () => {
+    const source = image(9, 9, [220, 30, 20, 255]);
+    const matte = new Uint8ClampedArray(9 * 9);
+    matte.fill(255);
+    paint(source, 3, 3, 3, 3, [0, 255, 0, 255]);
+    for (let y = 3; y <= 5; y += 1)
+      for (let x = 3; x <= 5; x += 1) matte[y * 9 + x] = 48;
+
+    const detected = detectEnclosedChroma(
+      source,
+      matte,
+      new Uint8Array(9 * 9).fill(1),
+      119,
+      { r: 0, g: 255, b: 0 },
+      [],
+      new Uint8Array(9 * 9),
+      new Uint8Array(9 * 9),
+    );
+
+    expect(detected.mask.some((value) => value !== 0)).toBe(false);
+  });
+
+  it("grows through dark key-colored fringe but stops at a neutral outline", () => {
+    const source = image(13, 13, [220, 30, 20, 255]);
+    const matte = new Uint8ClampedArray(13 * 13);
+    matte.fill(255);
+    paint(source, 3, 3, 7, 7, [8, 8, 8, 255]);
+    paint(source, 4, 4, 5, 5, [1, 40, 1, 255]);
+    paint(source, 5, 5, 3, 3, [0, 255, 0, 255]);
+    for (let y = 4; y <= 8; y += 1)
+      for (let x = 4; x <= 8; x += 1) matte[y * 13 + x] = 200;
+    for (let y = 5; y <= 7; y += 1)
+      for (let x = 5; x <= 7; x += 1) matte[y * 13 + x] = 0;
+
+    const detected = detectEnclosedChroma(
+      source,
+      matte,
+      new Uint8Array(13 * 13).fill(1),
+      32,
+      { r: 0, g: 255, b: 0 },
+      [],
+      new Uint8Array(13 * 13),
+      new Uint8Array(13 * 13),
+    );
+
+    expect(detected.mask[4 * 13 + 6]).toBe(1);
+    expect(detected.mask[3 * 13 + 6]).toBe(0);
+  });
+
+  it.each([
+    ["transparent", 0, [0, 255, 0]],
+    ["black", 255, [0, 0, 0]],
+    ["desaturate", 255, [182, 182, 182]],
+    ["preserve", 255, [0, 255, 0]],
+  ] as const)("handles enclosed chroma in %s mode", (mode, alpha, rgb) => {
+    const recipe = chromaRecipe();
+    setEnclosedChroma(recipe, mode);
+    const result = processModularSprite({
+      image: enclosedHoleSource(),
+      recipe,
+    });
+    const center = 5 * result.width + 5;
+    const offset = center * 4;
+
+    expect(result.matte[center]).toBe(alpha);
+    expect(Array.from(result.rgba.slice(offset, offset + 3))).toEqual(rgb);
+    expect(result.rgba[offset + 3]).toBe(alpha);
+    expect(result.protectedInteriorMask[center]).toBe(0);
+    expect(result.enclosedChromaMask[center]).toBe(1);
+  });
+
+  it("lets a manual seed force a whole inconsistent component transparent", () => {
+    const source = enclosedHoleSource([100, 150, 50, 255]);
+    for (const [x, y] of [
+      [4, 4],
+      [5, 4],
+      [6, 4],
+      [4, 5],
+    ])
+      paint(source, x, y, 1, 1, [0, 255, 0, 255]);
+    const recipe = chromaRecipe();
+    setEnclosedChroma(recipe, "black", [{ x: 0.5, y: 0.5 }]);
+    const result = processModularSprite({ image: source, recipe });
+
+    for (let y = 4; y <= 6; y += 1) {
+      for (let x = 4; x <= 6; x += 1) {
+        const pixelIndex = y * source.width + x;
+        expect(result.matte[pixelIndex]).toBeLessThanOrEqual(1);
+        expect(result.rgba[pixelIndex * 4 + 3]).toBe(result.matte[pixelIndex]);
+        expect(result.protectedInteriorMask[pixelIndex]).toBe(0);
+        expect(result.enclosedChromaMask[pixelIndex]).toBe(1);
+      }
+    }
+  });
+
+  it("ignores a manual seed on the outer background", () => {
+    const source = enclosedHoleSource([100, 150, 50, 255]);
+    for (const [x, y] of [
+      [4, 4],
+      [5, 4],
+      [6, 4],
+      [4, 5],
+    ])
+      paint(source, x, y, 1, 1, [0, 255, 0, 255]);
+    const recipe = chromaRecipe();
+    setEnclosedChroma(recipe, "transparent", [{ x: 0, y: 0 }]);
+    const result = processModularSprite({ image: source, recipe });
+    const center = 5 * source.width + 5;
+
+    expect(result.matte[center]).toBe(255);
+    expect(result.protectedInteriorMask[center]).toBe(1);
+    expect(result.enclosedChromaMask[center]).toBe(0);
+  });
+
+  it("keeps background strokes above enclosed chroma and foreground strokes intact", () => {
+    const backgroundStrokeRecipe = chromaRecipe();
+    setEnclosedChroma(backgroundStrokeRecipe, "preserve");
+    backgroundStrokeRecipe.strokes.push({
+      kind: "background",
+      radius: 0.01,
+      points: [{ x: 0.5, y: 0.5 }],
+    });
+    const backgroundStrokeResult = processModularSprite({
+      image: enclosedHoleSource(),
+      recipe: backgroundStrokeRecipe,
+    });
+    const center = 5 * 11 + 5;
+    expect(backgroundStrokeResult.matte[center]).toBe(0);
+    expect(backgroundStrokeResult.rgba[center * 4 + 3]).toBe(0);
+    expect(backgroundStrokeResult.protectedInteriorMask[center]).toBe(0);
+
+    const foregroundStrokeRecipe = chromaRecipe();
+    setEnclosedChroma(foregroundStrokeRecipe, "transparent");
+    foregroundStrokeRecipe.strokes.push({
+      kind: "foreground",
+      radius: 0.01,
+      points: [{ x: 0.5, y: 0.5 }],
+    });
+    const foregroundStrokeResult = processModularSprite({
+      image: enclosedHoleSource(),
+      recipe: foregroundStrokeRecipe,
+    });
+    expect(foregroundStrokeResult.matte[center]).toBe(255);
+    expect(foregroundStrokeResult.rgba[center * 4 + 3]).toBe(255);
+    expect(foregroundStrokeResult.enclosedChromaMask[center]).toBe(0);
+  });
+
+  it("detects a diagonal-only background connection as a closed core", () => {
+    const source = image(7, 7, [0, 255, 0, 255]);
+    for (let y = 1; y < 6; y += 1) {
+      for (let x = 1; x < 6; x += 1) {
+        if ((x === 1 || x === 5 || y === 1 || y === 5) && !(x === 1 && y === 1))
+          paint(source, x, y, 1, 1, [20, 20, 20, 255]);
+      }
+    }
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.background.tolerance = 0.02;
+    recipe.background.softness = 0.04;
+    recipe.background.interiorProtectionInset = 1;
+    recipe.background.matteChoke = 0;
+    recipe.background.edgeColorRecovery = 0;
+    recipe.detection.minimumRegionAreaRatio = 0;
+    recipe.detection.openingRadius = 0;
+    recipe.detection.closingRadius = 0;
+
+    const result = processModularSprite({ image: source, recipe });
+
+    expect(result.matte[3 * 7 + 3]).toBe(0);
+    expect(result.protectedInteriorMask[3 * 7 + 3]).toBe(0);
+    expect(result.enclosedChromaMask[3 * 7 + 3]).toBe(1);
+  });
+
+  it("keeps a closed soft-edge hole separate from the outer soft background", () => {
+    const transparentRecipe = chromaRecipe();
+    transparentRecipe.background.color = { r: 0, g: 255, b: 0 };
+    transparentRecipe.background.tolerance = 0.02;
+    transparentRecipe.background.softness = 0.08;
+    transparentRecipe.background.interiorProtectionInset = 1;
+    setEnclosedChroma(transparentRecipe, "transparent");
+    const preserveRecipe = structuredClone(transparentRecipe);
+    setEnclosedChroma(preserveRecipe, "preserve");
+
+    const transparent = processModularSprite({
+      image: softConnectedEnclosedHoleSource(),
+      recipe: transparentRecipe,
+    });
+    const preserve = processModularSprite({
+      image: softConnectedEnclosedHoleSource(),
+      recipe: preserveRecipe,
+    });
+    const center = 9 * transparent.width + 9;
+    const innerSoftEdge = 9 * transparent.width + 14;
+    const outerSoftBackground = 9 * transparent.width + 15;
+
+    expect(transparent.enclosedChromaMask[center]).toBe(1);
+    expect(transparent.enclosedChromaMask[innerSoftEdge]).toBe(1);
+    expect(transparent.enclosedChromaMask[outerSoftBackground]).toBe(0);
+    expect(transparent.matte[center]).toBe(0);
+    expect(preserve.matte[center]).toBe(255);
+    expect(preserve.matte[innerSoftEdge]).toBe(255);
+    expect(Array.from(preserve.rgba)).not.toEqual(Array.from(transparent.rgba));
+  });
+
+  it("does not protect enclosed pixels with zero source alpha", () => {
+    const source = image(9, 9, [0, 255, 0, 255]);
+    paint(source, 2, 2, 5, 5, [220, 30, 20, 255]);
+    paint(source, 4, 4, 1, 1, [0, 255, 0, 0]);
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.background.tolerance = 0.02;
+    recipe.background.softness = 0.04;
+    recipe.background.matteChoke = 0;
+    recipe.background.edgeColorRecovery = 0;
+    recipe.detection.minimumRegionAreaRatio = 0;
+    recipe.detection.openingRadius = 0;
+    recipe.detection.closingRadius = 0;
+
+    const result = processModularSprite({ image: source, recipe });
+    const center = 4 * 9 + 4;
+
+    expect(result.matte[center]).toBe(0);
+    expect(result.rgba[center * 4 + 3]).toBe(0);
+    expect(result.protectedInteriorMask[center]).toBe(0);
+  });
+
+  it("does not protect keyed space connected to the canvas border", () => {
+    const source = image(7, 7, [0, 255, 0, 255]);
+    paint(source, 1, 1, 2, 1, [20, 20, 20, 255]);
+    paint(source, 4, 1, 2, 1, [20, 20, 20, 255]);
+    paint(source, 1, 5, 5, 1, [20, 20, 20, 255]);
+    paint(source, 1, 1, 1, 5, [20, 20, 20, 255]);
+    paint(source, 5, 1, 1, 5, [20, 20, 20, 255]);
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.background.matteChoke = 0;
+    recipe.background.edgeColorRecovery = 0;
+    recipe.detection.minimumRegionAreaRatio = 0;
+    recipe.detection.openingRadius = 0;
+    recipe.detection.closingRadius = 0;
+
+    const result = processModularSprite({ image: source, recipe });
+
+    expect(result.matte[3 * 7 + 3]).toBe(0);
+    expect(result.protectedInteriorMask[3 * 7 + 3]).toBe(0);
   });
 
   it("does not let island protection undo a manual erase stroke", () => {
@@ -227,6 +658,7 @@ describe("modular sprite processor", () => {
     const result = processModularSprite({ image: source, recipe });
 
     expect(result.matte[4 * 9 + 4]).toBe(0);
+    expect(result.protectedInteriorMask[4 * 9 + 4]).toBe(0);
   });
 
   it("reconstructs contaminated edge RGB from nearby solid foreground", () => {
@@ -281,6 +713,12 @@ describe("modular sprite processor", () => {
     );
     expect(Array.from(cooperative.labels)).toEqual(
       Array.from(synchronous.labels),
+    );
+    expect(Array.from(cooperative.protectedInteriorMask)).toEqual(
+      Array.from(synchronous.protectedInteriorMask),
+    );
+    expect(Array.from(cooperative.enclosedChromaMask)).toEqual(
+      Array.from(synchronous.enclosedChromaMask),
     );
   });
 
@@ -405,7 +843,13 @@ describe("modular sprite processor", () => {
       createRuntime(),
     );
     expect(task.response.type).toBe("result");
-    expect(task.transferables).toHaveLength(3);
+    expect(task.transferables).toHaveLength(5);
+    if (task.response.type !== "result") throw new Error("Expected result");
+    const processed = task.response.data.result as ProcessedModularSprite;
+    expect(task.transferables).toContain(
+      processed.protectedInteriorMask.buffer,
+    );
+    expect(task.transferables).toContain(processed.enclosedChromaMask.buffer);
   });
 
   it("processes from the warm cache and reuses the precomputed color space", async () => {

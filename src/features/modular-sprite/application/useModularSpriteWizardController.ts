@@ -112,7 +112,8 @@ interface ModularSpriteWizardControllerProps {
 }
 
 type PreviewMode = "original" | "matte" | "result";
-type EditorTool = "select" | "eyedropper" | ModularSpriteMaskStrokeKind;
+type EditorTool =
+  "select" | "eyedropper" | "enclosed-fill" | ModularSpriteMaskStrokeKind;
 
 interface RegionAssignment {
   color: string;
@@ -134,6 +135,8 @@ interface ModularSpriteWizardController {
     setZoom: (zoom: number) => void;
     showOverlays: boolean;
     setShowOverlays: (value: boolean) => void;
+    showProtectedInteriors: boolean;
+    setShowProtectedInteriors: (value: boolean) => void;
     advancedFrameKeys: ReadonlySet<string>;
     toggleAdvancedFrame: (partKey: string) => void;
     selectedRegionIds: ReadonlySet<number>;
@@ -310,6 +313,7 @@ export function useModularSpriteWizardController({
   );
   const [zoom, setZoom] = useState(1);
   const [showOverlays, setShowOverlays] = useState(true);
+  const [showProtectedInteriors, setShowProtectedInteriors] = useState(false);
   const [advancedFrameKeys, setAdvancedFrameKeys] = useState<Set<string>>(
     new Set(),
   );
@@ -341,6 +345,7 @@ export function useModularSpriteWizardController({
     setPreviewMode("result");
     setTool("select");
     setZoom(1);
+    setShowProtectedInteriors(false);
     dispatch({ type: "RESET" });
   }, [ports.processing]);
 
@@ -906,6 +911,8 @@ export function useModularSpriteWizardController({
       setZoom,
       showOverlays,
       setShowOverlays,
+      showProtectedInteriors,
+      setShowProtectedInteriors,
       advancedFrameKeys,
       toggleAdvancedFrame,
       selectedRegionIds,

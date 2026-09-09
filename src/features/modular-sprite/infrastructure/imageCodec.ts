@@ -3,7 +3,9 @@ import type { RgbaImageData } from "../domain/contracts.types.js";
 export const MODULAR_SPRITE_MAX_FILE_BYTES = 50 * 1024 * 1024;
 export const MODULAR_SPRITE_MAX_SIDE = 8192;
 export const MODULAR_SPRITE_MAX_PIXELS = 20_000_000;
-export const MODULAR_SPRITE_PREVIEW_SIDE = 768;
+// Keep typical sprite sheets at source resolution. Enclosed chroma cleanup works
+// on one- and two-pixel color fringes, which a small resampled preview can alter.
+export const MODULAR_SPRITE_PREVIEW_SIDE = 2048;
 
 const SUPPORTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 

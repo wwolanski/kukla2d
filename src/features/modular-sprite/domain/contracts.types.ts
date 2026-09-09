@@ -32,6 +32,8 @@ export interface ProcessedModularSprite {
   height: number;
   rgba: Uint8ClampedArray;
   matte: Uint8ClampedArray;
+  protectedInteriorMask: Uint8Array;
+  enclosedChromaMask: Uint8Array;
   labels: Int32Array;
   regions: DetectedRegion[];
   background: {

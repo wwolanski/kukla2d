@@ -1,6 +1,10 @@
 import { Loader2 } from "lucide-react";
 
-import type { ModularSpriteMaskStrokeKind } from "@kukla2d/contracts";
+import {
+  resolveChromaRefinement,
+  type ModularSpriteMaskStrokeKind,
+  type NormalizedPoint,
+} from "@kukla2d/contracts";
 
 import { SchemaComparisonSidebar } from "@/features/modular-sprite-schema";
 
@@ -57,6 +61,9 @@ export function ModularSpriteWizard({
   const result = state.processingResult;
   const source = state.source;
   const step = state.step;
+  const protectionAvailable =
+    state.recipe.background.mode === "chroma" &&
+    resolveChromaRefinement(state.recipe.background).protectIslandInteriors;
   const existingName = source?.existingDocument?.name;
   const title = existingName
     ? `Edit ${existingName}`
@@ -67,6 +74,17 @@ export function ModularSpriteWizard({
   ): void =>
     controller.changeRecipe((recipe) => {
       recipe.strokes.push({ kind, radius: ui.brushRadius, points });
+    }, "discrete");
+  const onEnclosedChromaSeed = (point: NormalizedPoint): void =>
+    controller.changeRecipe((recipe) => {
+      recipe.background.enclosedChromaSeeds = [
+        ...(recipe.background.enclosedChromaSeeds ?? []),
+        point,
+      ];
+    }, "discrete");
+  const onClearEnclosedAreas = (): void =>
+    controller.changeRecipe((recipe) => {
+      recipe.background.enclosedChromaSeeds = [];
     }, "discrete");
 
   return (
@@ -103,12 +121,13 @@ export function ModularSpriteWizard({
                       controller.changeRecipe(change, "recipe", process)
                     }
                     onRecipeCommit={controller.commitRecipeProcessing}
-                    onToolChange={ui.setTool}
                     onBrushRadiusChange={ui.setBrushRadius}
+                    onClearEnclosedAreas={onClearEnclosedAreas}
                     onPickMode={() => {
                       ui.setTool("eyedropper");
                       ui.setPreviewMode("original");
                     }}
+                    onToolChange={ui.setTool}
                   />
                 )}
                 {step === "regions" && (
@@ -151,6 +170,27 @@ export function ModularSpriteWizard({
                       />
                       Region outlines
                     </label>
+                    <label
+                      className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground"
+                      title={
+                        protectionAvailable
+                          ? "Show the exact protected interior mask"
+                          : "Enable Protect island interiors to inspect its mask"
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        checked={
+                          ui.showProtectedInteriors && protectionAvailable
+                        }
+                        disabled={!protectionAvailable}
+                        aria-label="Protected area"
+                        onChange={(event) =>
+                          ui.setShowProtectedInteriors(event.target.checked)
+                        }
+                      />
+                      Protected area
+                    </label>
                     <UiButton
                       size="sm"
                       variant="ghost"
@@ -185,6 +225,9 @@ export function ModularSpriteWizard({
                       selectedRegionIds={ui.selectedRegionIds}
                       assignments={controller.assignments}
                       showOverlays={ui.showOverlays}
+                      showProtectedInteriors={
+                        ui.showProtectedInteriors && protectionAvailable
+                      }
                       onSelectRegion={controller.toggleRegionSelection}
                       onPickColor={(color) => {
                         controller.changeRecipe((recipe) => {
@@ -194,6 +237,7 @@ export function ModularSpriteWizard({
                         ui.setTool("select");
                       }}
                       onStroke={onStroke}
+                      onEnclosedChromaSeed={onEnclosedChromaSeed}
                     />
                   </div>
                 </section>

@@ -27,13 +27,68 @@ interface ModularSpritePreviewCanvasProps {
   selectedRegionIds: ReadonlySet<number>;
   assignments: ReadonlyMap<number, RegionAssignment>;
   showOverlays: boolean;
+  showProtectedInteriors: boolean;
   onSelectRegion: (regionId: number, additive: boolean) => void;
   onStroke: (
     kind: ModularSpriteMaskStrokeKind,
     points: NormalizedPoint[],
   ) => void;
+  onEnclosedChromaSeed?: (point: NormalizedPoint) => void;
   onPickColor?: (color: { r: number; g: number; b: number }) => void;
   zoom?: number;
+}
+
+const PROTECTED_INTERIOR_COLOR = [255, 0, 204] as const;
+const PROTECTED_INTERIOR_OPACITY = 0.42;
+const ENCLOSED_CHROMA_COLOR = [34, 211, 238] as const;
+const ENCLOSED_CHROMA_OPACITY = 0.58;
+
+function blendMask(
+  pixels: Uint8ClampedArray,
+  mask: Uint8Array,
+  color: readonly [number, number, number],
+  opacity: number,
+): Uint8ClampedArray {
+  const blended = new Uint8ClampedArray(pixels);
+  const pixelCount = Math.min(mask.length, Math.floor(blended.length / 4));
+  const clampedOpacity = Math.min(1, Math.max(0, opacity));
+  for (let pixelIndex = 0; pixelIndex < pixelCount; pixelIndex += 1) {
+    if ((mask[pixelIndex] ?? 0) === 0) continue;
+    const offset = pixelIndex * 4;
+    blended[offset] = Math.round(
+      (blended[offset] ?? 0) * (1 - clampedOpacity) + color[0] * clampedOpacity,
+    );
+    blended[offset + 1] = Math.round(
+      (blended[offset + 1] ?? 0) * (1 - clampedOpacity) +
+        color[1] * clampedOpacity,
+    );
+    blended[offset + 2] = Math.round(
+      (blended[offset + 2] ?? 0) * (1 - clampedOpacity) +
+        color[2] * clampedOpacity,
+    );
+    // The recognized enclosed chroma is transparent in the result view. Make
+    // diagnostic overlays opaque so cyan remains visible over those pixels.
+    blended[offset + 3] = 255;
+  }
+  return blended;
+}
+
+export function blendProtectedInteriorMask(
+  pixels: Uint8ClampedArray,
+  mask: Uint8Array,
+  color: readonly [number, number, number] = PROTECTED_INTERIOR_COLOR,
+  opacity = PROTECTED_INTERIOR_OPACITY,
+): Uint8ClampedArray {
+  return blendMask(pixels, mask, color, opacity);
+}
+
+export function blendEnclosedChromaMask(
+  pixels: Uint8ClampedArray,
+  mask: Uint8Array,
+  color: readonly [number, number, number] = ENCLOSED_CHROMA_COLOR,
+  opacity = ENCLOSED_CHROMA_OPACITY,
+): Uint8ClampedArray {
+  return blendMask(pixels, mask, color, opacity);
 }
 
 function imageDataForMode(
@@ -73,8 +128,10 @@ export function ModularSpritePreviewCanvas({
   selectedRegionIds,
   assignments,
   showOverlays,
+  showProtectedInteriors,
   onSelectRegion,
   onStroke,
+  onEnclosedChromaSeed,
   onPickColor,
   zoom = 1,
 }: ModularSpritePreviewCanvasProps): React.ReactElement {
@@ -89,7 +146,18 @@ export function ModularSpritePreviewCanvas({
     canvas.height = source.height;
     const context = canvas.getContext("2d");
     if (!context) return;
-    context.putImageData(imageDataForMode(source, result, mode), 0, 0);
+    const imageData = imageDataForMode(source, result, mode);
+    if (result && showProtectedInteriors) {
+      // Protected magenta is the base layer; cyan then identifies the
+      // recognized enclosed chroma subset without hiding protected-only areas.
+      let blended = blendProtectedInteriorMask(
+        imageData.data,
+        result.protectedInteriorMask,
+      );
+      blended = blendEnclosedChromaMask(blended, result.enclosedChromaMask);
+      imageData.data.set(blended);
+    }
+    context.putImageData(imageData, 0, 0);
     if (!result || mode === "matte" || !showOverlays) return;
     context.lineWidth = Math.max(
       1,
@@ -158,6 +226,7 @@ export function ModularSpritePreviewCanvas({
     resultVersion,
     selectedRegionIds,
     showOverlays,
+    showProtectedInteriors,
     source,
   ]);
 
@@ -213,21 +282,37 @@ export function ModularSpritePreviewCanvas({
           );
           return;
         }
+        if (tool === "enclosed-fill") {
+          activeStroke.current = null;
+          onEnclosedChromaSeed?.(point);
+          return;
+        }
         activeStroke.current = [point];
       }}
       onPointerMove={(event) => {
-        if (!activeStroke.current || tool === "select" || tool === "eyedropper")
+        if (
+          !activeStroke.current ||
+          tool === "select" ||
+          tool === "eyedropper" ||
+          tool === "enclosed-fill"
+        )
           return;
         activeStroke.current.push(normalizedPointer(event));
       }}
       onPointerUp={(event) => {
-        if (!activeStroke.current || tool === "select" || tool === "eyedropper")
+        if (
+          !activeStroke.current ||
+          tool === "select" ||
+          tool === "eyedropper" ||
+          tool === "enclosed-fill"
+        )
           return;
         activeStroke.current.push(normalizedPointer(event));
         onStroke(tool, activeStroke.current);
         activeStroke.current = null;
       }}
       aria-label="Modular sprite processing preview"
+      title="Modular sprite processing preview"
     />
   );
 }
