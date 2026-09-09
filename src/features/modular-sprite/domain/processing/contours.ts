@@ -1,9 +1,13 @@
+import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
+
 import { normalizedPoint } from "../imageMath.js";
 
 import type { ComponentStats } from "./connectedComponents.types.js";
 
-const MAX_CONTOUR_CANDIDATES = 1024;
-const MAX_CONTOUR_POINTS = 256;
+const MAX_CONTOUR_CANDIDATES =
+  MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.maxContourCandidates;
+const MAX_CONTOUR_POINTS =
+  MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.maxContourPoints;
 
 interface GridPoint {
   x: number;

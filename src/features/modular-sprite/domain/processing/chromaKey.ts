@@ -1,11 +1,15 @@
-import type { ModularSpriteProcessingRecipe } from "@kukla2d/contracts";
+import {
+  MODULAR_SPRITE_PROCESSING_CONFIG,
+  type ModularSpriteProcessingRecipe,
+} from "@kukla2d/contracts";
 
 import { clamp, rgbToOklab, smoothstep } from "../imageMath.js";
 
 import type { RgbaImageData } from "../contracts.types.js";
 import type { ProcessingHooks } from "./processing.types.js";
 
-export const PROCESSING_CHUNK_ROWS = 64;
+export const PROCESSING_CHUNK_ROWS =
+  MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.processingChunkRows;
 
 export function precomputeOklab(image: RgbaImageData): Float32Array {
   const oklab = new Float32Array(image.width * image.height * 3);
@@ -61,6 +65,7 @@ export function computeMatteRange(
 ): void {
   const { width, height } = image;
   const background = recipe.background;
+  const algorithm = MODULAR_SPRITE_PROCESSING_CONFIG.algorithm;
   const [backgroundLightness = 0, backgroundA = 0, backgroundB = 0] =
     backgroundLab;
   const startY = Math.max(0, Math.min(height, yStart));
@@ -70,9 +75,9 @@ export function computeMatteRange(
 
   for (let pixelIndex = startPixel; pixelIndex < endPixel; pixelIndex += 1) {
     const offset = pixelIndex * 4;
-    const sourceAlpha = (image.data[offset + 3] ?? 0) / 255;
+    const sourceAlpha = (image.data[offset + 3] ?? 0) / algorithm.alphaByteMax;
     if (background.mode === "alpha") {
-      matte[pixelIndex] = Math.round(sourceAlpha * 255);
+      matte[pixelIndex] = Math.round(sourceAlpha * algorithm.alphaByteMax);
       rgba[offset + 3] = matte[pixelIndex] ?? 0;
       continue;
     }
@@ -90,7 +95,8 @@ export function computeMatteRange(
     } else {
       [labLightness, labA, labB] = rgbToOklab(red, green, blue);
     }
-    const deltaLightness = (labLightness - backgroundLightness) * 0.5;
+    const deltaLightness =
+      (labLightness - backgroundLightness) * algorithm.oklabLightnessWeight;
     const deltaA = labA - backgroundA;
     const deltaB = labB - backgroundB;
     const distance = Math.sqrt(
@@ -102,25 +108,29 @@ export function computeMatteRange(
       distance,
     );
     const alpha = sourceAlpha * keyAlpha;
-    matte[pixelIndex] = Math.round(alpha * 255);
+    matte[pixelIndex] = Math.round(alpha * algorithm.alphaByteMax);
 
-    if (keyAlpha > 0.02 && keyAlpha < 0.995 && background.despill > 0) {
+    if (
+      keyAlpha > algorithm.despillKeyAlphaMin &&
+      keyAlpha < algorithm.despillKeyAlphaMax &&
+      background.despill > 0
+    ) {
       const edgeStrength = (1 - keyAlpha) * background.despill;
-      const safeAlpha = Math.max(0.08, keyAlpha);
+      const safeAlpha = Math.max(algorithm.despillSafeAlphaMin, keyAlpha);
       const correctedRed = clamp(
         (red - (1 - keyAlpha) * background.color.r) / safeAlpha,
         0,
-        255,
+        algorithm.alphaByteMax,
       );
       const correctedGreen = clamp(
         (green - (1 - keyAlpha) * background.color.g) / safeAlpha,
         0,
-        255,
+        algorithm.alphaByteMax,
       );
       const correctedBlue = clamp(
         (blue - (1 - keyAlpha) * background.color.b) / safeAlpha,
         0,
-        255,
+        algorithm.alphaByteMax,
       );
       rgba[offset] = Math.round(red + (correctedRed - red) * edgeStrength);
       rgba[offset + 1] = Math.round(

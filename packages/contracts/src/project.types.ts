@@ -267,6 +267,16 @@ export interface ModularSpriteProcessingRecipe {
     tolerance: number;
     softness: number;
     despill: number;
+    /** Keep the confidently detected core of each island opaque. */
+    protectIslandInteriors?: boolean;
+    /** Number of pixels kept between the detected edge and the protected core. */
+    interiorProtectionInset?: number;
+    /** Removes the weakest part of the soft matte without eroding solid pixels. */
+    matteChoke?: number;
+    /** Replaces contaminated edge RGB with nearby confident foreground RGB. */
+    edgeColorRecovery?: number;
+    /** Maximum foreground-color propagation distance in pixels. */
+    edgeSearchRadius?: number;
   };
   detection: {
     alphaThreshold: number;

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertValidModularSpriteRecipe,
   DEFAULT_MODULAR_SPRITE_RECIPE,
+} from "@kukla2d/contracts";
+import {
   extractModularSpriteParts,
   matchRegionsToTemplate,
   processModularSprite,
@@ -85,6 +88,20 @@ function createRuntime(
 }
 
 describe("modular sprite processor", () => {
+  it("rejects recipe values outside the shared processing contract", () => {
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.background.edgeSearchRadius = 13;
+
+    expect(() => assertValidModularSpriteRecipe(recipe)).toThrow(
+      "background.edgeSearchRadius",
+    );
+    expect(() =>
+      processModularSprite({
+        image: image(2, 2, () => [0, 255, 0, 255]),
+        recipe,
+      }),
+    ).toThrow("background.edgeSearchRadius");
+  });
   it("detects transparent regions in deterministic reading order", () => {
     const source = image(12, 8);
     paint(source, 7, 1, 3, 2, [255, 0, 0, 255]);
@@ -168,6 +185,103 @@ describe("modular sprite processor", () => {
     expect(result.matte[0]).toBe(0);
     expect(result.matte[3 * 7 + 3]).toBeGreaterThan(250);
     expect(result.regions).toHaveLength(1);
+  });
+
+  it("protects island interiors from accidental partial keying by default", () => {
+    const source = image(9, 9, [0, 255, 0, 255]);
+    paint(source, 2, 2, 5, 5, [220, 30, 20, 255]);
+    paint(source, 4, 4, 1, 1, [0, 220, 0, 255]);
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.background.tolerance = 0.02;
+    recipe.background.softness = 0.04;
+    recipe.background.matteChoke = 0;
+    recipe.background.edgeColorRecovery = 0;
+    recipe.detection.minimumRegionAreaRatio = 0;
+    recipe.detection.openingRadius = 0;
+    recipe.detection.closingRadius = 0;
+
+    const protectedResult = processModularSprite({ image: source, recipe });
+    recipe.background.protectIslandInteriors = false;
+    const unprotectedResult = processModularSprite({ image: source, recipe });
+
+    expect(protectedResult.matte[4 * 9 + 4]).toBe(255);
+    expect(unprotectedResult.matte[4 * 9 + 4]).toBeGreaterThan(0);
+    expect(unprotectedResult.matte[4 * 9 + 4]).toBeLessThan(255);
+  });
+
+  it("does not let island protection undo a manual erase stroke", () => {
+    const source = image(9, 9, [0, 255, 0, 255]);
+    paint(source, 2, 2, 5, 5, [220, 30, 20, 255]);
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.background.matteChoke = 0;
+    recipe.background.edgeColorRecovery = 0;
+    recipe.detection.minimumRegionAreaRatio = 0;
+    recipe.detection.openingRadius = 0;
+    recipe.detection.closingRadius = 0;
+    recipe.strokes.push({
+      kind: "background",
+      radius: 0.05,
+      points: [{ x: 0.5, y: 0.5 }],
+    });
+
+    const result = processModularSprite({ image: source, recipe });
+
+    expect(result.matte[4 * 9 + 4]).toBe(0);
+  });
+
+  it("reconstructs contaminated edge RGB from nearby solid foreground", () => {
+    const source = image(7, 7, [0, 255, 0, 255]);
+    paint(source, 1, 1, 5, 5, [0, 220, 0, 255]);
+    paint(source, 2, 2, 3, 3, [0, 0, 0, 255]);
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.background.tolerance = 0.02;
+    recipe.background.softness = 0.08;
+    recipe.background.despill = 0;
+    recipe.background.protectIslandInteriors = false;
+    recipe.background.matteChoke = 0;
+    recipe.background.edgeSearchRadius = 2;
+    recipe.detection.minimumRegionAreaRatio = 0;
+    recipe.detection.openingRadius = 0;
+    recipe.detection.closingRadius = 0;
+
+    recipe.background.edgeColorRecovery = 0;
+    const raw = processModularSprite({ image: source, recipe });
+    recipe.background.edgeColorRecovery = 1;
+    const recovered = processModularSprite({ image: source, recipe });
+    const edgeGreen = (1 * 7 + 3) * 4 + 1;
+
+    expect(raw.matte[1 * 7 + 3]).toBeGreaterThan(0);
+    expect(raw.matte[1 * 7 + 3]).toBeLessThan(250);
+    expect(recovered.rgba[edgeGreen]).toBeLessThan(raw.rgba[edgeGreen]! / 2);
+  });
+
+  it("keeps chroma refinement identical in the CLI and browser pipelines", async () => {
+    const source = image(9, 9, [0, 255, 0, 255]);
+    paint(source, 1, 1, 7, 7, [0, 220, 0, 255]);
+    paint(source, 2, 2, 5, 5, [20, 20, 20, 255]);
+    paint(source, 3, 3, 3, 3, [0, 255, 0, 255]);
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.detection.minimumRegionAreaRatio = 0;
+    recipe.detection.openingRadius = 0;
+    recipe.detection.closingRadius = 0;
+
+    const synchronous = processModularSprite({ image: source, recipe });
+    const cooperative = await processModularSpriteAsync(
+      { image: source, recipe },
+      {
+        throwIfAborted: () => {},
+        checkpoint: () => Promise.resolve(),
+        report: () => {},
+      },
+    );
+
+    expect(Array.from(cooperative.rgba)).toEqual(Array.from(synchronous.rgba));
+    expect(Array.from(cooperative.matte)).toEqual(
+      Array.from(synchronous.matte),
+    );
+    expect(Array.from(cooperative.labels)).toEqual(
+      Array.from(synchronous.labels),
+    );
   });
 
   it("caps noisy detections before they can overwhelm the UI", () => {

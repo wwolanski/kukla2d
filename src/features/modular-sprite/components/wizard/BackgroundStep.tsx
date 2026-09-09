@@ -1,6 +1,10 @@
 import { Eraser, MousePointer2, Paintbrush, Scissors } from "lucide-react";
 
-import type { ModularSpriteProcessingRecipe } from "@kukla2d/contracts";
+import {
+  MODULAR_SPRITE_PROCESSING_CONFIG,
+  resolveChromaRefinement,
+  type ModularSpriteProcessingRecipe,
+} from "@kukla2d/contracts";
 
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -60,6 +64,8 @@ export function BackgroundStep({
   onBrushRadiusChange: (value: number) => void;
   onPickMode: () => void;
 }): React.ReactElement {
+  const config = MODULAR_SPRITE_PROCESSING_CONFIG;
+  const refinement = resolveChromaRefinement(recipe.background);
   return (
     <aside className="space-y-4 overflow-auto rounded-lg border p-4">
       <p className="text-xs text-muted-foreground">
@@ -102,11 +108,14 @@ export function BackgroundStep({
         Pick from image
       </UiButton>
       <FieldLabel>
-        Tolerance: {recipe.background.tolerance.toFixed(3)}
+        Tolerance:{" "}
+        {recipe.background.tolerance.toFixed(
+          config.background.tolerance.digits,
+        )}
         <UiSlider
-          min={0}
-          max={0.25}
-          step={0.002}
+          min={config.background.tolerance.min}
+          max={config.background.tolerance.max}
+          step={config.background.tolerance.step}
           value={[recipe.background.tolerance]}
           onValueChange={(value) =>
             onRecipeChange((draft) => {
@@ -118,11 +127,12 @@ export function BackgroundStep({
         />
       </FieldLabel>
       <FieldLabel>
-        Soft edge: {recipe.background.softness.toFixed(3)}
+        Soft edge:{" "}
+        {recipe.background.softness.toFixed(config.background.softness.digits)}
         <UiSlider
-          min={0.002}
-          max={0.25}
-          step={0.002}
+          min={config.background.softness.min}
+          max={config.background.softness.max}
+          step={config.background.softness.step}
           value={[recipe.background.softness]}
           onValueChange={(value) =>
             onRecipeChange((draft) => {
@@ -133,11 +143,12 @@ export function BackgroundStep({
         />
       </FieldLabel>
       <FieldLabel>
-        Despill: {recipe.background.despill.toFixed(2)}
+        Despill:{" "}
+        {recipe.background.despill.toFixed(config.background.despill.digits)}
         <UiSlider
-          min={0}
-          max={1}
-          step={0.02}
+          min={config.background.despill.min}
+          max={config.background.despill.max}
+          step={config.background.despill.step}
           value={[recipe.background.despill]}
           onValueChange={(value) =>
             onRecipeChange((draft) => {
@@ -147,12 +158,104 @@ export function BackgroundStep({
           onValueCommit={onRecipeCommit}
         />
       </FieldLabel>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={refinement.protectIslandInteriors}
+          onChange={(event) =>
+            onRecipeChange((draft) => {
+              draft.background.protectIslandInteriors = event.target.checked;
+            })
+          }
+        />
+        Protect island interiors
+      </label>
+      <p className="text-xs text-muted-foreground">
+        Keeps the confident center of detected parts opaque while their edge
+        remains soft.
+      </p>
+      <FieldLabel>
+        Interior inset: {refinement.interiorProtectionInset}px
+        <UiSlider
+          min={config.background.interiorProtectionInset.min}
+          max={config.background.interiorProtectionInset.max}
+          step={config.background.interiorProtectionInset.step}
+          value={[refinement.interiorProtectionInset]}
+          onValueChange={(value) =>
+            onRecipeChange((draft) => {
+              draft.background.interiorProtectionInset =
+                value[0] ??
+                draft.background.interiorProtectionInset ??
+                config.background.interiorProtectionInset.default;
+            }, false)
+          }
+          onValueCommit={onRecipeCommit}
+        />
+      </FieldLabel>
+      <FieldLabel>
+        Matte choke:{" "}
+        {refinement.matteChoke.toFixed(config.background.matteChoke.digits)}
+        <UiSlider
+          min={config.background.matteChoke.min}
+          max={config.background.matteChoke.max}
+          step={config.background.matteChoke.step}
+          value={[refinement.matteChoke]}
+          onValueChange={(value) =>
+            onRecipeChange((draft) => {
+              draft.background.matteChoke =
+                value[0] ??
+                draft.background.matteChoke ??
+                config.background.matteChoke.default;
+            }, false)
+          }
+          onValueCommit={onRecipeCommit}
+        />
+      </FieldLabel>
+      <FieldLabel>
+        Edge color recovery:{" "}
+        {refinement.edgeColorRecovery.toFixed(
+          config.background.edgeColorRecovery.digits,
+        )}
+        <UiSlider
+          min={config.background.edgeColorRecovery.min}
+          max={config.background.edgeColorRecovery.max}
+          step={config.background.edgeColorRecovery.step}
+          value={[refinement.edgeColorRecovery]}
+          onValueChange={(value) =>
+            onRecipeChange((draft) => {
+              draft.background.edgeColorRecovery =
+                value[0] ??
+                draft.background.edgeColorRecovery ??
+                config.background.edgeColorRecovery.default;
+            }, false)
+          }
+          onValueCommit={onRecipeCommit}
+        />
+      </FieldLabel>
+      <FieldLabel>
+        Edge search: {refinement.edgeSearchRadius}px
+        <UiSlider
+          min={config.background.edgeSearchRadius.min}
+          max={config.background.edgeSearchRadius.max}
+          step={config.background.edgeSearchRadius.step}
+          value={[refinement.edgeSearchRadius]}
+          onValueChange={(value) =>
+            onRecipeChange((draft) => {
+              draft.background.edgeSearchRadius =
+                value[0] ??
+                draft.background.edgeSearchRadius ??
+                config.background.edgeSearchRadius.default;
+            }, false)
+          }
+          onValueCommit={onRecipeCommit}
+        />
+      </FieldLabel>
       <FieldLabel>
         Detection alpha: {recipe.detection.alphaThreshold}
         <UiSlider
-          min={1}
-          max={254}
-          step={1}
+          min={config.detection.alphaThreshold.min}
+          max={config.detection.alphaThreshold.max}
+          step={config.detection.alphaThreshold.step}
           value={[recipe.detection.alphaThreshold]}
           onValueChange={(value) =>
             onRecipeChange((draft) => {
@@ -166,9 +269,9 @@ export function BackgroundStep({
       <FieldLabel>
         Opening radius: {recipe.detection.openingRadius}px
         <UiSlider
-          min={0}
-          max={8}
-          step={1}
+          min={config.detection.openingRadius.min}
+          max={config.detection.openingRadius.max}
+          step={config.detection.openingRadius.step}
           value={[recipe.detection.openingRadius]}
           onValueChange={(value) =>
             onRecipeChange((draft) => {
@@ -182,9 +285,9 @@ export function BackgroundStep({
       <FieldLabel>
         Closing radius: {recipe.detection.closingRadius}px
         <UiSlider
-          min={0}
-          max={8}
-          step={1}
+          min={config.detection.closingRadius.min}
+          max={config.detection.closingRadius.max}
+          step={config.detection.closingRadius.step}
           value={[recipe.detection.closingRadius]}
           onValueChange={(value) =>
             onRecipeChange((draft) => {
@@ -197,11 +300,14 @@ export function BackgroundStep({
       </FieldLabel>
       <FieldLabel>
         Minimum island:{" "}
-        {(recipe.detection.minimumRegionAreaRatio * 100).toFixed(3)}%
+        {(recipe.detection.minimumRegionAreaRatio * 100).toFixed(
+          config.detection.minimumRegionAreaRatio.digits - 2,
+        )}
+        %
         <UiSlider
-          min={0}
-          max={0.01}
-          step={0.00005}
+          min={config.detection.minimumRegionAreaRatio.min}
+          max={config.detection.minimumRegionAreaRatio.max}
+          step={config.detection.minimumRegionAreaRatio.step}
           value={[recipe.detection.minimumRegionAreaRatio]}
           onValueChange={(value) =>
             onRecipeChange((draft) => {
@@ -259,9 +365,9 @@ export function BackgroundStep({
         <FieldLabel>
           Brush radius: {(brushRadius * 100).toFixed(1)}%
           <UiSlider
-            min={0.002}
-            max={0.08}
-            step={0.002}
+            min={config.strokes.editorRadius.min}
+            max={config.strokes.editorRadius.max}
+            step={config.strokes.editorRadius.step}
             value={[brushRadius]}
             onValueChange={(value) =>
               onBrushRadiusChange(value[0] ?? brushRadius)

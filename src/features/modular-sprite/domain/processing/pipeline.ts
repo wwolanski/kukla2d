@@ -1,4 +1,8 @@
-import type { ModularSpriteProcessingRecipe } from "@kukla2d/contracts";
+import {
+  assertValidModularSpriteRecipe,
+  MODULAR_SPRITE_PROCESSING_CONFIG,
+  type ModularSpriteProcessingRecipe,
+} from "@kukla2d/contracts";
 import { createSpriteObservation } from "@kukla2d/modular-sprite-schema";
 
 import { rgbToOklab } from "../imageMath.js";
@@ -14,6 +18,7 @@ import {
   restoreSplitPixels,
 } from "./connectedComponents.js";
 import { componentContour } from "./contours.js";
+import { refineChromaKeyEdges } from "./edgeRefinement.js";
 import { detectionStrokesPass, matteStrokesPass } from "./maskStrokes.js";
 import { buildDetectionMask } from "./morphology.js";
 import { suggestRole } from "./regionClassification.js";
@@ -104,7 +109,11 @@ function warningsFor(
   discardedRegionCount: number,
 ): string[] {
   const warnings: string[] = [];
-  if (recipe.background.mode === "chroma" && background.confidence < 0.55)
+  if (
+    recipe.background.mode === "chroma" &&
+    background.confidence <
+      MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.lowBorderConfidence
+  )
     warnings.push(
       "Low border-color confidence; pick the background color manually.",
     );
@@ -151,9 +160,11 @@ export function processModularSprite(
 ): ProcessedModularSprite {
   const { image, recipe } = request;
   assertValidImage(image);
+  assertValidModularSpriteRecipe(recipe);
   const background = analyzeModularSpriteBackground(image);
   const { matte, rgba } = createMatte(image, recipe);
   matteStrokesPass(matte, rgba, recipe, image.width, image.height);
+  refineChromaKeyEdges(image, recipe, matte, rgba);
   const detection = buildDetectionMask(
     matte,
     recipe,
@@ -192,6 +203,7 @@ export async function processModularSpriteAsync(
 ): Promise<ProcessedModularSprite> {
   const { image, recipe } = request;
   assertValidImage(image);
+  assertValidModularSpriteRecipe(recipe);
   hooks.throwIfAborted();
   const background = analyzeModularSpriteBackground(image);
   hooks.report(0.05, "Analyzing background");
@@ -234,7 +246,11 @@ export async function processModularSpriteAsync(
   }
   hooks.throwIfAborted();
   matteStrokesPass(matte, rgba, recipe, image.width, image.height);
-  hooks.report(0.5, "Applying mask strokes");
+  hooks.report(0.48, "Applying mask strokes");
+  await hooks.checkpoint();
+  hooks.throwIfAborted();
+  refineChromaKeyEdges(image, recipe, matte, rgba);
+  hooks.report(0.56, "Refining edges");
   await hooks.checkpoint();
   hooks.throwIfAborted();
   const detection = buildDetectionMask(
@@ -243,7 +259,7 @@ export async function processModularSpriteAsync(
     image.width,
     image.height,
   );
-  hooks.report(0.6, "Cleaning detection mask");
+  hooks.report(0.64, "Cleaning detection mask");
   await hooks.checkpoint();
   hooks.throwIfAborted();
   const beforeSplit = detectionStrokesPass(
@@ -252,7 +268,7 @@ export async function processModularSpriteAsync(
     image.width,
     image.height,
   );
-  hooks.report(0.68, "Finding regions");
+  hooks.report(0.72, "Finding regions");
   await hooks.checkpoint();
   hooks.throwIfAborted();
   const { labels, regions, discardedRegionCount } = buildRegions(

@@ -1,4 +1,3 @@
-export { DEFAULT_MODULAR_SPRITE_RECIPE } from "./domain/contracts.js";
 export { analyzeModularSpriteBackground } from "./domain/processing/backgroundAnalysis.js";
 export { precomputeOklab } from "./domain/processing/chromaKey.js";
 export {
