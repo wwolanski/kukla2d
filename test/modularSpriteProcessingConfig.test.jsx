@@ -20,6 +20,7 @@ vi.mock("@/components/ui/slider", () => ({
 
 import { BackgroundStep } from "@/features/modular-sprite/components/wizard/BackgroundStep";
 import {
+  assertValidModularSpriteRecipe,
   createDefaultModularSpriteRecipe,
   MODULAR_SPRITE_PROCESSING_CONFIG,
   resolveChromaRefinement,
@@ -67,6 +68,8 @@ describe("modular sprite processing configuration", () => {
       tolerance: config.background.tolerance.default,
       softness: config.background.softness.default,
       despill: config.background.despill.default,
+      enclosedChromaMode: "transparent",
+      enclosedChromaSeeds: [],
       protectIslandInteriors: config.background.protectIslandInteriors.default,
       interiorProtectionInset:
         config.background.interiorProtectionInset.default,
@@ -81,7 +84,11 @@ describe("modular sprite processing configuration", () => {
       closingRadius: config.detection.closingRadius.default,
       connectivity: config.detection.connectivity.default,
     });
-    expect(refinement.protectIslandInteriors).toBe(true);
+    expect(refinement).toMatchObject({
+      enclosedChromaMode: "transparent",
+      enclosedChromaSeeds: [],
+      protectIslandInteriors: true,
+    });
   });
 
   it("uses the same defaults for legacy recipes without refinement fields", () => {
@@ -91,8 +98,12 @@ describe("modular sprite processing configuration", () => {
     delete recipe.background.matteChoke;
     delete recipe.background.edgeColorRecovery;
     delete recipe.background.edgeSearchRadius;
+    delete recipe.background.enclosedChromaMode;
+    delete recipe.background.enclosedChromaSeeds;
 
     expect(resolveChromaRefinement(recipe.background)).toEqual({
+      enclosedChromaMode: "preserve",
+      enclosedChromaSeeds: [],
       protectIslandInteriors:
         MODULAR_SPRITE_PROCESSING_CONFIG.background.protectIslandInteriors
           .default,
@@ -106,6 +117,41 @@ describe("modular sprite processing configuration", () => {
       edgeSearchRadius:
         MODULAR_SPRITE_PROCESSING_CONFIG.background.edgeSearchRadius.default,
     });
+  });
+
+  it("validates enclosed chroma fields and exposes its algorithm heuristics", () => {
+    const config = MODULAR_SPRITE_PROCESSING_CONFIG;
+    expect(config.algorithm).toMatchObject({
+      enclosedChromaStrongDistance: 0.05,
+      enclosedChromaMeanDistance: 0.08,
+      enclosedChromaStrongRatio: 0.7,
+      enclosedChromaColorSpread: 0.06,
+      enclosedChromaSmallArea: 64,
+      enclosedChromaSmallMeanDistance: 0.13,
+      enclosedChromaSmallStrongRatio: 0.1,
+      enclosedChromaSmallColorSpread: 0.09,
+    });
+
+    const recipe = createDefaultModularSpriteRecipe();
+    recipe.background.enclosedChromaMode = "black";
+    recipe.background.enclosedChromaSeeds = [{ x: 0.25, y: 0.75 }];
+    expect(() => assertValidModularSpriteRecipe(recipe)).not.toThrow();
+
+    expect(() =>
+      assertValidModularSpriteRecipe({
+        ...recipe,
+        background: { ...recipe.background, enclosedChromaMode: "invalid" },
+      }),
+    ).toThrow();
+    expect(() =>
+      assertValidModularSpriteRecipe({
+        ...recipe,
+        background: {
+          ...recipe.background,
+          enclosedChromaSeeds: [{ x: 1.01, y: 0.5 }],
+        },
+      }),
+    ).toThrow();
   });
 
   it("renders every numeric Web UI control directly from the config", () => {

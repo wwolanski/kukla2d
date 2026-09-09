@@ -58,6 +58,48 @@ function alphaRecipe() {
   return recipe;
 }
 
+type EnclosedChromaMode = "transparent" | "black" | "desaturate" | "preserve";
+
+function setEnclosedChroma(
+  recipe: ReturnType<typeof alphaRecipe>,
+  mode: EnclosedChromaMode,
+  seeds: { x: number; y: number }[] = [],
+): void {
+  const background = recipe.background as typeof recipe.background & {
+    enclosedChromaMode?: EnclosedChromaMode;
+    enclosedChromaSeeds?: { x: number; y: number }[];
+  };
+  background.enclosedChromaMode = mode;
+  background.enclosedChromaSeeds = seeds;
+}
+
+function enclosedHoleSource(hole = [0, 255, 0, 255]): RgbaImageData {
+  const source = image(11, 11, [0, 255, 0, 255]);
+  paint(source, 2, 2, 7, 7, [220, 30, 20, 255]);
+  paint(source, 4, 4, 3, 3, hole);
+  return source;
+}
+
+function softConnectedEnclosedHoleSource(): RgbaImageData {
+  const source = image(19, 19, [0, 255, 0, 255]);
+  paint(source, 3, 3, 13, 13, [220, 30, 20, 255]);
+  paint(source, 6, 6, 7, 7, [0, 255, 0, 255]);
+  paint(source, 13, 6, 3, 7, [80, 200, 20, 255]);
+  return source;
+}
+
+function chromaRecipe(): ReturnType<typeof alphaRecipe> {
+  const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+  recipe.background.tolerance = 0.2;
+  recipe.background.softness = 0.04;
+  recipe.background.matteChoke = 0;
+  recipe.background.edgeColorRecovery = 0;
+  recipe.detection.minimumRegionAreaRatio = 0;
+  recipe.detection.openingRadius = 0;
+  recipe.detection.closingRadius = 0;
+  return recipe;
+}
+
 function draft(
   partKey: string,
   regionIds: number[],
@@ -205,7 +247,7 @@ describe("modular sprite processor", () => {
     expect(result.regions).toHaveLength(1);
   });
 
-  it("restores fully keyed texture enclosed inside an island", () => {
+  it("removes a fully keyed enclosed hole in the new default mode", () => {
     const source = image(9, 9, [0, 255, 0, 255]);
     paint(source, 2, 2, 5, 5, [220, 30, 20, 255]);
     paint(source, 4, 4, 1, 1, [0, 255, 0, 255]);
@@ -218,14 +260,17 @@ describe("modular sprite processor", () => {
     recipe.detection.openingRadius = 0;
     recipe.detection.closingRadius = 0;
 
-    const protectedResult = processModularSprite({ image: source, recipe });
+    const defaultResult = processModularSprite({ image: source, recipe });
     recipe.background.protectIslandInteriors = false;
     const unprotectedResult = processModularSprite({ image: source, recipe });
 
-    expect(protectedResult.matte[4 * 9 + 4]).toBe(255);
-    expect(protectedResult.protectedInteriorMask[4 * 9 + 4]).toBe(1);
+    expect(defaultResult.matte[4 * 9 + 4]).toBe(0);
+    expect(defaultResult.rgba[(4 * 9 + 4) * 4 + 3]).toBe(0);
+    expect(defaultResult.protectedInteriorMask[4 * 9 + 4]).toBe(0);
+    expect(defaultResult.enclosedChromaMask[4 * 9 + 4]).toBe(1);
     expect(unprotectedResult.matte[4 * 9 + 4]).toBe(0);
     expect(unprotectedResult.protectedInteriorMask[4 * 9 + 4]).toBe(0);
+    expect(unprotectedResult.enclosedChromaMask[4 * 9 + 4]).toBe(0);
   });
 
   it("keeps island protection independent of detection closing", () => {
@@ -255,10 +300,130 @@ describe("modular sprite processor", () => {
     expect(Array.from(morphed.protectedInteriorMask)).toEqual(
       Array.from(baseline.protectedInteriorMask),
     );
-    expect(morphed.matte[4 * 9 + 4]).toBe(255);
+    expect(morphed.matte[4 * 9 + 4]).toBe(0);
+    expect(morphed.enclosedChromaMask[4 * 9 + 4]).toBe(1);
   });
 
-  it("keeps a diagonal-only background connection enclosed", () => {
+  it("keeps an inconsistent green enclosed detail protected", () => {
+    const source = enclosedHoleSource([100, 150, 50, 255]);
+    for (const [x, y] of [
+      [4, 4],
+      [5, 4],
+      [6, 4],
+      [4, 5],
+    ])
+      paint(source, x, y, 1, 1, [0, 255, 0, 255]);
+    const result = processModularSprite({
+      image: source,
+      recipe: chromaRecipe(),
+    });
+    const center = 5 * source.width + 5;
+
+    expect(result.matte[center]).toBe(255);
+    expect(result.rgba[center * 4 + 3]).toBe(255);
+    expect(result.protectedInteriorMask[center]).toBe(1);
+    expect(result.enclosedChromaMask[center]).toBe(0);
+  });
+
+  it.each([
+    ["transparent", 0, [0, 255, 0]],
+    ["black", 255, [0, 0, 0]],
+    ["desaturate", 255, [182, 182, 182]],
+    ["preserve", 255, [0, 255, 0]],
+  ] as const)("handles enclosed chroma in %s mode", (mode, alpha, rgb) => {
+    const recipe = chromaRecipe();
+    setEnclosedChroma(recipe, mode);
+    const result = processModularSprite({
+      image: enclosedHoleSource(),
+      recipe,
+    });
+    const center = 5 * result.width + 5;
+    const offset = center * 4;
+
+    expect(result.matte[center]).toBe(alpha);
+    expect(Array.from(result.rgba.slice(offset, offset + 3))).toEqual(rgb);
+    expect(result.rgba[offset + 3]).toBe(alpha);
+    expect(result.protectedInteriorMask[center]).toBe(0);
+    expect(result.enclosedChromaMask[center]).toBe(1);
+  });
+
+  it("lets a manual seed force a whole inconsistent component transparent", () => {
+    const source = enclosedHoleSource([100, 150, 50, 255]);
+    for (const [x, y] of [
+      [4, 4],
+      [5, 4],
+      [6, 4],
+      [4, 5],
+    ])
+      paint(source, x, y, 1, 1, [0, 255, 0, 255]);
+    const recipe = chromaRecipe();
+    setEnclosedChroma(recipe, "black", [{ x: 0.5, y: 0.5 }]);
+    const result = processModularSprite({ image: source, recipe });
+
+    for (let y = 4; y <= 6; y += 1) {
+      for (let x = 4; x <= 6; x += 1) {
+        const pixelIndex = y * source.width + x;
+        expect(result.matte[pixelIndex]).toBe(0);
+        expect(result.rgba[pixelIndex * 4 + 3]).toBe(0);
+        expect(result.protectedInteriorMask[pixelIndex]).toBe(0);
+        expect(result.enclosedChromaMask[pixelIndex]).toBe(1);
+      }
+    }
+  });
+
+  it("ignores a manual seed on the outer background", () => {
+    const source = enclosedHoleSource([100, 150, 50, 255]);
+    for (const [x, y] of [
+      [4, 4],
+      [5, 4],
+      [6, 4],
+      [4, 5],
+    ])
+      paint(source, x, y, 1, 1, [0, 255, 0, 255]);
+    const recipe = chromaRecipe();
+    setEnclosedChroma(recipe, "transparent", [{ x: 0, y: 0 }]);
+    const result = processModularSprite({ image: source, recipe });
+    const center = 5 * source.width + 5;
+
+    expect(result.matte[center]).toBe(255);
+    expect(result.protectedInteriorMask[center]).toBe(1);
+    expect(result.enclosedChromaMask[center]).toBe(0);
+  });
+
+  it("keeps background strokes above enclosed chroma and foreground strokes intact", () => {
+    const backgroundStrokeRecipe = chromaRecipe();
+    setEnclosedChroma(backgroundStrokeRecipe, "preserve");
+    backgroundStrokeRecipe.strokes.push({
+      kind: "background",
+      radius: 0.01,
+      points: [{ x: 0.5, y: 0.5 }],
+    });
+    const backgroundStrokeResult = processModularSprite({
+      image: enclosedHoleSource(),
+      recipe: backgroundStrokeRecipe,
+    });
+    const center = 5 * 11 + 5;
+    expect(backgroundStrokeResult.matte[center]).toBe(0);
+    expect(backgroundStrokeResult.rgba[center * 4 + 3]).toBe(0);
+    expect(backgroundStrokeResult.protectedInteriorMask[center]).toBe(0);
+
+    const foregroundStrokeRecipe = chromaRecipe();
+    setEnclosedChroma(foregroundStrokeRecipe, "transparent");
+    foregroundStrokeRecipe.strokes.push({
+      kind: "foreground",
+      radius: 0.01,
+      points: [{ x: 0.5, y: 0.5 }],
+    });
+    const foregroundStrokeResult = processModularSprite({
+      image: enclosedHoleSource(),
+      recipe: foregroundStrokeRecipe,
+    });
+    expect(foregroundStrokeResult.matte[center]).toBe(255);
+    expect(foregroundStrokeResult.rgba[center * 4 + 3]).toBe(255);
+    expect(foregroundStrokeResult.enclosedChromaMask[center]).toBe(0);
+  });
+
+  it("detects a diagonal-only background connection as a closed core", () => {
     const source = image(7, 7, [0, 255, 0, 255]);
     for (let y = 1; y < 6; y += 1) {
       for (let x = 1; x < 6; x += 1) {
@@ -278,8 +443,40 @@ describe("modular sprite processor", () => {
 
     const result = processModularSprite({ image: source, recipe });
 
-    expect(result.matte[3 * 7 + 3]).toBe(255);
-    expect(result.protectedInteriorMask[3 * 7 + 3]).toBe(1);
+    expect(result.matte[3 * 7 + 3]).toBe(0);
+    expect(result.protectedInteriorMask[3 * 7 + 3]).toBe(0);
+    expect(result.enclosedChromaMask[3 * 7 + 3]).toBe(1);
+  });
+
+  it("keeps a closed soft-edge hole separate from the outer soft background", () => {
+    const transparentRecipe = chromaRecipe();
+    transparentRecipe.background.color = { r: 0, g: 255, b: 0 };
+    transparentRecipe.background.tolerance = 0.02;
+    transparentRecipe.background.softness = 0.08;
+    transparentRecipe.background.interiorProtectionInset = 1;
+    setEnclosedChroma(transparentRecipe, "transparent");
+    const preserveRecipe = structuredClone(transparentRecipe);
+    setEnclosedChroma(preserveRecipe, "preserve");
+
+    const transparent = processModularSprite({
+      image: softConnectedEnclosedHoleSource(),
+      recipe: transparentRecipe,
+    });
+    const preserve = processModularSprite({
+      image: softConnectedEnclosedHoleSource(),
+      recipe: preserveRecipe,
+    });
+    const center = 9 * transparent.width + 9;
+    const innerSoftEdge = 9 * transparent.width + 14;
+    const outerSoftBackground = 9 * transparent.width + 15;
+
+    expect(transparent.enclosedChromaMask[center]).toBe(1);
+    expect(transparent.enclosedChromaMask[innerSoftEdge]).toBe(1);
+    expect(transparent.enclosedChromaMask[outerSoftBackground]).toBe(0);
+    expect(transparent.matte[center]).toBe(0);
+    expect(preserve.matte[center]).toBe(255);
+    expect(preserve.matte[innerSoftEdge]).toBe(255);
+    expect(Array.from(preserve.rgba)).not.toEqual(Array.from(transparent.rgba));
   });
 
   it("does not protect enclosed pixels with zero source alpha", () => {
@@ -399,6 +596,9 @@ describe("modular sprite processor", () => {
     );
     expect(Array.from(cooperative.protectedInteriorMask)).toEqual(
       Array.from(synchronous.protectedInteriorMask),
+    );
+    expect(Array.from(cooperative.enclosedChromaMask)).toEqual(
+      Array.from(synchronous.enclosedChromaMask),
     );
   });
 

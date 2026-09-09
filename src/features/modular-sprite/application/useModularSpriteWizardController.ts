@@ -112,7 +112,8 @@ interface ModularSpriteWizardControllerProps {
 }
 
 type PreviewMode = "original" | "matte" | "result";
-type EditorTool = "select" | "eyedropper" | ModularSpriteMaskStrokeKind;
+type EditorTool =
+  "select" | "eyedropper" | "enclosed-fill" | ModularSpriteMaskStrokeKind;
 
 interface RegionAssignment {
   color: string;

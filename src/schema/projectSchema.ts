@@ -315,6 +315,10 @@ const ModularSpriteRecipeSchema = z.object({
       .finite()
       .min(processingConfig.background.despill.min)
       .max(processingConfig.background.despill.max),
+    enclosedChromaMode: z
+      .enum(["transparent", "black", "desaturate", "preserve"])
+      .optional(),
+    enclosedChromaSeeds: z.array(NormalizedPointSchema).optional(),
     protectIslandInteriors: z.boolean().optional(),
     interiorProtectionInset: z
       .number()

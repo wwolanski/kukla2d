@@ -18,7 +18,7 @@ import {
   restoreSplitPixels,
 } from "./connectedComponents.js";
 import { componentContour } from "./contours.js";
-import { refineChromaKeyEdges } from "./edgeRefinement.js";
+import { refineChromaKeyEdgesWithMasks } from "./edgeRefinement.js";
 import { detectionStrokesPass, matteStrokesPass } from "./maskStrokes.js";
 import { buildDetectionMask } from "./morphology.js";
 import { suggestRole } from "./regionClassification.js";
@@ -133,6 +133,7 @@ function makeResult(
   rgba: Uint8ClampedArray,
   matte: Uint8ClampedArray,
   protectedInteriorMask: Uint8Array,
+  enclosedChromaMask: Uint8Array,
   labels: Int32Array,
   regions: DetectedRegion[],
   discardedRegionCount: number,
@@ -143,6 +144,7 @@ function makeResult(
     rgba,
     matte,
     protectedInteriorMask,
+    enclosedChromaMask,
     labels,
     regions,
     background,
@@ -166,12 +168,7 @@ export function processModularSprite(
   const background = analyzeModularSpriteBackground(image);
   const { matte, rgba } = createMatte(image, recipe);
   matteStrokesPass(matte, rgba, recipe, image.width, image.height);
-  const protectedInteriorMask = refineChromaKeyEdges(
-    image,
-    recipe,
-    matte,
-    rgba,
-  );
+  const refinement = refineChromaKeyEdgesWithMasks(image, recipe, matte, rgba);
   const detection = buildDetectionMask(
     matte,
     recipe,
@@ -197,7 +194,8 @@ export function processModularSprite(
     background,
     rgba,
     matte,
-    protectedInteriorMask,
+    refinement.protectedInteriorMask,
+    refinement.enclosedChromaMask,
     labels,
     regions,
     discardedRegionCount,
@@ -257,12 +255,7 @@ export async function processModularSpriteAsync(
   hooks.report(0.48, "Applying mask strokes");
   await hooks.checkpoint();
   hooks.throwIfAborted();
-  const protectedInteriorMask = refineChromaKeyEdges(
-    image,
-    recipe,
-    matte,
-    rgba,
-  );
+  const refinement = refineChromaKeyEdgesWithMasks(image, recipe, matte, rgba);
   hooks.report(0.56, "Refining edges");
   await hooks.checkpoint();
   hooks.throwIfAborted();
@@ -301,7 +294,8 @@ export async function processModularSpriteAsync(
     background,
     rgba,
     matte,
-    protectedInteriorMask,
+    refinement.protectedInteriorMask,
+    refinement.enclosedChromaMask,
     labels,
     regions,
     discardedRegionCount,

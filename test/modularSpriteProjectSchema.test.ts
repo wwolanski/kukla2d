@@ -37,7 +37,7 @@ function projectWithModularSprite() {
     sourceAssetId: "source",
     source: { width: 16, height: 16 },
     processorVersion: 1,
-    recipe,
+    recipe: structuredClone(recipe),
     parts: [
       {
         partKey: "head",
@@ -65,6 +65,30 @@ describe("modular sprite project schema", () => {
 
   it("accepts a complete profile", () => {
     expect(validateProject(projectWithModularSprite()).success).toBe(true);
+  });
+
+  it("accepts enclosed chroma mode and normalized seeds", () => {
+    const project = projectWithModularSprite();
+    project.modularSprites[0]!.recipe.background.enclosedChromaMode =
+      "desaturate";
+    project.modularSprites[0]!.recipe.background.enclosedChromaSeeds = [
+      { x: 0.25, y: 0.75 },
+    ];
+    expect(validateProject(project).success).toBe(true);
+  });
+
+  it("rejects invalid enclosed chroma mode and seeds", () => {
+    const invalidMode = projectWithModularSprite();
+    const invalidModeBackground = invalidMode.modularSprites[0]!.recipe
+      .background as unknown as Record<string, unknown>;
+    invalidModeBackground.enclosedChromaMode = "invalid";
+    expect(validateProject(invalidMode).success).toBe(false);
+
+    const invalidSeed = projectWithModularSprite();
+    invalidSeed.modularSprites[0]!.recipe.background.enclosedChromaSeeds = [
+      { x: 1.01, y: 0.5 },
+    ];
+    expect(validateProject(invalidSeed).success).toBe(false);
   });
 
   it("validates recipe values with the same limits used by processing and UI", () => {

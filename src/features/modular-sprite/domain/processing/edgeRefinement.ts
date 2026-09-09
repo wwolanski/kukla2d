@@ -1,9 +1,11 @@
 import {
   MODULAR_SPRITE_PROCESSING_CONFIG,
   resolveChromaRefinement,
+  type NormalizedPoint,
   type ModularSpriteProcessingRecipe,
 } from "@kukla2d/contracts";
 
+import { detectEnclosedChroma } from "./enclosedChroma.js";
 import { rasterizeStroke } from "./maskStrokes.js";
 import {
   fillEnclosedHoles,
@@ -24,6 +26,74 @@ const PROPAGATION_NEIGHBORS = [
   [1, 1],
 ] as const;
 
+type EnclosedChromaMode = "transparent" | "black" | "desaturate" | "preserve";
+
+type ExtendedChromaBackground = ModularSpriteProcessingRecipe["background"] & {
+  enclosedChromaMode?: EnclosedChromaMode;
+  enclosedChromaSeeds?: NormalizedPoint[];
+};
+
+type ExtendedChromaRefinement = ReturnType<typeof resolveChromaRefinement> & {
+  enclosedChromaMode?: EnclosedChromaMode;
+  enclosedChromaSeeds?: NormalizedPoint[];
+};
+
+interface PreparedInteriorMasks {
+  protectedCore: Uint8Array;
+  backgroundStrokeMask: Uint8Array;
+  enclosedChromaMask: Uint8Array;
+  enclosedChromaManualMask: Uint8Array;
+  mode: EnclosedChromaMode;
+}
+
+interface ChromaRefinementResult {
+  protectedInteriorMask: Uint8Array;
+  enclosedChromaMask: Uint8Array;
+}
+
+function isEnclosedChromaMode(value: unknown): value is EnclosedChromaMode {
+  return (
+    value === "transparent" ||
+    value === "black" ||
+    value === "desaturate" ||
+    value === "preserve"
+  );
+}
+
+function resolvedChromaRefinement(
+  recipe: ModularSpriteProcessingRecipe,
+): ExtendedChromaRefinement {
+  const background = recipe.background as ExtendedChromaBackground;
+  const resolved = resolveChromaRefinement(
+    background,
+  ) as ExtendedChromaRefinement;
+  return {
+    ...resolved,
+    enclosedChromaMode: isEnclosedChromaMode(resolved.enclosedChromaMode)
+      ? resolved.enclosedChromaMode
+      : isEnclosedChromaMode(background.enclosedChromaMode)
+        ? background.enclosedChromaMode
+        : "transparent",
+    enclosedChromaSeeds: Array.isArray(resolved.enclosedChromaSeeds)
+      ? resolved.enclosedChromaSeeds
+      : Array.isArray(background.enclosedChromaSeeds)
+        ? background.enclosedChromaSeeds
+        : [],
+  };
+}
+
+function strokeMask(
+  recipe: ModularSpriteProcessingRecipe,
+  width: number,
+  height: number,
+  kind: "background" | "foreground",
+): Uint8Array {
+  const mask = new Uint8Array(width * height);
+  for (const stroke of recipe.strokes)
+    if (stroke.kind === kind) rasterizeStroke(mask, width, height, stroke, 1);
+  return mask;
+}
+
 function backgroundStrokeMask(
   recipe: ModularSpriteProcessingRecipe,
   width: number,
@@ -36,31 +106,70 @@ function backgroundStrokeMask(
   return locked;
 }
 
-export function protectIslandInteriors(
+function prepareInteriorMasks(
   image: RgbaImageData,
   recipe: ModularSpriteProcessingRecipe,
+  matte: Uint8ClampedArray,
+): PreparedInteriorMasks {
+  const empty = new Uint8Array(image.width * image.height);
+  const refinement = resolvedChromaRefinement(recipe);
+  const lockedBackground = backgroundStrokeMask(
+    recipe,
+    image.width,
+    image.height,
+  );
+  if (!refinement.protectIslandInteriors)
+    return {
+      protectedCore: empty,
+      backgroundStrokeMask: lockedBackground,
+      enclosedChromaMask: empty,
+      enclosedChromaManualMask: empty,
+      mode: refinement.enclosedChromaMode ?? "transparent",
+    };
+
+  const detection = thresholdMatte(matte, recipe.detection.alphaThreshold);
+  const filledDetection = fillEnclosedHoles(
+    detection,
+    image.width,
+    image.height,
+  );
+  const protectedCore = squareMorphology(
+    filledDetection,
+    image.width,
+    image.height,
+    refinement.interiorProtectionInset,
+    false,
+  );
+  const detectedEnclosed = detectEnclosedChroma(
+    image,
+    matte,
+    protectedCore,
+    recipe.detection.alphaThreshold,
+    recipe.background.color,
+    refinement.enclosedChromaSeeds ?? [],
+    lockedBackground,
+    strokeMask(recipe, image.width, image.height, "foreground"),
+  );
+  return {
+    protectedCore,
+    backgroundStrokeMask: lockedBackground,
+    enclosedChromaMask: detectedEnclosed.mask,
+    enclosedChromaManualMask: detectedEnclosed.manualMask,
+    mode: refinement.enclosedChromaMode ?? "transparent",
+  };
+}
+
+function restoreProtectedInterior(
+  image: RgbaImageData,
+  masks: PreparedInteriorMasks,
   matte: Uint8ClampedArray,
   rgba: Uint8ClampedArray,
 ): Uint8Array {
   const protection = new Uint8Array(image.width * image.height);
-  const refinement = resolveChromaRefinement(recipe.background);
-  if (!refinement.protectIslandInteriors) return protection;
-  const { width, height } = image;
-  const detection = thresholdMatte(matte, recipe.detection.alphaThreshold);
-  const filledDetection = fillEnclosedHoles(detection, width, height);
-  const inset = refinement.interiorProtectionInset;
-  const protectedCore = squareMorphology(
-    filledDetection,
-    width,
-    height,
-    inset,
-    false,
-  );
-  const lockedBackground = backgroundStrokeMask(recipe, width, height);
-
   for (let pixelIndex = 0; pixelIndex < protection.length; pixelIndex += 1) {
-    if (lockedBackground[pixelIndex]) continue;
-    if (!protectedCore[pixelIndex]) continue;
+    if (masks.backgroundStrokeMask[pixelIndex]) continue;
+    if (!masks.protectedCore[pixelIndex]) continue;
+    if (masks.enclosedChromaMask[pixelIndex]) continue;
     const offset = pixelIndex * 4;
     const sourceAlpha = image.data[offset + 3] ?? 0;
     if (sourceAlpha === 0) continue;
@@ -74,16 +183,70 @@ export function protectIslandInteriors(
   return protection;
 }
 
+function applyEnclosedChroma(
+  image: RgbaImageData,
+  masks: PreparedInteriorMasks,
+  matte: Uint8ClampedArray,
+  rgba: Uint8ClampedArray,
+): void {
+  if (masks.mode === "transparent") return;
+  for (
+    let pixelIndex = 0;
+    pixelIndex < masks.enclosedChromaMask.length;
+    pixelIndex += 1
+  ) {
+    if (!masks.enclosedChromaMask[pixelIndex]) continue;
+    if (masks.enclosedChromaManualMask[pixelIndex]) continue;
+    const offset = pixelIndex * 4;
+    const sourceAlpha = image.data[offset + 3] ?? 0;
+    matte[pixelIndex] = sourceAlpha;
+    rgba[offset + 3] = sourceAlpha;
+    if (masks.mode === "black") {
+      rgba[offset] = 0;
+      rgba[offset + 1] = 0;
+      rgba[offset + 2] = 0;
+      continue;
+    }
+    if (masks.mode === "desaturate") {
+      const gray = Math.round(
+        (image.data[offset] ?? 0) * 0.2126 +
+          (image.data[offset + 1] ?? 0) * 0.7152 +
+          (image.data[offset + 2] ?? 0) * 0.0722,
+      );
+      rgba[offset] = gray;
+      rgba[offset + 1] = gray;
+      rgba[offset + 2] = gray;
+      continue;
+    }
+    rgba[offset] = image.data[offset] ?? 0;
+    rgba[offset + 1] = image.data[offset + 1] ?? 0;
+    rgba[offset + 2] = image.data[offset + 2] ?? 0;
+  }
+}
+
+export function protectIslandInteriors(
+  image: RgbaImageData,
+  recipe: ModularSpriteProcessingRecipe,
+  matte: Uint8ClampedArray,
+  rgba: Uint8ClampedArray,
+): Uint8Array {
+  const masks = prepareInteriorMasks(image, recipe, matte);
+  applyEnclosedChroma(image, masks, matte, rgba);
+  return restoreProtectedInterior(image, masks, matte, rgba);
+}
+
 function chokeSoftMatte(
   recipe: ModularSpriteProcessingRecipe,
   matte: Uint8ClampedArray,
   rgba: Uint8ClampedArray,
+  skipMask?: Uint8Array,
 ): void {
   const choke = resolveChromaRefinement(recipe.background).matteChoke;
   if (choke <= 0) return;
   const { alphaByteMax } = MODULAR_SPRITE_PROCESSING_CONFIG.algorithm;
   const remaining = 1 - choke;
   for (let pixelIndex = 0; pixelIndex < matte.length; pixelIndex += 1) {
+    if (skipMask?.[pixelIndex]) continue;
     const current = matte[pixelIndex] ?? 0;
     if (current === 0 || current === alphaByteMax) continue;
     const alpha = current / alphaByteMax;
@@ -100,6 +263,7 @@ function recoverEdgeColors(
   rgba: Uint8ClampedArray,
   width: number,
   height: number,
+  skipMask?: Uint8Array,
 ): void {
   const refinement = resolveChromaRefinement(recipe.background);
   const recovery = refinement.edgeColorRecovery;
@@ -149,6 +313,7 @@ function recoverEdgeColors(
   }
 
   for (let pixelIndex = 0; pixelIndex < matte.length; pixelIndex += 1) {
+    if (skipMask?.[pixelIndex]) continue;
     const foregroundPixel = sourcePixel[pixelIndex] ?? -1;
     const alphaByte = matte[pixelIndex] ?? 0;
     if (foregroundPixel < 0 || alphaByte >= confidentForegroundAlpha) continue;
@@ -175,10 +340,35 @@ export function refineChromaKeyEdges(
   matte: Uint8ClampedArray,
   rgba: Uint8ClampedArray,
 ): Uint8Array {
+  return refineChromaKeyEdgesWithMasks(image, recipe, matte, rgba)
+    .protectedInteriorMask;
+}
+
+export function refineChromaKeyEdgesWithMasks(
+  image: RgbaImageData,
+  recipe: ModularSpriteProcessingRecipe,
+  matte: Uint8ClampedArray,
+  rgba: Uint8ClampedArray,
+): ChromaRefinementResult {
   if (recipe.background.mode !== "chroma")
-    return new Uint8Array(image.width * image.height);
-  const protection = protectIslandInteriors(image, recipe, matte, rgba);
-  chokeSoftMatte(recipe, matte, rgba);
-  recoverEdgeColors(recipe, matte, rgba, image.width, image.height);
-  return protection;
+    return {
+      protectedInteriorMask: new Uint8Array(image.width * image.height),
+      enclosedChromaMask: new Uint8Array(image.width * image.height),
+    };
+  const masks = prepareInteriorMasks(image, recipe, matte);
+  applyEnclosedChroma(image, masks, matte, rgba);
+  const protection = restoreProtectedInterior(image, masks, matte, rgba);
+  chokeSoftMatte(recipe, matte, rgba, masks.enclosedChromaMask);
+  recoverEdgeColors(
+    recipe,
+    matte,
+    rgba,
+    image.width,
+    image.height,
+    masks.enclosedChromaMask,
+  );
+  return {
+    protectedInteriorMask: protection,
+    enclosedChromaMask: masks.enclosedChromaMask,
+  };
 }

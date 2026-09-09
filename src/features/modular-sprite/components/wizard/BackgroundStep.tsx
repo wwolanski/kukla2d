@@ -3,6 +3,7 @@ import { Eraser, MousePointer2, Paintbrush, Scissors } from "lucide-react";
 import {
   MODULAR_SPRITE_PROCESSING_CONFIG,
   resolveChromaRefinement,
+  type ModularSpriteEnclosedChromaMode,
   type ModularSpriteProcessingRecipe,
 } from "@kukla2d/contracts";
 
@@ -50,6 +51,7 @@ export function BackgroundStep({
   onToolChange,
   onBrushRadiusChange,
   onPickMode,
+  onClearEnclosedAreas,
 }: {
   recipe: ModularSpriteProcessingRecipe;
   tool: EditorTool;
@@ -63,9 +65,11 @@ export function BackgroundStep({
   onToolChange: (tool: EditorTool) => void;
   onBrushRadiusChange: (value: number) => void;
   onPickMode: () => void;
+  onClearEnclosedAreas: () => void;
 }): React.ReactElement {
   const config = MODULAR_SPRITE_PROCESSING_CONFIG;
   const refinement = resolveChromaRefinement(recipe.background);
+  const enclosedChromaSeedCount = refinement.enclosedChromaSeeds.length;
   return (
     <aside className="space-y-4 overflow-auto rounded-lg border p-4">
       <p className="text-xs text-muted-foreground">
@@ -174,6 +178,34 @@ export function BackgroundStep({
         Keeps the inset interior of closed part silhouettes opaque, including
         keyed colors enclosed by their outlines. Open areas and background brush
         strokes stay transparent.
+      </p>
+      <FieldLabel>
+        Enclosed chroma inside protected areas
+        <select
+          aria-label="Enclosed chroma inside protected areas"
+          className="h-9 rounded-md border bg-background px-2"
+          value={refinement.enclosedChromaMode}
+          onChange={(event) =>
+            onRecipeChange((draft) => {
+              draft.background.enclosedChromaMode = event.target
+                .value as ModularSpriteEnclosedChromaMode;
+            })
+          }
+        >
+          <option value="transparent">Remove (transparent)</option>
+          <option value="black">Fill black</option>
+          <option value="desaturate">Desaturate</option>
+          <option value="preserve">Preserve</option>
+        </select>
+      </FieldLabel>
+      <p className="text-xs text-muted-foreground">
+        Automatic enclosed-chroma handling applies only inside the protected
+        area; open background areas are not affected.
+      </p>
+      <p className="text-xs text-muted-foreground">
+        Overlay: <span className="text-fuchsia-400">magenta</span> is the
+        protected area, <span className="text-cyan-300">cyan</span> is
+        recognized enclosed chroma.
       </p>
       <FieldLabel>
         Interior inset: {refinement.interiorProtectionInset}px
@@ -362,7 +394,25 @@ export function BackgroundStep({
             <Scissors className="mr-1 h-4 w-4" />
             Split
           </UiButton>
+          <UiButton
+            size="sm"
+            variant={tool === "enclosed-fill" ? "default" : "outline"}
+            onClick={() => onToolChange("enclosed-fill")}
+          >
+            <MousePointer2 className="mr-1 h-4 w-4" />
+            Remove enclosed area
+          </UiButton>
         </div>
+        <UiButton
+          className="w-full"
+          disabled={enclosedChromaSeedCount === 0}
+          size="sm"
+          variant="outline"
+          onClick={onClearEnclosedAreas}
+        >
+          Clear manual areas
+          {enclosedChromaSeedCount > 0 ? ` (${enclosedChromaSeedCount})` : ""}
+        </UiButton>
         <FieldLabel>
           Brush radius: {(brushRadius * 100).toFixed(1)}%
           <UiSlider

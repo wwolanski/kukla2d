@@ -1,4 +1,8 @@
-import type { ModularSpriteProcessingRecipe } from "./project.types.js";
+import type {
+  ModularSpriteEnclosedChromaMode,
+  ModularSpriteProcessingRecipe,
+  NormalizedPoint,
+} from "./project.types.js";
 
 interface NumericProcessingParameter {
   readonly default: number;
@@ -22,14 +26,14 @@ export const MODULAR_SPRITE_PROCESSING_CONFIG = {
       channel: { min: 0, max: 255, step: 1, integer: true },
     },
     tolerance: {
-      default: 0.08,
+      default: 0.2,
       min: 0,
       max: 0.25,
       step: 0.002,
       digits: 3,
     },
     softness: {
-      default: 0.12,
+      default: 0.2,
       min: 0.002,
       max: 0.25,
       step: 0.002,
@@ -38,7 +42,7 @@ export const MODULAR_SPRITE_PROCESSING_CONFIG = {
     despill: { default: 0.8, min: 0, max: 1, step: 0.02, digits: 2 },
     protectIslandInteriors: { default: true },
     interiorProtectionInset: {
-      default: 2,
+      default: 1,
       min: 1,
       max: 8,
       step: 1,
@@ -133,6 +137,14 @@ export const MODULAR_SPRITE_PROCESSING_CONFIG = {
     extractionPaddingRatio: 0.01,
     extractionPaddingMin: 4,
     extractionPaddingMax: 32,
+    enclosedChromaStrongDistance: 0.05,
+    enclosedChromaMeanDistance: 0.08,
+    enclosedChromaStrongRatio: 0.7,
+    enclosedChromaColorSpread: 0.06,
+    enclosedChromaSmallArea: 64,
+    enclosedChromaSmallMeanDistance: 0.13,
+    enclosedChromaSmallStrongRatio: 0.1,
+    enclosedChromaSmallColorSpread: 0.09,
   },
 } as const;
 
@@ -154,6 +166,8 @@ export function createDefaultModularSpriteRecipe(): ModularSpriteProcessingRecip
       tolerance: config.background.tolerance.default,
       softness: config.background.softness.default,
       despill: config.background.despill.default,
+      enclosedChromaMode: "transparent",
+      enclosedChromaSeeds: [],
       ...DEFAULT_CHROMA_REFINEMENT,
     },
     detection: {
@@ -170,6 +184,8 @@ export function createDefaultModularSpriteRecipe(): ModularSpriteProcessingRecip
 export const DEFAULT_MODULAR_SPRITE_RECIPE = createDefaultModularSpriteRecipe();
 
 interface ChromaRefinement {
+  enclosedChromaMode: ModularSpriteEnclosedChromaMode;
+  enclosedChromaSeeds: NormalizedPoint[];
   protectIslandInteriors: boolean;
   interiorProtectionInset: number;
   matteChoke: number;
@@ -181,6 +197,8 @@ export function resolveChromaRefinement(
   background: ModularSpriteProcessingRecipe["background"],
 ): ChromaRefinement {
   return {
+    enclosedChromaMode: background.enclosedChromaMode ?? "preserve",
+    enclosedChromaSeeds: background.enclosedChromaSeeds ?? [],
     protectIslandInteriors:
       background.protectIslandInteriors ??
       DEFAULT_CHROMA_REFINEMENT.protectIslandInteriors,
@@ -221,6 +239,21 @@ function assertRecord(
     throw new Error(`${name} must be an object`);
 }
 
+function assertNormalizedPoint(
+  name: string,
+  value: unknown,
+): asserts value is NormalizedPoint {
+  assertRecord(name, value);
+  for (const axis of ["x", "y"] as const)
+    if (
+      typeof value[axis] !== "number" ||
+      !Number.isFinite(value[axis]) ||
+      value[axis] < 0 ||
+      value[axis] > 1
+    )
+      throw new Error(`${name}.${axis} must be between 0 and 1`);
+}
+
 /** Validates the exact recipe contract accepted by both browser and CLI. */
 export function assertValidModularSpriteRecipe(
   value: unknown,
@@ -259,6 +292,25 @@ export function assertValidModularSpriteRecipe(
     background.despill,
     config.background.despill,
   );
+  if (
+    background.enclosedChromaMode !== undefined &&
+    background.enclosedChromaMode !== "transparent" &&
+    background.enclosedChromaMode !== "black" &&
+    background.enclosedChromaMode !== "desaturate" &&
+    background.enclosedChromaMode !== "preserve"
+  )
+    throw new Error(
+      "background.enclosedChromaMode must be transparent, black, desaturate or preserve",
+    );
+  if (background.enclosedChromaSeeds !== undefined) {
+    if (!Array.isArray(background.enclosedChromaSeeds))
+      throw new Error("background.enclosedChromaSeeds must be an array");
+    for (const [index, pointValue] of background.enclosedChromaSeeds.entries())
+      assertNormalizedPoint(
+        `background.enclosedChromaSeeds.${index}`,
+        pointValue,
+      );
+  }
   const protectIslandInteriors =
     background.protectIslandInteriors ??
     DEFAULT_CHROMA_REFINEMENT.protectIslandInteriors;
@@ -333,19 +385,10 @@ export function assertValidModularSpriteRecipe(
       );
     if (!Array.isArray(stroke.points) || stroke.points.length === 0)
       throw new Error(`strokes.${index}.points must not be empty`);
-    for (const [pointIndex, pointValue] of stroke.points.entries()) {
-      assertRecord(`strokes.${index}.points.${pointIndex}`, pointValue);
-      const point = pointValue;
-      for (const axis of ["x", "y"] as const)
-        if (
-          typeof point[axis] !== "number" ||
-          !Number.isFinite(point[axis]) ||
-          point[axis] < 0 ||
-          point[axis] > 1
-        )
-          throw new Error(
-            `strokes.${index}.points.${pointIndex}.${axis} must be between 0 and 1`,
-          );
-    }
+    for (const [pointIndex, pointValue] of stroke.points.entries())
+      assertNormalizedPoint(
+        `strokes.${index}.points.${pointIndex}`,
+        pointValue,
+      );
   }
 }

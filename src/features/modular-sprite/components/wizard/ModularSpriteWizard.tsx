@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import {
   resolveChromaRefinement,
   type ModularSpriteMaskStrokeKind,
+  type NormalizedPoint,
 } from "@kukla2d/contracts";
 
 import { SchemaComparisonSidebar } from "@/features/modular-sprite-schema";
@@ -74,6 +75,17 @@ export function ModularSpriteWizard({
     controller.changeRecipe((recipe) => {
       recipe.strokes.push({ kind, radius: ui.brushRadius, points });
     }, "discrete");
+  const onEnclosedChromaSeed = (point: NormalizedPoint): void =>
+    controller.changeRecipe((recipe) => {
+      recipe.background.enclosedChromaSeeds = [
+        ...(recipe.background.enclosedChromaSeeds ?? []),
+        point,
+      ];
+    }, "discrete");
+  const onClearEnclosedAreas = (): void =>
+    controller.changeRecipe((recipe) => {
+      recipe.background.enclosedChromaSeeds = [];
+    }, "discrete");
 
   return (
     <UiDialog
@@ -109,12 +121,13 @@ export function ModularSpriteWizard({
                       controller.changeRecipe(change, "recipe", process)
                     }
                     onRecipeCommit={controller.commitRecipeProcessing}
-                    onToolChange={ui.setTool}
                     onBrushRadiusChange={ui.setBrushRadius}
+                    onClearEnclosedAreas={onClearEnclosedAreas}
                     onPickMode={() => {
                       ui.setTool("eyedropper");
                       ui.setPreviewMode("original");
                     }}
+                    onToolChange={ui.setTool}
                   />
                 )}
                 {step === "regions" && (
@@ -224,6 +237,7 @@ export function ModularSpriteWizard({
                         ui.setTool("select");
                       }}
                       onStroke={onStroke}
+                      onEnclosedChromaSeed={onEnclosedChromaSeed}
                     />
                   </div>
                 </section>

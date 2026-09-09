@@ -251,6 +251,9 @@ export interface NormalizedRect extends NormalizedPoint {
   height: number;
 }
 
+export type ModularSpriteEnclosedChromaMode =
+  "transparent" | "black" | "desaturate" | "preserve";
+
 export type ModularSpriteSide = "left" | "right" | "center" | "none";
 export type ModularSpriteMaskStrokeKind = "foreground" | "background" | "split";
 
@@ -267,6 +270,10 @@ export interface ModularSpriteProcessingRecipe {
     tolerance: number;
     softness: number;
     despill: number;
+    /** How enclosed chroma-colored regions are handled during refinement. */
+    enclosedChromaMode?: ModularSpriteEnclosedChromaMode;
+    /** Normalized seed points identifying enclosed chroma-colored regions. */
+    enclosedChromaSeeds?: NormalizedPoint[];
     /** Keep the inset interior of each closed island silhouette opaque. */
     protectIslandInteriors?: boolean;
     /** Number of pixels kept between the detected edge and the protected core. */
