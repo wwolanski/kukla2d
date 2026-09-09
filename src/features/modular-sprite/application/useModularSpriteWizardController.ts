@@ -14,6 +14,7 @@ import type {
   ModularSpriteProcessingRecipe,
   NormalizedPoint,
 } from "@kukla2d/contracts";
+import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
 import type {
   MatchProgressEvent,
   ModularSpriteSchema,
@@ -304,7 +305,9 @@ export function useModularSpriteWizardController({
   const [resultVersion, setResultVersion] = useState(0);
   const [previewMode, setPreviewMode] = useState<PreviewMode>("result");
   const [tool, setTool] = useState<EditorTool>("select");
-  const [brushRadius, setBrushRadius] = useState(0.012);
+  const [brushRadius, setBrushRadius] = useState<number>(
+    MODULAR_SPRITE_PROCESSING_CONFIG.strokes.editorRadius.default,
+  );
   const [zoom, setZoom] = useState(1);
   const [showOverlays, setShowOverlays] = useState(true);
   const [advancedFrameKeys, setAdvancedFrameKeys] = useState<Set<string>>(

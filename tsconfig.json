@@ -30,6 +30,7 @@
     "packages/**/*.ts",
     "packages/**/*.tsx",
     "packages/**/*.d.ts",
+    "scripts/process-modular-sprite.mts",
     "test/types/**/*.ts"
   ]
 }

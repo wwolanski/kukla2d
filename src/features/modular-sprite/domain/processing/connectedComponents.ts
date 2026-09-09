@@ -1,3 +1,5 @@
+import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
+
 import type { ComponentStats } from "./connectedComponents.types.js";
 
 const NEIGHBORS_8 = [
@@ -11,7 +13,8 @@ const NEIGHBORS_8 = [
   [1, 1],
 ] as const;
 
-export const MAX_DETECTED_REGIONS = 256;
+export const MAX_DETECTED_REGIONS =
+  MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.maxDetectedRegions;
 
 function hasLowerRetentionPriority(
   left: ComponentStats,

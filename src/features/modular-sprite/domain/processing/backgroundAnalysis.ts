@@ -1,3 +1,5 @@
+import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
+
 import type { RgbaImageData } from "../contracts.types.js";
 
 interface BackgroundAnalysis {
@@ -10,6 +12,7 @@ export function analyzeModularSpriteBackground(
   image: RgbaImageData,
 ): BackgroundAnalysis {
   const { data, width, height } = image;
+  const config = MODULAR_SPRITE_PROCESSING_CONFIG.algorithm;
   const borderIndices: number[] = [];
   for (let x = 0; x < width; x += 1) {
     borderIndices.push(x, (height - 1) * width + x);
@@ -26,11 +29,15 @@ export function analyzeModularSpriteBackground(
   for (const pixelIndex of borderIndices) {
     const offset = pixelIndex * 4;
     const alpha = data[offset + 3] ?? 0;
-    if (alpha < 16) transparent += 1;
+    if (alpha < config.transparentBorderAlpha) transparent += 1;
     const red = data[offset] ?? 0;
     const green = data[offset + 1] ?? 0;
     const blue = data[offset + 2] ?? 0;
-    const key = ((red >> 4) << 8) | ((green >> 4) << 4) | (blue >> 4);
+    const shift = config.borderColorBinShift;
+    const key =
+      ((red >> shift) << (shift * 2)) |
+      ((green >> shift) << shift) |
+      (blue >> shift);
     const bin = bins.get(key) ?? { count: 0, red: 0, green: 0, blue: 0 };
     bin.count += 1;
     bin.red += red;
@@ -40,7 +47,7 @@ export function analyzeModularSpriteBackground(
   }
 
   const borderCount = Math.max(1, borderIndices.length);
-  if (transparent / borderCount >= 0.5) {
+  if (transparent / borderCount >= config.transparentBorderRatio) {
     return {
       mode: "alpha",
       color: { r: 0, g: 0, b: 0 },

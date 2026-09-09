@@ -1,4 +1,5 @@
 export * from "./errors.js";
+export * from "./modularSpriteProcessing.config.js";
 export type * from "./errors.types.js";
 export type * from "./project.types.js";
 export type * from "./commands.types.js";

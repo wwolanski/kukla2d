@@ -3,12 +3,11 @@ import type {
   ModularSpriteId,
   ModularSpriteProcessingRecipe,
 } from "@kukla2d/contracts";
+import { DEFAULT_MODULAR_SPRITE_RECIPE } from "@kukla2d/contracts";
 import type {
   ModularSpriteSchema,
   SchemaComparisonResult,
 } from "@kukla2d/modular-sprite-schema";
-
-import { DEFAULT_MODULAR_SPRITE_RECIPE } from "../domain/contracts.js";
 
 import type {
   ModularSpriteWizardStep,

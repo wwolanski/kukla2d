@@ -1,4 +1,7 @@
-import type { NormalizedRect } from "@kukla2d/contracts";
+import {
+  MODULAR_SPRITE_PROCESSING_CONFIG,
+  type NormalizedRect,
+} from "@kukla2d/contracts";
 
 import { clamp, normalizedRect, pixelRect } from "../imageMath.js";
 
@@ -14,10 +17,13 @@ export function createDefaultExtractionFrame(
   sourceWidth: number,
   sourceHeight: number,
 ): NormalizedRect {
+  const config = MODULAR_SPRITE_PROCESSING_CONFIG.algorithm;
   const padding = clamp(
-    Math.round(Math.max(sourceWidth, sourceHeight) * 0.01),
-    4,
-    32,
+    Math.round(
+      Math.max(sourceWidth, sourceHeight) * config.extractionPaddingRatio,
+    ),
+    config.extractionPaddingMin,
+    config.extractionPaddingMax,
   );
   const x = Math.max(0, region.bounds.x - padding);
   const y = Math.max(0, region.bounds.y - padding);

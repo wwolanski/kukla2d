@@ -1,4 +1,7 @@
-import type { ModularSpriteProcessingRecipe } from "@kukla2d/contracts";
+import {
+  MODULAR_SPRITE_PROCESSING_CONFIG,
+  type ModularSpriteProcessingRecipe,
+} from "@kukla2d/contracts";
 
 import { precomputeOklabAsync } from "../domain/processing/chromaKey.js";
 import { extractModularSpriteParts } from "../domain/processing/extractParts.js";
@@ -21,8 +24,6 @@ interface ModularSpriteWarmCache {
   oklab: Float32Array | null;
 }
 
-const OKLAB_CACHE_MAX_PIXELS = 4_000_000;
-
 function createHooks(runtime: ModularSpriteTaskRuntime, requestId: string) {
   return {
     throwIfAborted: () => {
@@ -43,7 +44,11 @@ async function ensureOklab(
   requestId: string,
 ): Promise<Float32Array | null> {
   if (recipe.background.mode !== "chroma") return null;
-  if (image.width * image.height > OKLAB_CACHE_MAX_PIXELS) return null;
+  if (
+    image.width * image.height >
+    MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.oklabCacheMaxPixels
+  )
+    return null;
   if (!cache) return null;
   if (!cache.oklab) {
     runtime.reportProgress(requestId, 0.02, "Precomputing color space");

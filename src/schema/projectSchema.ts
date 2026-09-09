@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  MODULAR_SPRITE_PROCESSING_CONFIG,
   toAnimationId,
   toAnimationTargetId,
   toAttachmentId,
@@ -277,29 +278,100 @@ const NormalizedRectSchema = NormalizedPointSchema.extend({
     message: "Normalized rectangle exceeds image height",
   });
 
+const processingConfig = MODULAR_SPRITE_PROCESSING_CONFIG;
+
 const ModularSpriteRecipeSchema = z.object({
   background: z.object({
     mode: z.enum(["alpha", "chroma"]),
     color: z.object({
-      r: z.number().int().min(0).max(255),
-      g: z.number().int().min(0).max(255),
-      b: z.number().int().min(0).max(255),
+      r: z
+        .number()
+        .int()
+        .min(processingConfig.background.color.channel.min)
+        .max(processingConfig.background.color.channel.max),
+      g: z
+        .number()
+        .int()
+        .min(processingConfig.background.color.channel.min)
+        .max(processingConfig.background.color.channel.max),
+      b: z
+        .number()
+        .int()
+        .min(processingConfig.background.color.channel.min)
+        .max(processingConfig.background.color.channel.max),
     }),
-    tolerance: z.number().finite().min(0).max(1),
-    softness: z.number().finite().min(0).max(1),
-    despill: z.number().finite().min(0).max(1),
+    tolerance: z
+      .number()
+      .finite()
+      .min(processingConfig.background.tolerance.min)
+      .max(processingConfig.background.tolerance.max),
+    softness: z
+      .number()
+      .finite()
+      .min(processingConfig.background.softness.min)
+      .max(processingConfig.background.softness.max),
+    despill: z
+      .number()
+      .finite()
+      .min(processingConfig.background.despill.min)
+      .max(processingConfig.background.despill.max),
+    protectIslandInteriors: z.boolean().optional(),
+    interiorProtectionInset: z
+      .number()
+      .int()
+      .min(processingConfig.background.interiorProtectionInset.min)
+      .max(processingConfig.background.interiorProtectionInset.max)
+      .optional(),
+    matteChoke: z
+      .number()
+      .finite()
+      .min(processingConfig.background.matteChoke.min)
+      .max(processingConfig.background.matteChoke.max)
+      .optional(),
+    edgeColorRecovery: z
+      .number()
+      .finite()
+      .min(processingConfig.background.edgeColorRecovery.min)
+      .max(processingConfig.background.edgeColorRecovery.max)
+      .optional(),
+    edgeSearchRadius: z
+      .number()
+      .int()
+      .min(processingConfig.background.edgeSearchRadius.min)
+      .max(processingConfig.background.edgeSearchRadius.max)
+      .optional(),
   }),
   detection: z.object({
-    alphaThreshold: z.number().int().min(0).max(255),
-    minimumRegionAreaRatio: z.number().finite().min(0).max(1),
-    openingRadius: z.number().int().min(0).max(32),
-    closingRadius: z.number().int().min(0).max(32),
-    connectivity: z.literal(8),
+    alphaThreshold: z
+      .number()
+      .int()
+      .min(processingConfig.detection.alphaThreshold.min)
+      .max(processingConfig.detection.alphaThreshold.max),
+    minimumRegionAreaRatio: z
+      .number()
+      .finite()
+      .min(processingConfig.detection.minimumRegionAreaRatio.min)
+      .max(processingConfig.detection.minimumRegionAreaRatio.max),
+    openingRadius: z
+      .number()
+      .int()
+      .min(processingConfig.detection.openingRadius.min)
+      .max(processingConfig.detection.openingRadius.max),
+    closingRadius: z
+      .number()
+      .int()
+      .min(processingConfig.detection.closingRadius.min)
+      .max(processingConfig.detection.closingRadius.max),
+    connectivity: z.literal(processingConfig.detection.connectivity.default),
   }),
   strokes: z.array(
     z.object({
       kind: z.enum(["foreground", "background", "split"]),
-      radius: z.number().finite().positive().max(1),
+      radius: z
+        .number()
+        .finite()
+        .gt(processingConfig.strokes.radius.minExclusive)
+        .max(processingConfig.strokes.radius.max),
       points: z.array(NormalizedPointSchema).min(1),
     }),
   ),
