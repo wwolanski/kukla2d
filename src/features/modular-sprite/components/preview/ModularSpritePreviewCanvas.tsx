@@ -27,6 +27,7 @@ interface ModularSpritePreviewCanvasProps {
   selectedRegionIds: ReadonlySet<number>;
   assignments: ReadonlyMap<number, RegionAssignment>;
   showOverlays: boolean;
+  showProtectedInteriors: boolean;
   onSelectRegion: (regionId: number, additive: boolean) => void;
   onStroke: (
     kind: ModularSpriteMaskStrokeKind,
@@ -34,6 +35,36 @@ interface ModularSpritePreviewCanvasProps {
   ) => void;
   onPickColor?: (color: { r: number; g: number; b: number }) => void;
   zoom?: number;
+}
+
+const PROTECTED_INTERIOR_COLOR = [255, 0, 204] as const;
+const PROTECTED_INTERIOR_OPACITY = 0.42;
+
+export function blendProtectedInteriorMask(
+  pixels: Uint8ClampedArray,
+  mask: Uint8Array,
+  color: readonly [number, number, number] = PROTECTED_INTERIOR_COLOR,
+  opacity = PROTECTED_INTERIOR_OPACITY,
+): Uint8ClampedArray {
+  const blended = new Uint8ClampedArray(pixels);
+  const pixelCount = Math.min(mask.length, Math.floor(blended.length / 4));
+  const clampedOpacity = Math.min(1, Math.max(0, opacity));
+  for (let pixelIndex = 0; pixelIndex < pixelCount; pixelIndex += 1) {
+    if ((mask[pixelIndex] ?? 0) === 0) continue;
+    const offset = pixelIndex * 4;
+    blended[offset] = Math.round(
+      (blended[offset] ?? 0) * (1 - clampedOpacity) + color[0] * clampedOpacity,
+    );
+    blended[offset + 1] = Math.round(
+      (blended[offset + 1] ?? 0) * (1 - clampedOpacity) +
+        color[1] * clampedOpacity,
+    );
+    blended[offset + 2] = Math.round(
+      (blended[offset + 2] ?? 0) * (1 - clampedOpacity) +
+        color[2] * clampedOpacity,
+    );
+  }
+  return blended;
 }
 
 function imageDataForMode(
@@ -73,6 +104,7 @@ export function ModularSpritePreviewCanvas({
   selectedRegionIds,
   assignments,
   showOverlays,
+  showProtectedInteriors,
   onSelectRegion,
   onStroke,
   onPickColor,
@@ -89,7 +121,15 @@ export function ModularSpritePreviewCanvas({
     canvas.height = source.height;
     const context = canvas.getContext("2d");
     if (!context) return;
-    context.putImageData(imageDataForMode(source, result, mode), 0, 0);
+    const imageData = imageDataForMode(source, result, mode);
+    if (result && showProtectedInteriors)
+      imageData.data.set(
+        blendProtectedInteriorMask(
+          imageData.data,
+          result.protectedInteriorMask,
+        ),
+      );
+    context.putImageData(imageData, 0, 0);
     if (!result || mode === "matte" || !showOverlays) return;
     context.lineWidth = Math.max(
       1,
@@ -158,6 +198,7 @@ export function ModularSpritePreviewCanvas({
     resultVersion,
     selectedRegionIds,
     showOverlays,
+    showProtectedInteriors,
     source,
   ]);
 
@@ -228,6 +269,7 @@ export function ModularSpritePreviewCanvas({
         activeStroke.current = null;
       }}
       aria-label="Modular sprite processing preview"
+      title="Modular sprite processing preview"
     />
   );
 }

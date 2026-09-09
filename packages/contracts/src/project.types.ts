@@ -267,7 +267,7 @@ export interface ModularSpriteProcessingRecipe {
     tolerance: number;
     softness: number;
     despill: number;
-    /** Keep the confidently detected core of each island opaque. */
+    /** Keep the inset interior of each closed island silhouette opaque. */
     protectIslandInteriors?: boolean;
     /** Number of pixels kept between the detected edge and the protected core. */
     interiorProtectionInset?: number;

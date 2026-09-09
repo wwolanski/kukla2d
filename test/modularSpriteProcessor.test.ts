@@ -10,6 +10,7 @@ import {
   processModularSpriteAsync,
 } from "@/features/modular-sprite";
 import { handleModularSpriteTask } from "@/features/modular-sprite/infrastructure/workerTaskHandler";
+import { blendProtectedInteriorMask } from "@/features/modular-sprite/components/preview/ModularSpritePreviewCanvas";
 
 import type { ModularSpriteTaskRuntime } from "@/features/modular-sprite/infrastructure/workerTaskHandler.types";
 import type {
@@ -88,6 +89,20 @@ function createRuntime(
 }
 
 describe("modular sprite processor", () => {
+  it("blends the protection overlay only into marked pixels", () => {
+    const pixels = new Uint8ClampedArray([10, 20, 30, 255, 40, 50, 60, 128]);
+
+    const blended = blendProtectedInteriorMask(
+      pixels,
+      new Uint8Array([1, 0]),
+      [200, 100, 0],
+      0.5,
+    );
+
+    expect(Array.from(blended)).toEqual([105, 60, 15, 255, 40, 50, 60, 128]);
+    expect(Array.from(pixels)).toEqual([10, 20, 30, 255, 40, 50, 60, 128]);
+  });
+
   it("rejects recipe values outside the shared processing contract", () => {
     const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
     recipe.background.edgeSearchRadius = 13;
@@ -122,6 +137,9 @@ describe("modular sprite processor", () => {
     expect(first.observation.components).toHaveLength(2);
     expect(first.observation.components[0]?.shapeMask.data).toBeInstanceOf(
       Uint8Array,
+    );
+    expect(first.protectedInteriorMask.every((value) => value === 0)).toBe(
+      true,
     );
   });
 
@@ -187,10 +205,10 @@ describe("modular sprite processor", () => {
     expect(result.regions).toHaveLength(1);
   });
 
-  it("protects island interiors from accidental partial keying by default", () => {
+  it("restores fully keyed texture enclosed inside an island", () => {
     const source = image(9, 9, [0, 255, 0, 255]);
     paint(source, 2, 2, 5, 5, [220, 30, 20, 255]);
-    paint(source, 4, 4, 1, 1, [0, 220, 0, 255]);
+    paint(source, 4, 4, 1, 1, [0, 255, 0, 255]);
     const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
     recipe.background.tolerance = 0.02;
     recipe.background.softness = 0.04;
@@ -205,8 +223,104 @@ describe("modular sprite processor", () => {
     const unprotectedResult = processModularSprite({ image: source, recipe });
 
     expect(protectedResult.matte[4 * 9 + 4]).toBe(255);
-    expect(unprotectedResult.matte[4 * 9 + 4]).toBeGreaterThan(0);
-    expect(unprotectedResult.matte[4 * 9 + 4]).toBeLessThan(255);
+    expect(protectedResult.protectedInteriorMask[4 * 9 + 4]).toBe(1);
+    expect(unprotectedResult.matte[4 * 9 + 4]).toBe(0);
+    expect(unprotectedResult.protectedInteriorMask[4 * 9 + 4]).toBe(0);
+  });
+
+  it("keeps island protection independent of detection closing", () => {
+    const source = image(9, 9, [0, 255, 0, 255]);
+    paint(source, 2, 2, 5, 5, [220, 30, 20, 255]);
+    paint(source, 4, 4, 1, 1, [0, 255, 0, 255]);
+    const withoutMorphology = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    withoutMorphology.background.tolerance = 0.02;
+    withoutMorphology.background.softness = 0.04;
+    withoutMorphology.background.matteChoke = 0;
+    withoutMorphology.background.edgeColorRecovery = 0;
+    withoutMorphology.detection.minimumRegionAreaRatio = 0;
+    withoutMorphology.detection.openingRadius = 0;
+    withoutMorphology.detection.closingRadius = 0;
+    const withMorphology = structuredClone(withoutMorphology);
+    withMorphology.detection.closingRadius = 1;
+
+    const baseline = processModularSprite({
+      image: source,
+      recipe: withoutMorphology,
+    });
+    const morphed = processModularSprite({
+      image: source,
+      recipe: withMorphology,
+    });
+
+    expect(Array.from(morphed.protectedInteriorMask)).toEqual(
+      Array.from(baseline.protectedInteriorMask),
+    );
+    expect(morphed.matte[4 * 9 + 4]).toBe(255);
+  });
+
+  it("keeps a diagonal-only background connection enclosed", () => {
+    const source = image(7, 7, [0, 255, 0, 255]);
+    for (let y = 1; y < 6; y += 1) {
+      for (let x = 1; x < 6; x += 1) {
+        if ((x === 1 || x === 5 || y === 1 || y === 5) && !(x === 1 && y === 1))
+          paint(source, x, y, 1, 1, [20, 20, 20, 255]);
+      }
+    }
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.background.tolerance = 0.02;
+    recipe.background.softness = 0.04;
+    recipe.background.interiorProtectionInset = 1;
+    recipe.background.matteChoke = 0;
+    recipe.background.edgeColorRecovery = 0;
+    recipe.detection.minimumRegionAreaRatio = 0;
+    recipe.detection.openingRadius = 0;
+    recipe.detection.closingRadius = 0;
+
+    const result = processModularSprite({ image: source, recipe });
+
+    expect(result.matte[3 * 7 + 3]).toBe(255);
+    expect(result.protectedInteriorMask[3 * 7 + 3]).toBe(1);
+  });
+
+  it("does not protect enclosed pixels with zero source alpha", () => {
+    const source = image(9, 9, [0, 255, 0, 255]);
+    paint(source, 2, 2, 5, 5, [220, 30, 20, 255]);
+    paint(source, 4, 4, 1, 1, [0, 255, 0, 0]);
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.background.tolerance = 0.02;
+    recipe.background.softness = 0.04;
+    recipe.background.matteChoke = 0;
+    recipe.background.edgeColorRecovery = 0;
+    recipe.detection.minimumRegionAreaRatio = 0;
+    recipe.detection.openingRadius = 0;
+    recipe.detection.closingRadius = 0;
+
+    const result = processModularSprite({ image: source, recipe });
+    const center = 4 * 9 + 4;
+
+    expect(result.matte[center]).toBe(0);
+    expect(result.rgba[center * 4 + 3]).toBe(0);
+    expect(result.protectedInteriorMask[center]).toBe(0);
+  });
+
+  it("does not protect keyed space connected to the canvas border", () => {
+    const source = image(7, 7, [0, 255, 0, 255]);
+    paint(source, 1, 1, 2, 1, [20, 20, 20, 255]);
+    paint(source, 4, 1, 2, 1, [20, 20, 20, 255]);
+    paint(source, 1, 5, 5, 1, [20, 20, 20, 255]);
+    paint(source, 1, 1, 1, 5, [20, 20, 20, 255]);
+    paint(source, 5, 1, 1, 5, [20, 20, 20, 255]);
+    const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+    recipe.background.matteChoke = 0;
+    recipe.background.edgeColorRecovery = 0;
+    recipe.detection.minimumRegionAreaRatio = 0;
+    recipe.detection.openingRadius = 0;
+    recipe.detection.closingRadius = 0;
+
+    const result = processModularSprite({ image: source, recipe });
+
+    expect(result.matte[3 * 7 + 3]).toBe(0);
+    expect(result.protectedInteriorMask[3 * 7 + 3]).toBe(0);
   });
 
   it("does not let island protection undo a manual erase stroke", () => {
@@ -227,6 +341,7 @@ describe("modular sprite processor", () => {
     const result = processModularSprite({ image: source, recipe });
 
     expect(result.matte[4 * 9 + 4]).toBe(0);
+    expect(result.protectedInteriorMask[4 * 9 + 4]).toBe(0);
   });
 
   it("reconstructs contaminated edge RGB from nearby solid foreground", () => {
@@ -281,6 +396,9 @@ describe("modular sprite processor", () => {
     );
     expect(Array.from(cooperative.labels)).toEqual(
       Array.from(synchronous.labels),
+    );
+    expect(Array.from(cooperative.protectedInteriorMask)).toEqual(
+      Array.from(synchronous.protectedInteriorMask),
     );
   });
 
@@ -405,7 +523,12 @@ describe("modular sprite processor", () => {
       createRuntime(),
     );
     expect(task.response.type).toBe("result");
-    expect(task.transferables).toHaveLength(3);
+    expect(task.transferables).toHaveLength(4);
+    if (task.response.type !== "result") throw new Error("Expected result");
+    const processed = task.response.data.result as ProcessedModularSprite;
+    expect(task.transferables).toContain(
+      processed.protectedInteriorMask.buffer,
+    );
   });
 
   it("processes from the warm cache and reuses the precomputed color space", async () => {

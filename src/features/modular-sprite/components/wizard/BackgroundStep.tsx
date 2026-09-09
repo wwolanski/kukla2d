@@ -171,8 +171,9 @@ export function BackgroundStep({
         Protect island interiors
       </label>
       <p className="text-xs text-muted-foreground">
-        Keeps the confident center of detected parts opaque while their edge
-        remains soft.
+        Keeps the inset interior of closed part silhouettes opaque, including
+        keyed colors enclosed by their outlines. Open areas and background brush
+        strokes stay transparent.
       </p>
       <FieldLabel>
         Interior inset: {refinement.interiorProtectionInset}px

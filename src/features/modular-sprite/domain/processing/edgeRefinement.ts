@@ -5,7 +5,11 @@ import {
 } from "@kukla2d/contracts";
 
 import { rasterizeStroke } from "./maskStrokes.js";
-import { buildDetectionMask, squareMorphology } from "./morphology.js";
+import {
+  fillEnclosedHoles,
+  squareMorphology,
+  thresholdMatte,
+} from "./morphology.js";
 
 import type { RgbaImageData } from "../contracts.types.js";
 
@@ -32,19 +36,21 @@ function backgroundStrokeMask(
   return locked;
 }
 
-function protectIslandInteriors(
+export function protectIslandInteriors(
   image: RgbaImageData,
   recipe: ModularSpriteProcessingRecipe,
   matte: Uint8ClampedArray,
   rgba: Uint8ClampedArray,
-): void {
+): Uint8Array {
+  const protection = new Uint8Array(image.width * image.height);
   const refinement = resolveChromaRefinement(recipe.background);
-  if (!refinement.protectIslandInteriors) return;
+  if (!refinement.protectIslandInteriors) return protection;
   const { width, height } = image;
-  const detection = buildDetectionMask(matte, recipe, width, height);
+  const detection = thresholdMatte(matte, recipe.detection.alphaThreshold);
+  const filledDetection = fillEnclosedHoles(detection, width, height);
   const inset = refinement.interiorProtectionInset;
   const protectedCore = squareMorphology(
-    detection,
+    filledDetection,
     width,
     height,
     inset,
@@ -52,17 +58,20 @@ function protectIslandInteriors(
   );
   const lockedBackground = backgroundStrokeMask(recipe, width, height);
 
-  for (let pixelIndex = 0; pixelIndex < matte.length; pixelIndex += 1) {
+  for (let pixelIndex = 0; pixelIndex < protection.length; pixelIndex += 1) {
     if (lockedBackground[pixelIndex]) continue;
     if (!protectedCore[pixelIndex]) continue;
     const offset = pixelIndex * 4;
     const sourceAlpha = image.data[offset + 3] ?? 0;
+    if (sourceAlpha === 0) continue;
+    protection[pixelIndex] = 1;
     matte[pixelIndex] = sourceAlpha;
     rgba[offset] = image.data[offset] ?? 0;
     rgba[offset + 1] = image.data[offset + 1] ?? 0;
     rgba[offset + 2] = image.data[offset + 2] ?? 0;
     rgba[offset + 3] = sourceAlpha;
   }
+  return protection;
 }
 
 function chokeSoftMatte(
@@ -165,9 +174,11 @@ export function refineChromaKeyEdges(
   recipe: ModularSpriteProcessingRecipe,
   matte: Uint8ClampedArray,
   rgba: Uint8ClampedArray,
-): void {
-  if (recipe.background.mode !== "chroma") return;
-  protectIslandInteriors(image, recipe, matte, rgba);
+): Uint8Array {
+  if (recipe.background.mode !== "chroma")
+    return new Uint8Array(image.width * image.height);
+  const protection = protectIslandInteriors(image, recipe, matte, rgba);
   chokeSoftMatte(recipe, matte, rgba);
   recoverEdgeColors(recipe, matte, rgba, image.width, image.height);
+  return protection;
 }

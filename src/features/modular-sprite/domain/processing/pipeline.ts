@@ -132,6 +132,7 @@ function makeResult(
   background: ReturnType<typeof analyzeModularSpriteBackground>,
   rgba: Uint8ClampedArray,
   matte: Uint8ClampedArray,
+  protectedInteriorMask: Uint8Array,
   labels: Int32Array,
   regions: DetectedRegion[],
   discardedRegionCount: number,
@@ -141,6 +142,7 @@ function makeResult(
     height: image.height,
     rgba,
     matte,
+    protectedInteriorMask,
     labels,
     regions,
     background,
@@ -164,7 +166,12 @@ export function processModularSprite(
   const background = analyzeModularSpriteBackground(image);
   const { matte, rgba } = createMatte(image, recipe);
   matteStrokesPass(matte, rgba, recipe, image.width, image.height);
-  refineChromaKeyEdges(image, recipe, matte, rgba);
+  const protectedInteriorMask = refineChromaKeyEdges(
+    image,
+    recipe,
+    matte,
+    rgba,
+  );
   const detection = buildDetectionMask(
     matte,
     recipe,
@@ -190,6 +197,7 @@ export function processModularSprite(
     background,
     rgba,
     matte,
+    protectedInteriorMask,
     labels,
     regions,
     discardedRegionCount,
@@ -249,7 +257,12 @@ export async function processModularSpriteAsync(
   hooks.report(0.48, "Applying mask strokes");
   await hooks.checkpoint();
   hooks.throwIfAborted();
-  refineChromaKeyEdges(image, recipe, matte, rgba);
+  const protectedInteriorMask = refineChromaKeyEdges(
+    image,
+    recipe,
+    matte,
+    rgba,
+  );
   hooks.report(0.56, "Refining edges");
   await hooks.checkpoint();
   hooks.throwIfAborted();
@@ -288,6 +301,7 @@ export async function processModularSpriteAsync(
     background,
     rgba,
     matte,
+    protectedInteriorMask,
     labels,
     regions,
     discardedRegionCount,

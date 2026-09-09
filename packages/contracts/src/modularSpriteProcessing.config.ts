@@ -46,7 +46,7 @@ export const MODULAR_SPRITE_PROCESSING_CONFIG = {
       integer: true,
     },
     matteChoke: {
-      default: 0.06,
+      default: 0.1,
       min: 0,
       max: 0.25,
       step: 0.01,
