@@ -14,7 +14,37 @@ const FOUR_CONNECTED_NEIGHBORS = [
   [0, 1],
 ] as const;
 
-const DEFAULT_THRESHOLDS = {
+const EIGHT_CONNECTED_NEIGHBORS = [
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+  [-1, 0],
+  [1, 0],
+  [-1, 1],
+  [0, 1],
+  [1, 1],
+] as const;
+
+interface EnclosedChromaThresholds {
+  strongDistance: number;
+  meanDistance: number;
+  strongRatio: number;
+  colorSpread: number;
+  smallArea: number;
+  smallMeanDistance: number;
+  smallStrongRatio: number;
+  smallColorSpread: number;
+  coreAlphaMax: number;
+  coreColorTolerance: number;
+  growthRadius: number;
+  growthAlphaMax: number;
+  growthColorTolerance: number;
+  growthChromaTolerance: number;
+  growthHueTolerance: number;
+  growthMinChromaRatio: number;
+}
+
+const DEFAULT_THRESHOLDS: EnclosedChromaThresholds = {
   strongDistance: 0.05,
   meanDistance: 0.08,
   strongRatio: 0.7,
@@ -23,9 +53,15 @@ const DEFAULT_THRESHOLDS = {
   smallMeanDistance: 0.13,
   smallStrongRatio: 0.1,
   smallColorSpread: 0.09,
-} as const;
-
-type EnclosedChromaThresholds = typeof DEFAULT_THRESHOLDS;
+  coreAlphaMax: 32,
+  coreColorTolerance: 0.13,
+  growthRadius: 2,
+  growthAlphaMax: 254,
+  growthColorTolerance: 0.24,
+  growthChromaTolerance: 0.16,
+  growthHueTolerance: 12,
+  growthMinChromaRatio: 0.2,
+};
 
 type AlgorithmWithEnclosedThresholds =
   typeof MODULAR_SPRITE_PROCESSING_CONFIG.algorithm &
@@ -40,12 +76,25 @@ type AlgorithmWithEnclosedThresholds =
       enclosedChromaSmallColorSpread: number;
     }>;
 
+interface EnclosedChromaTuning {
+  coreAlphaMax: number;
+  coreColorTolerance: number;
+  growthRadius: number;
+  growthAlphaMax: number;
+  growthColorTolerance: number;
+  growthChromaTolerance: number;
+  growthHueTolerance: number;
+  growthMinChromaRatio: number;
+}
+
 interface EnclosedChromaDetection {
   mask: Uint8Array;
   manualMask: Uint8Array;
 }
 
-function thresholds(): EnclosedChromaThresholds {
+function thresholds(
+  tuning: Partial<EnclosedChromaTuning>,
+): EnclosedChromaThresholds {
   const algorithm = MODULAR_SPRITE_PROCESSING_CONFIG.algorithm as
     AlgorithmWithEnclosedThresholds | undefined;
   return {
@@ -69,6 +118,19 @@ function thresholds(): EnclosedChromaThresholds {
     smallColorSpread:
       algorithm?.enclosedChromaSmallColorSpread ??
       DEFAULT_THRESHOLDS.smallColorSpread,
+    coreAlphaMax: tuning.coreAlphaMax ?? DEFAULT_THRESHOLDS.coreAlphaMax,
+    coreColorTolerance:
+      tuning.coreColorTolerance ?? DEFAULT_THRESHOLDS.coreColorTolerance,
+    growthRadius: tuning.growthRadius ?? DEFAULT_THRESHOLDS.growthRadius,
+    growthAlphaMax: tuning.growthAlphaMax ?? DEFAULT_THRESHOLDS.growthAlphaMax,
+    growthColorTolerance:
+      tuning.growthColorTolerance ?? DEFAULT_THRESHOLDS.growthColorTolerance,
+    growthChromaTolerance:
+      tuning.growthChromaTolerance ?? DEFAULT_THRESHOLDS.growthChromaTolerance,
+    growthHueTolerance:
+      tuning.growthHueTolerance ?? DEFAULT_THRESHOLDS.growthHueTolerance,
+    growthMinChromaRatio:
+      tuning.growthMinChromaRatio ?? DEFAULT_THRESHOLDS.growthMinChromaRatio,
   };
 }
 
@@ -172,21 +234,123 @@ function componentMetrics(
   };
 }
 
-function createKeyedSoftMask(
+function pixelColorDistances(
+  image: RgbaImageData,
+  pixelIndex: number,
+  backgroundLab: readonly [number, number, number],
+): {
+  weighted: number;
+  chroma: number;
+  pixelChroma: number;
+  hueCosine: number;
+} {
+  const offset = pixelIndex * 4;
+  const [lightness, aAxis, bAxis] = rgbToOklab(
+    image.data[offset] ?? 0,
+    image.data[offset + 1] ?? 0,
+    image.data[offset + 2] ?? 0,
+  );
+  const lightnessWeight =
+    MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.oklabLightnessWeight;
+  const deltaA = aAxis - backgroundLab[1];
+  const deltaB = bAxis - backgroundLab[2];
+  const pixelChroma = Math.hypot(aAxis, bAxis);
+  const backgroundChroma = Math.hypot(backgroundLab[1], backgroundLab[2]);
+  return {
+    weighted: Math.hypot(
+      (lightness - backgroundLab[0]) * lightnessWeight,
+      deltaA,
+      deltaB,
+    ),
+    chroma: Math.hypot(deltaA, deltaB),
+    pixelChroma,
+    hueCosine:
+      pixelChroma > Number.EPSILON && backgroundChroma > Number.EPSILON
+        ? (aAxis * backgroundLab[1] + bAxis * backgroundLab[2]) /
+          (pixelChroma * backgroundChroma)
+        : -1,
+  };
+}
+
+function growChromaCore(
+  coreMask: Uint8Array,
+  image: RgbaImageData,
   matte: Uint8ClampedArray,
+  protectedCore: Uint8Array,
   backgroundStrokeMask: Uint8Array,
   foregroundStrokeMask: Uint8Array,
-  alphaByteMax: number,
+  backgroundLab: readonly [number, number, number],
+  limits: EnclosedChromaThresholds,
 ): Uint8Array {
-  const keyedSoft = new Uint8Array(matte.length);
-  for (let pixelIndex = 0; pixelIndex < matte.length; pixelIndex += 1) {
-    keyedSoft[pixelIndex] = Number(
-      (matte[pixelIndex] ?? 0) < alphaByteMax &&
-        (backgroundStrokeMask[pixelIndex] ?? 0) === 0 &&
-        (foregroundStrokeMask[pixelIndex] ?? 0) === 0,
-    );
+  const grown = new Uint8Array(coreMask);
+  if (limits.growthRadius <= 0) return grown;
+
+  const depth = new Int16Array(coreMask.length);
+  depth.fill(-1);
+  const rejected = new Uint8Array(coreMask.length);
+  const queue = new Int32Array(coreMask.length);
+  let head = 0;
+  let tail = 0;
+  const backgroundChroma = Math.hypot(backgroundLab[1], backgroundLab[2]);
+  const minimumPixelChroma = backgroundChroma * limits.growthMinChromaRatio;
+  const minimumHueCosine = Math.cos(
+    (limits.growthHueTolerance * Math.PI) / 180,
+  );
+  for (let pixelIndex = 0; pixelIndex < coreMask.length; pixelIndex += 1) {
+    if (!coreMask[pixelIndex]) continue;
+    depth[pixelIndex] = 0;
+    queue[tail++] = pixelIndex;
   }
-  return keyedSoft;
+
+  while (head < tail) {
+    const pixelIndex = queue[head++] ?? 0;
+    const currentDepth = depth[pixelIndex] ?? 0;
+    if (currentDepth >= limits.growthRadius) continue;
+    const x = pixelIndex % image.width;
+    const y = Math.floor(pixelIndex / image.width);
+    for (const [deltaX, deltaY] of EIGHT_CONNECTED_NEIGHBORS) {
+      const neighborX = x + deltaX;
+      const neighborY = y + deltaY;
+      if (
+        neighborX < 0 ||
+        neighborX >= image.width ||
+        neighborY < 0 ||
+        neighborY >= image.height
+      )
+        continue;
+      const neighborIndex = neighborY * image.width + neighborX;
+      if ((depth[neighborIndex] ?? -1) >= 0 || rejected[neighborIndex])
+        continue;
+      if (
+        !protectedCore[neighborIndex] ||
+        backgroundStrokeMask[neighborIndex] ||
+        foregroundStrokeMask[neighborIndex] ||
+        (matte[neighborIndex] ?? 0) > limits.growthAlphaMax
+      ) {
+        rejected[neighborIndex] = 1;
+        continue;
+      }
+      const distances = pixelColorDistances(
+        image,
+        neighborIndex,
+        backgroundLab,
+      );
+      const closeToKey =
+        distances.weighted <= limits.growthColorTolerance &&
+        distances.chroma <= limits.growthChromaTolerance;
+      const sameKeyHue =
+        distances.pixelChroma >= minimumPixelChroma &&
+        distances.hueCosine >= minimumHueCosine;
+      if (!closeToKey && !sameKeyHue) {
+        rejected[neighborIndex] = 1;
+        continue;
+      }
+      grown[neighborIndex] = 1;
+      depth[neighborIndex] = currentDepth + 1;
+      queue[tail++] = neighborIndex;
+    }
+  }
+  return grown;
 }
 
 function createCandidateCoreMask(
@@ -269,15 +433,17 @@ export function detectEnclosedChroma(
   enclosedChromaSeeds: readonly NormalizedPoint[],
   backgroundStrokeMask: Uint8Array,
   foregroundStrokeMask: Uint8Array,
+  tuning: Partial<EnclosedChromaTuning> = {},
 ): EnclosedChromaDetection {
   const mask = new Uint8Array(matte.length);
   const manualMask = new Uint8Array(matte.length);
+  const limits = thresholds(tuning);
   const candidateCore = createCandidateCoreMask(
     matte,
     protectedCore,
     backgroundStrokeMask,
     foregroundStrokeMask,
-    alphaThreshold,
+    Math.min(alphaThreshold, limits.coreAlphaMax),
   );
   const coreComponents = findComponents(
     candidateCore,
@@ -286,25 +452,6 @@ export function detectEnclosedChroma(
   );
   const coreComponentIds = new Int32Array(matte.length);
   coreComponentIds.fill(-1);
-  const keyedSoft = createKeyedSoftMask(
-    matte,
-    backgroundStrokeMask,
-    foregroundStrokeMask,
-    MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.alphaByteMax,
-  );
-  const expansionMask = new Uint8Array(matte.length);
-  for (let pixelIndex = 0; pixelIndex < matte.length; pixelIndex += 1)
-    expansionMask[pixelIndex] = Number(
-      keyedSoft[pixelIndex] !== 0 && (protectedCore[pixelIndex] ?? 0) !== 0,
-    );
-  const expandedComponents = findComponents(
-    expansionMask,
-    image.width,
-    image.height,
-  );
-  const expansionComponentIds = new Int32Array(matte.length);
-  expansionComponentIds.fill(-1);
-  const limits = thresholds();
   const backgroundLab = rgbToOklab(
     backgroundColor.r,
     backgroundColor.g,
@@ -330,28 +477,6 @@ export function detectEnclosedChroma(
       selectedCores.add(componentId);
   }
 
-  for (const [componentId, component] of expandedComponents.entries()) {
-    for (const pixelIndex of component)
-      expansionComponentIds[pixelIndex] = componentId;
-  }
-
-  const coreExpansionIds: Array<Set<number>> = coreComponents.map(
-    () => new Set<number>(),
-  );
-  const expansionCoreIds: Array<Set<number>> = expandedComponents.map(
-    () => new Set<number>(),
-  );
-  for (const [coreId, component] of coreComponents.entries()) {
-    const expansionIds = coreExpansionIds[coreId];
-    if (!expansionIds) continue;
-    for (const pixelIndex of component) {
-      const expansionId = expansionComponentIds[pixelIndex] ?? -1;
-      if (expansionId < 0) continue;
-      expansionIds.add(expansionId);
-      expansionCoreIds[expansionId]?.add(coreId);
-    }
-  }
-
   for (const seed of enclosedChromaSeeds) {
     if (
       !Number.isFinite(seed.x) ||
@@ -367,36 +492,51 @@ export function detectEnclosedChroma(
     if (coreId >= 0) {
       selectedCores.add(coreId);
       manuallySelectedCores.add(coreId);
-      continue;
-    }
-    const expansionId = expansionComponentIds[pixelIndex] ?? -1;
-    if (expansionId < 0 || !expandedComponents[expansionId]) continue;
-    for (const candidateCoreId of expansionCoreIds[expansionId] ?? []) {
-      selectedCores.add(candidateCoreId);
-      manuallySelectedCores.add(candidateCoreId);
     }
   }
 
-  const selectedExpansions = new Set<number>();
-  const manuallySelectedExpansions = new Set<number>();
+  const automaticCoreMask = new Uint8Array(matte.length);
+  const manualCoreMask = new Uint8Array(matte.length);
   for (const coreId of selectedCores) {
-    const expansionIds = coreExpansionIds[coreId];
-    if (!expansionIds) continue;
-    for (const expansionId of expansionIds) {
-      selectedExpansions.add(expansionId);
-      if (manuallySelectedCores.has(coreId))
-        manuallySelectedExpansions.add(expansionId);
+    const component = coreComponents[coreId];
+    if (!component) continue;
+    const manuallySelected = manuallySelectedCores.has(coreId);
+    for (const pixelIndex of component) {
+      if (manuallySelected) manualCoreMask[pixelIndex] = 1;
+      else if (
+        pixelColorDistances(image, pixelIndex, backgroundLab).weighted <=
+        limits.coreColorTolerance
+      )
+        automaticCoreMask[pixelIndex] = 1;
     }
   }
 
-  for (const expansionId of selectedExpansions) {
-    const component = expandedComponents[expansionId];
-    if (!component) continue;
-    for (const pixelIndex of component) {
+  // Multi-source geodesic growth recovers dark/anti-aliased key spill while a
+  // hard radius and two color constraints prevent it crossing foreground edges.
+  const automaticGrowth = growChromaCore(
+    automaticCoreMask,
+    image,
+    matte,
+    protectedCore,
+    backgroundStrokeMask,
+    foregroundStrokeMask,
+    backgroundLab,
+    limits,
+  );
+  const manualGrowth = growChromaCore(
+    manualCoreMask,
+    image,
+    matte,
+    protectedCore,
+    backgroundStrokeMask,
+    foregroundStrokeMask,
+    backgroundLab,
+    limits,
+  );
+  for (let pixelIndex = 0; pixelIndex < matte.length; pixelIndex += 1) {
+    if (automaticGrowth[pixelIndex] || manualGrowth[pixelIndex])
       mask[pixelIndex] = 1;
-      if (manuallySelectedExpansions.has(expansionId))
-        manualMask[pixelIndex] = 1;
-    }
+    if (manualGrowth[pixelIndex]) manualMask[pixelIndex] = 1;
   }
   return { mask, manualMask };
 }

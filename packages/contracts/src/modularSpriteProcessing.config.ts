@@ -71,6 +71,65 @@ export const MODULAR_SPRITE_PROCESSING_CONFIG = {
       digits: 0,
       integer: true,
     },
+    enclosedChromaCoreAlphaMax: {
+      default: 32,
+      min: 1,
+      max: 254,
+      step: 1,
+      digits: 0,
+      integer: true,
+    },
+    enclosedChromaCoreColorTolerance: {
+      default: 0.13,
+      min: 0,
+      max: 0.5,
+      step: 0.01,
+      digits: 2,
+    },
+    enclosedChromaGrowthRadius: {
+      default: 2,
+      min: 0,
+      max: 8,
+      step: 1,
+      digits: 0,
+      integer: true,
+    },
+    enclosedChromaGrowthAlphaMax: {
+      default: 254,
+      min: 0,
+      max: 254,
+      step: 1,
+      digits: 0,
+      integer: true,
+    },
+    enclosedChromaGrowthColorTolerance: {
+      default: 0.24,
+      min: 0,
+      max: 0.5,
+      step: 0.01,
+      digits: 2,
+    },
+    enclosedChromaGrowthChromaTolerance: {
+      default: 0.16,
+      min: 0,
+      max: 0.5,
+      step: 0.01,
+      digits: 2,
+    },
+    enclosedChromaGrowthHueTolerance: {
+      default: 12,
+      min: 0,
+      max: 90,
+      step: 1,
+      digits: 0,
+    },
+    enclosedChromaGrowthMinChromaRatio: {
+      default: 0.2,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      digits: 2,
+    },
   },
   detection: {
     alphaThreshold: {
@@ -151,6 +210,22 @@ export const MODULAR_SPRITE_PROCESSING_CONFIG = {
 const config = MODULAR_SPRITE_PROCESSING_CONFIG;
 
 export const DEFAULT_CHROMA_REFINEMENT = {
+  enclosedChromaCoreAlphaMax:
+    config.background.enclosedChromaCoreAlphaMax.default,
+  enclosedChromaCoreColorTolerance:
+    config.background.enclosedChromaCoreColorTolerance.default,
+  enclosedChromaGrowthRadius:
+    config.background.enclosedChromaGrowthRadius.default,
+  enclosedChromaGrowthAlphaMax:
+    config.background.enclosedChromaGrowthAlphaMax.default,
+  enclosedChromaGrowthColorTolerance:
+    config.background.enclosedChromaGrowthColorTolerance.default,
+  enclosedChromaGrowthChromaTolerance:
+    config.background.enclosedChromaGrowthChromaTolerance.default,
+  enclosedChromaGrowthHueTolerance:
+    config.background.enclosedChromaGrowthHueTolerance.default,
+  enclosedChromaGrowthMinChromaRatio:
+    config.background.enclosedChromaGrowthMinChromaRatio.default,
   protectIslandInteriors: config.background.protectIslandInteriors.default,
   interiorProtectionInset: config.background.interiorProtectionInset.default,
   matteChoke: config.background.matteChoke.default,
@@ -186,6 +261,14 @@ export const DEFAULT_MODULAR_SPRITE_RECIPE = createDefaultModularSpriteRecipe();
 interface ChromaRefinement {
   enclosedChromaMode: ModularSpriteEnclosedChromaMode;
   enclosedChromaSeeds: NormalizedPoint[];
+  enclosedChromaCoreAlphaMax: number;
+  enclosedChromaCoreColorTolerance: number;
+  enclosedChromaGrowthRadius: number;
+  enclosedChromaGrowthAlphaMax: number;
+  enclosedChromaGrowthColorTolerance: number;
+  enclosedChromaGrowthChromaTolerance: number;
+  enclosedChromaGrowthHueTolerance: number;
+  enclosedChromaGrowthMinChromaRatio: number;
   protectIslandInteriors: boolean;
   interiorProtectionInset: number;
   matteChoke: number;
@@ -199,6 +282,30 @@ export function resolveChromaRefinement(
   return {
     enclosedChromaMode: background.enclosedChromaMode ?? "preserve",
     enclosedChromaSeeds: background.enclosedChromaSeeds ?? [],
+    enclosedChromaCoreAlphaMax:
+      background.enclosedChromaCoreAlphaMax ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaCoreAlphaMax,
+    enclosedChromaCoreColorTolerance:
+      background.enclosedChromaCoreColorTolerance ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaCoreColorTolerance,
+    enclosedChromaGrowthRadius:
+      background.enclosedChromaGrowthRadius ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthRadius,
+    enclosedChromaGrowthAlphaMax:
+      background.enclosedChromaGrowthAlphaMax ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthAlphaMax,
+    enclosedChromaGrowthColorTolerance:
+      background.enclosedChromaGrowthColorTolerance ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthColorTolerance,
+    enclosedChromaGrowthChromaTolerance:
+      background.enclosedChromaGrowthChromaTolerance ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthChromaTolerance,
+    enclosedChromaGrowthHueTolerance:
+      background.enclosedChromaGrowthHueTolerance ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthHueTolerance,
+    enclosedChromaGrowthMinChromaRatio:
+      background.enclosedChromaGrowthMinChromaRatio ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthMinChromaRatio,
     protectIslandInteriors:
       background.protectIslandInteriors ??
       DEFAULT_CHROMA_REFINEMENT.protectIslandInteriors,
@@ -311,6 +418,54 @@ export function assertValidModularSpriteRecipe(
         pointValue,
       );
   }
+  assertNumericParameter(
+    "background.enclosedChromaCoreAlphaMax",
+    background.enclosedChromaCoreAlphaMax ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaCoreAlphaMax,
+    config.background.enclosedChromaCoreAlphaMax,
+  );
+  assertNumericParameter(
+    "background.enclosedChromaCoreColorTolerance",
+    background.enclosedChromaCoreColorTolerance ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaCoreColorTolerance,
+    config.background.enclosedChromaCoreColorTolerance,
+  );
+  assertNumericParameter(
+    "background.enclosedChromaGrowthRadius",
+    background.enclosedChromaGrowthRadius ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthRadius,
+    config.background.enclosedChromaGrowthRadius,
+  );
+  assertNumericParameter(
+    "background.enclosedChromaGrowthAlphaMax",
+    background.enclosedChromaGrowthAlphaMax ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthAlphaMax,
+    config.background.enclosedChromaGrowthAlphaMax,
+  );
+  assertNumericParameter(
+    "background.enclosedChromaGrowthColorTolerance",
+    background.enclosedChromaGrowthColorTolerance ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthColorTolerance,
+    config.background.enclosedChromaGrowthColorTolerance,
+  );
+  assertNumericParameter(
+    "background.enclosedChromaGrowthChromaTolerance",
+    background.enclosedChromaGrowthChromaTolerance ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthChromaTolerance,
+    config.background.enclosedChromaGrowthChromaTolerance,
+  );
+  assertNumericParameter(
+    "background.enclosedChromaGrowthHueTolerance",
+    background.enclosedChromaGrowthHueTolerance ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthHueTolerance,
+    config.background.enclosedChromaGrowthHueTolerance,
+  );
+  assertNumericParameter(
+    "background.enclosedChromaGrowthMinChromaRatio",
+    background.enclosedChromaGrowthMinChromaRatio ??
+      DEFAULT_CHROMA_REFINEMENT.enclosedChromaGrowthMinChromaRatio,
+    config.background.enclosedChromaGrowthMinChromaRatio,
+  );
   const protectIslandInteriors =
     background.protectIslandInteriors ??
     DEFAULT_CHROMA_REFINEMENT.protectIslandInteriors;

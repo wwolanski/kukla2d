@@ -319,6 +319,54 @@ const ModularSpriteRecipeSchema = z.object({
       .enum(["transparent", "black", "desaturate", "preserve"])
       .optional(),
     enclosedChromaSeeds: z.array(NormalizedPointSchema).optional(),
+    enclosedChromaCoreAlphaMax: z
+      .number()
+      .int()
+      .min(processingConfig.background.enclosedChromaCoreAlphaMax.min)
+      .max(processingConfig.background.enclosedChromaCoreAlphaMax.max)
+      .optional(),
+    enclosedChromaCoreColorTolerance: z
+      .number()
+      .finite()
+      .min(processingConfig.background.enclosedChromaCoreColorTolerance.min)
+      .max(processingConfig.background.enclosedChromaCoreColorTolerance.max)
+      .optional(),
+    enclosedChromaGrowthRadius: z
+      .number()
+      .int()
+      .min(processingConfig.background.enclosedChromaGrowthRadius.min)
+      .max(processingConfig.background.enclosedChromaGrowthRadius.max)
+      .optional(),
+    enclosedChromaGrowthAlphaMax: z
+      .number()
+      .int()
+      .min(processingConfig.background.enclosedChromaGrowthAlphaMax.min)
+      .max(processingConfig.background.enclosedChromaGrowthAlphaMax.max)
+      .optional(),
+    enclosedChromaGrowthColorTolerance: z
+      .number()
+      .finite()
+      .min(processingConfig.background.enclosedChromaGrowthColorTolerance.min)
+      .max(processingConfig.background.enclosedChromaGrowthColorTolerance.max)
+      .optional(),
+    enclosedChromaGrowthChromaTolerance: z
+      .number()
+      .finite()
+      .min(processingConfig.background.enclosedChromaGrowthChromaTolerance.min)
+      .max(processingConfig.background.enclosedChromaGrowthChromaTolerance.max)
+      .optional(),
+    enclosedChromaGrowthHueTolerance: z
+      .number()
+      .finite()
+      .min(processingConfig.background.enclosedChromaGrowthHueTolerance.min)
+      .max(processingConfig.background.enclosedChromaGrowthHueTolerance.max)
+      .optional(),
+    enclosedChromaGrowthMinChromaRatio: z
+      .number()
+      .finite()
+      .min(processingConfig.background.enclosedChromaGrowthMinChromaRatio.min)
+      .max(processingConfig.background.enclosedChromaGrowthMinChromaRatio.max)
+      .optional(),
     protectIslandInteriors: z.boolean().optional(),
     interiorProtectionInset: z
       .number()

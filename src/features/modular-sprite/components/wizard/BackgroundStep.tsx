@@ -175,10 +175,200 @@ export function BackgroundStep({
         Protect island interiors
       </label>
       <p className="text-xs text-muted-foreground">
-        Keeps the inset interior of closed part silhouettes opaque, including
-        keyed colors enclosed by their outlines. Open areas and background brush
-        strokes stay transparent.
+        Keeps the inset interior of closed part silhouettes opaque while
+        allowing enclosed key-color pockets to be tuned separately. Open areas
+        and background brush strokes stay transparent.
       </p>
+      {refinement.protectIslandInteriors ? (
+        <details className="space-y-3 rounded-md border bg-muted/20 px-3 py-2">
+          <summary className="cursor-pointer text-sm font-medium">
+            Enclosed chroma tuning
+          </summary>
+          <p className="text-xs text-muted-foreground">
+            Core detection is restrictive; growth only cleans a neighboring
+            fringe that also matches the key color and hue.
+          </p>
+          <FieldLabel>
+            Core alpha maximum:{" "}
+            {refinement.enclosedChromaCoreAlphaMax.toFixed(
+              config.background.enclosedChromaCoreAlphaMax.digits,
+            )}
+            <UiSlider
+              min={config.background.enclosedChromaCoreAlphaMax.min}
+              max={config.background.enclosedChromaCoreAlphaMax.max}
+              step={config.background.enclosedChromaCoreAlphaMax.step}
+              value={[refinement.enclosedChromaCoreAlphaMax]}
+              onValueChange={(value) =>
+                onRecipeChange((draft) => {
+                  draft.background.enclosedChromaCoreAlphaMax =
+                    value[0] ?? refinement.enclosedChromaCoreAlphaMax;
+                }, false)
+              }
+              onValueCommit={onRecipeCommit}
+            />
+          </FieldLabel>
+          <FieldLabel>
+            Core color tolerance:{" "}
+            {refinement.enclosedChromaCoreColorTolerance.toFixed(
+              config.background.enclosedChromaCoreColorTolerance.digits,
+            )}
+            <UiSlider
+              min={config.background.enclosedChromaCoreColorTolerance.min}
+              max={config.background.enclosedChromaCoreColorTolerance.max}
+              step={config.background.enclosedChromaCoreColorTolerance.step}
+              value={[refinement.enclosedChromaCoreColorTolerance]}
+              onValueChange={(value) =>
+                onRecipeChange((draft) => {
+                  draft.background.enclosedChromaCoreColorTolerance =
+                    value[0] ?? refinement.enclosedChromaCoreColorTolerance;
+                }, false)
+              }
+              onValueCommit={onRecipeCommit}
+            />
+          </FieldLabel>
+          <FieldLabel>
+            Growth radius:{" "}
+            {refinement.enclosedChromaGrowthRadius.toFixed(
+              config.background.enclosedChromaGrowthRadius.digits,
+            )}
+            <UiSlider
+              min={config.background.enclosedChromaGrowthRadius.min}
+              max={config.background.enclosedChromaGrowthRadius.max}
+              step={config.background.enclosedChromaGrowthRadius.step}
+              value={[refinement.enclosedChromaGrowthRadius]}
+              onValueChange={(value) =>
+                onRecipeChange((draft) => {
+                  draft.background.enclosedChromaGrowthRadius =
+                    value[0] ?? refinement.enclosedChromaGrowthRadius;
+                }, false)
+              }
+              onValueCommit={onRecipeCommit}
+            />
+          </FieldLabel>
+          <FieldLabel>
+            Growth alpha maximum:{" "}
+            {refinement.enclosedChromaGrowthAlphaMax.toFixed(
+              config.background.enclosedChromaGrowthAlphaMax.digits,
+            )}
+            <UiSlider
+              min={config.background.enclosedChromaGrowthAlphaMax.min}
+              max={config.background.enclosedChromaGrowthAlphaMax.max}
+              step={config.background.enclosedChromaGrowthAlphaMax.step}
+              value={[refinement.enclosedChromaGrowthAlphaMax]}
+              onValueChange={(value) =>
+                onRecipeChange((draft) => {
+                  draft.background.enclosedChromaGrowthAlphaMax =
+                    value[0] ?? refinement.enclosedChromaGrowthAlphaMax;
+                }, false)
+              }
+              onValueCommit={onRecipeCommit}
+            />
+          </FieldLabel>
+          <FieldLabel>
+            Growth color tolerance:{" "}
+            {refinement.enclosedChromaGrowthColorTolerance.toFixed(
+              config.background.enclosedChromaGrowthColorTolerance.digits,
+            )}
+            <UiSlider
+              min={config.background.enclosedChromaGrowthColorTolerance.min}
+              max={config.background.enclosedChromaGrowthColorTolerance.max}
+              step={config.background.enclosedChromaGrowthColorTolerance.step}
+              value={[refinement.enclosedChromaGrowthColorTolerance]}
+              onValueChange={(value) =>
+                onRecipeChange((draft) => {
+                  draft.background.enclosedChromaGrowthColorTolerance =
+                    value[0] ?? refinement.enclosedChromaGrowthColorTolerance;
+                }, false)
+              }
+              onValueCommit={onRecipeCommit}
+            />
+          </FieldLabel>
+          <FieldLabel>
+            Growth chroma tolerance:{" "}
+            {refinement.enclosedChromaGrowthChromaTolerance.toFixed(
+              config.background.enclosedChromaGrowthChromaTolerance.digits,
+            )}
+            <UiSlider
+              min={config.background.enclosedChromaGrowthChromaTolerance.min}
+              max={config.background.enclosedChromaGrowthChromaTolerance.max}
+              step={config.background.enclosedChromaGrowthChromaTolerance.step}
+              value={[refinement.enclosedChromaGrowthChromaTolerance]}
+              onValueChange={(value) =>
+                onRecipeChange((draft) => {
+                  draft.background.enclosedChromaGrowthChromaTolerance =
+                    value[0] ?? refinement.enclosedChromaGrowthChromaTolerance;
+                }, false)
+              }
+              onValueCommit={onRecipeCommit}
+            />
+          </FieldLabel>
+          <FieldLabel>
+            Growth hue tolerance:{" "}
+            {refinement.enclosedChromaGrowthHueTolerance.toFixed(
+              config.background.enclosedChromaGrowthHueTolerance.digits,
+            )}
+            <UiSlider
+              min={config.background.enclosedChromaGrowthHueTolerance.min}
+              max={config.background.enclosedChromaGrowthHueTolerance.max}
+              step={config.background.enclosedChromaGrowthHueTolerance.step}
+              value={[refinement.enclosedChromaGrowthHueTolerance]}
+              onValueChange={(value) =>
+                onRecipeChange((draft) => {
+                  draft.background.enclosedChromaGrowthHueTolerance =
+                    value[0] ?? refinement.enclosedChromaGrowthHueTolerance;
+                }, false)
+              }
+              onValueCommit={onRecipeCommit}
+            />
+          </FieldLabel>
+          <FieldLabel>
+            Minimum chroma ratio:{" "}
+            {refinement.enclosedChromaGrowthMinChromaRatio.toFixed(
+              config.background.enclosedChromaGrowthMinChromaRatio.digits,
+            )}
+            <UiSlider
+              min={config.background.enclosedChromaGrowthMinChromaRatio.min}
+              max={config.background.enclosedChromaGrowthMinChromaRatio.max}
+              step={config.background.enclosedChromaGrowthMinChromaRatio.step}
+              value={[refinement.enclosedChromaGrowthMinChromaRatio]}
+              onValueChange={(value) =>
+                onRecipeChange((draft) => {
+                  draft.background.enclosedChromaGrowthMinChromaRatio =
+                    value[0] ?? refinement.enclosedChromaGrowthMinChromaRatio;
+                }, false)
+              }
+              onValueCommit={onRecipeCommit}
+            />
+          </FieldLabel>
+          <UiButton
+            className="w-full"
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              onRecipeChange((draft) => {
+                draft.background.enclosedChromaCoreAlphaMax =
+                  config.background.enclosedChromaCoreAlphaMax.default;
+                draft.background.enclosedChromaCoreColorTolerance =
+                  config.background.enclosedChromaCoreColorTolerance.default;
+                draft.background.enclosedChromaGrowthRadius =
+                  config.background.enclosedChromaGrowthRadius.default;
+                draft.background.enclosedChromaGrowthAlphaMax =
+                  config.background.enclosedChromaGrowthAlphaMax.default;
+                draft.background.enclosedChromaGrowthColorTolerance =
+                  config.background.enclosedChromaGrowthColorTolerance.default;
+                draft.background.enclosedChromaGrowthChromaTolerance =
+                  config.background.enclosedChromaGrowthChromaTolerance.default;
+                draft.background.enclosedChromaGrowthHueTolerance =
+                  config.background.enclosedChromaGrowthHueTolerance.default;
+                draft.background.enclosedChromaGrowthMinChromaRatio =
+                  config.background.enclosedChromaGrowthMinChromaRatio.default;
+              })
+            }
+          >
+            Reset enclosed chroma tuning
+          </UiButton>
+        </details>
+      ) : null}
       <FieldLabel>
         Enclosed chroma inside protected areas
         <select

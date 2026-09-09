@@ -74,6 +74,22 @@ describe("modular sprite project schema", () => {
     project.modularSprites[0]!.recipe.background.enclosedChromaSeeds = [
       { x: 0.25, y: 0.75 },
     ];
+    project.modularSprites[0]!.recipe.background.enclosedChromaCoreAlphaMax =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.enclosedChromaCoreAlphaMax.default;
+    project.modularSprites[0]!.recipe.background.enclosedChromaCoreColorTolerance =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.enclosedChromaCoreColorTolerance.default;
+    project.modularSprites[0]!.recipe.background.enclosedChromaGrowthRadius =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.enclosedChromaGrowthRadius.default;
+    project.modularSprites[0]!.recipe.background.enclosedChromaGrowthAlphaMax =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.enclosedChromaGrowthAlphaMax.default;
+    project.modularSprites[0]!.recipe.background.enclosedChromaGrowthColorTolerance =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.enclosedChromaGrowthColorTolerance.default;
+    project.modularSprites[0]!.recipe.background.enclosedChromaGrowthChromaTolerance =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.enclosedChromaGrowthChromaTolerance.default;
+    project.modularSprites[0]!.recipe.background.enclosedChromaGrowthHueTolerance =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.enclosedChromaGrowthHueTolerance.default;
+    project.modularSprites[0]!.recipe.background.enclosedChromaGrowthMinChromaRatio =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.enclosedChromaGrowthMinChromaRatio.default;
     expect(validateProject(project).success).toBe(true);
   });
 
@@ -97,6 +113,27 @@ describe("modular sprite project schema", () => {
       MODULAR_SPRITE_PROCESSING_CONFIG.background.tolerance.max +
       MODULAR_SPRITE_PROCESSING_CONFIG.background.tolerance.step;
     expect(validateProject(project).success).toBe(false);
+  });
+
+  it("rejects enclosed chroma values outside their configured ranges", () => {
+    const fields = [
+      "enclosedChromaCoreAlphaMax",
+      "enclosedChromaCoreColorTolerance",
+      "enclosedChromaGrowthRadius",
+      "enclosedChromaGrowthAlphaMax",
+      "enclosedChromaGrowthColorTolerance",
+      "enclosedChromaGrowthChromaTolerance",
+      "enclosedChromaGrowthHueTolerance",
+      "enclosedChromaGrowthMinChromaRatio",
+    ] as const;
+
+    for (const field of fields) {
+      const project = projectWithModularSprite();
+      const parameter = MODULAR_SPRITE_PROCESSING_CONFIG.background[field];
+      project.modularSprites[0]!.recipe.background[field] =
+        parameter.min - parameter.step;
+      expect(validateProject(project).success).toBe(false);
+    }
   });
 
   it("rejects missing textures, duplicate part keys, and shared assets", () => {

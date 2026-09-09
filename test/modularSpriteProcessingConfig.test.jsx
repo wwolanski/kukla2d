@@ -70,6 +70,22 @@ describe("modular sprite processing configuration", () => {
       despill: config.background.despill.default,
       enclosedChromaMode: "transparent",
       enclosedChromaSeeds: [],
+      enclosedChromaCoreAlphaMax:
+        config.background.enclosedChromaCoreAlphaMax.default,
+      enclosedChromaCoreColorTolerance:
+        config.background.enclosedChromaCoreColorTolerance.default,
+      enclosedChromaGrowthRadius:
+        config.background.enclosedChromaGrowthRadius.default,
+      enclosedChromaGrowthAlphaMax:
+        config.background.enclosedChromaGrowthAlphaMax.default,
+      enclosedChromaGrowthColorTolerance:
+        config.background.enclosedChromaGrowthColorTolerance.default,
+      enclosedChromaGrowthChromaTolerance:
+        config.background.enclosedChromaGrowthChromaTolerance.default,
+      enclosedChromaGrowthHueTolerance:
+        config.background.enclosedChromaGrowthHueTolerance.default,
+      enclosedChromaGrowthMinChromaRatio:
+        config.background.enclosedChromaGrowthMinChromaRatio.default,
       protectIslandInteriors: config.background.protectIslandInteriors.default,
       interiorProtectionInset:
         config.background.interiorProtectionInset.default,
@@ -100,10 +116,42 @@ describe("modular sprite processing configuration", () => {
     delete recipe.background.edgeSearchRadius;
     delete recipe.background.enclosedChromaMode;
     delete recipe.background.enclosedChromaSeeds;
+    delete recipe.background.enclosedChromaCoreAlphaMax;
+    delete recipe.background.enclosedChromaCoreColorTolerance;
+    delete recipe.background.enclosedChromaGrowthRadius;
+    delete recipe.background.enclosedChromaGrowthAlphaMax;
+    delete recipe.background.enclosedChromaGrowthColorTolerance;
+    delete recipe.background.enclosedChromaGrowthChromaTolerance;
+    delete recipe.background.enclosedChromaGrowthHueTolerance;
+    delete recipe.background.enclosedChromaGrowthMinChromaRatio;
 
     expect(resolveChromaRefinement(recipe.background)).toEqual({
       enclosedChromaMode: "preserve",
       enclosedChromaSeeds: [],
+      enclosedChromaCoreAlphaMax:
+        MODULAR_SPRITE_PROCESSING_CONFIG.background.enclosedChromaCoreAlphaMax
+          .default,
+      enclosedChromaCoreColorTolerance:
+        MODULAR_SPRITE_PROCESSING_CONFIG.background
+          .enclosedChromaCoreColorTolerance.default,
+      enclosedChromaGrowthRadius:
+        MODULAR_SPRITE_PROCESSING_CONFIG.background.enclosedChromaGrowthRadius
+          .default,
+      enclosedChromaGrowthAlphaMax:
+        MODULAR_SPRITE_PROCESSING_CONFIG.background.enclosedChromaGrowthAlphaMax
+          .default,
+      enclosedChromaGrowthColorTolerance:
+        MODULAR_SPRITE_PROCESSING_CONFIG.background
+          .enclosedChromaGrowthColorTolerance.default,
+      enclosedChromaGrowthChromaTolerance:
+        MODULAR_SPRITE_PROCESSING_CONFIG.background
+          .enclosedChromaGrowthChromaTolerance.default,
+      enclosedChromaGrowthHueTolerance:
+        MODULAR_SPRITE_PROCESSING_CONFIG.background
+          .enclosedChromaGrowthHueTolerance.default,
+      enclosedChromaGrowthMinChromaRatio:
+        MODULAR_SPRITE_PROCESSING_CONFIG.background
+          .enclosedChromaGrowthMinChromaRatio.default,
       protectIslandInteriors:
         MODULAR_SPRITE_PROCESSING_CONFIG.background.protectIslandInteriors
           .default,
@@ -119,8 +167,58 @@ describe("modular sprite processing configuration", () => {
     });
   });
 
-  it("validates enclosed chroma fields and exposes its algorithm heuristics", () => {
+  it("validates enclosed chroma fields and exposes its recipe heuristics", () => {
     const config = MODULAR_SPRITE_PROCESSING_CONFIG;
+    expect(config.background).toMatchObject({
+      enclosedChromaCoreAlphaMax: {
+        default: 32,
+        min: 1,
+        max: 254,
+        step: 1,
+      },
+      enclosedChromaCoreColorTolerance: {
+        default: 0.13,
+        min: 0,
+        max: 0.5,
+        step: 0.01,
+      },
+      enclosedChromaGrowthRadius: {
+        default: 2,
+        min: 0,
+        max: 8,
+        step: 1,
+      },
+      enclosedChromaGrowthAlphaMax: {
+        default: 254,
+        min: 0,
+        max: 254,
+        step: 1,
+      },
+      enclosedChromaGrowthColorTolerance: {
+        default: 0.24,
+        min: 0,
+        max: 0.5,
+        step: 0.01,
+      },
+      enclosedChromaGrowthChromaTolerance: {
+        default: 0.16,
+        min: 0,
+        max: 0.5,
+        step: 0.01,
+      },
+      enclosedChromaGrowthHueTolerance: {
+        default: 12,
+        min: 0,
+        max: 90,
+        step: 1,
+      },
+      enclosedChromaGrowthMinChromaRatio: {
+        default: 0.2,
+        min: 0,
+        max: 1,
+        step: 0.01,
+      },
+    });
     expect(config.algorithm).toMatchObject({
       enclosedChromaStrongDistance: 0.05,
       enclosedChromaMeanDistance: 0.08,
@@ -131,6 +229,13 @@ describe("modular sprite processing configuration", () => {
       enclosedChromaSmallStrongRatio: 0.1,
       enclosedChromaSmallColorSpread: 0.09,
     });
+    expect(config.algorithm).not.toHaveProperty("enclosedChromaCoreAlphaMax");
+    expect(config.algorithm).not.toHaveProperty(
+      "enclosedChromaMaxPixelDistance",
+    );
+    expect(config.algorithm).not.toHaveProperty(
+      "enclosedChromaExpansionRadius",
+    );
 
     const recipe = createDefaultModularSpriteRecipe();
     recipe.background.enclosedChromaMode = "black";
@@ -152,6 +257,32 @@ describe("modular sprite processing configuration", () => {
         },
       }),
     ).toThrow();
+    for (const [field, parameter] of Object.entries({
+      enclosedChromaCoreAlphaMax: config.background.enclosedChromaCoreAlphaMax,
+      enclosedChromaCoreColorTolerance:
+        config.background.enclosedChromaCoreColorTolerance,
+      enclosedChromaGrowthRadius: config.background.enclosedChromaGrowthRadius,
+      enclosedChromaGrowthAlphaMax:
+        config.background.enclosedChromaGrowthAlphaMax,
+      enclosedChromaGrowthColorTolerance:
+        config.background.enclosedChromaGrowthColorTolerance,
+      enclosedChromaGrowthChromaTolerance:
+        config.background.enclosedChromaGrowthChromaTolerance,
+      enclosedChromaGrowthHueTolerance:
+        config.background.enclosedChromaGrowthHueTolerance,
+      enclosedChromaGrowthMinChromaRatio:
+        config.background.enclosedChromaGrowthMinChromaRatio,
+    })) {
+      expect(() =>
+        assertValidModularSpriteRecipe({
+          ...recipe,
+          background: {
+            ...recipe.background,
+            [field]: parameter.min - parameter.step,
+          },
+        }),
+      ).toThrow();
+    }
   });
 
   it("renders every numeric Web UI control directly from the config", () => {
@@ -160,6 +291,14 @@ describe("modular sprite processing configuration", () => {
       config.background.tolerance,
       config.background.softness,
       config.background.despill,
+      config.background.enclosedChromaCoreAlphaMax,
+      config.background.enclosedChromaCoreColorTolerance,
+      config.background.enclosedChromaGrowthRadius,
+      config.background.enclosedChromaGrowthAlphaMax,
+      config.background.enclosedChromaGrowthColorTolerance,
+      config.background.enclosedChromaGrowthChromaTolerance,
+      config.background.enclosedChromaGrowthHueTolerance,
+      config.background.enclosedChromaGrowthMinChromaRatio,
       config.background.interiorProtectionInset,
       config.background.matteChoke,
       config.background.edgeColorRecovery,

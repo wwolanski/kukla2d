@@ -66,6 +66,9 @@ function blendMask(
       (blended[offset + 2] ?? 0) * (1 - clampedOpacity) +
         color[2] * clampedOpacity,
     );
+    // The recognized enclosed chroma is transparent in the result view. Make
+    // diagnostic overlays opaque so cyan remains visible over those pixels.
+    blended[offset + 3] = 255;
   }
   return blended;
 }

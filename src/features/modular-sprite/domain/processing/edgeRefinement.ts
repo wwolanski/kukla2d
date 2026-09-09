@@ -1,7 +1,7 @@
 import {
   MODULAR_SPRITE_PROCESSING_CONFIG,
   resolveChromaRefinement,
-  type NormalizedPoint,
+  type ModularSpriteEnclosedChromaMode,
   type ModularSpriteProcessingRecipe,
 } from "@kukla2d/contracts";
 
@@ -26,60 +26,17 @@ const PROPAGATION_NEIGHBORS = [
   [1, 1],
 ] as const;
 
-type EnclosedChromaMode = "transparent" | "black" | "desaturate" | "preserve";
-
-type ExtendedChromaBackground = ModularSpriteProcessingRecipe["background"] & {
-  enclosedChromaMode?: EnclosedChromaMode;
-  enclosedChromaSeeds?: NormalizedPoint[];
-};
-
-type ExtendedChromaRefinement = ReturnType<typeof resolveChromaRefinement> & {
-  enclosedChromaMode?: EnclosedChromaMode;
-  enclosedChromaSeeds?: NormalizedPoint[];
-};
-
 interface PreparedInteriorMasks {
   protectedCore: Uint8Array;
   backgroundStrokeMask: Uint8Array;
   enclosedChromaMask: Uint8Array;
   enclosedChromaManualMask: Uint8Array;
-  mode: EnclosedChromaMode;
+  mode: ModularSpriteEnclosedChromaMode;
 }
 
 interface ChromaRefinementResult {
   protectedInteriorMask: Uint8Array;
   enclosedChromaMask: Uint8Array;
-}
-
-function isEnclosedChromaMode(value: unknown): value is EnclosedChromaMode {
-  return (
-    value === "transparent" ||
-    value === "black" ||
-    value === "desaturate" ||
-    value === "preserve"
-  );
-}
-
-function resolvedChromaRefinement(
-  recipe: ModularSpriteProcessingRecipe,
-): ExtendedChromaRefinement {
-  const background = recipe.background as ExtendedChromaBackground;
-  const resolved = resolveChromaRefinement(
-    background,
-  ) as ExtendedChromaRefinement;
-  return {
-    ...resolved,
-    enclosedChromaMode: isEnclosedChromaMode(resolved.enclosedChromaMode)
-      ? resolved.enclosedChromaMode
-      : isEnclosedChromaMode(background.enclosedChromaMode)
-        ? background.enclosedChromaMode
-        : "transparent",
-    enclosedChromaSeeds: Array.isArray(resolved.enclosedChromaSeeds)
-      ? resolved.enclosedChromaSeeds
-      : Array.isArray(background.enclosedChromaSeeds)
-        ? background.enclosedChromaSeeds
-        : [],
-  };
 }
 
 function strokeMask(
@@ -112,7 +69,7 @@ function prepareInteriorMasks(
   matte: Uint8ClampedArray,
 ): PreparedInteriorMasks {
   const empty = new Uint8Array(image.width * image.height);
-  const refinement = resolvedChromaRefinement(recipe);
+  const refinement = resolveChromaRefinement(recipe.background);
   const lockedBackground = backgroundStrokeMask(
     recipe,
     image.width,
@@ -124,7 +81,7 @@ function prepareInteriorMasks(
       backgroundStrokeMask: lockedBackground,
       enclosedChromaMask: empty,
       enclosedChromaManualMask: empty,
-      mode: refinement.enclosedChromaMode ?? "transparent",
+      mode: refinement.enclosedChromaMode,
     };
 
   const detection = thresholdMatte(matte, recipe.detection.alphaThreshold);
@@ -146,16 +103,26 @@ function prepareInteriorMasks(
     protectedCore,
     recipe.detection.alphaThreshold,
     recipe.background.color,
-    refinement.enclosedChromaSeeds ?? [],
+    refinement.enclosedChromaSeeds,
     lockedBackground,
     strokeMask(recipe, image.width, image.height, "foreground"),
+    {
+      coreAlphaMax: refinement.enclosedChromaCoreAlphaMax,
+      coreColorTolerance: refinement.enclosedChromaCoreColorTolerance,
+      growthRadius: refinement.enclosedChromaGrowthRadius,
+      growthAlphaMax: refinement.enclosedChromaGrowthAlphaMax,
+      growthColorTolerance: refinement.enclosedChromaGrowthColorTolerance,
+      growthChromaTolerance: refinement.enclosedChromaGrowthChromaTolerance,
+      growthHueTolerance: refinement.enclosedChromaGrowthHueTolerance,
+      growthMinChromaRatio: refinement.enclosedChromaGrowthMinChromaRatio,
+    },
   );
   return {
     protectedCore,
     backgroundStrokeMask: lockedBackground,
     enclosedChromaMask: detectedEnclosed.mask,
     enclosedChromaManualMask: detectedEnclosed.manualMask,
-    mode: refinement.enclosedChromaMode ?? "transparent",
+    mode: refinement.enclosedChromaMode,
   };
 }
 
@@ -189,15 +156,21 @@ function applyEnclosedChroma(
   matte: Uint8ClampedArray,
   rgba: Uint8ClampedArray,
 ): void {
-  if (masks.mode === "transparent") return;
   for (
     let pixelIndex = 0;
     pixelIndex < masks.enclosedChromaMask.length;
     pixelIndex += 1
   ) {
     if (!masks.enclosedChromaMask[pixelIndex]) continue;
-    if (masks.enclosedChromaManualMask[pixelIndex]) continue;
     const offset = pixelIndex * 4;
+    if (
+      masks.mode === "transparent" ||
+      masks.enclosedChromaManualMask[pixelIndex]
+    ) {
+      matte[pixelIndex] = 0;
+      rgba[offset + 3] = 0;
+      continue;
+    }
     const sourceAlpha = image.data[offset + 3] ?? 0;
     matte[pixelIndex] = sourceAlpha;
     rgba[offset + 3] = sourceAlpha;

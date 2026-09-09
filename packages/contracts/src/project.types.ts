@@ -274,6 +274,22 @@ export interface ModularSpriteProcessingRecipe {
     enclosedChromaMode?: ModularSpriteEnclosedChromaMode;
     /** Normalized seed points identifying enclosed chroma-colored regions. */
     enclosedChromaSeeds?: NormalizedPoint[];
+    /** Maximum matte alpha considered part of an enclosed chroma core. */
+    enclosedChromaCoreAlphaMax?: number;
+    /** Maximum Oklab distance accepted for enclosed chroma core pixels. */
+    enclosedChromaCoreColorTolerance?: number;
+    /** Maximum radius used to grow an enclosed chroma core into its soft edge. */
+    enclosedChromaGrowthRadius?: number;
+    /** Maximum matte alpha accepted while growing an enclosed chroma region. */
+    enclosedChromaGrowthAlphaMax?: number;
+    /** Maximum weighted Oklab distance accepted while growing an enclosed chroma region. */
+    enclosedChromaGrowthColorTolerance?: number;
+    /** Maximum chroma-only distance accepted while growing an enclosed chroma region. */
+    enclosedChromaGrowthChromaTolerance?: number;
+    /** Maximum Oklab hue-angle difference, in degrees, accepted during growth. */
+    enclosedChromaGrowthHueTolerance?: number;
+    /** Minimum pixel/background Oklab chroma ratio accepted by hue matching. */
+    enclosedChromaGrowthMinChromaRatio?: number;
     /** Keep the inset interior of each closed island silhouette opaque. */
     protectIslandInteriors?: boolean;
     /** Number of pixels kept between the detected edge and the protected core. */

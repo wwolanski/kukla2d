@@ -115,6 +115,7 @@ export async function handleModularSpriteTask(
           processed.rgba.buffer,
           processed.matte.buffer,
           processed.protectedInteriorMask.buffer,
+          processed.enclosedChromaMask.buffer,
           processed.labels.buffer,
         ],
       };
