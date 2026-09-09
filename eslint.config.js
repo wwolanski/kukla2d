@@ -43,6 +43,7 @@ const tsManifest = [
   "src/**/*.tsx",
   "packages/**/*.ts",
   "packages/**/*.tsx",
+  "scripts/**/*.mts",
   "test/**/*.test.ts",
   "test/**/*.test.tsx",
   "test/types/**/*.ts",
@@ -729,7 +730,7 @@ export default [
     },
   },
   {
-    files: ["scripts/**/*.{js,mjs}", "eslint-rules/**/*.js", "*.config.js"],
+    files: ["scripts/**/*.{js,mjs,mts}", "eslint-rules/**/*.js", "*.config.js"],
     languageOptions: {
       globals: globals.node,
     },
