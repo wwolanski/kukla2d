@@ -290,7 +290,7 @@ describe("modular sprite processing configuration", () => {
     const expected = [
       config.background.tolerance,
       config.background.softness,
-      config.background.despill,
+      config.background.interiorProtectionInset,
       config.background.enclosedChromaCoreAlphaMax,
       config.background.enclosedChromaCoreColorTolerance,
       config.background.enclosedChromaGrowthRadius,
@@ -299,7 +299,7 @@ describe("modular sprite processing configuration", () => {
       config.background.enclosedChromaGrowthChromaTolerance,
       config.background.enclosedChromaGrowthHueTolerance,
       config.background.enclosedChromaGrowthMinChromaRatio,
-      config.background.interiorProtectionInset,
+      config.background.despill,
       config.background.matteChoke,
       config.background.edgeColorRecovery,
       config.background.edgeSearchRadius,

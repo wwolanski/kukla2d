@@ -10,6 +10,7 @@ import { SchemaComparisonSidebar } from "@/features/modular-sprite-schema";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { BackgroundStep } from "./BackgroundStep.js";
 import { PartDetailsStep } from "./PartDetailsStep.js";
@@ -96,7 +97,7 @@ export function ModularSpriteWizard({
     >
       <UiDialogContent className="flex h-[95vh] w-[95vw] max-w-none flex-col gap-0 overflow-hidden p-0">
         <WizardHeader title={title} step={step} />
-        <div className="relative min-h-0 flex-1 overflow-auto p-5">
+        <div className="relative box-border min-h-0 h-full min-w-0 flex-1 overflow-hidden p-5">
           {step === "source" && (
             <SourceStep
               onFile={(file) => {
@@ -109,7 +110,7 @@ export function ModularSpriteWizard({
             source &&
             result && (
               <div
-                className={`grid h-full min-h-[500px] gap-5 ${step === "background" ? "grid-cols-[280px_minmax(0,1fr)_300px]" : "grid-cols-[280px_minmax(0,1fr)]"}`}
+                className={`grid h-full min-h-0 min-w-0 gap-5 ${step === "background" ? "grid-cols-[280px_minmax(0,1fr)_300px]" : "grid-cols-[280px_minmax(0,1fr)]"}`}
               >
                 {step === "background" && (
                   <BackgroundStep
@@ -147,7 +148,7 @@ export function ModularSpriteWizard({
                     onUpdatePart={controller.updatePart}
                   />
                 )}
-                <section className="flex min-h-0 flex-col rounded-lg border bg-black/40">
+                <section className="flex min-h-0 min-w-0 flex-col rounded-lg border bg-black/40">
                   <div className="flex items-center gap-1 border-b bg-background p-2">
                     {(["original", "matte", "result"] as const).map((mode) => (
                       <UiButton
@@ -214,32 +215,37 @@ export function ModularSpriteWizard({
                         : `${result.regions.length} regions`}
                     </span>
                   </div>
-                  <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
-                    <ModularSpritePreviewCanvas
-                      source={source.preview}
-                      resultRef={controller.resultRef}
-                      resultVersion={controller.resultVersion}
-                      mode={ui.previewMode}
-                      tool={ui.tool}
-                      zoom={ui.zoom}
-                      selectedRegionIds={ui.selectedRegionIds}
-                      assignments={controller.assignments}
-                      showOverlays={ui.showOverlays}
-                      showProtectedInteriors={
-                        ui.showProtectedInteriors && protectionAvailable
-                      }
-                      onSelectRegion={controller.toggleRegionSelection}
-                      onPickColor={(color) => {
-                        controller.changeRecipe((recipe) => {
-                          recipe.background.mode = "chroma";
-                          recipe.background.color = color;
-                        }, "discrete");
-                        ui.setTool("select");
-                      }}
-                      onStroke={onStroke}
-                      onEnclosedChromaSeed={onEnclosedChromaSeed}
-                    />
-                  </div>
+                  <ScrollArea
+                    className="h-0 min-h-0 min-w-0 flex-1"
+                    scrollbars="both"
+                  >
+                    <div className="flex h-max min-h-full min-w-full w-max items-center justify-center p-4">
+                      <ModularSpritePreviewCanvas
+                        source={source.preview}
+                        resultRef={controller.resultRef}
+                        resultVersion={controller.resultVersion}
+                        mode={ui.previewMode}
+                        tool={ui.tool}
+                        zoom={ui.zoom}
+                        selectedRegionIds={ui.selectedRegionIds}
+                        assignments={controller.assignments}
+                        showOverlays={ui.showOverlays}
+                        showProtectedInteriors={
+                          ui.showProtectedInteriors && protectionAvailable
+                        }
+                        onSelectRegion={controller.toggleRegionSelection}
+                        onPickColor={(color) => {
+                          controller.changeRecipe((recipe) => {
+                            recipe.background.mode = "chroma";
+                            recipe.background.color = color;
+                          }, "discrete");
+                          ui.setTool("select");
+                        }}
+                        onStroke={onStroke}
+                        onEnclosedChromaSeed={onEnclosedChromaSeed}
+                      />
+                    </div>
+                  </ScrollArea>
                 </section>
                 {step === "background" && (
                   <SchemaComparisonSidebar
