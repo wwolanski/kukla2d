@@ -138,12 +138,9 @@ export function ModularSpriteWizard({
                     resultRef={controller.resultRef}
                     resultVersion={controller.resultVersion}
                     selectedRegionIds={ui.selectedRegionIds}
-                    assignmentPartKey={ui.assignmentPartKey}
-                    onToolSelect={() => ui.setTool("select")}
-                    onAssignmentPartKeyChange={controller.setAssignmentPartKey}
-                    onAssign={controller.assignSelected}
-                    onMerge={controller.mergeSelected}
-                    onExclude={controller.excludeSelected}
+                    onMoveRegionsToPart={controller.moveRegionsToPart}
+                    onExcludeRegions={controller.excludeRegions}
+                    onCreatePart={controller.createPart}
                     onSelectRegion={controller.toggleRegionSelection}
                     onUpdatePart={controller.updatePart}
                   />
@@ -225,7 +222,7 @@ export function ModularSpriteWizard({
                         resultRef={controller.resultRef}
                         resultVersion={controller.resultVersion}
                         mode={ui.previewMode}
-                        tool={ui.tool}
+                        tool={step === "regions" ? "select" : ui.tool}
                         zoom={ui.zoom}
                         selectedRegionIds={ui.selectedRegionIds}
                         assignments={controller.assignments}

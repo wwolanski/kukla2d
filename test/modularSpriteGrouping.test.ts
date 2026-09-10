@@ -88,6 +88,32 @@ describe("modular sprite region grouping", () => {
     expect(validateGrouping(moved, [1, 2, 3]).valid).toBe(true);
   });
 
+  it("keeps an explicitly created empty part when regions are dropped into it", () => {
+    const grouping = createInitialGrouping(regions, partFactory);
+    const emptyPart: ModularSpriteDraftPart = {
+      ...grouping.parts[0]!,
+      partKey: "empty-part",
+      name: "Empty part",
+      contentBounds: { x: 0, y: 0, width: 0, height: 0 },
+      regionIds: [],
+    };
+    const moved = moveRegionsToPart(
+      {
+        parts: [...grouping.parts, emptyPart],
+        excludedRegionIds: [],
+      },
+      [1],
+      emptyPart.partKey,
+      { regions, dimensions: { width: 100, height: 100 } },
+    ).grouping;
+    const target = moved.parts.find(
+      (part) => part.partKey === emptyPart.partKey,
+    );
+    expect(target?.regionIds).toEqual([1]);
+    expect(target?.contentBounds).toEqual(regions[0]!.normalizedBounds);
+    expect(validateGrouping(moved, [1, 2, 3]).valid).toBe(true);
+  });
+
   it("creates, renames, removes and reconciles parts as pure operations", () => {
     const grouping = createInitialGrouping(regions, partFactory);
     const created = createPartFromRegions(
