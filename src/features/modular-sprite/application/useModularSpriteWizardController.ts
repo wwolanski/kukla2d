@@ -25,7 +25,7 @@ import type {
 } from "@kukla2d/modular-sprite-schema";
 
 import { finalizeModularSpriteImport } from "./finalizeModularSpriteImport.js";
-import { createDraftPart } from "./partDraftFactory.js";
+import { createDraftPart, createEmptyDraftPart } from "./partDraftFactory.js";
 import { groupingFromSchemaMatch } from "./schemaBinding.js";
 import {
   canContinue,
@@ -37,7 +37,6 @@ import {
 import { matchRegionsToTemplate } from "../domain/matching.js";
 import {
   createInitialGrouping,
-  createPartFromRegions,
   excludeRegions,
   moveRegionsToPart,
   removePart,
@@ -140,7 +139,6 @@ interface ModularSpriteWizardController {
     advancedFrameKeys: ReadonlySet<string>;
     toggleAdvancedFrame: (partKey: string) => void;
     selectedRegionIds: ReadonlySet<number>;
-    assignmentPartKey: string;
   };
   assignments: ReadonlyMap<number, RegionAssignment>;
   busy: boolean;
@@ -162,11 +160,13 @@ interface ModularSpriteWizardController {
     value: number,
   ) => void;
   removePart: (index: number) => void;
-  mergeSelected: () => void;
-  excludeSelected: () => void;
-  assignSelected: () => void;
+  createPart: () => void;
+  moveRegionsToPart: (
+    regionIds: readonly number[],
+    targetPartKey: string,
+  ) => void;
+  excludeRegions: (regionIds: readonly number[]) => void;
   toggleRegionSelection: (regionId: number, additive: boolean) => void;
-  setAssignmentPartKey: (partKey: string) => void;
   confirmPart: (partKey: string) => void;
   undo: () => void;
   redo: () => void;
@@ -320,7 +320,6 @@ export function useModularSpriteWizardController({
   const [selectedRegionIds, setSelectedRegionIds] = useState<Set<number>>(
     new Set(),
   );
-  const [assignmentPartKey, setAssignmentPartKeyState] = useState("");
 
   useEffect(
     () =>
@@ -340,7 +339,6 @@ export function useModularSpriteWizardController({
     resultRef.current = null;
     setResultVersion((version) => version + 1);
     setSelectedRegionIds(new Set());
-    setAssignmentPartKeyState("");
     setAdvancedFrameKeys(new Set());
     setPreviewMode("result");
     setTool("select");
@@ -708,40 +706,52 @@ export function useModularSpriteWizardController({
     [updateGrouping],
   );
 
-  const mergeSelected = useCallback((): void => {
+  const createPart = useCallback((): void => {
     const grouping = stateRef.current.grouping;
-    const result = stateRef.current.processingResult;
-    const ids = [...selectedRegionIds];
-    if (!grouping || !result || ids.length < 2) return;
-    const changed = createPartFromRegions(
-      grouping,
-      result.regions,
-      ids,
-      partFactoryFor(result),
-      { width: result.width, height: result.height },
+    if (!grouping) return;
+    const part = createEmptyDraftPart(grouping.parts.length, grouping.parts);
+    updateGrouping(
+      {
+        parts: [...grouping.parts, part],
+        excludedRegionIds: [...grouping.excludedRegionIds],
+      },
+      [part.partKey],
     );
-    updateGrouping(changed.grouping, changed.affectedPartKeys);
-    setSelectedRegionIds(new Set());
-    setAssignmentPartKeyState("");
-  }, [selectedRegionIds, updateGrouping]);
+  }, [updateGrouping]);
 
-  const excludeSelected = useCallback((): void => {
-    const grouping = stateRef.current.grouping;
-    const ids = [...selectedRegionIds];
-    if (!grouping || ids.length === 0) return;
-    const changed = excludeRegions(grouping, ids);
-    updateGrouping(changed.grouping, changed.affectedPartKeys);
-    setSelectedRegionIds(new Set());
-  }, [selectedRegionIds, updateGrouping]);
+  const moveRegionsToPartCommand = useCallback(
+    (regionIds: readonly number[], targetPartKey: string): void => {
+      const grouping = stateRef.current.grouping;
+      const result = stateRef.current.processingResult;
+      if (!grouping || !result || regionIds.length === 0) return;
+      const changed = moveRegionsToPart(grouping, regionIds, targetPartKey, {
+        regions: result.regions,
+        dimensions: { width: result.width, height: result.height },
+      });
+      updateGrouping(changed.grouping, changed.affectedPartKeys);
+      setSelectedRegionIds((previous) => {
+        const next = new Set(previous);
+        for (const regionId of regionIds) next.delete(regionId);
+        return next;
+      });
+    },
+    [updateGrouping],
+  );
 
-  const assignSelected = useCallback((): void => {
-    const grouping = stateRef.current.grouping;
-    const ids = [...selectedRegionIds];
-    if (!grouping || ids.length === 0 || !assignmentPartKey) return;
-    const changed = moveRegionsToPart(grouping, ids, assignmentPartKey);
-    updateGrouping(changed.grouping, changed.affectedPartKeys);
-    setSelectedRegionIds(new Set());
-  }, [assignmentPartKey, selectedRegionIds, updateGrouping]);
+  const excludeRegionsCommand = useCallback(
+    (regionIds: readonly number[]): void => {
+      const grouping = stateRef.current.grouping;
+      if (!grouping || regionIds.length === 0) return;
+      const changed = excludeRegions(grouping, regionIds);
+      updateGrouping(changed.grouping, changed.affectedPartKeys);
+      setSelectedRegionIds((previous) => {
+        const next = new Set(previous);
+        for (const regionId of regionIds) next.delete(regionId);
+        return next;
+      });
+    },
+    [updateGrouping],
+  );
 
   const toggleRegionSelection = useCallback(
     (regionId: number, additive: boolean): void => {
@@ -863,10 +873,6 @@ export function useModularSpriteWizardController({
     });
   }, []);
 
-  const setAssignmentPartKey = useCallback(
-    (partKey: string): void => setAssignmentPartKeyState(partKey),
-    [],
-  );
   const confirmPart = useCallback(
     (partKey: string): void => dispatch({ type: "CONFIRM_PART", partKey }),
     [],
@@ -916,7 +922,6 @@ export function useModularSpriteWizardController({
       advancedFrameKeys,
       toggleAdvancedFrame,
       selectedRegionIds,
-      assignmentPartKey,
     },
     assignments,
     busy: isWizardBusy(state),
@@ -927,11 +932,10 @@ export function useModularSpriteWizardController({
     updatePart,
     updateExtractionFrame,
     removePart: removePartCommand,
-    mergeSelected,
-    excludeSelected,
-    assignSelected,
+    createPart,
+    moveRegionsToPart: moveRegionsToPartCommand,
+    excludeRegions: excludeRegionsCommand,
     toggleRegionSelection,
-    setAssignmentPartKey,
     confirmPart,
     undo,
     redo,

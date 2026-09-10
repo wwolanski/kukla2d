@@ -61,6 +61,7 @@ function uniqueSorted(ids: Iterable<number>): number[] {
 function removeRegionIds(
   grouping: RegionGrouping,
   regionIds: ReadonlySet<number>,
+  preservePartKeys: ReadonlySet<string> = new Set(),
 ): RegionGrouping {
   return {
     parts: grouping.parts
@@ -70,7 +71,10 @@ function removeRegionIds(
           (regionId) => !regionIds.has(regionId),
         ),
       }))
-      .filter((part) => part.regionIds.length > 0),
+      .filter(
+        (part) =>
+          part.regionIds.length > 0 || preservePartKeys.has(part.partKey),
+      ),
     excludedRegionIds: grouping.excludedRegionIds.filter(
       (regionId) => !regionIds.has(regionId),
     ),
@@ -214,12 +218,18 @@ export function moveRegionsToPart(
   grouping: RegionGrouping,
   regionIds: readonly number[],
   targetPartKey: string,
+  options: {
+    regions?: readonly DetectedRegion[];
+    dimensions?: { width: number; height: number };
+  } = {},
 ): RegionGroupingChange {
   const selected = new Set(regionIds);
   if (selected.size === 0)
     return { grouping: cloneGrouping(grouping), affectedPartKeys: [] };
-  if (!grouping.parts.some((part) => part.partKey === targetPartKey))
-    throw new Error(`Unknown target part: ${targetPartKey}`);
+  const targetBefore = grouping.parts.find(
+    (part) => part.partKey === targetPartKey,
+  );
+  if (!targetBefore) throw new Error(`Unknown target part: ${targetPartKey}`);
   const affectedPartKeys = grouping.parts
     .filter(
       (part) =>
@@ -227,10 +237,27 @@ export function moveRegionsToPart(
         part.regionIds.some((id) => selected.has(id)),
     )
     .map((part) => part.partKey);
-  const next = removeRegionIds(grouping, selected);
+  const targetWasEmpty = targetBefore.regionIds.length === 0;
+  const next = removeRegionIds(grouping, selected, new Set([targetPartKey]));
   const target = next.parts.find((part) => part.partKey === targetPartKey);
   if (!target) throw new Error(`Unknown target part: ${targetPartKey}`);
   target.regionIds = uniqueSorted([...target.regionIds, ...selected]);
+  if (targetWasEmpty && options.regions) {
+    const selectedRegions = options.regions.filter((region) =>
+      selected.has(region.id),
+    );
+    if (selectedRegions.length > 0) {
+      const geometry = options.dimensions
+        ? syntheticRegion(
+            selectedRegions,
+            options.dimensions.width,
+            options.dimensions.height,
+          )
+        : unionBounds(selectedRegions);
+      target.extractionFrame = geometry.normalizedBounds;
+      target.contentBounds = geometry.normalizedBounds;
+    }
+  }
   return { grouping: next, affectedPartKeys };
 }
 

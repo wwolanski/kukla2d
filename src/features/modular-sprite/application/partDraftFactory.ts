@@ -60,3 +60,24 @@ export function createDraftPart(
     regionIds: [region.id],
   };
 }
+
+export function createEmptyDraftPart(
+  index: number,
+  existingParts: readonly ModularSpriteDraftPart[],
+): ModularSpriteDraftPart {
+  const name = `Part ${index + 1}`;
+  const semanticRoleId = semanticRoleIdForLegacyRole("custom");
+  return {
+    partKey: uniquePartKey(slugPartKey(name), existingParts),
+    name,
+    role: "custom",
+    ...(semanticRoleId ? { semanticRoleId } : {}),
+    side: "none",
+    qualifiers: {},
+    required: true,
+    order: index,
+    extractionFrame: { x: 0, y: 0, width: 1, height: 1 },
+    contentBounds: { x: 0, y: 0, width: 0, height: 0 },
+    regionIds: [],
+  };
+}
