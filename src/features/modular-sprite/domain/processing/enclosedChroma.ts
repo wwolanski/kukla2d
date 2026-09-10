@@ -4,6 +4,7 @@ import {
 } from "@kukla2d/contracts";
 
 import { clamp, rgbToOklab } from "../imageMath.js";
+import { hasReliableKeyChroma, keyLightnessWeight } from "./keyColorProfile.js";
 
 import type { RgbaImageData } from "../contracts.types.js";
 
@@ -203,8 +204,7 @@ function componentMetrics(
   let meanLightness = 0;
   let meanA = 0;
   let meanB = 0;
-  const lightnessWeight =
-    MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.oklabLightnessWeight;
+  const lightnessWeight = keyLightnessWeight(backgroundLab);
   for (const [lightness, aAxis, bAxis] of labs) {
     const deltaLightness = (lightness - backgroundLab[0]) * lightnessWeight;
     const deltaA = aAxis - backgroundLab[1];
@@ -250,8 +250,7 @@ function pixelColorDistances(
     image.data[offset + 1] ?? 0,
     image.data[offset + 2] ?? 0,
   );
-  const lightnessWeight =
-    MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.oklabLightnessWeight;
+  const lightnessWeight = keyLightnessWeight(backgroundLab);
   const deltaA = aAxis - backgroundLab[1];
   const deltaB = bAxis - backgroundLab[2];
   const pixelChroma = Math.hypot(aAxis, bAxis);
@@ -459,6 +458,10 @@ export function detectEnclosedChroma(
   );
   const selectedCores = new Set<number>();
   const manuallySelectedCores = new Set<number>();
+  // Hue cannot disambiguate an achromatic key from black, white or gray
+  // foreground details. Preserve those automatically and retain manual seeds
+  // as the explicit signal for true enclosed background pockets.
+  const allowAutomaticSelection = hasReliableKeyChroma(backgroundLab);
 
   for (const [componentId, component] of coreComponents.entries()) {
     for (const pixelIndex of component)
@@ -473,7 +476,10 @@ export function detectEnclosedChroma(
       backgroundLab,
       limits.strongDistance,
     );
-    if (componentQualifies(component, values, limits))
+    if (
+      allowAutomaticSelection &&
+      componentQualifies(component, values, limits)
+    )
       selectedCores.add(componentId);
   }
 

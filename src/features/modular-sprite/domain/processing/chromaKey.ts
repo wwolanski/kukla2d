@@ -4,6 +4,7 @@ import {
 } from "@kukla2d/contracts";
 
 import { clamp, rgbToOklab, smoothstep } from "../imageMath.js";
+import { keyLightnessWeight } from "./keyColorProfile.js";
 
 import type { RgbaImageData } from "../contracts.types.js";
 import type { ProcessingHooks } from "./processing.types.js";
@@ -68,6 +69,7 @@ export function computeMatteRange(
   const algorithm = MODULAR_SPRITE_PROCESSING_CONFIG.algorithm;
   const [backgroundLightness = 0, backgroundA = 0, backgroundB = 0] =
     backgroundLab;
+  const lightnessWeight = keyLightnessWeight(backgroundLab);
   const startY = Math.max(0, Math.min(height, yStart));
   const endY = Math.max(startY, Math.min(height, yEnd));
   const startPixel = startY * width;
@@ -96,7 +98,7 @@ export function computeMatteRange(
       [labLightness, labA, labB] = rgbToOklab(red, green, blue);
     }
     const deltaLightness =
-      (labLightness - backgroundLightness) * algorithm.oklabLightnessWeight;
+      (labLightness - backgroundLightness) * lightnessWeight;
     const deltaA = labA - backgroundA;
     const deltaB = labB - backgroundB;
     const distance = Math.sqrt(

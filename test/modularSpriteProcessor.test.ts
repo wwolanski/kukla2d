@@ -419,6 +419,71 @@ describe("modular sprite processor", () => {
     expect(result.enclosedChromaMask[center]).toBe(0);
   });
 
+  it("preserves enclosed foreground shades for a neutral key", () => {
+    const source = image(11, 11, [0, 0, 0, 255]);
+    paint(source, 2, 2, 7, 7, [255, 255, 255, 255]);
+    paint(source, 4, 4, 3, 3, [8, 8, 8, 255]);
+    const recipe = chromaRecipe();
+    recipe.background.color = { r: 0, g: 0, b: 0 };
+
+    const result = processModularSprite({ image: source, recipe });
+    const center = 5 * source.width + 5;
+
+    expect(result.matte[center]).toBe(255);
+    expect(result.protectedInteriorMask[center]).toBe(1);
+    expect(result.enclosedChromaMask[center]).toBe(0);
+    expect(result.warnings).toContain(
+      "Neutral background key detected (rgb(0, 0, 0)); conservative luminance-aware keying is active because foreground shades can match the background. Review the matte and use mask tools for remaining corrections.",
+    );
+  });
+
+  it("closes a narrow neutral-key leak before protecting an interior", () => {
+    const source = image(13, 13, [0, 0, 0, 255]);
+    paint(source, 2, 2, 9, 9, [255, 255, 255, 255]);
+    paint(source, 4, 4, 5, 5, [0, 0, 0, 255]);
+    paint(source, 6, 2, 1, 2, [0, 0, 0, 255]);
+    const recipe = chromaRecipe();
+    recipe.background.color = { r: 0, g: 0, b: 0 };
+
+    const result = processModularSprite({ image: source, recipe });
+    const center = 6 * source.width + 6;
+
+    expect(result.matte[center]).toBe(255);
+    expect(result.protectedInteriorMask[center]).toBe(1);
+    expect(result.enclosedChromaMask[center]).toBe(0);
+  });
+
+  it("lets a manual seed remove an enclosed pocket for a neutral key", () => {
+    const source = image(11, 11, [0, 0, 0, 255]);
+    paint(source, 2, 2, 7, 7, [255, 255, 255, 255]);
+    paint(source, 4, 4, 3, 3, [0, 0, 0, 255]);
+    const recipe = chromaRecipe();
+    recipe.background.color = { r: 0, g: 0, b: 0 };
+    setEnclosedChroma(recipe, "transparent", [{ x: 0.5, y: 0.5 }]);
+
+    const result = processModularSprite({ image: source, recipe });
+    const center = 5 * source.width + 5;
+
+    expect(result.matte[center]).toBe(0);
+    expect(result.protectedInteriorMask[center]).toBe(0);
+    expect(result.enclosedChromaMask[center]).toBe(1);
+  });
+
+  it("uses luminance separation when keying a neutral background", () => {
+    const source = image(7, 7, [114, 113, 113, 255]);
+    paint(source, 2, 2, 3, 3, [35, 35, 35, 255]);
+    const recipe = chromaRecipe();
+    recipe.background.color = { r: 114, g: 113, b: 113 };
+
+    const result = processModularSprite({ image: source, recipe });
+
+    expect(result.matte[0]).toBe(0);
+    expect(result.matte[3 * source.width + 3]).toBeGreaterThan(
+      recipe.detection.alphaThreshold,
+    );
+    expect(result.regions).toHaveLength(1);
+  });
+
   it("excludes foreground-colored pixels from a qualifying chroma component", () => {
     const source = image(9, 9, [220, 30, 20, 255]);
     const matte = new Uint8ClampedArray(9 * 9);

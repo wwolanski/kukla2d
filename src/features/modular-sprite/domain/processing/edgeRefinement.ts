@@ -5,7 +5,9 @@ import {
   type ModularSpriteProcessingRecipe,
 } from "@kukla2d/contracts";
 
+import { rgbToOklab } from "../imageMath.js";
 import { detectEnclosedChroma } from "./enclosedChroma.js";
+import { hasReliableKeyChroma } from "./keyColorProfile.js";
 import { rasterizeStroke } from "./maskStrokes.js";
 import {
   fillEnclosedHoles,
@@ -84,7 +86,33 @@ function prepareInteriorMasks(
       mode: refinement.enclosedChromaMode,
     };
 
-  const detection = thresholdMatte(matte, recipe.detection.alphaThreshold);
+  let detection = thresholdMatte(matte, recipe.detection.alphaThreshold);
+  const backgroundLab = rgbToOklab(
+    recipe.background.color.r,
+    recipe.background.color.g,
+    recipe.background.color.b,
+  );
+  if (!hasReliableKeyChroma(backgroundLab)) {
+    // Neutral foreground outlines can share the key luminance and leave narrow
+    // leaks into otherwise closed silhouettes. Seal only tiny gaps before the
+    // protection fill; the final region mask still uses the user's morphology.
+    const closingRadius =
+      MODULAR_SPRITE_PROCESSING_CONFIG.algorithm
+        .neutralKeyProtectionClosingRadius;
+    detection = squareMorphology(
+      squareMorphology(
+        detection,
+        image.width,
+        image.height,
+        closingRadius,
+        true,
+      ),
+      image.width,
+      image.height,
+      closingRadius,
+      false,
+    );
+  }
   const filledDetection = fillEnclosedHoles(
     detection,
     image.width,
