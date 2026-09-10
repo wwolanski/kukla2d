@@ -60,18 +60,15 @@ export interface WizardState {
   processingResult: ProcessedModularSprite | null;
   grouping: RegionGrouping | null;
   groupingTouched: boolean;
-  confirmation: { confirmedPartKeys: string[] };
   schema: WizardSchemaState;
   history: {
     recipe: ModularSpriteProcessingRecipe;
     grouping: RegionGrouping | null;
-    confirmedPartKeys: string[];
     groupingTouched: boolean;
   }[];
   future: {
     recipe: ModularSpriteProcessingRecipe;
     grouping: RegionGrouping | null;
-    confirmedPartKeys: string[];
     groupingTouched: boolean;
   }[];
   error: string | null;

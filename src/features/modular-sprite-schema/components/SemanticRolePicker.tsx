@@ -42,12 +42,14 @@ export function SemanticRolePicker({
   semantics,
   onChange,
   onSaveSemantic,
+  compact = false,
 }: {
   role: string;
   semanticRoleId?: string;
   semantics: SemanticCatalog;
   onChange: (value: { role: string; semanticRoleId?: string }) => void;
   onSaveSemantic: (definition: SemanticDefinition) => Promise<void>;
+  compact?: boolean;
 }): React.ReactElement {
   const definitions = useMemo(
     () => semantics.list("part-role"),
@@ -56,6 +58,7 @@ export function SemanticRolePicker({
   const selected = definitions.find(
     (item) => item.id === semanticRoleId || item.key === role,
   );
+  const selectedLabel = selected?.label ?? (role.trim() || "Custom");
   const persistCustom = (): void => {
     const key = role
       .trim()
@@ -83,11 +86,30 @@ export function SemanticRolePicker({
           const definition = definitions.find((item) => item.id === value);
           if (definition)
             onChange({ role: definition.key, semanticRoleId: definition.id });
-          else onChange({ role });
+          else onChange({ role: "" });
         }}
       >
-        <UiSelectTrigger className="h-10">
-          <UiSelectValue />
+        <UiSelectTrigger
+          className={
+            compact
+              ? "h-8 w-8 justify-center px-0 [&>svg:last-child]:hidden"
+              : "h-10"
+          }
+          {...(compact
+            ? {
+                "aria-label": `Role: ${selectedLabel}`,
+                title: `Role: ${selectedLabel}`,
+              }
+            : {})}
+        >
+          {compact ? (
+            <SemanticRoleIcon
+              role={selected?.key ?? "custom"}
+              className="h-4 w-4"
+            />
+          ) : (
+            <UiSelectValue />
+          )}
         </UiSelectTrigger>
         <UiSelectContent className="max-h-72">
           {definitions.map((item) => (

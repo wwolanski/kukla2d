@@ -1,4 +1,5 @@
 import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   resolveChromaRefinement,
@@ -41,6 +42,10 @@ const UiDialogContent = DialogContent as React.ComponentType<{
   children: React.ReactNode;
 }>;
 
+const MIN_PREVIEW_ZOOM = 0.25;
+const MAX_PREVIEW_ZOOM = 16;
+const PREVIEW_CONTENT_PADDING = 32;
+
 export function ModularSpriteWizard({
   open,
   existingId,
@@ -59,10 +64,69 @@ export function ModularSpriteWizard({
     ports,
     ...(confirmDiscard ? { confirmDiscard } : {}),
   });
-  const { state, ui } = controller;
+  const { state, resultVersion, ui } = controller;
   const result = state.processingResult;
   const source = state.source;
   const step = state.step;
+  const previewViewportRef = useRef<HTMLDivElement>(null);
+  const previewAutoFitAppliedRef = useRef(false);
+  const [hasPendingPartNameSuggestions, setHasPendingPartNameSuggestions] =
+    useState(false);
+  const sourceWidth = source?.preview.width ?? 0;
+  const sourceHeight = source?.preview.height ?? 0;
+  const hasPreviewResult = result !== null;
+  const setPreviewZoom = ui.setZoom;
+  const fitPreviewToViewport = useCallback(() => {
+    const viewport = previewViewportRef.current;
+    if (!viewport || sourceWidth <= 0 || sourceHeight <= 0) return;
+
+    const availableWidth = Math.max(
+      1,
+      viewport.clientWidth - PREVIEW_CONTENT_PADDING,
+    );
+    const availableHeight = Math.max(
+      1,
+      viewport.clientHeight - PREVIEW_CONTENT_PADDING,
+    );
+    const fitZoom = Math.min(
+      availableWidth / sourceWidth,
+      availableHeight / sourceHeight,
+    );
+    setPreviewZoom(
+      Math.min(MAX_PREVIEW_ZOOM, Math.max(MIN_PREVIEW_ZOOM, fitZoom)),
+    );
+  }, [setPreviewZoom, sourceHeight, sourceWidth]);
+
+  useEffect(() => {
+    if (!open || step === "source" || !hasPreviewResult) {
+      previewAutoFitAppliedRef.current = false;
+      return;
+    }
+    if (previewAutoFitAppliedRef.current) return;
+    const viewport = previewViewportRef.current;
+    if (!viewport) return;
+
+    let observer: ResizeObserver | undefined;
+    const applyInitialFit = (): void => {
+      if (
+        previewAutoFitAppliedRef.current ||
+        viewport.clientWidth <= 0 ||
+        viewport.clientHeight <= 0
+      )
+        return;
+      fitPreviewToViewport();
+      previewAutoFitAppliedRef.current = true;
+      observer?.disconnect();
+    };
+
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(applyInitialFit);
+      observer.observe(viewport);
+    }
+    applyInitialFit();
+    return () => observer?.disconnect();
+  }, [fitPreviewToViewport, hasPreviewResult, open, resultVersion, step]);
+
   const refinement = resolveChromaRefinement(state.recipe.background);
   const protectionAvailable =
     state.recipe.background.mode === "chroma" &&
@@ -141,6 +205,11 @@ export function ModularSpriteWizard({
                     onCreatePart={controller.createPart}
                     onSelectRegion={controller.toggleRegionSelection}
                     onUpdatePart={controller.updatePart}
+                    semanticCatalog={semanticCatalog}
+                    onSaveSemantic={onSaveSemantic}
+                    onPendingNameSuggestionsChange={
+                      setHasPendingPartNameSuggestions
+                    }
                   />
                 )}
                 <section className="flex min-h-0 min-w-0 flex-col rounded-lg border bg-black/40">
@@ -190,7 +259,9 @@ export function ModularSpriteWizard({
                     <UiButton
                       size="sm"
                       variant="ghost"
-                      onClick={() => ui.setZoom(Math.max(0.25, ui.zoom - 0.25))}
+                      onClick={() =>
+                        ui.setZoom(Math.max(MIN_PREVIEW_ZOOM, ui.zoom - 0.25))
+                      }
                     >
                       −
                     </UiButton>
@@ -200,7 +271,9 @@ export function ModularSpriteWizard({
                     <UiButton
                       size="sm"
                       variant="ghost"
-                      onClick={() => ui.setZoom(Math.min(4, ui.zoom + 0.25))}
+                      onClick={() =>
+                        ui.setZoom(Math.min(MAX_PREVIEW_ZOOM, ui.zoom + 0.25))
+                      }
                     >
                       +
                     </UiButton>
@@ -210,7 +283,10 @@ export function ModularSpriteWizard({
                         : `${result.regions.length} regions`}
                     </span>
                   </div>
-                  <div className="relative min-h-0 min-w-0 flex-1">
+                  <div
+                    ref={previewViewportRef}
+                    className="relative min-h-0 min-w-0 flex-1"
+                  >
                     <ScrollArea
                       className="h-full min-h-0 min-w-0"
                       scrollbars="both"
@@ -282,23 +358,15 @@ export function ModularSpriteWizard({
           {step === "parts" && state.grouping && (
             <PartDetailsStep
               grouping={state.grouping}
-              confirmedPartKeys={state.confirmation.confirmedPartKeys}
               resultRef={controller.resultRef}
               resultVersion={controller.resultVersion}
-              advancedFrameKeys={ui.advancedFrameKeys}
               schema={{
                 addSchema: state.schema.addSchema,
                 saveMode: state.schema.saveMode,
                 metadata: state.schema.metadata,
                 applied: Boolean(state.schema.applied),
               }}
-              semanticCatalog={semanticCatalog}
-              onSaveSemantic={onSaveSemantic}
               onUpdatePart={controller.updatePart}
-              onUpdateFrame={controller.updateExtractionFrame}
-              onRemovePart={controller.removePart}
-              onToggleFrame={ui.toggleAdvancedFrame}
-              onConfirmPart={controller.confirmPart}
               onSchemaEditorChange={controller.setSchemaEditor}
             />
           )}
@@ -340,7 +408,7 @@ export function ModularSpriteWizard({
         <WizardFooter
           step={step}
           busy={controller.busy}
-          canGoNext={controller.canGoNext}
+          canGoNext={controller.canGoNext && !hasPendingPartNameSuggestions}
           onCancel={() => {
             controller.requestClose();
           }}

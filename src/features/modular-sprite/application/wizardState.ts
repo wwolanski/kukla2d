@@ -31,7 +31,6 @@ interface WizardSource {
 interface WizardSnapshot {
   recipe: ModularSpriteProcessingRecipe;
   grouping: RegionGrouping | null;
-  confirmedPartKeys: string[];
   groupingTouched: boolean;
 }
 
@@ -80,10 +79,8 @@ type WizardEvent =
       type: "GROUPING_CHANGED";
       grouping: RegionGrouping;
       kind?: WizardHistoryKind;
-      affectedPartKeys?: string[];
       at?: number;
     }
-  | { type: "CONFIRM_PART"; partKey: string }
   | { type: "SCHEMA_CATALOG_LOADED"; schemas: ModularSpriteSchema[] }
   | { type: "SCHEMA_MATCHING_STARTED"; total: number }
   | { type: "SCHEMA_PROGRESS"; completed: number; total: number }
@@ -115,7 +112,6 @@ export function createInitialWizardState(): WizardState {
     processingResult: null,
     grouping: null,
     groupingTouched: false,
-    confirmation: { confirmedPartKeys: [] },
     schema: {
       schemas: [],
       matches: [],
@@ -149,7 +145,6 @@ function snapshotOf(state: WizardState): WizardSnapshot {
   return {
     recipe: structuredClone(state.recipe),
     grouping: state.grouping ? structuredClone(state.grouping) : null,
-    confirmedPartKeys: [...state.confirmation.confirmedPartKeys],
     groupingTouched: state.groupingTouched,
   };
 }
@@ -162,7 +157,6 @@ function applySnapshot(
     ...state,
     recipe: structuredClone(snapshot.recipe),
     grouping: snapshot.grouping ? structuredClone(snapshot.grouping) : null,
-    confirmation: { confirmedPartKeys: [...snapshot.confirmedPartKeys] },
     groupingTouched: snapshot.groupingTouched,
   };
 }
@@ -186,18 +180,6 @@ function withHistory(
   };
 }
 
-function clearConfirmations(
-  state: WizardState,
-  affectedPartKeys: readonly string[],
-): string[] {
-  if (affectedPartKeys.length === 0)
-    return [...state.confirmation.confirmedPartKeys];
-  const affected = new Set(affectedPartKeys);
-  return state.confirmation.confirmedPartKeys.filter(
-    (partKey) => !affected.has(partKey),
-  );
-}
-
 export function wizardReducer(
   state: WizardState,
   event: WizardEvent,
@@ -217,7 +199,6 @@ export function wizardReducer(
         processingResult: null,
         grouping: null,
         groupingTouched: false,
-        confirmation: { confirmedPartKeys: [] },
         history: [],
         future: [],
         error: null,
@@ -278,12 +259,6 @@ export function wizardReducer(
         ...next,
         grouping: structuredClone(event.grouping),
         groupingTouched: true,
-        confirmation: {
-          confirmedPartKeys: clearConfirmations(
-            next,
-            event.affectedPartKeys ?? [],
-          ),
-        },
         schema: next.schema.applied
           ? {
               ...next.schema,
@@ -293,23 +268,6 @@ export function wizardReducer(
         error: null,
       };
     }
-    case "CONFIRM_PART":
-      return state.grouping?.parts.some(
-        (part) => part.partKey === event.partKey,
-      )
-        ? {
-            ...state,
-            confirmation: {
-              confirmedPartKeys: [
-                ...new Set([
-                  ...state.confirmation.confirmedPartKeys,
-                  event.partKey,
-                ]),
-              ],
-            },
-            error: null,
-          }
-        : state;
     case "SCHEMA_CATALOG_LOADED":
       return {
         ...state,
@@ -350,9 +308,6 @@ export function wizardReducer(
         ...state,
         grouping: structuredClone(event.grouping),
         groupingTouched: false,
-        confirmation: {
-          confirmedPartKeys: event.grouping.parts.map((part) => part.partKey),
-        },
         schema: {
           ...state.schema,
           applied: {
@@ -424,6 +379,22 @@ export function wizardReducer(
   }
 }
 
+function partsAreReady(state: WizardState): boolean {
+  const parts = state.grouping?.parts ?? [];
+  if (parts.length === 0) return false;
+  const keys = parts.map((part) => part.partKey.toLowerCase());
+  return (
+    new Set(keys).size === keys.length &&
+    parts.every(
+      (part) =>
+        /^[a-z][a-z0-9-]*$/.test(part.partKey) &&
+        part.regionIds.length > 0 &&
+        part.name.trim().length > 0 &&
+        part.role.trim().length > 0,
+    )
+  );
+}
+
 export function canContinue(state: WizardState): boolean {
   if (
     state.status === "loading" ||
@@ -432,16 +403,8 @@ export function canContinue(state: WizardState): boolean {
   )
     return false;
   if (state.step === "background") return Boolean(state.processingResult);
-  if (state.step === "regions") return Boolean(state.grouping?.parts.length);
-  if (state.step === "parts")
-    return (
-      Boolean(state.grouping?.parts.length) &&
-      state.grouping!.parts.every(
-        (part) =>
-          part.regionIds.length > 0 &&
-          state.confirmation.confirmedPartKeys.includes(part.partKey),
-      )
-    );
+  if (state.step === "regions" || state.step === "parts")
+    return partsAreReady(state);
   return false;
 }
 

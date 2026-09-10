@@ -58,7 +58,6 @@ interface FinalizeModularSpriteImportInput {
   recipe: ModularSpriteProcessingRecipe;
   previewResult: ProcessedModularSprite;
   grouping: RegionGrouping;
-  confirmedPartKeys: readonly string[];
   name: string;
   addToCanvas: boolean;
   schema: {
@@ -80,9 +79,13 @@ interface FinalizeModularSpriteImportResult {
 function validationErrors(input: FinalizeModularSpriteImportInput): string[] {
   const errors: string[] = [];
   const keys = input.grouping.parts.map((part) => part.partKey);
+  const normalizedKeys = keys.map((key) => key.toLowerCase());
   if (input.grouping.parts.length === 0)
     errors.push("Assign at least one modular sprite part");
-  if (keys.some((key) => !key.trim()) || new Set(keys).size !== keys.length)
+  if (
+    keys.some((key) => !/^[a-z][a-z0-9-]*$/.test(key)) ||
+    new Set(normalizedKeys).size !== normalizedKeys.length
+  )
     errors.push("Every part needs a unique, non-empty key");
   if (
     input.grouping.parts.some(
@@ -91,9 +94,6 @@ function validationErrors(input: FinalizeModularSpriteImportInput): string[] {
     )
   )
     errors.push("Every part needs a name, role, and assigned region");
-  const confirmed = new Set(input.confirmedPartKeys);
-  if (input.grouping.parts.some((part) => !confirmed.has(part.partKey)))
-    errors.push("Confirm every semantic part assignment before importing");
   return errors;
 }
 
@@ -224,7 +224,7 @@ export async function finalizeModularSpriteImport(
   );
   const fullParts = reconciled.grouping.parts;
   if (fullParts.some((part) => part.regionIds.length === 0))
-    throw new Error("A confirmed part could not be matched at full resolution");
+    throw new Error("An imported part could not be matched at full resolution");
   const extracted = await ports.processing.extract(
     { image: input.source.image, recipe: input.recipe },
     fullParts,

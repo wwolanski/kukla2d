@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertValidModularSpriteRecipe,
   DEFAULT_MODULAR_SPRITE_RECIPE,
+  MODULAR_SPRITE_PROCESSING_CONFIG,
   type ModularSpriteEnclosedChromaMode,
 } from "@kukla2d/contracts";
 import {
@@ -61,6 +62,31 @@ function alphaRecipe() {
   recipe.detection.openingRadius = 0;
   recipe.detection.closingRadius = 0;
   return recipe;
+}
+
+function alphaSourceAtDetectionThreshold(): RgbaImageData {
+  const source = image(4, 4, [11, 22, 33, 255]);
+  const border = [0, 1, 2, 3, 12, 13, 14, 15, 4, 7, 8, 11];
+  const threshold =
+    MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.transparentBorderAlpha;
+  border.forEach((pixelIndex, index) => {
+    const offset = pixelIndex * 4;
+    source.data[offset] = (index * 37) % 256;
+    source.data[offset + 1] = (index * 53) % 256;
+    source.data[offset + 2] = (index * 71) % 256;
+    source.data[offset + 3] =
+      index < border.length / 2 ? threshold - 1 : threshold;
+  });
+  const interior = [
+    [120, 15, 220, 1],
+    [20, 210, 40, 63],
+    [200, 30, 90, 127],
+    [240, 180, 10, 254],
+  ];
+  [5, 6, 9, 10].forEach((pixelIndex, index) => {
+    source.data.set(interior[index]!, pixelIndex * 4);
+  });
+  return source;
 }
 
 function setEnclosedChroma(
@@ -180,6 +206,53 @@ describe("modular sprite processor", () => {
       }),
     ).toThrow("background.edgeSearchRadius");
   });
+
+  it("detects a transparent border at the threshold and preserves alpha RGBA in sync and async processing", async () => {
+    const source = alphaSourceAtDetectionThreshold();
+    const recipe = alphaRecipe();
+    recipe.background.tolerance =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.tolerance.max;
+    recipe.background.softness =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.softness.max;
+    recipe.background.despill = 1;
+    recipe.background.matteChoke =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.matteChoke.max;
+    recipe.background.edgeColorRecovery = 1;
+    recipe.background.edgeSearchRadius =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.edgeSearchRadius.max;
+
+    const sync = processModularSprite({ image: source, recipe });
+    const asyncResult = await processModularSpriteAsync(
+      { image: source, recipe },
+      {
+        throwIfAborted: () => {},
+        checkpoint: () => Promise.resolve(),
+        report: () => {},
+      },
+    );
+    const sourceAlpha = Array.from(source.data).filter(
+      (_, index) => index % 4 === 3,
+    );
+
+    expect(sync.background.mode).toBe("alpha");
+    expect(sync.background.confidence).toBe(
+      MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.transparentBorderRatio,
+    );
+    expect(asyncResult.background).toEqual(sync.background);
+    expect(Array.from(sync.rgba)).toEqual(Array.from(source.data));
+    expect(Array.from(asyncResult.rgba)).toEqual(Array.from(source.data));
+    expect(Array.from(sync.matte)).toEqual(sourceAlpha);
+    expect(Array.from(asyncResult.matte)).toEqual(sourceAlpha);
+    expect(sync.protectedInteriorMask.every((value) => value === 0)).toBe(true);
+    expect(sync.enclosedChromaMask.every((value) => value === 0)).toBe(true);
+    expect(
+      asyncResult.protectedInteriorMask.every((value) => value === 0),
+    ).toBe(true);
+    expect(asyncResult.enclosedChromaMask.every((value) => value === 0)).toBe(
+      true,
+    );
+  });
+
   it("detects transparent regions in deterministic reading order", () => {
     const source = image(12, 8);
     paint(source, 7, 1, 3, 2, [255, 0, 0, 255]);
@@ -344,6 +417,71 @@ describe("modular sprite processor", () => {
     expect(result.rgba[center * 4 + 3]).toBe(255);
     expect(result.protectedInteriorMask[center]).toBe(1);
     expect(result.enclosedChromaMask[center]).toBe(0);
+  });
+
+  it("preserves enclosed foreground shades for a neutral key", () => {
+    const source = image(11, 11, [0, 0, 0, 255]);
+    paint(source, 2, 2, 7, 7, [255, 255, 255, 255]);
+    paint(source, 4, 4, 3, 3, [8, 8, 8, 255]);
+    const recipe = chromaRecipe();
+    recipe.background.color = { r: 0, g: 0, b: 0 };
+
+    const result = processModularSprite({ image: source, recipe });
+    const center = 5 * source.width + 5;
+
+    expect(result.matte[center]).toBe(255);
+    expect(result.protectedInteriorMask[center]).toBe(1);
+    expect(result.enclosedChromaMask[center]).toBe(0);
+    expect(result.warnings).toContain(
+      "Neutral background key detected (rgb(0, 0, 0)); conservative luminance-aware keying is active because foreground shades can match the background. Review the matte and use mask tools for remaining corrections.",
+    );
+  });
+
+  it("closes a narrow neutral-key leak before protecting an interior", () => {
+    const source = image(13, 13, [0, 0, 0, 255]);
+    paint(source, 2, 2, 9, 9, [255, 255, 255, 255]);
+    paint(source, 4, 4, 5, 5, [0, 0, 0, 255]);
+    paint(source, 6, 2, 1, 2, [0, 0, 0, 255]);
+    const recipe = chromaRecipe();
+    recipe.background.color = { r: 0, g: 0, b: 0 };
+
+    const result = processModularSprite({ image: source, recipe });
+    const center = 6 * source.width + 6;
+
+    expect(result.matte[center]).toBe(255);
+    expect(result.protectedInteriorMask[center]).toBe(1);
+    expect(result.enclosedChromaMask[center]).toBe(0);
+  });
+
+  it("lets a manual seed remove an enclosed pocket for a neutral key", () => {
+    const source = image(11, 11, [0, 0, 0, 255]);
+    paint(source, 2, 2, 7, 7, [255, 255, 255, 255]);
+    paint(source, 4, 4, 3, 3, [0, 0, 0, 255]);
+    const recipe = chromaRecipe();
+    recipe.background.color = { r: 0, g: 0, b: 0 };
+    setEnclosedChroma(recipe, "transparent", [{ x: 0.5, y: 0.5 }]);
+
+    const result = processModularSprite({ image: source, recipe });
+    const center = 5 * source.width + 5;
+
+    expect(result.matte[center]).toBe(0);
+    expect(result.protectedInteriorMask[center]).toBe(0);
+    expect(result.enclosedChromaMask[center]).toBe(1);
+  });
+
+  it("uses luminance separation when keying a neutral background", () => {
+    const source = image(7, 7, [114, 113, 113, 255]);
+    paint(source, 2, 2, 3, 3, [35, 35, 35, 255]);
+    const recipe = chromaRecipe();
+    recipe.background.color = { r: 114, g: 113, b: 113 };
+
+    const result = processModularSprite({ image: source, recipe });
+
+    expect(result.matte[0]).toBe(0);
+    expect(result.matte[3 * source.width + 3]).toBeGreaterThan(
+      recipe.detection.alphaThreshold,
+    );
+    expect(result.regions).toHaveLength(1);
   });
 
   it("excludes foreground-colored pixels from a qualifying chroma component", () => {

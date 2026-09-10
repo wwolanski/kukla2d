@@ -19,6 +19,7 @@ import {
 } from "./connectedComponents.js";
 import { componentContour } from "./contours.js";
 import { refineChromaKeyEdgesWithMasks } from "./edgeRefinement.js";
+import { hasReliableKeyChroma } from "./keyColorProfile.js";
 import { detectionStrokesPass, matteStrokesPass } from "./maskStrokes.js";
 import { buildDetectionMask } from "./morphology.js";
 import { suggestRole } from "./regionClassification.js";
@@ -116,6 +117,19 @@ function warningsFor(
   )
     warnings.push(
       "Low border-color confidence; pick the background color manually.",
+    );
+  if (
+    recipe.background.mode === "chroma" &&
+    !hasReliableKeyChroma(
+      rgbToOklab(
+        recipe.background.color.r,
+        recipe.background.color.g,
+        recipe.background.color.b,
+      ),
+    )
+  )
+    warnings.push(
+      `Neutral background key detected (rgb(${recipe.background.color.r}, ${recipe.background.color.g}, ${recipe.background.color.b})); conservative luminance-aware keying is active because foreground shades can match the background. Review the matte and use mask tools for remaining corrections.`,
     );
   if (regions.length === 0)
     warnings.push("No foreground regions were detected.");
