@@ -1,4 +1,11 @@
-import { Eraser, MousePointer2, Paintbrush, Scissors } from "lucide-react";
+import {
+  ChevronDown,
+  Eraser,
+  MousePointer2,
+  Paintbrush,
+  Pipette,
+  Scissors,
+} from "lucide-react";
 
 import {
   MODULAR_SPRITE_PROCESSING_CONFIG,
@@ -8,9 +15,9 @@ import {
 } from "@kukla2d/contracts";
 
 import { Button } from "@/components/ui/button";
+import { HelpIcon } from "@/components/ui/help-icon";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
-
-import { FieldLabel } from "./FieldLabel.js";
 
 import type { EditorTool } from "../preview/ModularSpritePreviewCanvas.types.js";
 
@@ -27,7 +34,15 @@ const UiSlider = Slider as React.ComponentType<{
   value: number[];
   onValueChange: (value: number[]) => void;
   onValueCommit?: (value: number[]) => void;
+  "aria-label"?: string;
 }>;
+
+type SliderParameter = {
+  readonly min: number;
+  readonly max: number;
+  readonly step: number;
+  readonly digits: number;
+};
 
 function colorToHex(color: { r: number; g: number; b: number }): string {
   return `#${[color.r, color.g, color.b].map((value) => value.toString(16).padStart(2, "0")).join("")}`;
@@ -39,6 +54,98 @@ function hexToColor(value: string): { r: number; g: number; b: number } {
     g: Number.parseInt(value.slice(3, 5), 16),
     b: Number.parseInt(value.slice(5, 7), 16),
   };
+}
+
+function ParameterField({
+  label,
+  help,
+  children,
+}: {
+  label: React.ReactNode;
+  help: string;
+  children: React.ReactNode;
+}): React.ReactElement {
+  return (
+    <div className="grid gap-1 text-xs text-muted-foreground">
+      <div className="flex items-center gap-1">
+        <span>{label}</span>
+        <HelpIcon tip={help} side="right" />
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function SliderField({
+  name,
+  help,
+  value,
+  parameter,
+  onChange,
+  onCommit,
+  formatValue,
+}: {
+  name: string;
+  help: string;
+  value: number;
+  parameter: SliderParameter;
+  onChange: (value: number) => void;
+  onCommit?: () => void;
+  formatValue?: (value: number) => string;
+}): React.ReactElement {
+  const displayedValue =
+    formatValue?.(value) ?? value.toFixed(parameter.digits);
+  return (
+    <ParameterField label={`${name}: ${displayedValue}`} help={help}>
+      <UiSlider
+        aria-label={name}
+        min={parameter.min}
+        max={parameter.max}
+        step={parameter.step}
+        value={[value]}
+        onValueChange={(nextValue) => onChange(nextValue[0] ?? value)}
+        {...(onCommit ? { onValueCommit: () => onCommit() } : {})}
+      />
+    </ParameterField>
+  );
+}
+
+function ProcessingSection({
+  title,
+  help,
+  children,
+  defaultOpen = false,
+  separated = true,
+}: {
+  title: string;
+  help: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  separated?: boolean;
+}): React.ReactElement {
+  return (
+    <details
+      className={`group space-y-3 ${separated ? "border-t pt-3" : ""}`}
+      {...(defaultOpen ? { open: true } : {})}
+    >
+      <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-foreground">
+        <ChevronDown
+          className="h-3.5 w-3.5 text-muted-foreground transition-transform group-open:rotate-180"
+          aria-hidden="true"
+        />
+        <span>{title}</span>
+        <span
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+        >
+          <HelpIcon tip={help} side="right" />
+        </span>
+      </summary>
+      <div className="space-y-3">{children}</div>
+    </details>
+  );
 }
 
 export function BackgroundStep({
@@ -70,557 +177,500 @@ export function BackgroundStep({
   const config = MODULAR_SPRITE_PROCESSING_CONFIG;
   const refinement = resolveChromaRefinement(recipe.background);
   const enclosedChromaSeedCount = refinement.enclosedChromaSeeds.length;
+
   return (
-    <aside className="space-y-4 overflow-auto rounded-lg border p-4">
-      <p className="text-xs text-muted-foreground">
-        The keyer removes the background color (or uses existing alpha) and
-        finds connected regions. Use the touch-up tools below to fix the mask.
-      </p>
-      <FieldLabel>
-        Mode
-        <select
-          className="h-9 rounded-md border bg-background px-2"
-          value={recipe.background.mode}
-          onChange={(event) =>
-            onRecipeChange((draft) => {
-              draft.background.mode = event.target.value as "alpha" | "chroma";
-            })
-          }
+    <ScrollArea className="h-full min-h-0 min-w-0 rounded-lg border">
+      <aside className="space-y-3 p-4">
+        <ProcessingSection
+          defaultOpen
+          separated={false}
+          title="Background keying"
+          help="Choose how the transparent mask is created: from the source alpha or by removing a sampled background color."
         >
-          <option value="alpha">Existing alpha</option>
-          <option value="chroma">Chroma key</option>
-        </select>
-      </FieldLabel>
-      <FieldLabel>
-        Background color
-        <input
-          className="h-9 w-full"
-          type="color"
-          value={colorToHex(recipe.background.color)}
-          onChange={(event) =>
-            onRecipeChange((draft) => {
-              draft.background.color = hexToColor(event.target.value);
-            })
-          }
-        />
-      </FieldLabel>
-      <UiButton
-        size="sm"
-        variant={tool === "eyedropper" ? "default" : "outline"}
-        onClick={onPickMode}
-      >
-        Pick from image
-      </UiButton>
-      <FieldLabel>
-        Tolerance:{" "}
-        {recipe.background.tolerance.toFixed(
-          config.background.tolerance.digits,
-        )}
-        <UiSlider
-          min={config.background.tolerance.min}
-          max={config.background.tolerance.max}
-          step={config.background.tolerance.step}
-          value={[recipe.background.tolerance]}
-          onValueChange={(value) =>
-            onRecipeChange((draft) => {
-              draft.background.tolerance =
-                value[0] ?? draft.background.tolerance;
-            }, false)
-          }
-          onValueCommit={onRecipeCommit}
-        />
-      </FieldLabel>
-      <FieldLabel>
-        Soft edge:{" "}
-        {recipe.background.softness.toFixed(config.background.softness.digits)}
-        <UiSlider
-          min={config.background.softness.min}
-          max={config.background.softness.max}
-          step={config.background.softness.step}
-          value={[recipe.background.softness]}
-          onValueChange={(value) =>
-            onRecipeChange((draft) => {
-              draft.background.softness = value[0] ?? draft.background.softness;
-            }, false)
-          }
-          onValueCommit={onRecipeCommit}
-        />
-      </FieldLabel>
-      <FieldLabel>
-        Despill:{" "}
-        {recipe.background.despill.toFixed(config.background.despill.digits)}
-        <UiSlider
-          min={config.background.despill.min}
-          max={config.background.despill.max}
-          step={config.background.despill.step}
-          value={[recipe.background.despill]}
-          onValueChange={(value) =>
-            onRecipeChange((draft) => {
-              draft.background.despill = value[0] ?? draft.background.despill;
-            }, false)
-          }
-          onValueCommit={onRecipeCommit}
-        />
-      </FieldLabel>
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={refinement.protectIslandInteriors}
-          onChange={(event) =>
-            onRecipeChange((draft) => {
-              draft.background.protectIslandInteriors = event.target.checked;
-            })
-          }
-        />
-        Protect island interiors
-      </label>
-      <p className="text-xs text-muted-foreground">
-        Keeps the inset interior of closed part silhouettes opaque while
-        allowing enclosed key-color pockets to be tuned separately. Open areas
-        and background brush strokes stay transparent.
-      </p>
-      {refinement.protectIslandInteriors ? (
-        <details className="space-y-3 rounded-md border bg-muted/20 px-3 py-2">
-          <summary className="cursor-pointer text-sm font-medium">
-            Enclosed chroma tuning
-          </summary>
-          <p className="text-xs text-muted-foreground">
-            Core detection is restrictive; growth only cleans a neighboring
-            fringe that also matches the key color and hue.
+          <ParameterField
+            label="Mode"
+            help="Use existing alpha for images that already contain transparency, or Chroma key to remove a selected color."
+          >
+            <select
+              aria-label="Mode"
+              className="h-9 w-full rounded-md border bg-background px-2"
+              value={recipe.background.mode}
+              onChange={(event) =>
+                onRecipeChange((draft) => {
+                  draft.background.mode = event.target.value as
+                    "alpha" | "chroma";
+                })
+              }
+            >
+              <option value="alpha">Existing alpha</option>
+              <option value="chroma">Chroma key</option>
+            </select>
+          </ParameterField>
+          <ParameterField
+            label="Background color"
+            help="The color removed when Chroma key mode is active. Sample it directly from the preview with the pipette button."
+          >
+            <div className="flex items-center gap-2">
+              <input
+                aria-label="Background color"
+                className="h-9 min-w-0 flex-1 rounded-md border bg-background p-1"
+                type="color"
+                value={colorToHex(recipe.background.color)}
+                onChange={(event) =>
+                  onRecipeChange((draft) => {
+                    draft.background.color = hexToColor(event.target.value);
+                  })
+                }
+              />
+              <UiButton
+                aria-label="Pick background color from image"
+                className="h-9 w-9 p-0"
+                size="sm"
+                title="Pick background color from image"
+                type="button"
+                variant={tool === "eyedropper" ? "default" : "outline"}
+                onClick={onPickMode}
+              >
+                <Pipette className="h-4 w-4" aria-hidden="true" />
+              </UiButton>
+            </div>
+          </ParameterField>
+          <SliderField
+            name="Tolerance"
+            help="How far a pixel may be from the background color before it remains opaque. Higher values remove more."
+            parameter={config.background.tolerance}
+            value={recipe.background.tolerance}
+            onChange={(value) =>
+              onRecipeChange((draft) => {
+                draft.background.tolerance = value;
+              }, false)
+            }
+            onCommit={onRecipeCommit}
+          />
+          <SliderField
+            name="Soft edge"
+            help="Adds a gradual alpha transition around the tolerance boundary instead of a hard cut."
+            parameter={config.background.softness}
+            value={recipe.background.softness}
+            onChange={(value) =>
+              onRecipeChange((draft) => {
+                draft.background.softness = value;
+              }, false)
+            }
+            onCommit={onRecipeCommit}
+          />
+        </ProcessingSection>
+
+        <ProcessingSection
+          defaultOpen
+          title="Protect island interiors"
+          help="Keeps the inset interior of closed part silhouettes opaque while allowing enclosed background-colored pockets to be tuned separately."
+        >
+          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={refinement.protectIslandInteriors}
+                onChange={(event) =>
+                  onRecipeChange((draft) => {
+                    draft.background.protectIslandInteriors =
+                      event.target.checked;
+                  })
+                }
+              />
+              Protect island interiors
+            </label>
+            <HelpIcon
+              tip="Turn this on to restore opaque pixels inside closed foreground shapes. Open background areas and background brush strokes stay transparent."
+              side="right"
+            />
+          </div>
+          <SliderField
+            name="Interior inset"
+            help="Pixels kept between the detected edge and the protected core. Higher values leave a wider edge area to the keyer."
+            parameter={config.background.interiorProtectionInset}
+            value={refinement.interiorProtectionInset}
+            formatValue={(value) => `${value}px`}
+            onChange={(value) =>
+              onRecipeChange((draft) => {
+                draft.background.interiorProtectionInset = value;
+              }, false)
+            }
+            onCommit={onRecipeCommit}
+          />
+          <ParameterField
+            label="Enclosed chroma inside protected areas"
+            help="Controls how background-colored pockets inside protected islands are handled. Open background areas are not affected."
+          >
+            <select
+              aria-label="Enclosed chroma inside protected areas"
+              className="h-9 w-full rounded-md border bg-background px-2"
+              value={refinement.enclosedChromaMode}
+              onChange={(event) =>
+                onRecipeChange((draft) => {
+                  draft.background.enclosedChromaMode = event.target
+                    .value as ModularSpriteEnclosedChromaMode;
+                })
+              }
+            >
+              <option value="transparent">Remove (transparent)</option>
+              <option value="black">Fill black</option>
+              <option value="desaturate">Desaturate</option>
+              <option value="preserve">Preserve</option>
+            </select>
+          </ParameterField>
+          {refinement.protectIslandInteriors ? (
+            <details className="space-y-3">
+              <summary className="flex cursor-pointer items-center gap-1 text-xs font-medium text-muted-foreground">
+                <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Enclosed chroma tuning</span>
+                <span
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                >
+                  <HelpIcon
+                    tip="Core detection is restrictive; growth only cleans a neighboring fringe that also matches the key color and hue."
+                    side="right"
+                  />
+                </span>
+              </summary>
+              <div className="space-y-3 pl-3">
+                <SliderField
+                  name="Core alpha maximum"
+                  help="Maximum matte alpha for pixels considered the core of an enclosed background-colored pocket."
+                  parameter={config.background.enclosedChromaCoreAlphaMax}
+                  value={refinement.enclosedChromaCoreAlphaMax}
+                  onChange={(value) =>
+                    onRecipeChange((draft) => {
+                      draft.background.enclosedChromaCoreAlphaMax = value;
+                    }, false)
+                  }
+                  onCommit={onRecipeCommit}
+                />
+                <SliderField
+                  name="Core color tolerance"
+                  help="How close a pocket's core color must be to the sampled background color."
+                  parameter={config.background.enclosedChromaCoreColorTolerance}
+                  value={refinement.enclosedChromaCoreColorTolerance}
+                  onChange={(value) =>
+                    onRecipeChange((draft) => {
+                      draft.background.enclosedChromaCoreColorTolerance = value;
+                    }, false)
+                  }
+                  onCommit={onRecipeCommit}
+                />
+                <SliderField
+                  name="Growth radius"
+                  help="How many pixels the enclosed-pocket detector may grow beyond its core."
+                  parameter={config.background.enclosedChromaGrowthRadius}
+                  value={refinement.enclosedChromaGrowthRadius}
+                  formatValue={(value) => `${value}px`}
+                  onChange={(value) =>
+                    onRecipeChange((draft) => {
+                      draft.background.enclosedChromaGrowthRadius = value;
+                    }, false)
+                  }
+                  onCommit={onRecipeCommit}
+                />
+                <SliderField
+                  name="Growth alpha maximum"
+                  help="Maximum alpha for neighboring pixels eligible to join an enclosed pocket."
+                  parameter={config.background.enclosedChromaGrowthAlphaMax}
+                  value={refinement.enclosedChromaGrowthAlphaMax}
+                  onChange={(value) =>
+                    onRecipeChange((draft) => {
+                      draft.background.enclosedChromaGrowthAlphaMax = value;
+                    }, false)
+                  }
+                  onCommit={onRecipeCommit}
+                />
+                <SliderField
+                  name="Growth color tolerance"
+                  help="Maximum weighted color distance accepted while growing an enclosed pocket."
+                  parameter={
+                    config.background.enclosedChromaGrowthColorTolerance
+                  }
+                  value={refinement.enclosedChromaGrowthColorTolerance}
+                  onChange={(value) =>
+                    onRecipeChange((draft) => {
+                      draft.background.enclosedChromaGrowthColorTolerance =
+                        value;
+                    }, false)
+                  }
+                  onCommit={onRecipeCommit}
+                />
+                <SliderField
+                  name="Growth chroma tolerance"
+                  help="Maximum colorfulness distance accepted while growing an enclosed pocket."
+                  parameter={
+                    config.background.enclosedChromaGrowthChromaTolerance
+                  }
+                  value={refinement.enclosedChromaGrowthChromaTolerance}
+                  onChange={(value) =>
+                    onRecipeChange((draft) => {
+                      draft.background.enclosedChromaGrowthChromaTolerance =
+                        value;
+                    }, false)
+                  }
+                  onCommit={onRecipeCommit}
+                />
+                <SliderField
+                  name="Growth hue tolerance"
+                  help="Maximum hue difference accepted while growing an enclosed pocket."
+                  parameter={config.background.enclosedChromaGrowthHueTolerance}
+                  value={refinement.enclosedChromaGrowthHueTolerance}
+                  onChange={(value) =>
+                    onRecipeChange((draft) => {
+                      draft.background.enclosedChromaGrowthHueTolerance = value;
+                    }, false)
+                  }
+                  onCommit={onRecipeCommit}
+                />
+                <SliderField
+                  name="Minimum chroma ratio"
+                  help="Minimum colorfulness, relative to the sampled background, required during growth."
+                  parameter={
+                    config.background.enclosedChromaGrowthMinChromaRatio
+                  }
+                  value={refinement.enclosedChromaGrowthMinChromaRatio}
+                  onChange={(value) =>
+                    onRecipeChange((draft) => {
+                      draft.background.enclosedChromaGrowthMinChromaRatio =
+                        value;
+                    }, false)
+                  }
+                  onCommit={onRecipeCommit}
+                />
+                <UiButton
+                  className="w-full"
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    onRecipeChange((draft) => {
+                      draft.background.enclosedChromaCoreAlphaMax =
+                        config.background.enclosedChromaCoreAlphaMax.default;
+                      draft.background.enclosedChromaCoreColorTolerance =
+                        config.background.enclosedChromaCoreColorTolerance.default;
+                      draft.background.enclosedChromaGrowthRadius =
+                        config.background.enclosedChromaGrowthRadius.default;
+                      draft.background.enclosedChromaGrowthAlphaMax =
+                        config.background.enclosedChromaGrowthAlphaMax.default;
+                      draft.background.enclosedChromaGrowthColorTolerance =
+                        config.background.enclosedChromaGrowthColorTolerance.default;
+                      draft.background.enclosedChromaGrowthChromaTolerance =
+                        config.background.enclosedChromaGrowthChromaTolerance.default;
+                      draft.background.enclosedChromaGrowthHueTolerance =
+                        config.background.enclosedChromaGrowthHueTolerance.default;
+                      draft.background.enclosedChromaGrowthMinChromaRatio =
+                        config.background.enclosedChromaGrowthMinChromaRatio.default;
+                    })
+                  }
+                >
+                  Reset enclosed chroma tuning
+                </UiButton>
+              </div>
+            </details>
+          ) : null}
+        </ProcessingSection>
+
+        <ProcessingSection
+          title="Edge cleanup"
+          help="Refine semi-transparent edges after keying: reduce background spill, remove weak matte pixels, and recover nearby foreground colors."
+        >
+          <SliderField
+            name="Despill"
+            help="Reduces the sampled background color bleeding into semi-transparent foreground edges."
+            parameter={config.background.despill}
+            value={recipe.background.despill}
+            onChange={(value) =>
+              onRecipeChange((draft) => {
+                draft.background.despill = value;
+              }, false)
+            }
+            onCommit={onRecipeCommit}
+          />
+          <SliderField
+            name="Matte choke"
+            help="Removes the weakest semi-transparent matte pixels without eroding solid foreground pixels."
+            parameter={config.background.matteChoke}
+            value={refinement.matteChoke}
+            onChange={(value) =>
+              onRecipeChange((draft) => {
+                draft.background.matteChoke = value;
+              }, false)
+            }
+            onCommit={onRecipeCommit}
+          />
+          <SliderField
+            name="Edge color recovery"
+            help="Replaces background-contaminated edge RGB with nearby confident foreground color."
+            parameter={config.background.edgeColorRecovery}
+            value={refinement.edgeColorRecovery}
+            onChange={(value) =>
+              onRecipeChange((draft) => {
+                draft.background.edgeColorRecovery = value;
+              }, false)
+            }
+            onCommit={onRecipeCommit}
+          />
+          <SliderField
+            name="Edge search"
+            help="How far to look for a confident foreground color when recovering an edge."
+            parameter={config.background.edgeSearchRadius}
+            value={refinement.edgeSearchRadius}
+            formatValue={(value) => `${value}px`}
+            onChange={(value) =>
+              onRecipeChange((draft) => {
+                draft.background.edgeSearchRadius = value;
+              }, false)
+            }
+            onCommit={onRecipeCommit}
+          />
+        </ProcessingSection>
+
+        <ProcessingSection
+          title="Region detection"
+          help="Turn the matte into connected regions for later part assignment. These controls affect region detection, not the initial background key."
+        >
+          <SliderField
+            name="Detection alpha"
+            help="Alpha cutoff used to turn the matte into regions for connected-component detection."
+            parameter={config.detection.alphaThreshold}
+            value={recipe.detection.alphaThreshold}
+            onChange={(value) =>
+              onRecipeChange((draft) => {
+                draft.detection.alphaThreshold = value;
+              }, false)
+            }
+            onCommit={onRecipeCommit}
+          />
+          <SliderField
+            name="Opening radius"
+            help="Removes small isolated pixels and narrow protrusions before regions are detected."
+            parameter={config.detection.openingRadius}
+            value={recipe.detection.openingRadius}
+            formatValue={(value) => `${value}px`}
+            onChange={(value) =>
+              onRecipeChange((draft) => {
+                draft.detection.openingRadius = value;
+              }, false)
+            }
+            onCommit={onRecipeCommit}
+          />
+          <SliderField
+            name="Closing radius"
+            help="Fills small gaps and closes narrow holes before regions are detected."
+            parameter={config.detection.closingRadius}
+            value={recipe.detection.closingRadius}
+            formatValue={(value) => `${value}px`}
+            onChange={(value) =>
+              onRecipeChange((draft) => {
+                draft.detection.closingRadius = value;
+              }, false)
+            }
+            onCommit={onRecipeCommit}
+          />
+          <SliderField
+            name="Minimum island"
+            help="Smallest detected region kept as a part, expressed as a percentage of the image area."
+            parameter={config.detection.minimumRegionAreaRatio}
+            value={recipe.detection.minimumRegionAreaRatio}
+            formatValue={(value) =>
+              `${(value * 100).toFixed(config.detection.minimumRegionAreaRatio.digits - 2)}%`
+            }
+            onChange={(value) =>
+              onRecipeChange((draft) => {
+                draft.detection.minimumRegionAreaRatio = value;
+              }, false)
+            }
+            onCommit={onRecipeCommit}
+          />
+        </ProcessingSection>
+
+        {warnings.map((warning) => (
+          <p
+            key={warning}
+            className="rounded bg-amber-500/10 p-2 text-xs text-amber-500"
+          >
+            {warning}
           </p>
-          <FieldLabel>
-            Core alpha maximum:{" "}
-            {refinement.enclosedChromaCoreAlphaMax.toFixed(
-              config.background.enclosedChromaCoreAlphaMax.digits,
-            )}
-            <UiSlider
-              min={config.background.enclosedChromaCoreAlphaMax.min}
-              max={config.background.enclosedChromaCoreAlphaMax.max}
-              step={config.background.enclosedChromaCoreAlphaMax.step}
-              value={[refinement.enclosedChromaCoreAlphaMax]}
-              onValueChange={(value) =>
-                onRecipeChange((draft) => {
-                  draft.background.enclosedChromaCoreAlphaMax =
-                    value[0] ?? refinement.enclosedChromaCoreAlphaMax;
-                }, false)
-              }
-              onValueCommit={onRecipeCommit}
-            />
-          </FieldLabel>
-          <FieldLabel>
-            Core color tolerance:{" "}
-            {refinement.enclosedChromaCoreColorTolerance.toFixed(
-              config.background.enclosedChromaCoreColorTolerance.digits,
-            )}
-            <UiSlider
-              min={config.background.enclosedChromaCoreColorTolerance.min}
-              max={config.background.enclosedChromaCoreColorTolerance.max}
-              step={config.background.enclosedChromaCoreColorTolerance.step}
-              value={[refinement.enclosedChromaCoreColorTolerance]}
-              onValueChange={(value) =>
-                onRecipeChange((draft) => {
-                  draft.background.enclosedChromaCoreColorTolerance =
-                    value[0] ?? refinement.enclosedChromaCoreColorTolerance;
-                }, false)
-              }
-              onValueCommit={onRecipeCommit}
-            />
-          </FieldLabel>
-          <FieldLabel>
-            Growth radius:{" "}
-            {refinement.enclosedChromaGrowthRadius.toFixed(
-              config.background.enclosedChromaGrowthRadius.digits,
-            )}
-            <UiSlider
-              min={config.background.enclosedChromaGrowthRadius.min}
-              max={config.background.enclosedChromaGrowthRadius.max}
-              step={config.background.enclosedChromaGrowthRadius.step}
-              value={[refinement.enclosedChromaGrowthRadius]}
-              onValueChange={(value) =>
-                onRecipeChange((draft) => {
-                  draft.background.enclosedChromaGrowthRadius =
-                    value[0] ?? refinement.enclosedChromaGrowthRadius;
-                }, false)
-              }
-              onValueCommit={onRecipeCommit}
-            />
-          </FieldLabel>
-          <FieldLabel>
-            Growth alpha maximum:{" "}
-            {refinement.enclosedChromaGrowthAlphaMax.toFixed(
-              config.background.enclosedChromaGrowthAlphaMax.digits,
-            )}
-            <UiSlider
-              min={config.background.enclosedChromaGrowthAlphaMax.min}
-              max={config.background.enclosedChromaGrowthAlphaMax.max}
-              step={config.background.enclosedChromaGrowthAlphaMax.step}
-              value={[refinement.enclosedChromaGrowthAlphaMax]}
-              onValueChange={(value) =>
-                onRecipeChange((draft) => {
-                  draft.background.enclosedChromaGrowthAlphaMax =
-                    value[0] ?? refinement.enclosedChromaGrowthAlphaMax;
-                }, false)
-              }
-              onValueCommit={onRecipeCommit}
-            />
-          </FieldLabel>
-          <FieldLabel>
-            Growth color tolerance:{" "}
-            {refinement.enclosedChromaGrowthColorTolerance.toFixed(
-              config.background.enclosedChromaGrowthColorTolerance.digits,
-            )}
-            <UiSlider
-              min={config.background.enclosedChromaGrowthColorTolerance.min}
-              max={config.background.enclosedChromaGrowthColorTolerance.max}
-              step={config.background.enclosedChromaGrowthColorTolerance.step}
-              value={[refinement.enclosedChromaGrowthColorTolerance]}
-              onValueChange={(value) =>
-                onRecipeChange((draft) => {
-                  draft.background.enclosedChromaGrowthColorTolerance =
-                    value[0] ?? refinement.enclosedChromaGrowthColorTolerance;
-                }, false)
-              }
-              onValueCommit={onRecipeCommit}
-            />
-          </FieldLabel>
-          <FieldLabel>
-            Growth chroma tolerance:{" "}
-            {refinement.enclosedChromaGrowthChromaTolerance.toFixed(
-              config.background.enclosedChromaGrowthChromaTolerance.digits,
-            )}
-            <UiSlider
-              min={config.background.enclosedChromaGrowthChromaTolerance.min}
-              max={config.background.enclosedChromaGrowthChromaTolerance.max}
-              step={config.background.enclosedChromaGrowthChromaTolerance.step}
-              value={[refinement.enclosedChromaGrowthChromaTolerance]}
-              onValueChange={(value) =>
-                onRecipeChange((draft) => {
-                  draft.background.enclosedChromaGrowthChromaTolerance =
-                    value[0] ?? refinement.enclosedChromaGrowthChromaTolerance;
-                }, false)
-              }
-              onValueCommit={onRecipeCommit}
-            />
-          </FieldLabel>
-          <FieldLabel>
-            Growth hue tolerance:{" "}
-            {refinement.enclosedChromaGrowthHueTolerance.toFixed(
-              config.background.enclosedChromaGrowthHueTolerance.digits,
-            )}
-            <UiSlider
-              min={config.background.enclosedChromaGrowthHueTolerance.min}
-              max={config.background.enclosedChromaGrowthHueTolerance.max}
-              step={config.background.enclosedChromaGrowthHueTolerance.step}
-              value={[refinement.enclosedChromaGrowthHueTolerance]}
-              onValueChange={(value) =>
-                onRecipeChange((draft) => {
-                  draft.background.enclosedChromaGrowthHueTolerance =
-                    value[0] ?? refinement.enclosedChromaGrowthHueTolerance;
-                }, false)
-              }
-              onValueCommit={onRecipeCommit}
-            />
-          </FieldLabel>
-          <FieldLabel>
-            Minimum chroma ratio:{" "}
-            {refinement.enclosedChromaGrowthMinChromaRatio.toFixed(
-              config.background.enclosedChromaGrowthMinChromaRatio.digits,
-            )}
-            <UiSlider
-              min={config.background.enclosedChromaGrowthMinChromaRatio.min}
-              max={config.background.enclosedChromaGrowthMinChromaRatio.max}
-              step={config.background.enclosedChromaGrowthMinChromaRatio.step}
-              value={[refinement.enclosedChromaGrowthMinChromaRatio]}
-              onValueChange={(value) =>
-                onRecipeChange((draft) => {
-                  draft.background.enclosedChromaGrowthMinChromaRatio =
-                    value[0] ?? refinement.enclosedChromaGrowthMinChromaRatio;
-                }, false)
-              }
-              onValueCommit={onRecipeCommit}
-            />
-          </FieldLabel>
+        ))}
+
+        <ProcessingSection
+          title="Touch-up tools"
+          help="Use the preview tools to paint foreground or background corrections, split regions, and remove enclosed background-colored areas manually."
+        >
+          <div className="grid grid-cols-2 gap-2">
+            <UiButton
+              size="sm"
+              type="button"
+              variant={tool === "select" ? "default" : "outline"}
+              onClick={() => onToolChange("select")}
+            >
+              <MousePointer2 className="mr-1 h-4 w-4" />
+              Select
+            </UiButton>
+            <UiButton
+              size="sm"
+              type="button"
+              variant={tool === "foreground" ? "default" : "outline"}
+              onClick={() => onToolChange("foreground")}
+            >
+              <Paintbrush className="mr-1 h-4 w-4" />
+              Keep
+            </UiButton>
+            <UiButton
+              size="sm"
+              type="button"
+              variant={tool === "background" ? "default" : "outline"}
+              onClick={() => onToolChange("background")}
+            >
+              <Eraser className="mr-1 h-4 w-4" />
+              Erase
+            </UiButton>
+            <UiButton
+              size="sm"
+              type="button"
+              variant={tool === "split" ? "default" : "outline"}
+              onClick={() => onToolChange("split")}
+            >
+              <Scissors className="mr-1 h-4 w-4" />
+              Split
+            </UiButton>
+            <UiButton
+              size="sm"
+              type="button"
+              variant={tool === "enclosed-fill" ? "default" : "outline"}
+              onClick={() => onToolChange("enclosed-fill")}
+            >
+              <MousePointer2 className="mr-1 h-4 w-4" />
+              Remove enclosed area
+            </UiButton>
+          </div>
           <UiButton
             className="w-full"
+            disabled={enclosedChromaSeedCount === 0}
             size="sm"
+            type="button"
             variant="outline"
-            onClick={() =>
-              onRecipeChange((draft) => {
-                draft.background.enclosedChromaCoreAlphaMax =
-                  config.background.enclosedChromaCoreAlphaMax.default;
-                draft.background.enclosedChromaCoreColorTolerance =
-                  config.background.enclosedChromaCoreColorTolerance.default;
-                draft.background.enclosedChromaGrowthRadius =
-                  config.background.enclosedChromaGrowthRadius.default;
-                draft.background.enclosedChromaGrowthAlphaMax =
-                  config.background.enclosedChromaGrowthAlphaMax.default;
-                draft.background.enclosedChromaGrowthColorTolerance =
-                  config.background.enclosedChromaGrowthColorTolerance.default;
-                draft.background.enclosedChromaGrowthChromaTolerance =
-                  config.background.enclosedChromaGrowthChromaTolerance.default;
-                draft.background.enclosedChromaGrowthHueTolerance =
-                  config.background.enclosedChromaGrowthHueTolerance.default;
-                draft.background.enclosedChromaGrowthMinChromaRatio =
-                  config.background.enclosedChromaGrowthMinChromaRatio.default;
-              })
-            }
+            onClick={onClearEnclosedAreas}
           >
-            Reset enclosed chroma tuning
+            Clear manual areas
+            {enclosedChromaSeedCount > 0 ? ` (${enclosedChromaSeedCount})` : ""}
           </UiButton>
-        </details>
-      ) : null}
-      <FieldLabel>
-        Enclosed chroma inside protected areas
-        <select
-          aria-label="Enclosed chroma inside protected areas"
-          className="h-9 rounded-md border bg-background px-2"
-          value={refinement.enclosedChromaMode}
-          onChange={(event) =>
-            onRecipeChange((draft) => {
-              draft.background.enclosedChromaMode = event.target
-                .value as ModularSpriteEnclosedChromaMode;
-            })
-          }
-        >
-          <option value="transparent">Remove (transparent)</option>
-          <option value="black">Fill black</option>
-          <option value="desaturate">Desaturate</option>
-          <option value="preserve">Preserve</option>
-        </select>
-      </FieldLabel>
-      <p className="text-xs text-muted-foreground">
-        Automatic enclosed-chroma handling applies only inside the protected
-        area; open background areas are not affected.
-      </p>
-      <p className="text-xs text-muted-foreground">
-        Overlay: <span className="text-fuchsia-400">magenta</span> is the
-        protected area, <span className="text-cyan-300">cyan</span> is
-        recognized enclosed chroma.
-      </p>
-      <FieldLabel>
-        Interior inset: {refinement.interiorProtectionInset}px
-        <UiSlider
-          min={config.background.interiorProtectionInset.min}
-          max={config.background.interiorProtectionInset.max}
-          step={config.background.interiorProtectionInset.step}
-          value={[refinement.interiorProtectionInset]}
-          onValueChange={(value) =>
-            onRecipeChange((draft) => {
-              draft.background.interiorProtectionInset =
-                value[0] ??
-                draft.background.interiorProtectionInset ??
-                config.background.interiorProtectionInset.default;
-            }, false)
-          }
-          onValueCommit={onRecipeCommit}
-        />
-      </FieldLabel>
-      <FieldLabel>
-        Matte choke:{" "}
-        {refinement.matteChoke.toFixed(config.background.matteChoke.digits)}
-        <UiSlider
-          min={config.background.matteChoke.min}
-          max={config.background.matteChoke.max}
-          step={config.background.matteChoke.step}
-          value={[refinement.matteChoke]}
-          onValueChange={(value) =>
-            onRecipeChange((draft) => {
-              draft.background.matteChoke =
-                value[0] ??
-                draft.background.matteChoke ??
-                config.background.matteChoke.default;
-            }, false)
-          }
-          onValueCommit={onRecipeCommit}
-        />
-      </FieldLabel>
-      <FieldLabel>
-        Edge color recovery:{" "}
-        {refinement.edgeColorRecovery.toFixed(
-          config.background.edgeColorRecovery.digits,
-        )}
-        <UiSlider
-          min={config.background.edgeColorRecovery.min}
-          max={config.background.edgeColorRecovery.max}
-          step={config.background.edgeColorRecovery.step}
-          value={[refinement.edgeColorRecovery]}
-          onValueChange={(value) =>
-            onRecipeChange((draft) => {
-              draft.background.edgeColorRecovery =
-                value[0] ??
-                draft.background.edgeColorRecovery ??
-                config.background.edgeColorRecovery.default;
-            }, false)
-          }
-          onValueCommit={onRecipeCommit}
-        />
-      </FieldLabel>
-      <FieldLabel>
-        Edge search: {refinement.edgeSearchRadius}px
-        <UiSlider
-          min={config.background.edgeSearchRadius.min}
-          max={config.background.edgeSearchRadius.max}
-          step={config.background.edgeSearchRadius.step}
-          value={[refinement.edgeSearchRadius]}
-          onValueChange={(value) =>
-            onRecipeChange((draft) => {
-              draft.background.edgeSearchRadius =
-                value[0] ??
-                draft.background.edgeSearchRadius ??
-                config.background.edgeSearchRadius.default;
-            }, false)
-          }
-          onValueCommit={onRecipeCommit}
-        />
-      </FieldLabel>
-      <FieldLabel>
-        Detection alpha: {recipe.detection.alphaThreshold}
-        <UiSlider
-          min={config.detection.alphaThreshold.min}
-          max={config.detection.alphaThreshold.max}
-          step={config.detection.alphaThreshold.step}
-          value={[recipe.detection.alphaThreshold]}
-          onValueChange={(value) =>
-            onRecipeChange((draft) => {
-              draft.detection.alphaThreshold =
-                value[0] ?? draft.detection.alphaThreshold;
-            }, false)
-          }
-          onValueCommit={onRecipeCommit}
-        />
-      </FieldLabel>
-      <FieldLabel>
-        Opening radius: {recipe.detection.openingRadius}px
-        <UiSlider
-          min={config.detection.openingRadius.min}
-          max={config.detection.openingRadius.max}
-          step={config.detection.openingRadius.step}
-          value={[recipe.detection.openingRadius]}
-          onValueChange={(value) =>
-            onRecipeChange((draft) => {
-              draft.detection.openingRadius =
-                value[0] ?? draft.detection.openingRadius;
-            }, false)
-          }
-          onValueCommit={onRecipeCommit}
-        />
-      </FieldLabel>
-      <FieldLabel>
-        Closing radius: {recipe.detection.closingRadius}px
-        <UiSlider
-          min={config.detection.closingRadius.min}
-          max={config.detection.closingRadius.max}
-          step={config.detection.closingRadius.step}
-          value={[recipe.detection.closingRadius]}
-          onValueChange={(value) =>
-            onRecipeChange((draft) => {
-              draft.detection.closingRadius =
-                value[0] ?? draft.detection.closingRadius;
-            }, false)
-          }
-          onValueCommit={onRecipeCommit}
-        />
-      </FieldLabel>
-      <FieldLabel>
-        Minimum island:{" "}
-        {(recipe.detection.minimumRegionAreaRatio * 100).toFixed(
-          config.detection.minimumRegionAreaRatio.digits - 2,
-        )}
-        %
-        <UiSlider
-          min={config.detection.minimumRegionAreaRatio.min}
-          max={config.detection.minimumRegionAreaRatio.max}
-          step={config.detection.minimumRegionAreaRatio.step}
-          value={[recipe.detection.minimumRegionAreaRatio]}
-          onValueChange={(value) =>
-            onRecipeChange((draft) => {
-              draft.detection.minimumRegionAreaRatio =
-                value[0] ?? draft.detection.minimumRegionAreaRatio;
-            }, false)
-          }
-          onValueCommit={onRecipeCommit}
-        />
-      </FieldLabel>
-      {warnings.map((warning) => (
-        <p
-          key={warning}
-          className="rounded bg-amber-500/10 p-2 text-xs text-amber-500"
-        >
-          {warning}
-        </p>
-      ))}
-      <div className="space-y-2 border-t pt-3">
-        <div className="text-xs font-medium">Touch-up tools</div>
-        <div className="grid grid-cols-2 gap-2">
-          <UiButton
-            size="sm"
-            variant={tool === "select" ? "default" : "outline"}
-            onClick={() => onToolChange("select")}
-          >
-            <MousePointer2 className="mr-1 h-4 w-4" />
-            Select
-          </UiButton>
-          <UiButton
-            size="sm"
-            variant={tool === "foreground" ? "default" : "outline"}
-            onClick={() => onToolChange("foreground")}
-          >
-            <Paintbrush className="mr-1 h-4 w-4" />
-            Keep
-          </UiButton>
-          <UiButton
-            size="sm"
-            variant={tool === "background" ? "default" : "outline"}
-            onClick={() => onToolChange("background")}
-          >
-            <Eraser className="mr-1 h-4 w-4" />
-            Erase
-          </UiButton>
-          <UiButton
-            size="sm"
-            variant={tool === "split" ? "default" : "outline"}
-            onClick={() => onToolChange("split")}
-          >
-            <Scissors className="mr-1 h-4 w-4" />
-            Split
-          </UiButton>
-          <UiButton
-            size="sm"
-            variant={tool === "enclosed-fill" ? "default" : "outline"}
-            onClick={() => onToolChange("enclosed-fill")}
-          >
-            <MousePointer2 className="mr-1 h-4 w-4" />
-            Remove enclosed area
-          </UiButton>
-        </div>
-        <UiButton
-          className="w-full"
-          disabled={enclosedChromaSeedCount === 0}
-          size="sm"
-          variant="outline"
-          onClick={onClearEnclosedAreas}
-        >
-          Clear manual areas
-          {enclosedChromaSeedCount > 0 ? ` (${enclosedChromaSeedCount})` : ""}
-        </UiButton>
-        <FieldLabel>
-          Brush radius: {(brushRadius * 100).toFixed(1)}%
-          <UiSlider
-            min={config.strokes.editorRadius.min}
-            max={config.strokes.editorRadius.max}
-            step={config.strokes.editorRadius.step}
-            value={[brushRadius]}
-            onValueChange={(value) =>
-              onBrushRadiusChange(value[0] ?? brushRadius)
-            }
+          <SliderField
+            name="Brush radius"
+            help="Size of Keep, Erase, and Split strokes on the preview."
+            parameter={config.strokes.editorRadius}
+            value={brushRadius}
+            formatValue={(value) => `${(value * 100).toFixed(1)}%`}
+            onChange={onBrushRadiusChange}
           />
-        </FieldLabel>
-        <p className="text-xs text-muted-foreground">
-          Keep and Erase paint the transparent mask. Split cuts a region in two
-          so it can be assigned to different parts; the exported image alpha
-          stays continuous.
-        </p>
-      </div>
-    </aside>
+        </ProcessingSection>
+      </aside>
+    </ScrollArea>
   );
 }

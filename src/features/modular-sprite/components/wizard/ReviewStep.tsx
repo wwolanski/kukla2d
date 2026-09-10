@@ -1,3 +1,5 @@
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 import type { ModularSpriteDraftPart } from "../../domain/contracts.types.js";
 
 const PART_COLORS = [
@@ -37,44 +39,46 @@ export function ReviewStep({
   onAddToCanvasChange: (value: boolean) => void;
 }): React.ReactElement {
   return (
-    <div className="mx-auto grid max-w-2xl gap-5">
-      <label className="grid gap-1 text-xs text-muted-foreground">
-        Set and folder name
-        <input
-          className="h-10 rounded-md border bg-background px-3 text-sm"
-          value={name}
-          onChange={(event) => onNameChange(event.target.value)}
-        />
-      </label>
-      <label className="flex items-center gap-3 rounded-lg border p-4 text-sm">
-        <input
-          type="checkbox"
-          checked={addToCanvas}
-          onChange={(event) => onAddToCanvasChange(event.target.checked)}
-        />
-        Add arranged parts to canvas
-      </label>
-      <div className="rounded-lg border p-4">
-        <div className="font-medium">{parts.length} parts ready</div>
-        <ul className="mt-2 grid grid-cols-2 gap-1 text-sm text-muted-foreground">
-          {[...parts]
-            .sort((left, right) => left.order - right.order)
-            .map((part) => (
-              <li key={part.partKey}>
-                <span
-                  className="mr-1 inline-block h-2 w-2 rounded-full align-middle"
-                  style={{ backgroundColor: partColor(parts, part.partKey) }}
-                />
-                {part.name} · {part.role} · {part.side}
-              </li>
-            ))}
-        </ul>
+    <ScrollArea className="h-full min-h-0 min-w-0">
+      <div className="mx-auto grid max-w-2xl gap-5">
+        <label className="grid gap-1 text-xs text-muted-foreground">
+          Set and folder name
+          <input
+            className="h-10 rounded-md border bg-background px-3 text-sm"
+            value={name}
+            onChange={(event) => onNameChange(event.target.value)}
+          />
+        </label>
+        <label className="flex items-center gap-3 rounded-lg border p-4 text-sm">
+          <input
+            type="checkbox"
+            checked={addToCanvas}
+            onChange={(event) => onAddToCanvasChange(event.target.checked)}
+          />
+          Add arranged parts to canvas
+        </label>
+        <div className="rounded-lg border p-4">
+          <div className="font-medium">{parts.length} parts ready</div>
+          <ul className="mt-2 grid grid-cols-2 gap-1 text-sm text-muted-foreground">
+            {[...parts]
+              .sort((left, right) => left.order - right.order)
+              .map((part) => (
+                <li key={part.partKey}>
+                  <span
+                    className="mr-1 inline-block h-2 w-2 rounded-full align-middle"
+                    style={{ backgroundColor: partColor(parts, part.partKey) }}
+                  />
+                  {part.name} · {part.role} · {part.side}
+                </li>
+              ))}
+          </ul>
+        </div>
+        {sourceType === "image/jpeg" && (
+          <p className="rounded bg-amber-500/10 p-3 text-sm text-amber-500">
+            JPEG compression can leave a colored halo around extracted parts.
+          </p>
+        )}
       </div>
-      {sourceType === "image/jpeg" && (
-        <p className="rounded bg-amber-500/10 p-3 text-sm text-amber-500">
-          JPEG compression can leave a colored halo around extracted parts.
-        </p>
-      )}
-    </div>
+    </ScrollArea>
   );
 }
