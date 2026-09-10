@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { partKeyForName } from "@/features/modular-sprite/application/partDraftFactory";
 import {
   createInitialGrouping,
   createPartFromRegions,
@@ -62,12 +63,42 @@ function partFactory(
   };
 }
 
+function partWithKey(partKey: string): ModularSpriteDraftPart {
+  return {
+    partKey,
+    name: partKey,
+    role: "custom",
+    side: "none",
+    required: true,
+    order: 0,
+    extractionFrame: { x: 0, y: 0, width: 1, height: 1 },
+    contentBounds: { x: 0, y: 0, width: 1, height: 1 },
+    regionIds: [],
+  };
+}
+
 describe("modular sprite region grouping", () => {
   const regions = [
     region(1, 0.1, 0.1),
     region(2, 0.6, 0.1),
     region(3, 0.4, 0.6),
   ];
+
+  it("rejects stable keys that differ only by letter case", () => {
+    const validation = validateGrouping(
+      {
+        parts: [
+          { ...partWithKey("head"), regionIds: [1] },
+          { ...partWithKey("HEAD"), regionIds: [2] },
+        ],
+        excludedRegionIds: [3],
+      },
+      [1, 2, 3],
+    );
+
+    expect(validation.valid).toBe(false);
+    expect(validation.errors).toContain("Duplicate partKey: HEAD");
+  });
 
   it("creates a complete initial grouping and tracks deliberate exclusions", () => {
     const grouping = createInitialGrouping(regions, partFactory);
@@ -184,5 +215,29 @@ describe("modular sprite region reconciliation", () => {
       [102],
     ]);
     expect(result.report.unmatchedNextRegionIds).toEqual([]);
+  });
+});
+
+describe("partKeyForName", () => {
+  it("creates a slug for a regular name", () => {
+    expect(partKeyForName("Left Arm", [])).toBe("left-arm");
+  });
+
+  it("adds deterministic suffixes for duplicate keys", () => {
+    expect(
+      partKeyForName("Head", [partWithKey("head"), partWithKey("head-2")]),
+    ).toBe("head-3");
+  });
+
+  it("treats keys that differ only by case as duplicates", () => {
+    expect(partKeyForName("Head", [partWithKey("HEAD")])).toBe("head-2");
+  });
+
+  it("handles diacritics and punctuation that collapse to the same slug", () => {
+    expect(partKeyForName("Éclair!", [partWithKey("eclair")])).toBe("eclair-2");
+  });
+
+  it("ignores the current part when checking collisions", () => {
+    expect(partKeyForName("Head", [partWithKey("head")], "HEAD")).toBe("head");
   });
 });

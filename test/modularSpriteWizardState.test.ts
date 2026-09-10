@@ -68,6 +68,11 @@ describe("modular sprite wizard reducer", () => {
     expect(canContinue(state)).toBe(true);
     state = wizardReducer(state, { type: "NEXT" });
     expect(state.step).toBe("regions");
+    state = wizardReducer(state, { type: "NEXT" });
+    expect(state.step).toBe("parts");
+    expect(canContinue(state)).toBe(true);
+    state = wizardReducer(state, { type: "BACK" });
+    expect(state.step).toBe("regions");
     state = wizardReducer(state, { type: "BACK" });
     expect(state.step).toBe("background");
     state = wizardReducer(state, { type: "PROCESSING_STARTED" });
@@ -75,7 +80,7 @@ describe("modular sprite wizard reducer", () => {
     expect(canContinue(state)).toBe(false);
   });
 
-  it("invalidates confirmations on grouping edits and supports undo/redo", () => {
+  it("supports undo and redo for grouping edits", () => {
     let state = createInitialWizardState();
     const grouping = createInitialGrouping([detected]);
     state = wizardReducer(state, {
@@ -110,18 +115,17 @@ describe("modular sprite wizard reducer", () => {
       },
       grouping,
     });
-    const partKey = grouping.parts[0]!.partKey;
-    state = wizardReducer(state, { type: "CONFIRM_PART", partKey });
+    const renamedGrouping = structuredClone(grouping);
+    renamedGrouping.parts[0]!.name = "Renamed part";
     state = wizardReducer(state, {
       type: "GROUPING_CHANGED",
-      grouping,
-      affectedPartKeys: [partKey],
+      grouping: renamedGrouping,
     });
-    expect(state.confirmation.confirmedPartKeys).toEqual([]);
+    expect(state.grouping?.parts[0]?.name).toBe("Renamed part");
     expect(hasUnsavedChanges(state)).toBe(true);
     state = wizardReducer(state, { type: "UNDO" });
-    expect(state.confirmation.confirmedPartKeys).toEqual([partKey]);
+    expect(state.grouping?.parts[0]?.name).toBe(grouping.parts[0]!.name);
     state = wizardReducer(state, { type: "REDO" });
-    expect(state.confirmation.confirmedPartKeys).toEqual([]);
+    expect(state.grouping?.parts[0]?.name).toBe("Renamed part");
   });
 });

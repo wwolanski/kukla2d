@@ -1,5 +1,5 @@
 import { Loader2 } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   resolveChromaRefinement,
@@ -70,6 +70,8 @@ export function ModularSpriteWizard({
   const step = state.step;
   const previewViewportRef = useRef<HTMLDivElement>(null);
   const previewAutoFitAppliedRef = useRef(false);
+  const [hasPendingPartNameSuggestions, setHasPendingPartNameSuggestions] =
+    useState(false);
   const sourceWidth = source?.preview.width ?? 0;
   const sourceHeight = source?.preview.height ?? 0;
   const hasPreviewResult = result !== null;
@@ -203,6 +205,11 @@ export function ModularSpriteWizard({
                     onCreatePart={controller.createPart}
                     onSelectRegion={controller.toggleRegionSelection}
                     onUpdatePart={controller.updatePart}
+                    semanticCatalog={semanticCatalog}
+                    onSaveSemantic={onSaveSemantic}
+                    onPendingNameSuggestionsChange={
+                      setHasPendingPartNameSuggestions
+                    }
                   />
                 )}
                 <section className="flex min-h-0 min-w-0 flex-col rounded-lg border bg-black/40">
@@ -351,23 +358,15 @@ export function ModularSpriteWizard({
           {step === "parts" && state.grouping && (
             <PartDetailsStep
               grouping={state.grouping}
-              confirmedPartKeys={state.confirmation.confirmedPartKeys}
               resultRef={controller.resultRef}
               resultVersion={controller.resultVersion}
-              advancedFrameKeys={ui.advancedFrameKeys}
               schema={{
                 addSchema: state.schema.addSchema,
                 saveMode: state.schema.saveMode,
                 metadata: state.schema.metadata,
                 applied: Boolean(state.schema.applied),
               }}
-              semanticCatalog={semanticCatalog}
-              onSaveSemantic={onSaveSemantic}
               onUpdatePart={controller.updatePart}
-              onUpdateFrame={controller.updateExtractionFrame}
-              onRemovePart={controller.removePart}
-              onToggleFrame={ui.toggleAdvancedFrame}
-              onConfirmPart={controller.confirmPart}
               onSchemaEditorChange={controller.setSchemaEditor}
             />
           )}
@@ -409,7 +408,7 @@ export function ModularSpriteWizard({
         <WizardFooter
           step={step}
           busy={controller.busy}
-          canGoNext={controller.canGoNext}
+          canGoNext={controller.canGoNext && !hasPendingPartNameSuggestions}
           onCancel={() => {
             controller.requestClose();
           }}

@@ -1,13 +1,8 @@
-import { Check } from "lucide-react";
-
-import type {
-  SemanticCatalog,
-  SemanticDefinition,
-} from "@kukla2d/modular-sprite-schema";
+import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   SchemaEditor,
-  SemanticRolePicker,
   type NewSchemaMetadata,
 } from "@/features/modular-sprite-schema";
 
@@ -16,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { FieldLabel } from "./FieldLabel.js";
-import { slugPartKey } from "../../application/partDraftFactory.js";
 import { PartThumbnail } from "../preview/PartThumbnail.js";
 
 import type {
@@ -35,87 +29,200 @@ const UiInput = Input as React.ComponentType<
   React.InputHTMLAttributes<HTMLInputElement>
 >;
 
-function parseQualifiers(value: string): Record<string, string> {
-  const qualifiers: Record<string, string> = {};
-  for (const entry of value.split(",")) {
-    const [rawKey, ...rawValue] = entry.split("=");
-    const key = rawKey?.trim() ?? "";
-    const itemValue = rawValue.join("=").trim();
-    if (key && itemValue) qualifiers[key] = itemValue;
-  }
-  return qualifiers;
+interface AttributeRow {
+  id: number;
+  key: string;
+  value: string;
+}
+
+function serializedAttributes(
+  value: Record<string, string> | undefined,
+): string {
+  return JSON.stringify(
+    Object.entries(value ?? {}).sort(([left], [right]) =>
+      left.localeCompare(right),
+    ),
+  );
+}
+
+function AdditionalAttributesEditor({
+  value,
+  onChange,
+}: {
+  value: Record<string, string> | undefined;
+  onChange: (value: Record<string, string>) => void;
+}): React.ReactElement {
+  const nextId = useRef(0);
+  const makeRows = (
+    attributes: Record<string, string> | undefined,
+  ): AttributeRow[] =>
+    Object.entries(attributes ?? {}).map(([key, itemValue]) => ({
+      id: nextId.current++,
+      key,
+      value: itemValue,
+    }));
+  const [rows, setRows] = useState<AttributeRow[]>(() => makeRows(value));
+  const serializedValue = serializedAttributes(value);
+  const lastEmitted = useRef(serializedValue);
+
+  useEffect(() => {
+    if (serializedValue === lastEmitted.current) return;
+    lastEmitted.current = serializedValue;
+    setRows(makeRows(value));
+  }, [serializedValue, value]);
+
+  const emit = (nextRows: readonly AttributeRow[]): void => {
+    const attributes: Record<string, string> = {};
+    const used = new Set<string>();
+    for (const row of nextRows) {
+      const key = row.key.trim();
+      const normalizedKey = key.toLowerCase();
+      if (!key || used.has(normalizedKey)) continue;
+      used.add(normalizedKey);
+      attributes[key] = row.value;
+    }
+    const serialized = serializedAttributes(attributes);
+    if (serialized === lastEmitted.current) return;
+    lastEmitted.current = serialized;
+    onChange(attributes);
+  };
+
+  const updateRow = (
+    rowId: number,
+    field: "key" | "value",
+    fieldValue: string,
+  ): void => {
+    const next = rows.map((row) =>
+      row.id === rowId ? { ...row, [field]: fieldValue } : row,
+    );
+    setRows(next);
+    emit(next);
+  };
+
+  const normalizedKeys = rows.map((row) => row.key.trim().toLowerCase());
+
+  return (
+    <details className="rounded-md border bg-muted/20 px-3 py-2">
+      <summary className="cursor-pointer text-xs font-medium">
+        Additional attributes (optional)
+      </summary>
+      <div className="mt-3 grid gap-2">
+        <p className="text-xs text-muted-foreground">
+          Add metadata only when role and side are not specific enough.
+        </p>
+        {rows.map((row, index) => {
+          const normalizedKey = normalizedKeys[index] ?? "";
+          const duplicate =
+            Boolean(normalizedKey) &&
+            normalizedKeys.indexOf(normalizedKey) !== index;
+          return (
+            <div
+              key={row.id}
+              className="grid grid-cols-[1fr_1fr_auto] items-start gap-2"
+            >
+              <div className="grid gap-1">
+                <UiInput
+                  className={duplicate ? "border-destructive" : ""}
+                  aria-label={`Attribute ${index + 1}`}
+                  placeholder="Attribute"
+                  value={row.key}
+                  onChange={(event) =>
+                    updateRow(row.id, "key", event.target.value)
+                  }
+                />
+                {duplicate && (
+                  <span className="text-[11px] text-destructive">
+                    Attribute names must be unique.
+                  </span>
+                )}
+              </div>
+              <UiInput
+                aria-label={`Value ${index + 1}`}
+                placeholder="Value"
+                value={row.value}
+                onChange={(event) =>
+                  updateRow(row.id, "value", event.target.value)
+                }
+              />
+              <UiButton
+                size="icon"
+                variant="ghost"
+                aria-label={`Remove attribute ${index + 1}`}
+                title="Remove attribute"
+                onClick={() => {
+                  const next = rows.filter((item) => item.id !== row.id);
+                  setRows(next);
+                  emit(next);
+                }}
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+              </UiButton>
+            </div>
+          );
+        })}
+        <UiButton
+          className="w-fit"
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            setRows((current) => [
+              ...current,
+              { id: nextId.current++, key: "", value: "" },
+            ])
+          }
+        >
+          <Plus className="mr-1 h-3.5 w-3.5" aria-hidden />
+          Add attribute
+        </UiButton>
+      </div>
+    </details>
+  );
 }
 
 export function PartDetailsStep({
   grouping,
-  confirmedPartKeys,
   resultRef,
   resultVersion,
-  advancedFrameKeys,
   schema,
-  semanticCatalog,
-  onSaveSemantic,
   onUpdatePart,
-  onUpdateFrame,
-  onRemovePart,
-  onToggleFrame,
-  onConfirmPart,
   onSchemaEditorChange,
 }: {
   grouping: RegionGrouping;
-  confirmedPartKeys: readonly string[];
   resultRef: React.RefObject<ProcessedModularSprite | null>;
   resultVersion: number;
-  advancedFrameKeys: ReadonlySet<string>;
   schema: {
     addSchema: boolean;
     saveMode: "new" | "revision";
     metadata: NewSchemaMetadata;
     applied: boolean;
   };
-  semanticCatalog: SemanticCatalog;
-  onSaveSemantic: (definition: SemanticDefinition) => Promise<void>;
   onUpdatePart: (
     index: number,
     change: Partial<ModularSpriteDraftPart>,
   ) => void;
-  onUpdateFrame: (
-    index: number,
-    field: "x" | "y" | "width" | "height",
-    value: number,
-  ) => void;
-  onRemovePart: (index: number) => void;
-  onToggleFrame: (partKey: string) => void;
-  onConfirmPart: (partKey: string) => void;
   onSchemaEditorChange: (value: {
     addSchema?: boolean;
     saveMode?: "new" | "revision";
     metadata?: NewSchemaMetadata;
   }) => void;
 }): React.ReactElement {
-  const confirmed = new Set(confirmedPartKeys);
   return (
     <ScrollArea className="h-full min-h-0 min-w-0">
       <div className="mx-auto max-w-3xl space-y-3">
         <p className="text-sm text-muted-foreground">
-          Name each imported part and describe what it represents. Name
-          identifies this specific image; role describes its reusable anatomical
-          meaning. Then confirm each part. Excluded regions from the previous
-          step are not imported.
+          Review the part names and ordering. Roles were assigned in the
+          previous step; technical extraction data is managed automatically.
         </p>
         {grouping.parts.map((part, index) => (
-          <div
-            key={`${part.partKey}-${index}`}
-            className="space-y-3 rounded-lg border p-3"
-          >
+          <div key={index} className="space-y-3 rounded-lg border p-3">
             <div className="flex gap-3">
               <PartThumbnail
                 resultRef={resultRef}
                 resultVersion={resultVersion}
                 regionIds={part.regionIds}
               />
-              <div className="grid min-w-0 flex-1 content-start gap-2">
-                <div className="grid grid-cols-[1fr_1fr_150px_110px_70px] items-end gap-2">
+              <div className="grid min-w-0 flex-1 content-start gap-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_140px_90px] items-end gap-2">
                   <FieldLabel>
                     Name
                     <UiInput
@@ -128,31 +235,19 @@ export function PartDetailsStep({
                   <FieldLabel>
                     Stable key
                     <UiInput
+                      className="cursor-default bg-muted/50 text-muted-foreground"
                       value={part.partKey}
-                      onChange={(event) =>
-                        onUpdatePart(index, {
-                          partKey: slugPartKey(event.target.value),
-                        })
-                      }
+                      readOnly
+                      aria-readonly="true"
+                      title="Generated automatically from the part name"
                     />
                   </FieldLabel>
                   <FieldLabel>
-                    Role
-                    <SemanticRolePicker
-                      role={part.role}
-                      {...(part.semanticRoleId
-                        ? { semanticRoleId: part.semanticRoleId }
-                        : {})}
-                      semantics={semanticCatalog}
-                      onSaveSemantic={onSaveSemantic}
-                      onChange={(value) => onUpdatePart(index, value)}
-                    />
-                  </FieldLabel>
-                  <FieldLabel>
-                    Side
+                    Side (optional)
                     <select
                       className="h-10 rounded-md border bg-background px-2"
                       value={part.side}
+                      title="Distinguishes mirrored parts such as the left and right arm"
                       onChange={(event) =>
                         onUpdatePart(index, {
                           side: event.target
@@ -160,14 +255,14 @@ export function PartDetailsStep({
                         })
                       }
                     >
-                      <option value="none">none</option>
-                      <option value="left">left</option>
-                      <option value="right">right</option>
-                      <option value="center">center</option>
+                      <option value="none">Not specified</option>
+                      <option value="left">Left</option>
+                      <option value="right">Right</option>
+                      <option value="center">Center</option>
                     </select>
                   </FieldLabel>
                   <FieldLabel>
-                    Order
+                    Layer order
                     <UiInput
                       type="number"
                       value={part.order}
@@ -179,101 +274,17 @@ export function PartDetailsStep({
                     />
                   </FieldLabel>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <label className="flex items-center gap-2 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={part.required}
-                      onChange={(event) =>
-                        onUpdatePart(index, { required: event.target.checked })
-                      }
-                    />
-                    Required
-                  </label>
-                  <UiButton
-                    size="sm"
-                    variant={
-                      confirmed.has(part.partKey) ? "outline" : "default"
-                    }
-                    onClick={() => onConfirmPart(part.partKey)}
-                  >
-                    <Check className="mr-1 h-3 w-3" />
-                    {confirmed.has(part.partKey) ? "Confirmed" : "Confirm"}
-                  </UiButton>
-                  <UiButton
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onToggleFrame(part.partKey)}
-                  >
-                    {advancedFrameKeys.has(part.partKey)
-                      ? "Hide extraction frame"
-                      : "Extraction frame"}
-                  </UiButton>
-                  <UiButton
-                    className="ml-auto"
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => onRemovePart(index)}
-                  >
-                    Remove part
-                  </UiButton>
-                </div>
-                <details className="rounded-md border bg-muted/20 px-3 py-2">
-                  <summary className="cursor-pointer text-xs font-medium">
-                    Additional attributes (optional)
-                  </summary>
-                  <div className="mt-2 grid gap-2">
-                    <p className="text-xs text-muted-foreground">
-                      Use these when role and side are not specific enough. They
-                      help schemas distinguish details such as an upper wing, a
-                      lower limb segment, or one finger.
-                    </p>
-                    <FieldLabel>
-                      Attributes
-                      <UiInput
-                        placeholder="segment=lower, limbIndex=3"
-                        value={Object.entries(part.qualifiers ?? {})
-                          .map(([key, value]) => `${key}=${value}`)
-                          .join(", ")}
-                        onChange={(event) =>
-                          onUpdatePart(index, {
-                            qualifiers: parseQualifiers(event.target.value),
-                          })
-                        }
-                      />
-                    </FieldLabel>
-                    <p className="text-[11px] text-muted-foreground">
-                      Format: <code>name=value</code>, separated with commas.
-                    </p>
-                  </div>
-                </details>
+                <p className="text-[11px] text-muted-foreground">
+                  Side is only needed to distinguish mirrored parts with the
+                  same role. The stable key follows the name and stays unique
+                  automatically.
+                </p>
+                <AdditionalAttributesEditor
+                  value={part.qualifiers}
+                  onChange={(qualifiers) => onUpdatePart(index, { qualifiers })}
+                />
               </div>
             </div>
-            {advancedFrameKeys.has(part.partKey) && (
-              <div className="grid grid-cols-[repeat(4,1fr)] items-end gap-2 border-t pt-2">
-                {(["x", "y", "width", "height"] as const).map((field) => (
-                  <FieldLabel key={field}>
-                    Frame {field} (%)
-                    <UiInput
-                      type="number"
-                      min={0}
-                      max={100}
-                      step={0.1}
-                      value={Number(
-                        (part.extractionFrame[field] * 100).toFixed(1),
-                      )}
-                      onChange={(event) =>
-                        onUpdateFrame(
-                          index,
-                          field,
-                          Number(event.target.value) / 100,
-                        )
-                      }
-                    />
-                  </FieldLabel>
-                ))}
-              </div>
-            )}
           </div>
         ))}
         <SchemaEditor

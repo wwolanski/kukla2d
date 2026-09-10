@@ -90,18 +90,26 @@ export function useModularSpriteImport({
       const oldPartsByKey = new Map(
         existing?.parts.map((part) => [part.partKey, part]) ?? [],
       );
+      const oldPartsByAssetId = new Map(
+        existing?.parts.map((part) => [part.assetId, part]) ?? [],
+      );
+      const oldPartForDraft = (
+        draft: ModularSpriteCommitRequest["parts"][number]["draft"],
+      ) =>
+        (draft.assetId ? oldPartsByAssetId.get(draft.assetId) : undefined) ??
+        oldPartsByKey.get(draft.partKey);
       const modularSpriteId = existing?.id ?? toModularSpriteId(uid());
       const sourceAssetId = existing?.sourceAssetId ?? toAssetId(uid());
       const partAssetIds = new Map(
         request.parts.map((part) => [
           part.draft.partKey,
-          oldPartsByKey.get(part.draft.partKey)?.assetId ?? toAssetId(uid()),
+          oldPartForDraft(part.draft)?.assetId ?? toAssetId(uid()),
         ]),
       );
 
       if (existing) {
         for (const part of request.parts) {
-          const oldPart = oldPartsByKey.get(part.draft.partKey);
+          const oldPart = oldPartForDraft(part.draft);
           if (!oldPart) continue;
           const expectedWidth =
             Math.ceil(

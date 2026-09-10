@@ -138,7 +138,6 @@ describe("finalizeModularSpriteImport", () => {
         },
         previewResult: processed(1),
         grouping,
-        confirmedPartKeys: ["body"],
         name: "Hero",
         addToCanvas: true,
         schema: {
@@ -206,7 +205,6 @@ describe("finalizeModularSpriteImport", () => {
             parts: [{ ...grouping.parts[0]!, regionIds: [] }],
             excludedRegionIds: [1],
           },
-          confirmedPartKeys: [],
           name: "Hero",
           addToCanvas: false,
           schema: {

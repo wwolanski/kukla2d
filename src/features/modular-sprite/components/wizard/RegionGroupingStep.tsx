@@ -1,6 +1,14 @@
-import { GripVertical, Plus, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { Check, GripVertical, Plus, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
+import type {
+  SemanticCatalog,
+  SemanticDefinition,
+} from "@kukla2d/modular-sprite-schema";
+
+import { SemanticRolePicker } from "@/features/modular-sprite-schema";
+
+import { BorderBeam } from "@/components/ui/border-beam";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -46,6 +54,43 @@ function partColor(
 
 function regionTargetKey(partKey: string): string {
   return "part:" + partKey;
+}
+
+function normalizedPartName(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function suggestedNameForRole(
+  role: string,
+  semanticRoleId: string | undefined,
+  partIndex: number,
+  grouping: RegionGrouping,
+  semantics: SemanticCatalog,
+  reservedNames: readonly string[] = [],
+): string {
+  const definition = semantics
+    .list("part-role")
+    .find((item) => item.id === semanticRoleId || item.key === role);
+  const fallback = role
+    .trim()
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const base = definition?.label.trim() || fallback || `Part ${partIndex + 1}`;
+  const taken = new Set(
+    grouping.parts
+      .filter((_, index) => index !== partIndex)
+      .map((part) => normalizedPartName(part.name))
+      .concat(reservedNames.map(normalizedPartName)),
+  );
+  if (!taken.has(normalizedPartName(base))) return base;
+  let suffix = 2;
+  while (taken.has(normalizedPartName(`${base} ${suffix}`))) suffix += 1;
+  return `${base} ${suffix}`;
 }
 
 function RegionRow({
@@ -139,6 +184,9 @@ export function RegionGroupingStep({
   onCreatePart,
   onSelectRegion,
   onUpdatePart,
+  semanticCatalog,
+  onSaveSemantic,
+  onPendingNameSuggestionsChange,
 }: {
   result: ProcessedModularSprite;
   grouping: RegionGrouping;
@@ -156,9 +204,36 @@ export function RegionGroupingStep({
     index: number,
     change: Partial<ModularSpriteDraftPart>,
   ) => void;
+  semanticCatalog: SemanticCatalog;
+  onSaveSemantic: (definition: SemanticDefinition) => Promise<void>;
+  onPendingNameSuggestionsChange: (pending: boolean) => void;
 }): React.ReactElement {
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [pendingNames, setPendingNames] = useState<
+    Record<string, { suggestedName: string }>
+  >({});
   const draggedRegionIds = useRef<number[]>([]);
+
+  useEffect(() => {
+    onPendingNameSuggestionsChange(Object.keys(pendingNames).length > 0);
+  }, [onPendingNameSuggestionsChange, pendingNames]);
+
+  useEffect(
+    () => () => onPendingNameSuggestionsChange(false),
+    [onPendingNameSuggestionsChange],
+  );
+
+  useEffect(() => {
+    const partKeys = new Set(grouping.parts.map((part) => part.partKey));
+    setPendingNames((previous) => {
+      const next = Object.fromEntries(
+        Object.entries(previous).filter(([partKey]) => partKeys.has(partKey)),
+      );
+      return Object.keys(next).length === Object.keys(previous).length
+        ? previous
+        : next;
+    });
+  }, [grouping.parts]);
   const assigned = new Set(grouping.parts.flatMap((part) => part.regionIds));
   const excluded = result.regions.filter(
     (region) =>
@@ -233,7 +308,9 @@ export function RegionGroupingStep({
             dragging.
           </p>
           <p className="text-[11px] text-muted-foreground/80">
-            Use the X on hover to exclude a region from import.
+            Choose each part&apos;s role with the icon button. A matching name
+            is suggested for you to accept or dismiss. Use the X on hover to
+            exclude a region from import.
           </p>
         </div>
 
@@ -256,9 +333,10 @@ export function RegionGroupingStep({
             const target = regionTargetKey(part.partKey);
             const isDropTarget = dropTarget === target;
             const color = partColor(grouping.parts, part.partKey);
+            const pendingName = pendingNames[part.partKey];
             return (
               <div
-                key={part.partKey}
+                key={partIndex}
                 className={[
                   "overflow-hidden rounded-md border bg-muted/10 transition-colors",
                   isDropTarget
@@ -275,18 +353,105 @@ export function RegionGroupingStep({
                     style={{ backgroundColor: color }}
                   />
                   <span className="shrink-0 text-muted-foreground">Part</span>
-                  <UiInput
-                    className="h-7 min-w-0 flex-1 px-2 text-xs font-medium"
-                    aria-label={"Name of part " + (partIndex + 1)}
-                    value={part.name}
-                    onChange={(event) =>
-                      onUpdatePart(partIndex, { name: event.target.value })
-                    }
-                  />
-                  <span className="ml-auto shrink-0 font-normal text-muted-foreground">
-                    {part.regionIds.length}{" "}
-                    {part.regionIds.length === 1 ? "region" : "regions"}
-                  </span>
+                  <div
+                    className={[
+                      "relative flex min-w-0 flex-1 items-center gap-1 overflow-hidden rounded-md",
+                      pendingName ? "border border-primary/50" : "",
+                    ].join(" ")}
+                  >
+                    <UiInput
+                      className={[
+                        "h-7 min-w-0 flex-1 px-2 text-xs font-medium",
+                        pendingName
+                          ? "border-0 bg-muted/50 pr-16 text-muted-foreground shadow-none focus-visible:ring-0"
+                          : "",
+                      ].join(" ")}
+                      aria-label={"Name of part " + (partIndex + 1)}
+                      value={pendingName?.suggestedName ?? part.name}
+                      readOnly={Boolean(pendingName)}
+                      onChange={(event) =>
+                        onUpdatePart(partIndex, { name: event.target.value })
+                      }
+                    />
+                    {pendingName && (
+                      <div className="absolute right-0.5 z-10 flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          className="flex h-6 w-6 items-center justify-center rounded text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300"
+                          aria-label={`Accept suggested name ${pendingName.suggestedName}`}
+                          title="Accept suggested name"
+                          onClick={() => {
+                            onUpdatePart(partIndex, {
+                              name: pendingName.suggestedName,
+                            });
+                            setPendingNames((previous) => {
+                              const next = { ...previous };
+                              delete next[part.partKey];
+                              return next;
+                            });
+                          }}
+                        >
+                          <Check className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+                          aria-label={`Dismiss suggested name ${pendingName.suggestedName}`}
+                          title="Keep current name"
+                          onClick={() =>
+                            setPendingNames((previous) => {
+                              const next = { ...previous };
+                              delete next[part.partKey];
+                              return next;
+                            })
+                          }
+                        >
+                          <X className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                      </div>
+                    )}
+                    {pendingName && <BorderBeam duration={3.5} />}
+                  </div>
+                  <div className="ml-auto shrink-0 font-normal">
+                    <SemanticRolePicker
+                      compact
+                      role={part.role}
+                      {...(part.semanticRoleId
+                        ? { semanticRoleId: part.semanticRoleId }
+                        : {})}
+                      semantics={semanticCatalog}
+                      onSaveSemantic={onSaveSemantic}
+                      onChange={(value) => {
+                        onUpdatePart(partIndex, value);
+                        setPendingNames((previous) => {
+                          const suggestedName = suggestedNameForRole(
+                            value.role,
+                            value.semanticRoleId,
+                            partIndex,
+                            grouping,
+                            semanticCatalog,
+                            Object.entries(previous)
+                              .filter(([partKey]) => partKey !== part.partKey)
+                              .map(
+                                ([, suggestion]) => suggestion.suggestedName,
+                              ),
+                          );
+                          if (
+                            normalizedPartName(suggestedName) ===
+                            normalizedPartName(part.name)
+                          ) {
+                            const next = { ...previous };
+                            delete next[part.partKey];
+                            return next;
+                          }
+                          return {
+                            ...previous,
+                            [part.partKey]: { suggestedName },
+                          };
+                        });
+                      }}
+                    />
+                  </div>
                 </div>
                 {part.regionIds.length > 0 ? (
                   <ul className="ml-4 space-y-1 py-1 pl-2 pr-1">

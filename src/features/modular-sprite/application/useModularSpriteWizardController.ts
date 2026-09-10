@@ -25,7 +25,11 @@ import type {
 } from "@kukla2d/modular-sprite-schema";
 
 import { finalizeModularSpriteImport } from "./finalizeModularSpriteImport.js";
-import { createDraftPart, createEmptyDraftPart } from "./partDraftFactory.js";
+import {
+  createDraftPart,
+  createEmptyDraftPart,
+  partKeyForName,
+} from "./partDraftFactory.js";
 import { groupingFromSchemaMatch } from "./schemaBinding.js";
 import {
   canContinue,
@@ -39,7 +43,6 @@ import {
   createInitialGrouping,
   excludeRegions,
   moveRegionsToPart,
-  removePart,
   renamePart,
 } from "../domain/partGrouping.js";
 import { analyzeModularSpriteBackground } from "../domain/processing/backgroundAnalysis.js";
@@ -136,8 +139,6 @@ interface ModularSpriteWizardController {
     setShowOverlays: (value: boolean) => void;
     showProtectedInteriors: boolean;
     setShowProtectedInteriors: (value: boolean) => void;
-    advancedFrameKeys: ReadonlySet<string>;
-    toggleAdvancedFrame: (partKey: string) => void;
     selectedRegionIds: ReadonlySet<number>;
   };
   assignments: ReadonlyMap<number, RegionAssignment>;
@@ -154,12 +155,6 @@ interface ModularSpriteWizardController {
   ) => void;
   commitRecipeProcessing: () => void;
   updatePart: (index: number, change: Partial<ModularSpriteDraftPart>) => void;
-  updateExtractionFrame: (
-    index: number,
-    field: "x" | "y" | "width" | "height",
-    value: number,
-  ) => void;
-  removePart: (index: number) => void;
   createPart: () => void;
   moveRegionsToPart: (
     regionIds: readonly number[],
@@ -167,7 +162,6 @@ interface ModularSpriteWizardController {
   ) => void;
   excludeRegions: (regionIds: readonly number[]) => void;
   toggleRegionSelection: (regionId: number, additive: boolean) => void;
-  confirmPart: (partKey: string) => void;
   undo: () => void;
   redo: () => void;
   applySchemaMatch: (match: SchemaComparisonResult) => void;
@@ -314,9 +308,6 @@ export function useModularSpriteWizardController({
   const [zoom, setZoom] = useState(1);
   const [showOverlays, setShowOverlays] = useState(true);
   const [showProtectedInteriors, setShowProtectedInteriors] = useState(false);
-  const [advancedFrameKeys, setAdvancedFrameKeys] = useState<Set<string>>(
-    new Set(),
-  );
   const [selectedRegionIds, setSelectedRegionIds] = useState<Set<number>>(
     new Set(),
   );
@@ -339,7 +330,6 @@ export function useModularSpriteWizardController({
     resultRef.current = null;
     setResultVersion((version) => version + 1);
     setSelectedRegionIds(new Set());
-    setAdvancedFrameKeys(new Set());
     setPreviewMode("result");
     setTool("select");
     setZoom(1);
@@ -648,75 +638,37 @@ export function useModularSpriteWizardController({
       if (!target) return;
       const otherChanges: Partial<ModularSpriteDraftPart> = { ...change };
       delete otherChanges.name;
+      delete otherChanges.partKey;
       Object.assign(target, structuredClone(otherChanges));
-      dispatch({
-        type: "GROUPING_CHANGED",
-        grouping: next,
-        affectedPartKeys: [
+      if (change.name !== undefined)
+        target.partKey = partKeyForName(
+          change.name,
+          grouping.parts,
           current.partKey,
-          ...(change.partKey ? [change.partKey] : []),
-        ],
-      });
-    },
-    [],
-  );
-
-  const updateExtractionFrame = useCallback(
-    (
-      index: number,
-      field: "x" | "y" | "width" | "height",
-      value: number,
-    ): void => {
-      const grouping = stateRef.current.grouping;
-      const part = grouping?.parts[index];
-      if (!grouping || !part || !Number.isFinite(value)) return;
-      const frame = { ...part.extractionFrame };
-      if (field === "x")
-        frame.x = Math.min(1 - frame.width, Math.max(0, value));
-      if (field === "y")
-        frame.y = Math.min(1 - frame.height, Math.max(0, value));
-      if (field === "width")
-        frame.width = Math.min(1 - frame.x, Math.max(0.001, value));
-      if (field === "height")
-        frame.height = Math.min(1 - frame.y, Math.max(0.001, value));
-      updatePart(index, { extractionFrame: frame });
-    },
-    [updatePart],
-  );
-
-  const updateGrouping = useCallback(
-    (next: RegionGrouping, affectedPartKeys: readonly string[] = []): void => {
+        );
       dispatch({
         type: "GROUPING_CHANGED",
         grouping: next,
-        affectedPartKeys: [...affectedPartKeys],
       });
     },
     [],
   );
 
-  const removePartCommand = useCallback(
-    (index: number): void => {
-      const grouping = stateRef.current.grouping;
-      const part = grouping?.parts[index];
-      if (!grouping || !part) return;
-      const changed = removePart(grouping, part.partKey);
-      updateGrouping(changed.grouping, changed.affectedPartKeys);
-    },
-    [updateGrouping],
-  );
+  const updateGrouping = useCallback((next: RegionGrouping): void => {
+    dispatch({
+      type: "GROUPING_CHANGED",
+      grouping: next,
+    });
+  }, []);
 
   const createPart = useCallback((): void => {
     const grouping = stateRef.current.grouping;
     if (!grouping) return;
     const part = createEmptyDraftPart(grouping.parts.length, grouping.parts);
-    updateGrouping(
-      {
-        parts: [...grouping.parts, part],
-        excludedRegionIds: [...grouping.excludedRegionIds],
-      },
-      [part.partKey],
-    );
+    updateGrouping({
+      parts: [...grouping.parts, part],
+      excludedRegionIds: [...grouping.excludedRegionIds],
+    });
   }, [updateGrouping]);
 
   const moveRegionsToPartCommand = useCallback(
@@ -728,7 +680,7 @@ export function useModularSpriteWizardController({
         regions: result.regions,
         dimensions: { width: result.width, height: result.height },
       });
-      updateGrouping(changed.grouping, changed.affectedPartKeys);
+      updateGrouping(changed.grouping);
       setSelectedRegionIds((previous) => {
         const next = new Set(previous);
         for (const regionId of regionIds) next.delete(regionId);
@@ -743,7 +695,7 @@ export function useModularSpriteWizardController({
       const grouping = stateRef.current.grouping;
       if (!grouping || regionIds.length === 0) return;
       const changed = excludeRegions(grouping, regionIds);
-      updateGrouping(changed.grouping, changed.affectedPartKeys);
+      updateGrouping(changed.grouping);
       setSelectedRegionIds((previous) => {
         const next = new Set(previous);
         for (const regionId of regionIds) next.delete(regionId);
@@ -812,7 +764,6 @@ export function useModularSpriteWizardController({
           recipe: current.recipe,
           previewResult: current.processingResult,
           grouping: current.grouping,
-          confirmedPartKeys: current.confirmation.confirmedPartKeys,
           name: current.name,
           addToCanvas: current.addToCanvas,
           schema: {
@@ -864,19 +815,6 @@ export function useModularSpriteWizardController({
     return true;
   }, [confirmDiscard, onOpenChange, reset]);
 
-  const toggleAdvancedFrame = useCallback((partKey: string): void => {
-    setAdvancedFrameKeys((previous) => {
-      const next = new Set(previous);
-      if (next.has(partKey)) next.delete(partKey);
-      else next.add(partKey);
-      return next;
-    });
-  }, []);
-
-  const confirmPart = useCallback(
-    (partKey: string): void => dispatch({ type: "CONFIRM_PART", partKey }),
-    [],
-  );
   const undo = useCallback(() => dispatch({ type: "UNDO" }), []);
   const redo = useCallback(() => dispatch({ type: "REDO" }), []);
   const setAutoMatch = useCallback(
@@ -919,8 +857,6 @@ export function useModularSpriteWizardController({
       setShowOverlays,
       showProtectedInteriors,
       setShowProtectedInteriors,
-      advancedFrameKeys,
-      toggleAdvancedFrame,
       selectedRegionIds,
     },
     assignments,
@@ -930,13 +866,10 @@ export function useModularSpriteWizardController({
     changeRecipe,
     commitRecipeProcessing,
     updatePart,
-    updateExtractionFrame,
-    removePart: removePartCommand,
     createPart,
     moveRegionsToPart: moveRegionsToPartCommand,
     excludeRegions: excludeRegionsCommand,
     toggleRegionSelection,
-    confirmPart,
     undo,
     redo,
     applySchemaMatch,

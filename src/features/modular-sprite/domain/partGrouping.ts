@@ -395,9 +395,10 @@ export function validateGrouping(
     );
   const keys = new Set<string>();
   for (const part of grouping.parts) {
-    if (keys.has(part.partKey))
+    const normalizedPartKey = part.partKey.toLowerCase();
+    if (keys.has(normalizedPartKey))
       errors.push(`Duplicate partKey: ${part.partKey}`);
-    keys.add(part.partKey);
+    keys.add(normalizedPartKey);
   }
   return {
     valid: errors.length === 0,

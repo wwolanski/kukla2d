@@ -18,6 +18,24 @@ export function slugPartKey(value: string): string {
   );
 }
 
+export function partKeyForName(
+  name: string,
+  parts: readonly ModularSpriteDraftPart[],
+  currentPartKey?: string,
+): string {
+  const base = slugPartKey(name);
+  const current = currentPartKey?.toLowerCase();
+  const taken = new Set(
+    parts
+      .filter((part) => part.partKey.toLowerCase() !== current)
+      .map((part) => part.partKey.toLowerCase()),
+  );
+  if (!taken.has(base)) return base;
+  let suffix = 2;
+  while (taken.has(`${base}-${suffix}`)) suffix += 1;
+  return `${base}-${suffix}`;
+}
+
 export function uniquePartKey(
   base: string,
   parts: readonly ModularSpriteDraftPart[],
