@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertValidModularSpriteRecipe,
   DEFAULT_MODULAR_SPRITE_RECIPE,
+  MODULAR_SPRITE_PROCESSING_CONFIG,
   type ModularSpriteEnclosedChromaMode,
 } from "@kukla2d/contracts";
 import {
@@ -61,6 +62,31 @@ function alphaRecipe() {
   recipe.detection.openingRadius = 0;
   recipe.detection.closingRadius = 0;
   return recipe;
+}
+
+function alphaSourceAtDetectionThreshold(): RgbaImageData {
+  const source = image(4, 4, [11, 22, 33, 255]);
+  const border = [0, 1, 2, 3, 12, 13, 14, 15, 4, 7, 8, 11];
+  const threshold =
+    MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.transparentBorderAlpha;
+  border.forEach((pixelIndex, index) => {
+    const offset = pixelIndex * 4;
+    source.data[offset] = (index * 37) % 256;
+    source.data[offset + 1] = (index * 53) % 256;
+    source.data[offset + 2] = (index * 71) % 256;
+    source.data[offset + 3] =
+      index < border.length / 2 ? threshold - 1 : threshold;
+  });
+  const interior = [
+    [120, 15, 220, 1],
+    [20, 210, 40, 63],
+    [200, 30, 90, 127],
+    [240, 180, 10, 254],
+  ];
+  [5, 6, 9, 10].forEach((pixelIndex, index) => {
+    source.data.set(interior[index]!, pixelIndex * 4);
+  });
+  return source;
 }
 
 function setEnclosedChroma(
@@ -180,6 +206,53 @@ describe("modular sprite processor", () => {
       }),
     ).toThrow("background.edgeSearchRadius");
   });
+
+  it("detects a transparent border at the threshold and preserves alpha RGBA in sync and async processing", async () => {
+    const source = alphaSourceAtDetectionThreshold();
+    const recipe = alphaRecipe();
+    recipe.background.tolerance =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.tolerance.max;
+    recipe.background.softness =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.softness.max;
+    recipe.background.despill = 1;
+    recipe.background.matteChoke =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.matteChoke.max;
+    recipe.background.edgeColorRecovery = 1;
+    recipe.background.edgeSearchRadius =
+      MODULAR_SPRITE_PROCESSING_CONFIG.background.edgeSearchRadius.max;
+
+    const sync = processModularSprite({ image: source, recipe });
+    const asyncResult = await processModularSpriteAsync(
+      { image: source, recipe },
+      {
+        throwIfAborted: () => {},
+        checkpoint: () => Promise.resolve(),
+        report: () => {},
+      },
+    );
+    const sourceAlpha = Array.from(source.data).filter(
+      (_, index) => index % 4 === 3,
+    );
+
+    expect(sync.background.mode).toBe("alpha");
+    expect(sync.background.confidence).toBe(
+      MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.transparentBorderRatio,
+    );
+    expect(asyncResult.background).toEqual(sync.background);
+    expect(Array.from(sync.rgba)).toEqual(Array.from(source.data));
+    expect(Array.from(asyncResult.rgba)).toEqual(Array.from(source.data));
+    expect(Array.from(sync.matte)).toEqual(sourceAlpha);
+    expect(Array.from(asyncResult.matte)).toEqual(sourceAlpha);
+    expect(sync.protectedInteriorMask.every((value) => value === 0)).toBe(true);
+    expect(sync.enclosedChromaMask.every((value) => value === 0)).toBe(true);
+    expect(
+      asyncResult.protectedInteriorMask.every((value) => value === 0),
+    ).toBe(true);
+    expect(asyncResult.enclosedChromaMask.every((value) => value === 0)).toBe(
+      true,
+    );
+  });
+
   it("detects transparent regions in deterministic reading order", () => {
     const source = image(12, 8);
     paint(source, 7, 1, 3, 2, [255, 0, 0, 255]);

@@ -5,10 +5,12 @@ import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/slider", () => ({
-  Slider: ({ min, max, step, value }) => (
+  Slider: ({ min, max, step, value, disabled, "aria-label": ariaLabel }) => (
     <input
       readOnly
+      aria-label={ariaLabel}
       data-processing-slider="true"
+      disabled={disabled}
       max={max}
       min={min}
       step={step}
@@ -63,6 +65,52 @@ function mountProcessingControls(recipe) {
       container.remove();
     },
   };
+}
+
+function mountBackgroundStep(recipe) {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  act(() => {
+    root.render(
+      <BackgroundStep
+        onPickMode={vi.fn()}
+        onRecipeChange={vi.fn()}
+        onRecipeCommit={vi.fn()}
+        recipe={recipe}
+        tool="select"
+        warnings={[]}
+      />,
+    );
+  });
+  return {
+    container,
+    unmount: () => {
+      act(() => root.unmount());
+      container.remove();
+    },
+  };
+}
+
+function sliderFor(container, label) {
+  return container.querySelector(
+    `[data-processing-slider="true"][aria-label="${label}"]`,
+  );
+}
+
+function processingSectionFor(container, title) {
+  return Array.from(container.querySelectorAll("details")).find((section) =>
+    section.querySelector("summary")?.textContent?.includes(title),
+  );
+}
+
+function disabledAttributeFor(element) {
+  return (
+    element?.getAttribute("data-disabled") ??
+    element?.getAttribute("aria-disabled") ??
+    element?.querySelector("summary")?.getAttribute("data-disabled") ??
+    element?.querySelector("summary")?.getAttribute("aria-disabled")
+  );
 }
 
 describe("modular sprite processing configuration", () => {
@@ -292,6 +340,125 @@ describe("modular sprite processing configuration", () => {
         }),
       ).toThrow();
     }
+  });
+
+  it("renders existing alpha as a transparent background and disables chroma controls", () => {
+    const recipe = createDefaultModularSpriteRecipe();
+    recipe.background.mode = "alpha";
+    const view = mountBackgroundStep(recipe);
+
+    const mode = view.container.querySelector('select[aria-label="Mode"]');
+    expect(mode?.querySelector('option[value="alpha"]')?.textContent).toBe(
+      "Existing alpha (transparent)",
+    );
+
+    const transparent = view.container.querySelector(
+      '[role="img"][aria-label="Transparent"]',
+    );
+    expect(transparent).not.toBeNull();
+    expect(transparent?.textContent).toContain("Transparent");
+    expect(transparent?.getAttribute("class")).toContain("linear-gradient");
+    expect(view.container.querySelector('input[type="color"]')).toBeNull();
+
+    const picker = view.container.querySelector(
+      'button[aria-label="Pick background color from image"]',
+    );
+    expect(picker?.disabled).toBe(true);
+
+    for (const label of [
+      "Tolerance",
+      "Soft edge",
+      "Interior inset",
+      "Core alpha maximum",
+      "Core color tolerance",
+      "Growth radius",
+      "Growth alpha maximum",
+      "Growth color tolerance",
+      "Growth chroma tolerance",
+      "Growth hue tolerance",
+      "Minimum chroma ratio",
+      "Despill",
+      "Matte choke",
+      "Edge color recovery",
+      "Edge search",
+    ]) {
+      expect(sliderFor(view.container, label)).not.toBeNull();
+      expect(sliderFor(view.container, label)?.disabled).toBe(true);
+    }
+
+    const protectIslandInteriors = view.container.querySelector(
+      'input[type="checkbox"]',
+    );
+    expect(protectIslandInteriors?.disabled).toBe(true);
+    expect(
+      view.container.querySelector(
+        'select[aria-label="Enclosed chroma inside protected areas"]',
+      )?.disabled,
+    ).toBe(true);
+    const resetEnclosedChroma = Array.from(
+      view.container.querySelectorAll("button"),
+    ).find((button) => button.textContent?.includes("Reset enclosed chroma"));
+    expect(resetEnclosedChroma?.disabled).toBe(true);
+
+    const edgeCleanup = processingSectionFor(view.container, "Edge cleanup");
+    expect(edgeCleanup).not.toBeNull();
+    expect(disabledAttributeFor(edgeCleanup)).toBe("true");
+    expect(edgeCleanup?.open).toBe(false);
+
+    const protectIslandInteriorsSection = processingSectionFor(
+      view.container,
+      "Protect island interiors",
+    );
+    expect(protectIslandInteriorsSection).not.toBeNull();
+    expect(protectIslandInteriorsSection?.open).toBe(false);
+
+    const enclosedChromaTuning = processingSectionFor(
+      view.container,
+      "Enclosed chroma tuning",
+    );
+    expect(enclosedChromaTuning).not.toBeNull();
+    expect(disabledAttributeFor(enclosedChromaTuning)).toBe("true");
+    expect(enclosedChromaTuning?.open).toBe(false);
+
+    expect(sliderFor(view.container, "Detection alpha")?.disabled).toBe(false);
+    view.unmount();
+  });
+
+  it("keeps background color picking and chroma controls enabled in chroma mode", () => {
+    const recipe = createDefaultModularSpriteRecipe();
+    recipe.background.mode = "chroma";
+    const view = mountBackgroundStep(recipe);
+
+    expect(view.container.querySelector('input[type="color"]')).not.toBeNull();
+    expect(
+      view.container.querySelector(
+        'button[aria-label="Pick background color from image"]',
+      )?.disabled,
+    ).toBe(false);
+    for (const label of [
+      "Tolerance",
+      "Soft edge",
+      "Interior inset",
+      "Despill",
+      "Matte choke",
+      "Edge color recovery",
+      "Edge search",
+    ]) {
+      expect(sliderFor(view.container, label)?.disabled).toBe(false);
+    }
+    const edgeCleanup = processingSectionFor(view.container, "Edge cleanup");
+    expect(edgeCleanup).not.toBeNull();
+    expect(disabledAttributeFor(edgeCleanup)).not.toBe("true");
+    expect(
+      view.container.querySelector('input[type="checkbox"]')?.disabled,
+    ).toBe(false);
+    expect(
+      view.container.querySelector(
+        'select[aria-label="Enclosed chroma inside protected areas"]',
+      )?.disabled,
+    ).toBe(false);
+
+    view.unmount();
   });
 
   it("renders every numeric Web UI control directly from the config", () => {

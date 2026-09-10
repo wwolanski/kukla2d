@@ -27,6 +27,8 @@ const UiSlider = Slider as React.ComponentType<{
   value: number[];
   onValueChange: (value: number[]) => void;
   onValueCommit?: (value: number[]) => void;
+  disabled?: boolean;
+  className?: string;
   "aria-label"?: string;
 }>;
 
@@ -77,6 +79,7 @@ function SliderField({
   onChange,
   onCommit,
   formatValue,
+  disabled = false,
 }: {
   name: string;
   help: string;
@@ -85,6 +88,7 @@ function SliderField({
   onChange: (value: number) => void;
   onCommit?: () => void;
   formatValue?: (value: number) => string;
+  disabled?: boolean;
 }): React.ReactElement {
   const displayedValue =
     formatValue?.(value) ?? value.toFixed(parameter.digits);
@@ -96,6 +100,8 @@ function SliderField({
         max={parameter.max}
         step={parameter.step}
         value={[value]}
+        disabled={disabled}
+        {...(disabled ? { className: "cursor-not-allowed opacity-60" } : {})}
         onValueChange={(nextValue) => onChange(nextValue[0] ?? value)}
         {...(onCommit ? { onValueCommit: () => onCommit() } : {})}
       />
@@ -109,19 +115,24 @@ function ProcessingSection({
   children,
   defaultOpen = false,
   separated = true,
+  muted = false,
 }: {
   title: string;
   help: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
   separated?: boolean;
+  muted?: boolean;
 }): React.ReactElement {
   return (
     <details
-      className={`group space-y-3 ${separated ? "border-t pt-3" : ""}`}
+      aria-disabled={muted}
+      className={`group space-y-3 ${separated ? "border-t pt-3" : ""} ${muted ? "text-muted-foreground" : ""}`}
       {...(defaultOpen ? { open: true } : {})}
     >
-      <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-foreground">
+      <summary
+        className={`flex cursor-pointer list-none items-center gap-1 text-xs font-medium ${muted ? "text-muted-foreground opacity-60" : "text-foreground"}`}
+      >
         <ChevronDown
           className="h-3.5 w-3.5 text-muted-foreground transition-transform group-open:rotate-180"
           aria-hidden="true"
@@ -136,7 +147,7 @@ function ProcessingSection({
           <HelpIcon tip={help} side="right" />
         </span>
       </summary>
-      <div className="space-y-3">{children}</div>
+      <div className={`space-y-3 ${muted ? "opacity-60" : ""}`}>{children}</div>
     </details>
   );
 }
@@ -161,6 +172,7 @@ export function BackgroundStep({
 }): React.ReactElement {
   const config = MODULAR_SPRITE_PROCESSING_CONFIG;
   const refinement = resolveChromaRefinement(recipe.background);
+  const isExistingAlpha = recipe.background.mode === "alpha";
 
   return (
     <ScrollArea className="h-full min-h-0 min-w-0 rounded-lg border">
@@ -186,7 +198,7 @@ export function BackgroundStep({
                 })
               }
             >
-              <option value="alpha">Existing alpha</option>
+              <option value="alpha">Existing alpha (transparent)</option>
               <option value="chroma">Chroma key</option>
             </select>
           </ParameterField>
@@ -195,20 +207,33 @@ export function BackgroundStep({
             help="The color removed when Chroma key mode is active. Sample it directly from the preview with the pipette button."
           >
             <div className="flex items-center gap-2">
-              <input
-                aria-label="Background color"
-                className="h-9 min-w-0 flex-1 rounded-md border bg-background p-1"
-                type="color"
-                value={colorToHex(recipe.background.color)}
-                onChange={(event) =>
-                  onRecipeChange((draft) => {
-                    draft.background.color = hexToColor(event.target.value);
-                  })
-                }
-              />
+              {isExistingAlpha ? (
+                <div
+                  role="img"
+                  aria-label="Transparent"
+                  className="flex h-9 min-w-0 flex-1 items-center rounded-md border bg-muted bg-[linear-gradient(45deg,#222_25%,transparent_25%),linear-gradient(-45deg,#222_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#222_75%),linear-gradient(-45deg,transparent_75%,#222_75%)] bg-[length:16px_16px] px-2 text-xs text-foreground"
+                >
+                  <span className="rounded bg-background/80 px-1.5 py-0.5">
+                    Transparent
+                  </span>
+                </div>
+              ) : (
+                <input
+                  aria-label="Background color"
+                  className="h-9 min-w-0 flex-1 rounded-md border bg-background p-1"
+                  type="color"
+                  value={colorToHex(recipe.background.color)}
+                  onChange={(event) =>
+                    onRecipeChange((draft) => {
+                      draft.background.color = hexToColor(event.target.value);
+                    })
+                  }
+                />
+              )}
               <UiButton
                 aria-label="Pick background color from image"
                 className="h-9 w-9 p-0"
+                disabled={isExistingAlpha}
                 size="sm"
                 title="Pick background color from image"
                 type="button"
@@ -224,6 +249,7 @@ export function BackgroundStep({
             help="How far a pixel may be from the background color before it remains opaque. Higher values remove more."
             parameter={config.background.tolerance}
             value={recipe.background.tolerance}
+            disabled={isExistingAlpha}
             onChange={(value) =>
               onRecipeChange((draft) => {
                 draft.background.tolerance = value;
@@ -236,6 +262,7 @@ export function BackgroundStep({
             help="Adds a gradual alpha transition around the tolerance boundary instead of a hard cut."
             parameter={config.background.softness}
             value={recipe.background.softness}
+            disabled={isExistingAlpha}
             onChange={(value) =>
               onRecipeChange((draft) => {
                 draft.background.softness = value;
@@ -246,15 +273,17 @@ export function BackgroundStep({
         </ProcessingSection>
 
         <ProcessingSection
-          defaultOpen
+          defaultOpen={!isExistingAlpha}
           title="Protect island interiors"
           help="Keeps the inset interior of closed part silhouettes opaque while allowing enclosed background-colored pockets to be tuned separately."
+          muted={isExistingAlpha}
         >
           <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={refinement.protectIslandInteriors}
+                disabled={isExistingAlpha}
                 onChange={(event) =>
                   onRecipeChange((draft) => {
                     draft.background.protectIslandInteriors =
@@ -274,6 +303,7 @@ export function BackgroundStep({
             help="Pixels kept between the detected edge and the protected core. Higher values leave a wider edge area to the keyer."
             parameter={config.background.interiorProtectionInset}
             value={refinement.interiorProtectionInset}
+            disabled={isExistingAlpha}
             formatValue={(value) => `${value}px`}
             onChange={(value) =>
               onRecipeChange((draft) => {
@@ -289,6 +319,7 @@ export function BackgroundStep({
             <select
               aria-label="Enclosed chroma inside protected areas"
               className="h-9 w-full rounded-md border bg-background px-2"
+              disabled={isExistingAlpha}
               value={refinement.enclosedChromaMode}
               onChange={(event) =>
                 onRecipeChange((draft) => {
@@ -303,9 +334,14 @@ export function BackgroundStep({
               <option value="preserve">Preserve</option>
             </select>
           </ParameterField>
-          {refinement.protectIslandInteriors ? (
-            <details className="space-y-3">
-              <summary className="flex cursor-pointer items-center gap-1 text-xs font-medium text-muted-foreground">
+          {refinement.protectIslandInteriors || isExistingAlpha ? (
+            <details
+              aria-disabled={isExistingAlpha}
+              className={`space-y-3 ${isExistingAlpha ? "text-muted-foreground" : ""}`}
+            >
+              <summary
+                className={`flex cursor-pointer items-center gap-1 text-xs font-medium text-muted-foreground ${isExistingAlpha ? "opacity-60" : ""}`}
+              >
                 <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Enclosed chroma tuning</span>
                 <span
@@ -320,12 +356,15 @@ export function BackgroundStep({
                   />
                 </span>
               </summary>
-              <div className="space-y-3 pl-3">
+              <div
+                className={`space-y-3 pl-3 ${isExistingAlpha ? "opacity-60" : ""}`}
+              >
                 <SliderField
                   name="Core alpha maximum"
                   help="Maximum matte alpha for pixels considered the core of an enclosed background-colored pocket."
                   parameter={config.background.enclosedChromaCoreAlphaMax}
                   value={refinement.enclosedChromaCoreAlphaMax}
+                  disabled={isExistingAlpha}
                   onChange={(value) =>
                     onRecipeChange((draft) => {
                       draft.background.enclosedChromaCoreAlphaMax = value;
@@ -338,6 +377,7 @@ export function BackgroundStep({
                   help="How close a pocket's core color must be to the sampled background color."
                   parameter={config.background.enclosedChromaCoreColorTolerance}
                   value={refinement.enclosedChromaCoreColorTolerance}
+                  disabled={isExistingAlpha}
                   onChange={(value) =>
                     onRecipeChange((draft) => {
                       draft.background.enclosedChromaCoreColorTolerance = value;
@@ -350,6 +390,7 @@ export function BackgroundStep({
                   help="How many pixels the enclosed-pocket detector may grow beyond its core."
                   parameter={config.background.enclosedChromaGrowthRadius}
                   value={refinement.enclosedChromaGrowthRadius}
+                  disabled={isExistingAlpha}
                   formatValue={(value) => `${value}px`}
                   onChange={(value) =>
                     onRecipeChange((draft) => {
@@ -363,6 +404,7 @@ export function BackgroundStep({
                   help="Maximum alpha for neighboring pixels eligible to join an enclosed pocket."
                   parameter={config.background.enclosedChromaGrowthAlphaMax}
                   value={refinement.enclosedChromaGrowthAlphaMax}
+                  disabled={isExistingAlpha}
                   onChange={(value) =>
                     onRecipeChange((draft) => {
                       draft.background.enclosedChromaGrowthAlphaMax = value;
@@ -377,6 +419,7 @@ export function BackgroundStep({
                     config.background.enclosedChromaGrowthColorTolerance
                   }
                   value={refinement.enclosedChromaGrowthColorTolerance}
+                  disabled={isExistingAlpha}
                   onChange={(value) =>
                     onRecipeChange((draft) => {
                       draft.background.enclosedChromaGrowthColorTolerance =
@@ -392,6 +435,7 @@ export function BackgroundStep({
                     config.background.enclosedChromaGrowthChromaTolerance
                   }
                   value={refinement.enclosedChromaGrowthChromaTolerance}
+                  disabled={isExistingAlpha}
                   onChange={(value) =>
                     onRecipeChange((draft) => {
                       draft.background.enclosedChromaGrowthChromaTolerance =
@@ -405,6 +449,7 @@ export function BackgroundStep({
                   help="Maximum hue difference accepted while growing an enclosed pocket."
                   parameter={config.background.enclosedChromaGrowthHueTolerance}
                   value={refinement.enclosedChromaGrowthHueTolerance}
+                  disabled={isExistingAlpha}
                   onChange={(value) =>
                     onRecipeChange((draft) => {
                       draft.background.enclosedChromaGrowthHueTolerance = value;
@@ -419,6 +464,7 @@ export function BackgroundStep({
                     config.background.enclosedChromaGrowthMinChromaRatio
                   }
                   value={refinement.enclosedChromaGrowthMinChromaRatio}
+                  disabled={isExistingAlpha}
                   onChange={(value) =>
                     onRecipeChange((draft) => {
                       draft.background.enclosedChromaGrowthMinChromaRatio =
@@ -429,6 +475,7 @@ export function BackgroundStep({
                 />
                 <UiButton
                   className="w-full"
+                  disabled={isExistingAlpha}
                   size="sm"
                   type="button"
                   variant="outline"
@@ -463,12 +510,14 @@ export function BackgroundStep({
         <ProcessingSection
           title="Edge cleanup"
           help="Refine semi-transparent edges after keying: reduce background spill, remove weak matte pixels, and recover nearby foreground colors."
+          muted={isExistingAlpha}
         >
           <SliderField
             name="Despill"
             help="Reduces the sampled background color bleeding into semi-transparent foreground edges."
             parameter={config.background.despill}
             value={recipe.background.despill}
+            disabled={isExistingAlpha}
             onChange={(value) =>
               onRecipeChange((draft) => {
                 draft.background.despill = value;
@@ -481,6 +530,7 @@ export function BackgroundStep({
             help="Removes the weakest semi-transparent matte pixels without eroding solid foreground pixels."
             parameter={config.background.matteChoke}
             value={refinement.matteChoke}
+            disabled={isExistingAlpha}
             onChange={(value) =>
               onRecipeChange((draft) => {
                 draft.background.matteChoke = value;
@@ -493,6 +543,7 @@ export function BackgroundStep({
             help="Replaces background-contaminated edge RGB with nearby confident foreground color."
             parameter={config.background.edgeColorRecovery}
             value={refinement.edgeColorRecovery}
+            disabled={isExistingAlpha}
             onChange={(value) =>
               onRecipeChange((draft) => {
                 draft.background.edgeColorRecovery = value;
@@ -505,6 +556,7 @@ export function BackgroundStep({
             help="How far to look for a confident foreground color when recovering an edge."
             parameter={config.background.edgeSearchRadius}
             value={refinement.edgeSearchRadius}
+            disabled={isExistingAlpha}
             formatValue={(value) => `${value}px`}
             onChange={(value) =>
               onRecipeChange((draft) => {
