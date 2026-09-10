@@ -47,6 +47,7 @@ function mountProcessingControls(recipe) {
             MODULAR_SPRITE_PROCESSING_CONFIG.strokes.editorRadius.default
           }
           enclosedChromaSeedCount={0}
+          featureDisabled={false}
           onBrushRadiusChange={vi.fn()}
           onClearEnclosedAreas={vi.fn()}
           onToolChange={vi.fn()}
