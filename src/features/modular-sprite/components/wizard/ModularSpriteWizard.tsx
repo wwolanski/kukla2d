@@ -17,6 +17,7 @@ import { PartDetailsStep } from "./PartDetailsStep.js";
 import { RegionGroupingStep } from "./RegionGroupingStep.js";
 import { ReviewStep } from "./ReviewStep.js";
 import { SourceStep } from "./SourceStep.js";
+import { TouchupToolbar } from "./TouchupToolbar.js";
 import { WizardFooter } from "./WizardFooter.js";
 import { WizardHeader } from "./WizardHeader.js";
 import { useModularSpriteWizardController } from "../../application/useModularSpriteWizardController.js";
@@ -62,9 +63,10 @@ export function ModularSpriteWizard({
   const result = state.processingResult;
   const source = state.source;
   const step = state.step;
+  const refinement = resolveChromaRefinement(state.recipe.background);
   const protectionAvailable =
     state.recipe.background.mode === "chroma" &&
-    resolveChromaRefinement(state.recipe.background).protectIslandInteriors;
+    refinement.protectIslandInteriors;
   const existingName = source?.existingDocument?.name;
   const title = existingName
     ? `Edit ${existingName}`
@@ -116,19 +118,15 @@ export function ModularSpriteWizard({
                   <BackgroundStep
                     recipe={state.recipe}
                     tool={ui.tool}
-                    brushRadius={ui.brushRadius}
                     warnings={result.warnings}
                     onRecipeChange={(change, process = true) =>
                       controller.changeRecipe(change, "recipe", process)
                     }
                     onRecipeCommit={controller.commitRecipeProcessing}
-                    onBrushRadiusChange={ui.setBrushRadius}
-                    onClearEnclosedAreas={onClearEnclosedAreas}
                     onPickMode={() => {
                       ui.setTool("eyedropper");
                       ui.setPreviewMode("original");
                     }}
-                    onToolChange={ui.setTool}
                   />
                 )}
                 {step === "regions" && (
@@ -212,37 +210,55 @@ export function ModularSpriteWizard({
                         : `${result.regions.length} regions`}
                     </span>
                   </div>
-                  <ScrollArea
-                    className="h-0 min-h-0 min-w-0 flex-1"
-                    scrollbars="both"
-                  >
-                    <div className="flex h-max min-h-full min-w-full w-max items-center justify-center p-4">
-                      <ModularSpritePreviewCanvas
-                        source={source.preview}
-                        resultRef={controller.resultRef}
-                        resultVersion={controller.resultVersion}
-                        mode={ui.previewMode}
-                        tool={step === "regions" ? "select" : ui.tool}
-                        zoom={ui.zoom}
-                        selectedRegionIds={ui.selectedRegionIds}
-                        assignments={controller.assignments}
-                        showOverlays={ui.showOverlays}
-                        showProtectedInteriors={
-                          ui.showProtectedInteriors && protectionAvailable
-                        }
-                        onSelectRegion={controller.toggleRegionSelection}
-                        onPickColor={(color) => {
-                          controller.changeRecipe((recipe) => {
-                            recipe.background.mode = "chroma";
-                            recipe.background.color = color;
-                          }, "discrete");
-                          ui.setTool("select");
-                        }}
-                        onStroke={onStroke}
-                        onEnclosedChromaSeed={onEnclosedChromaSeed}
-                      />
-                    </div>
-                  </ScrollArea>
+                  <div className="relative min-h-0 min-w-0 flex-1">
+                    <ScrollArea
+                      className="h-full min-h-0 min-w-0"
+                      scrollbars="both"
+                    >
+                      <div className="flex h-max min-h-full min-w-full w-max items-center justify-center p-4">
+                        <ModularSpritePreviewCanvas
+                          source={source.preview}
+                          resultRef={controller.resultRef}
+                          resultVersion={controller.resultVersion}
+                          mode={ui.previewMode}
+                          tool={step === "regions" ? "select" : ui.tool}
+                          zoom={ui.zoom}
+                          selectedRegionIds={ui.selectedRegionIds}
+                          assignments={controller.assignments}
+                          showOverlays={ui.showOverlays}
+                          showProtectedInteriors={
+                            ui.showProtectedInteriors && protectionAvailable
+                          }
+                          onSelectRegion={controller.toggleRegionSelection}
+                          onPickColor={(color) => {
+                            controller.changeRecipe((recipe) => {
+                              recipe.background.mode = "chroma";
+                              recipe.background.color = color;
+                            }, "discrete");
+                            ui.setTool("select");
+                          }}
+                          onStroke={onStroke}
+                          onEnclosedChromaSeed={onEnclosedChromaSeed}
+                        />
+                      </div>
+                    </ScrollArea>
+                    {step === "background" && (
+                      <div className="pointer-events-none absolute left-3 top-3 z-20">
+                        <div className="pointer-events-auto">
+                          <TouchupToolbar
+                            tool={ui.tool}
+                            brushRadius={ui.brushRadius}
+                            enclosedChromaSeedCount={
+                              refinement.enclosedChromaSeeds.length
+                            }
+                            onToolChange={ui.setTool}
+                            onBrushRadiusChange={ui.setBrushRadius}
+                            onClearEnclosedAreas={onClearEnclosedAreas}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </section>
                 {step === "background" && (
                   <SchemaComparisonSidebar

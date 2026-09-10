@@ -1,11 +1,4 @@
-import {
-  ChevronDown,
-  Eraser,
-  MousePointer2,
-  Paintbrush,
-  Pipette,
-  Scissors,
-} from "lucide-react";
+import { ChevronDown, Pipette } from "lucide-react";
 
 import {
   MODULAR_SPRITE_PROCESSING_CONFIG,
@@ -151,32 +144,23 @@ function ProcessingSection({
 export function BackgroundStep({
   recipe,
   tool,
-  brushRadius,
   warnings,
   onRecipeChange,
   onRecipeCommit,
-  onToolChange,
-  onBrushRadiusChange,
   onPickMode,
-  onClearEnclosedAreas,
 }: {
   recipe: ModularSpriteProcessingRecipe;
   tool: EditorTool;
-  brushRadius: number;
   warnings: readonly string[];
   onRecipeChange: (
     change: (recipe: ModularSpriteProcessingRecipe) => void,
     process?: boolean,
   ) => void;
   onRecipeCommit: () => void;
-  onToolChange: (tool: EditorTool) => void;
-  onBrushRadiusChange: (value: number) => void;
   onPickMode: () => void;
-  onClearEnclosedAreas: () => void;
 }): React.ReactElement {
   const config = MODULAR_SPRITE_PROCESSING_CONFIG;
   const refinement = resolveChromaRefinement(recipe.background);
-  const enclosedChromaSeedCount = refinement.enclosedChromaSeeds.length;
 
   return (
     <ScrollArea className="h-full min-h-0 min-w-0 rounded-lg border">
@@ -598,78 +582,6 @@ export function BackgroundStep({
             {warning}
           </p>
         ))}
-
-        <ProcessingSection
-          title="Touch-up tools"
-          help="Use the preview tools to paint foreground or background corrections, split regions, and remove enclosed background-colored areas manually."
-        >
-          <div className="grid grid-cols-2 gap-2">
-            <UiButton
-              size="sm"
-              type="button"
-              variant={tool === "select" ? "default" : "outline"}
-              onClick={() => onToolChange("select")}
-            >
-              <MousePointer2 className="mr-1 h-4 w-4" />
-              Select
-            </UiButton>
-            <UiButton
-              size="sm"
-              type="button"
-              variant={tool === "foreground" ? "default" : "outline"}
-              onClick={() => onToolChange("foreground")}
-            >
-              <Paintbrush className="mr-1 h-4 w-4" />
-              Keep
-            </UiButton>
-            <UiButton
-              size="sm"
-              type="button"
-              variant={tool === "background" ? "default" : "outline"}
-              onClick={() => onToolChange("background")}
-            >
-              <Eraser className="mr-1 h-4 w-4" />
-              Erase
-            </UiButton>
-            <UiButton
-              size="sm"
-              type="button"
-              variant={tool === "split" ? "default" : "outline"}
-              onClick={() => onToolChange("split")}
-            >
-              <Scissors className="mr-1 h-4 w-4" />
-              Split
-            </UiButton>
-            <UiButton
-              size="sm"
-              type="button"
-              variant={tool === "enclosed-fill" ? "default" : "outline"}
-              onClick={() => onToolChange("enclosed-fill")}
-            >
-              <MousePointer2 className="mr-1 h-4 w-4" />
-              Remove enclosed area
-            </UiButton>
-          </div>
-          <UiButton
-            className="w-full"
-            disabled={enclosedChromaSeedCount === 0}
-            size="sm"
-            type="button"
-            variant="outline"
-            onClick={onClearEnclosedAreas}
-          >
-            Clear manual areas
-            {enclosedChromaSeedCount > 0 ? ` (${enclosedChromaSeedCount})` : ""}
-          </UiButton>
-          <SliderField
-            name="Brush radius"
-            help="Size of Keep, Erase, and Split strokes on the preview."
-            parameter={config.strokes.editorRadius}
-            value={brushRadius}
-            formatValue={(value) => `${(value * 100).toFixed(1)}%`}
-            onChange={onBrushRadiusChange}
-          />
-        </ProcessingSection>
       </aside>
     </ScrollArea>
   );

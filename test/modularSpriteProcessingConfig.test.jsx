@@ -19,6 +19,7 @@ vi.mock("@/components/ui/slider", () => ({
 }));
 
 import { BackgroundStep } from "@/features/modular-sprite/components/wizard/BackgroundStep";
+import { TouchupToolbar } from "@/features/modular-sprite/components/wizard/TouchupToolbar";
 import {
   assertValidModularSpriteRecipe,
   createDefaultModularSpriteRecipe,
@@ -26,25 +27,32 @@ import {
   resolveChromaRefinement,
 } from "@kukla2d/contracts";
 
-function mountBackgroundStep(recipe) {
+function mountProcessingControls(recipe) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
   act(() => {
     root.render(
-      <BackgroundStep
-        brushRadius={
-          MODULAR_SPRITE_PROCESSING_CONFIG.strokes.editorRadius.default
-        }
-        onBrushRadiusChange={vi.fn()}
-        onPickMode={vi.fn()}
-        onRecipeChange={vi.fn()}
-        onRecipeCommit={vi.fn()}
-        onToolChange={vi.fn()}
-        recipe={recipe}
-        tool="select"
-        warnings={[]}
-      />,
+      <>
+        <BackgroundStep
+          onPickMode={vi.fn()}
+          onRecipeChange={vi.fn()}
+          onRecipeCommit={vi.fn()}
+          recipe={recipe}
+          tool="select"
+          warnings={[]}
+        />
+        <TouchupToolbar
+          brushRadius={
+            MODULAR_SPRITE_PROCESSING_CONFIG.strokes.editorRadius.default
+          }
+          enclosedChromaSeedCount={0}
+          onBrushRadiusChange={vi.fn()}
+          onClearEnclosedAreas={vi.fn()}
+          onToolChange={vi.fn()}
+          tool="select"
+        />
+      </>,
     );
   });
   return {
@@ -309,7 +317,12 @@ describe("modular sprite processing configuration", () => {
       config.detection.minimumRegionAreaRatio,
       config.strokes.editorRadius,
     ];
-    const view = mountBackgroundStep(createDefaultModularSpriteRecipe());
+    const view = mountProcessingControls(createDefaultModularSpriteRecipe());
+    act(() => {
+      view.container
+        .querySelector('button[aria-label="Brush radius"]')
+        ?.click();
+    });
     const sliders = Array.from(
       view.container.querySelectorAll('[data-processing-slider="true"]'),
     );
