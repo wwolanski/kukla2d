@@ -2,57 +2,44 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["scripts/*.mjs", "scripts/scripts_legacy/*.mjs", "test/types/**/*.ts"]
+      "entry": [
+        "scripts/*.mjs",
+        "scripts/scripts_legacy/*.mjs",
+        "test/types/**/*.ts",
+        ".repoatlas-custom-rules/index.js"
+      ],
+      "ignoreDependencies": ["repoatlas-lint-rules"]
     },
     "packages/application": {
-      "ignoreDependencies": [
-        "immer",
-        "zod",
-        "zustand"
-      ]
+      "ignoreDependencies": ["immer", "zod", "zustand"]
     },
     "packages/document": {
-      "ignoreDependencies": [
-        "zod"
-      ]
+      "ignoreDependencies": ["zod"]
     },
     "packages/engine": {
-      "ignoreDependencies": [
-        "gl-matrix"
-      ]
+      "ignoreDependencies": ["gl-matrix"]
     },
     "packages/math2d": {
-      "ignoreDependencies": [
-        "gl-matrix"
-      ]
+      "ignoreDependencies": ["gl-matrix"]
     },
     "packages/platform-browser": {
-      "ignoreDependencies": [
-        "jszip",
-        "zod"
-      ]
+      "ignoreDependencies": ["jszip", "zod"]
     },
     "packages/adapters/live2d": {
-      "ignoreDependencies": [
-        "jszip"
-      ]
+      "ignoreDependencies": ["jszip"]
     },
     "packages/adapters/psd": {
-      "ignoreDependencies": [
-        "ag-psd"
-      ]
+      "ignoreDependencies": ["ag-psd"]
     },
     "packages/adapters/spine": {
-      "ignoreDependencies": [
-        "jszip"
-      ]
-    },
+      "ignoreDependencies": ["jszip"]
+    }
   },
+  "ignoreBinaries": ["repoatlas-lint"],
   "ignore": [
     "src/components/ui/**",
     "src/features/physics/**",
-    "src/io/live2d/**",
-    "test/fixtures/**"
+    "src/io/live2d/**"
   ],
   "ignoreIssues": {
     "src/features/canvas/application/workspaceLoadTransaction.ts": ["types"],
@@ -61,7 +48,5 @@
     "src/features/auto-motion/index.ts": ["types"],
     "src/features/preferences/index.ts": ["types"]
   },
-  "exclude": [
-    "exports"
-  ]
+  "exclude": ["exports"]
 }
