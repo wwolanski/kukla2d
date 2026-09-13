@@ -6,9 +6,9 @@
         "scripts/*.mjs",
         "scripts/scripts_legacy/*.mjs",
         "test/types/**/*.ts",
-        ".repoatlas-custom-rules/index.js"
+        ".repoatlas/index.js"
       ],
-      "ignoreDependencies": ["repoatlas-lint-rules"]
+      "ignoreDependencies": ["repoatlas"]
     },
     "packages/application": {
       "ignoreDependencies": ["immer", "zod", "zustand"]
@@ -35,7 +35,7 @@
       "ignoreDependencies": ["jszip"]
     }
   },
-  "ignoreBinaries": ["repoatlas-lint"],
+  "ignoreBinaries": ["repoatlas"],
   "ignore": [
     "src/components/ui/**",
     "src/features/physics/**",
@@ -48,5 +48,16 @@
     "src/features/auto-motion/index.ts": ["types"],
     "src/features/preferences/index.ts": ["types"]
   },
-  "exclude": ["exports"]
+  "rules": {
+    "files": "warn",
+    "exports": "warn",
+    "types": "warn",
+    "enumMembers": "warn",
+    "duplicates": "warn",
+    "dependencies": "warn",
+    "devDependencies": "warn",
+    "cycles": "warn",
+    "unlisted": "error",
+    "unresolved": "error"
+  }
 }

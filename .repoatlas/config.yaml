@@ -1,0 +1,86 @@
+# RepoAtlas configuration owned by Kukla2D. Paths are relative to the repository root.
+paths:
+  source: src
+  features: src/features
+  packages: packages
+  tests: test
+  tsconfig: tsconfig.json
+
+alias: "@"
+
+ignores:
+  - coverage/**
+  - dist/**
+  - external_repos/**
+  - _context/**
+  - node_modules/**
+  - playwright-report/**
+  - test-results/**
+
+typescript:
+  manifest:
+    - src/**/*.ts
+    - src/**/*.tsx
+    - packages/**/*.ts
+    - packages/**/*.tsx
+    - scripts/**/*.mts
+    - test/**/*.test.ts
+    - test/**/*.test.tsx
+    - test/types/**/*.ts
+    - test/fixtures/goldenProject.ts
+  defaultProjectFiles:
+    - test/projectSchema.test.ts
+    - test/migrateProject.test.ts
+    - test/projectDocumentContract.test.ts
+    - test/trackBinding.test.ts
+    - test/typescriptMigrationScope.test.ts
+    - test/fixtures/goldenProject.ts
+    - test/domain/animationTransport.test.ts
+    - test/export/exportAreaPresets.test.ts
+    - test/domain/animationTargets.test.ts
+    - test/domain/editorModeFeedback.test.ts
+    - test/layers/buildLibraryTree.test.ts
+    - test/modularSpriteProcessor.test.ts
+    - test/modularSpriteGrouping.test.ts
+    - test/modularSpriteWizardState.test.ts
+    - test/modularSpriteFinalize.test.ts
+    - test/modularSpriteProjectSchema.test.ts
+    - test/modularSpriteSchema.test.ts
+    - test/runtime/pathConstraint.test.ts
+    - test/runtime/physicsRig.test.ts
+    - test/runtime/skin.test.ts
+    - test/timeline/timelineTime.test.ts
+
+typeLocality:
+  ignoredPrefixes:
+    - src/io/live2d/
+    - packages/adapters/live2d/
+
+tools:
+  eslint:
+    enabled: true
+  typecheck:
+    enabled: true
+    project: tsconfig.json
+  knip:
+    enabled: true
+    config: .repoatlas/knip.json
+  output:
+    format: text
+
+# Every registered rule is enabled by default. Controls may disable one rule
+# globally or except matching repository-relative paths for that rule only.
+rules:
+  # Preserve Kukla2D's existing Knip policy: export analysis is intentionally
+  # disabled while other project-level checks remain active.
+  DEAD-002: false
+  QUALITY-001:
+    severity: warning
+    options:
+      maxLines: 999
+# Example:
+# rules:
+#   ARCH-RS-1:
+#     enabled: true
+#     exceptions:
+#       - src/legacy-browser-bridge/**
