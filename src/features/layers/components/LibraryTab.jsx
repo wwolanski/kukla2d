@@ -5,6 +5,7 @@ import {
   Settings,
   Sparkles,
   Upload,
+  WandSparkles,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -280,6 +281,26 @@ export function LibraryTab({
                   <Sparkles className="h-3.5 w-3.5 text-primary" />
                 )}
                 Load example project
+              </button>
+              <div className="flex w-full items-center gap-2 px-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60">
+                <span className="h-px flex-1 bg-border" />
+                <span>OR</span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  onImportModularSprite?.({ highlightFirstExample: true })
+                }
+                className="relative inline-flex h-8 max-w-full items-center gap-1.5 overflow-hidden rounded border border-red-500/70 bg-background px-3 text-[11px] font-medium text-foreground hover:bg-muted"
+              >
+                <BorderBeam
+                  duration={3.5}
+                  color="hsl(0 84% 60%)"
+                  highlightColor="hsl(350 89% 72%)"
+                />
+                <WandSparkles className="h-3.5 w-3.5 shrink-0 text-red-400" />
+                Load example 2D modular sprite
               </button>
               {exampleError && (
                 <p

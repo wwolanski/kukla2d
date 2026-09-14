@@ -47,6 +47,7 @@ const PREVIEW_CONTENT_PADDING = 32;
 export function ModularSpriteWizard({
   open,
   existingId,
+  highlightFirstExample = false,
   onOpenChange,
   onCommit,
   ports,
@@ -164,6 +165,7 @@ export function ModularSpriteWizard({
         <div className="relative box-border min-h-0 h-full min-w-0 flex-1 overflow-hidden p-5">
           {step === "source" && (
             <SourceStep
+              highlightFirstExample={highlightFirstExample}
               onFile={(file) => {
                 void controller.loadFile(file);
               }}
