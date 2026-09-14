@@ -17,14 +17,12 @@ const MODULAR_SPRITE_EXAMPLES = [
   {
     id: "armored-panda",
     name: "Armored Panda",
-    description: "Armored character sheet",
     fileName: "armored-panda.png",
     url: exampleAssetUrls["../../assets/examples/armored-panda.png"]!,
   },
   {
     id: "arcane-wizard",
     name: "Arcane Wizard",
-    description: "Fantasy character sheet",
     fileName: "arcane-wizard.png",
     url: exampleAssetUrls["../../assets/examples/arcane-wizard.png"]!,
   },
@@ -140,7 +138,7 @@ export function SourceStep({
                       {example.name}
                     </span>
                     <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
-                      {example.description}
+                      {example.fileName}
                     </span>
                   </span>
                   {isLoading && (
