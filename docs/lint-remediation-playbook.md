@@ -2,8 +2,8 @@
 
 ## Objective and baseline
 
-Reduce the repository lint baseline to zero without weakening `lint-registry.js`
-or `eslint.config.js`, changing runtime behaviour, or discarding the existing
+Reduce the repository lint baseline to zero without weakening the policies in
+`.repoatlas/`, changing runtime behaviour, or discarding the existing
 type-locality migration.
 
 Baseline captured on 2026-09-07:
@@ -30,7 +30,7 @@ batch because all agents share the same worktree.
    coordinator-approved clusters.
 
 Never suppress, downgrade, disable, or broaden an exception to a lint rule.
-Do not edit `eslint-rules/lint-registry.js` or `eslint.config.js` as part of
+Do not edit `.repoatlas/rules/` or `.repoatlas/registry/` as part of ordinary
 remediation.
 
 ## Batch contract
