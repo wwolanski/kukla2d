@@ -49,6 +49,13 @@ and type-locality exceptions are relative to the Kukla2D root. It intentionally
 has no portable/repository preset selector: loading this extension is the
 explicit opt-in for Kukla2D policy.
 
+`paths.tsconfig` points to `.repoatlas/tsconfig.json`, RepoAtlas's independent
+TypeScript project. It does not extend Kukla2D's root `tsconfig.json`; the
+root project remains available for the normal build workflow. The RepoAtlas
+project contains the shared baseline plus Kukla2D's explicit alias and strict
+compiler settings. Because `tools.typecheck.project` defaults to
+`paths.tsconfig`, it is intentionally omitted from `config.yaml`.
+
 Every registered rule is enabled by default. Disable one rule globally or
 allow it only for an exceptional path in `config.yaml`:
 
@@ -79,7 +86,8 @@ npm link repoatlas --no-save
 Running RepoAtlas discovers this directory's entry point automatically and
 creates the `.repoatlas` scaffold in a new repository when it is missing;
 existing files are preserved. Knip configuration also lives here in
-`knip.json`; Kukla2D does not own a second root-level tooling config.
+`knip.json`; Kukla2D does not own a second root-level Knip config. Since the
+repository has a root `package.json`, `tools.knip.directory` remains `null`.
 
 Use `repoatlas check` for all enabled layers, or select `repoatlas lint`,
 `repoatlas repo`, `repoatlas typecheck`, and `repoatlas dead-code` individually.

@@ -17,6 +17,13 @@ async function lintRepoCode({ rules = {}, file, code }) {
     overrideConfig: createConfig({
       config: {
         root: repositoryRoot,
+        paths: {
+          source: "src",
+          features: "src/features",
+          packages: "packages",
+          tests: "test",
+          tsconfig: ".repoatlas/tsconfig.json",
+        },
         rules,
         typescript: { manifest: ["src/**/*.ts"], defaultProjectFiles: [] },
       },

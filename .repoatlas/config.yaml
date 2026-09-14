@@ -4,30 +4,32 @@ paths:
   features: src/features
   packages: packages
   tests: test
-  tsconfig: tsconfig.json
+  # RepoAtlas's own TypeScript project. It is intentionally independent from
+  # the root tsconfig.json used by Kukla2D's regular build workflow.
+  tsconfig: .repoatlas/tsconfig.json
 
 alias: "@"
 
 ignores:
-  - coverage/**
-  - dist/**
-  - external_repos/**
-  - _context/**
-  - node_modules/**
-  - playwright-report/**
-  - test-results/**
+  - "**/coverage/**"
+  - "**/dist/**"
+  - "**/external_repos/**"
+  - "**/_context/**"
+  - "**/node_modules/**"
+  - "**/playwright-report/**"
+  - "**/test-results/**"
 
 typescript:
+  # This manifest must stay inside .repoatlas/tsconfig.json's include set.
+  # The remaining test files are Vitest fixtures and are checked by Vitest,
+  # not by RepoAtlas's production typed-ESLint project.
   manifest:
     - src/**/*.ts
     - src/**/*.tsx
     - packages/**/*.ts
     - packages/**/*.tsx
     - scripts/**/*.mts
-    - test/**/*.test.ts
-    - test/**/*.test.tsx
     - test/types/**/*.ts
-    - test/fixtures/goldenProject.ts
   defaultProjectFiles:
     - test/projectSchema.test.ts
     - test/migrateProject.test.ts
@@ -60,11 +62,15 @@ tools:
   eslint:
     enabled: true
   typecheck:
+    # Typechecking uses the independent .repoatlas/tsconfig.json below.
     enabled: true
-    project: tsconfig.json
+    # project defaults to paths.tsconfig; set it only for a separate project.
   knip:
     enabled: true
     config: .repoatlas/knip.json
+    # Kukla2D has a root package.json, so Knip runs from the repository root.
+    directory: null
+    # project defaults to paths.tsconfig.
   output:
     format: text
 
