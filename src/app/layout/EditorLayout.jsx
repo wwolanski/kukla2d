@@ -62,6 +62,7 @@ export default function EditorLayout() {
   const [modularSpriteEditor, setModularSpriteEditor] = useState({
     open: false,
     existingId: null,
+    highlightFirstExample: false,
   });
   const [recoveryRecord, setRecoveryRecord] = useState(null);
   const [recoveryError, setRecoveryError] = useState(null);
@@ -215,11 +216,19 @@ export default function EditorLayout() {
           onRemesh={handleRemesh}
           onDeleteMesh={handleDeleteMesh}
           onLoadExampleProject={projectSession.handleLoadExampleProject}
-          onImportModularSprite={() =>
-            setModularSpriteEditor({ open: true, existingId: null })
+          onImportModularSprite={(options) =>
+            setModularSpriteEditor({
+              open: true,
+              existingId: null,
+              highlightFirstExample: Boolean(options?.highlightFirstExample),
+            })
           }
           onEditModularSprite={(existingId) =>
-            setModularSpriteEditor({ open: true, existingId })
+            setModularSpriteEditor({
+              open: true,
+              existingId,
+              highlightFirstExample: false,
+            })
           }
         />
 

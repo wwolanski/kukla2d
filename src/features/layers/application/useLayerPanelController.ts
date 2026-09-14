@@ -37,7 +37,9 @@ import { uid } from "@/lib/uid";
 interface LayerPanelControllerOptions {
   onImportClick?: () => void;
   onImportFiles?: (files: FileList) => void;
-  onImportModularSprite?: () => void;
+  onImportModularSprite?: (options?: {
+    highlightFirstExample?: boolean;
+  }) => void;
   onEditModularSprite?: (id: string) => void;
   getDragImage?: () => HTMLCanvasElement | null;
 }

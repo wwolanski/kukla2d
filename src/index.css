@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans:
+    var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -39,13 +41,21 @@
 }
 
 @keyframes accordion-down {
-  from { height: 0; }
-  to { height: var(--radix-accordion-content-height); }
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
 }
 
 @keyframes accordion-up {
-  from { height: var(--radix-accordion-content-height); }
-  to { height: 0; }
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
 }
 
 @layer base {
@@ -116,8 +126,13 @@
 }
 
 @keyframes blink-red {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .animate-recording {
@@ -127,9 +142,15 @@
 }
 
 @keyframes shimmer-sweep {
-  0% { transform: translateX(-100%); }
-  70% { transform: translateX(400%); }
-  100% { transform: translateX(400%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  70% {
+    transform: translateX(400%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
 }
 
 .animate-shimmer {
@@ -137,8 +158,13 @@
 }
 
 @keyframes subtle-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 .animate-pulse-subtle {
@@ -146,11 +172,24 @@
 }
 
 @keyframes vista-sweep {
-  0% { transform: translateX(-200%); opacity: 0; }
-  20% { opacity: 0.4; }
-  50% { opacity: 0.4; }
-  70% { transform: translateX(300%); opacity: 0; }
-  100% { transform: translateX(300%); opacity: 0; }
+  0% {
+    transform: translateX(-200%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  70% {
+    transform: translateX(300%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(300%);
+    opacity: 0;
+  }
 }
 
 .vista-effect {
@@ -183,13 +222,17 @@
   pointer-events: none;
 }
 @keyframes border-beam-spin {
-  to { transform: rotate(1turn); }
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 .border-beam {
   overflow: hidden;
   padding: 1px;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
 }
@@ -197,7 +240,13 @@
 .border-beam::before {
   position: absolute;
   inset: -150%;
-  content: '';
-  background: conic-gradient(from 0deg, transparent 0 76%, hsl(var(--primary)) 88%, #a78bfa 94%, transparent 100%);
+  content: "";
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 76%,
+    var(--border-beam-color, hsl(var(--primary))) 88%,
+    var(--border-beam-highlight, #a78bfa) 94%,
+    transparent 100%
+  );
   animation: border-beam-spin var(--border-beam-duration, 4s) linear infinite;
 }

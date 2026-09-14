@@ -63,6 +63,7 @@ interface ModularSpriteWizardControllerPorts {
 export interface ModularSpriteWizardProps {
   open: boolean;
   existingId?: ModularSpriteId | null;
+  highlightFirstExample?: boolean;
   onOpenChange: (open: boolean) => void;
   onCommit: (request: ModularSpriteCommitRequest) => Promise<unknown>;
   ports: ModularSpriteWizardControllerPorts;

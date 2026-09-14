@@ -111,6 +111,7 @@ export function EditorModals({
           <ModularSpriteWizard
             open={modularSpriteEditor.open}
             existingId={modularSpriteEditor.existingId}
+            highlightFirstExample={modularSpriteEditor.highlightFirstExample}
             onOpenChange={(open) =>
               setModularSpriteEditor((current) => ({ ...current, open }))
             }
@@ -234,6 +235,7 @@ EditorModals.propTypes = {
   modularSpriteEditor: PropTypes.shape({
     open: PropTypes.bool.isRequired,
     existingId: PropTypes.string,
+    highlightFirstExample: PropTypes.bool.isRequired,
   }).isRequired,
   setModularSpriteEditor: PropTypes.func.isRequired,
 };

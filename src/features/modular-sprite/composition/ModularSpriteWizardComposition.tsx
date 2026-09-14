@@ -21,6 +21,7 @@ import { localSchemaApi } from "@/features/modular-sprite-schema";
 interface ModularSpriteWizardCompositionProps {
   open: boolean;
   existingId?: ModularSpriteId | null;
+  highlightFirstExample?: boolean;
   onOpenChange: (open: boolean) => void;
   onCommit: WizardViewProps["onCommit"];
   confirmDiscard?: () => boolean;
@@ -29,6 +30,7 @@ interface ModularSpriteWizardCompositionProps {
 export function ModularSpriteWizardComposition({
   open,
   existingId,
+  highlightFirstExample = false,
   onOpenChange,
   onCommit,
   confirmDiscard,
@@ -92,6 +94,7 @@ export function ModularSpriteWizardComposition({
     <WizardView
       open={open}
       {...(existingId !== undefined ? { existingId } : {})}
+      highlightFirstExample={highlightFirstExample}
       onOpenChange={onOpenChange}
       onCommit={onCommit}
       ports={ports}
