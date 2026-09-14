@@ -1,6 +1,6 @@
 export const IDLE_BREATHING_PRESET_ID = "builtin.idleBreathing";
 export const IDLE_BREATHING_PRESET_VERSION = 1;
-import type { MotionPresetDefinition } from "./autoMotionTypes.types.js";
+import type { MotionPresetDefinition } from "@/domain/autoMotion/autoMotionTypes.types.js";
 
 export function createIdleBreathingPresetDefinition(): MotionPresetDefinition {
   return {

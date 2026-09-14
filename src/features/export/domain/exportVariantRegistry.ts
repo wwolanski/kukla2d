@@ -7,7 +7,7 @@ import type {
 import type {
   ExportFormat,
   ExportTypeId,
-} from "./exportVariantRegistry.types.js";
+} from "@/features/export/domain/exportVariantRegistry.types.js";
 
 interface ExportTypeDefinition {
   id: ExportTypeId;

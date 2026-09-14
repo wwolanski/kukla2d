@@ -1,4 +1,4 @@
-import type { ProjectActions } from "./projectStoreTypes.types.js";
+import type { ProjectActions } from "@/store/project/projectStoreTypes.types.js";
 
 type ProjectCapability = Partial<ProjectActions>;
 

@@ -1,4 +1,4 @@
-import { ANIMATION_DEFAULTS } from "./animationDefaults.js";
+import { ANIMATION_DEFAULTS } from "@/domain/animationDefaults.js";
 
 interface AnimationTransportState {
   currentTime: number;

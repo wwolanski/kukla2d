@@ -1,5 +1,9 @@
 import type { BoneId, Mesh, ProjectDocument, Vertex } from "@kukla2d/contracts";
 
+import type {
+  CanvasAnimationRuntimePort,
+  CanvasDraftPoseValue,
+} from "@/features/canvas/application/canvasRenderer.types.js";
 import type { GizmoFrame } from "@/features/canvas/domain/gizmoFrame.types.js";
 import type { PixiPerformanceCounters } from "@/features/canvas/domain/pixiPerformanceMetrics.types.js";
 import type { buildSkeletonFrame } from "@/features/canvas/domain/skeletonFrame.js";
@@ -9,53 +13,48 @@ import type {
   ProjectMutator,
   WorkflowEvent,
 } from "@/features/canvas/domain/workflowContracts.types.js";
-
-import { bindPixiInteractionRuntimeEvents } from "./bindPixiInteractionRuntimeEvents.js";
+import { bindPixiInteractionRuntimeEvents } from "@/features/canvas/infrastructure/rendering/pixi/bindPixiInteractionRuntimeEvents.js";
 import {
   startBoneDrag,
   startBoneRotate,
   startBoneLength,
-} from "./PixiBoneTransformDrag.js";
-import { handleCanvasGestureCancel } from "./PixiCanvasGestures.js";
-import { PixiGestureSnapshot } from "./pixiGestureSnapshot.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiBoneTransformDrag.js";
+import { handleCanvasGestureCancel } from "@/features/canvas/infrastructure/rendering/pixi/PixiCanvasGestures.js";
+import { PixiGestureSnapshot } from "@/features/canvas/infrastructure/rendering/pixi/pixiGestureSnapshot.js";
 import {
   handleDragMove as _handleDragMoveImpl,
   handleDragEnd,
-} from "./PixiInputDrag.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiInputDrag.js";
 import {
   startMoveDrag,
   startRotateDrag,
   startPivotDrag,
   startResizeDrag,
   startSkeletonDrag,
-} from "./PixiInputDragStart.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiInputDragStart.js";
 import {
   createGizmoHandles,
   createWarpHandles,
   createSkeletonHandles,
   clearHandles,
   removeListener,
-} from "./PixiInputHandles.js";
-import { getPointerClientPosition } from "./PixiPointerBounds.js";
-import { startPoseHandleDrag } from "./PixiPoseGestures.js";
-import { startWarpDrag } from "./PixiWarpGestures.js";
-
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiInputHandles.js";
 import type {
   EditorRuntimePort,
   FramePoseSnapshot,
   PixiInteractionSystemOptions,
   PointerInput,
-} from "./pixiInteractionContracts.types.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
 import type {
   BoundListener,
   DragState,
-} from "./pixiInteractionDragContracts.types.js";
-import type { PoseHandleFrame } from "./PixiPoseGestures.types.js";
-import type { PixiViewportBridge } from "./PixiViewportBridge.js";
-import type {
-  CanvasAnimationRuntimePort,
-  CanvasDraftPoseValue,
-} from "../../../application/canvasRenderer.types.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionDragContracts.types.js";
+import { getPointerClientPosition } from "@/features/canvas/infrastructure/rendering/pixi/PixiPointerBounds.js";
+import { startPoseHandleDrag } from "@/features/canvas/infrastructure/rendering/pixi/PixiPoseGestures.js";
+import type { PoseHandleFrame } from "@/features/canvas/infrastructure/rendering/pixi/PixiPoseGestures.types.js";
+import type { PixiViewportBridge } from "@/features/canvas/infrastructure/rendering/pixi/PixiViewportBridge.js";
+import { startWarpDrag } from "@/features/canvas/infrastructure/rendering/pixi/PixiWarpGestures.js";
+
 import type { Container, FederatedPointerEvent } from "pixi.js";
 import type { RefObject } from "react";
 

@@ -1,13 +1,15 @@
-import { clamp, rectIntersectionOverUnion } from "./imageMath.js";
-import { reconcileGrouping } from "./partGrouping.js";
-
-import type { DetectedRegion } from "./contracts.types.js";
-import type { RegionGrouping } from "./partGrouping.types.js";
+import type { DetectedRegion } from "@/features/modular-sprite/domain/contracts.types.js";
+import {
+  clamp,
+  rectIntersectionOverUnion,
+} from "@/features/modular-sprite/domain/imageMath.js";
+import { reconcileGrouping } from "@/features/modular-sprite/domain/partGrouping.js";
+import type { RegionGrouping } from "@/features/modular-sprite/domain/partGrouping.types.js";
 import type {
   RegionMapping,
   RegionReconciliationReport,
   RegionReconciliationResult,
-} from "./regionReconciliation.types.js";
+} from "@/features/modular-sprite/domain/regionReconciliation.types.js";
 
 function centerDistance(left: DetectedRegion, right: DetectedRegion): number {
   return Math.hypot(

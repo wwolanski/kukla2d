@@ -12,7 +12,7 @@
  * @param {number}            [gridSpacing=30]
  * @returns {Array<[number,number]>}
  */
-import type { Point2D } from "./contour.types.js";
+import type { Point2D } from "@/features/canvas/domain/mesh-generation/contour.types.js";
 
 export function sampleInterior(
   data: Uint8ClampedArray,

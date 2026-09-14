@@ -2,7 +2,7 @@ import type { Bone, Node } from "@kukla2d/contracts";
 
 import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 
-import type { EffectiveMeshFrame } from "./meshDeformation.types.js";
+import type { EffectiveMeshFrame } from "@/features/canvas/domain/meshDeformation.types.js";
 
 export interface FrameAnimationState {
   activeAnimationId: string | null;

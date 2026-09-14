@@ -5,11 +5,10 @@ import type {
   Track,
 } from "@kukla2d/contracts";
 
-import { checkBoomerangTimeBlocked } from "./animationBoomerang.js";
-import { expandGestureKeyframes } from "./keyframeProvenance.js";
-
-import type { KeyframeMatch } from "./keyframeProvenance.types.js";
-import type { MoveKeyframesPreflightResult } from "./moveKeyframesPreflight.types.js";
+import { checkBoomerangTimeBlocked } from "@/domain/animationBoomerang.js";
+import { expandGestureKeyframes } from "@/domain/keyframeProvenance.js";
+import type { KeyframeMatch } from "@/domain/keyframeProvenance.types.js";
+import type { MoveKeyframesPreflightResult } from "@/domain/moveKeyframesPreflight.types.js";
 
 interface KeyframeReference {
   targetId: AnimationTargetId;

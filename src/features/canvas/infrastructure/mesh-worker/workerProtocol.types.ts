@@ -1,7 +1,7 @@
 import type {
   MeshGenerationOptions,
   MeshGenerationResult,
-} from "../../domain/mesh-generation/generate.types.js";
+} from "@/features/canvas/domain/mesh-generation/generate.types.js";
 
 export interface MeshImageData {
   data: Uint8ClampedArray;

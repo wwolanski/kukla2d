@@ -6,20 +6,18 @@ import type {
 } from "@kukla2d/contracts";
 
 import type { PoseOverrides } from "@/domain/animationEngine.types.js";
-
-import { mapPhysicsRulesToRig } from "./mapper.js";
-import { validatePhysicsRig } from "./physicsRig.js";
-import {
-  evaluatePhysicsOutputs,
-  resetPhysics,
-  stepPhysicsResult,
-} from "./solver.js";
-
+import { mapPhysicsRulesToRig } from "@/runtime/physics/mapper.js";
+import { validatePhysicsRig } from "@/runtime/physics/physicsRig.js";
 import type {
   PhysicsOutput,
   PhysicsRig,
   PhysicsRigDiagnostic,
-} from "./physicsRig.types.js";
+} from "@/runtime/physics/physicsRig.types.js";
+import {
+  evaluatePhysicsOutputs,
+  resetPhysics,
+  stepPhysicsResult,
+} from "@/runtime/physics/solver.js";
 
 interface ManualPosePhysicsArgs {
   project: Pick<ProjectDocument, "bones" | "physics_groups" | "physicsRules">;

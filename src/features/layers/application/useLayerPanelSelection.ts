@@ -6,6 +6,7 @@ import type { EditorStore } from "@/store/editorStoreTypes.types.js";
 import type { ProjectActions } from "@/store/project/projectStoreTypes.types.js";
 
 import type { WorkflowEvent } from "@/features/canvas";
+import type { BoneTreeRow } from "@/features/layers/domain/buildBoneTreeRows.types.js";
 import {
   assignNodeToBone,
   createBoneSetupFromNode,
@@ -13,8 +14,6 @@ import {
 } from "@/features/rigging";
 
 import { uid } from "@/lib/uid";
-
-import type { BoneTreeRow } from "../domain/buildBoneTreeRows.types.js";
 
 interface SelectionModifiers {
   shiftKey: boolean;

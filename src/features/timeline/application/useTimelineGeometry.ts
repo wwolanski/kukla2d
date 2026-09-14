@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 
-import { clamp } from "@/lib/math";
+import { LAYOUT } from "@/features/timeline/domain/timelineLayout.js";
 
-import { LAYOUT } from "../domain/timelineLayout.js";
+import { clamp } from "@/lib/math";
 
 import type { RefObject } from "react";
 

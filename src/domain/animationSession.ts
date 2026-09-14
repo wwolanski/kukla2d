@@ -5,8 +5,8 @@ import type {
   ProjectDocument,
 } from "@kukla2d/contracts";
 
-import { ANIMATION_DEFAULTS } from "./animationDefaults.js";
-import { frameToTime } from "./animationTransport.js";
+import { ANIMATION_DEFAULTS } from "@/domain/animationDefaults.js";
+import { frameToTime } from "@/domain/animationTransport.js";
 
 interface AnimationSession {
   activeAnimationId: AnimationId | null;

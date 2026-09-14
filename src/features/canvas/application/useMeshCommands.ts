@@ -5,6 +5,7 @@ import type { BoneId, PartNode, ProjectDocument } from "@kukla2d/contracts";
 import { useEditorStore } from "@/store/editorStore";
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
 
+import type { CanvasSceneGateway } from "@/features/canvas/application/canvasApplication.types.js";
 import { applyLegacyJointWeights } from "@/features/canvas/domain/legacySkinning.js";
 import type {
   MeshGenerationOptions,
@@ -19,7 +20,6 @@ import type { MeshTopologyImpact } from "@/features/canvas/domain/meshTopologyCo
 import { bindMeshToBone } from "@/features/canvas/domain/meshWeighting.js";
 import type { WorkflowEvent } from "@/features/canvas/domain/workflowContracts.types.js";
 
-import type { CanvasSceneGateway } from "./canvasApplication.types.js";
 import type { RefObject } from "react";
 
 type MeshBindingResult =

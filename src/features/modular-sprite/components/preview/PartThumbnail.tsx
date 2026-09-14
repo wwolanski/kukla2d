@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import type { ProcessedModularSprite } from "../../domain/contracts.types.js";
+import type { ProcessedModularSprite } from "@/features/modular-sprite/domain/contracts.types.js";
 
 export function PartThumbnail({
   resultRef,

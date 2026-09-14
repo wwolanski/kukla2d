@@ -1,4 +1,4 @@
-import type { RgbaImageData } from "../domain/contracts.types.js";
+import type { RgbaImageData } from "@/features/modular-sprite/domain/contracts.types.js";
 
 export const MODULAR_SPRITE_MAX_FILE_BYTES = 50 * 1024 * 1024;
 export const MODULAR_SPRITE_MAX_SIDE = 8192;

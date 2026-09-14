@@ -4,10 +4,9 @@ import type {
   RasterExportVariantId,
 } from "@kukla2d/contracts";
 
-import { computeExportFrameSpecs } from "./exportFrameSpecs.js";
-import { resolveExportPipeline } from "./exportVariantRegistry.js";
-
-import type { ExportFrameAnimation } from "./exportFrameSpecs.types.js";
+import { computeExportFrameSpecs } from "@/features/export/domain/exportFrameSpecs.js";
+import type { ExportFrameAnimation } from "@/features/export/domain/exportFrameSpecs.types.js";
+import { resolveExportPipeline } from "@/features/export/domain/exportVariantRegistry.js";
 
 const RASTER_VARIANT_IDS = new Set<RasterExportVariantId>([
   "png_sequence",

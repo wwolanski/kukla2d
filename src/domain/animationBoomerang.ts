@@ -1,8 +1,11 @@
-import type { Animation, AnimationTargetId } from '@kukla2d/contracts';
+import type { Animation, AnimationTargetId } from "@kukla2d/contracts";
 
-import { isTimelineVisibleKeyframe } from './keyframeProvenance.js';
+import { isTimelineVisibleKeyframe } from "@/domain/keyframeProvenance.js";
 
-export function getTargetAuthoredEndMs(animation: Animation, targetId: AnimationTargetId): number {
+export function getTargetAuthoredEndMs(
+  animation: Animation,
+  targetId: AnimationTargetId,
+): number {
   let latestMs = -1;
   for (const track of animation.tracks) {
     if (track.targetId !== targetId) continue;
@@ -14,22 +17,26 @@ export function getTargetAuthoredEndMs(animation: Animation, targetId: Animation
   return latestMs;
 }
 
-export function checkBoomerangEligibility(animation: Animation, targetId: AnimationTargetId):
-  | { eligible: false; reasonCode: 'no_authored_keys' | 'no_room' }
+export function checkBoomerangEligibility(
+  animation: Animation,
+  targetId: AnimationTargetId,
+):
+  | { eligible: false; reasonCode: "no_authored_keys" | "no_room" }
   | { eligible: true; sourceEndMs: number } {
   const sourceEndMs = getTargetAuthoredEndMs(animation, targetId);
   if (sourceEndMs <= 0) {
-    return { eligible: false, reasonCode: 'no_authored_keys' };
+    return { eligible: false, reasonCode: "no_authored_keys" };
   }
   if (sourceEndMs >= animation.duration) {
-    return { eligible: false, reasonCode: 'no_room' };
+    return { eligible: false, reasonCode: "no_room" };
   }
   return { eligible: true, sourceEndMs };
 }
 
-export function getBoomerangCutoff(animation: Animation, targetId: AnimationTargetId):
-  | { enabled: false }
-  | { enabled: true; sourceEndMs: number } {
+export function getBoomerangCutoff(
+  animation: Animation,
+  targetId: AnimationTargetId,
+): { enabled: false } | { enabled: true; sourceEndMs: number } {
   const targets = animation.boomerangTargets;
   if (!targets || !targets[targetId]) {
     return { enabled: false };
@@ -37,13 +44,17 @@ export function getBoomerangCutoff(animation: Animation, targetId: AnimationTarg
   return { enabled: true, sourceEndMs: targets[targetId].sourceEndMs };
 }
 
-export function checkBoomerangTimeBlocked(animation: Animation, targetId: AnimationTargetId, timeMs: number):
+export function checkBoomerangTimeBlocked(
+  animation: Animation,
+  targetId: AnimationTargetId,
+  timeMs: number,
+):
   | { blocked: false }
-  | { blocked: true; reasonCode: 'boomerang_generated_range' } {
+  | { blocked: true; reasonCode: "boomerang_generated_range" } {
   const cutoff = getBoomerangCutoff(animation, targetId);
   if (!cutoff.enabled) return { blocked: false };
   if (timeMs > cutoff.sourceEndMs) {
-    return { blocked: true, reasonCode: 'boomerang_generated_range' };
+    return { blocked: true, reasonCode: "boomerang_generated_range" };
   }
   return { blocked: false };
 }
@@ -58,7 +69,11 @@ export function checkBoomerangTimeBlocked(animation: Animation, targetId: Animat
  * At seam (t = sourceEndMs): mappedTimeMs = sourceEndMs
  * At end  (t = duration):    mappedTimeMs = 0
  */
-export function getBoomerangSourceTime(animation: Animation, targetId: AnimationTargetId, timeMs: number): {
+export function getBoomerangSourceTime(
+  animation: Animation,
+  targetId: AnimationTargetId,
+  timeMs: number,
+): {
   mappedTimeMs: number;
   isGeneratedZone: boolean;
 } {
@@ -81,6 +96,7 @@ export function getBoomerangSourceTime(animation: Animation, targetId: Animation
     return { mappedTimeMs: 0, isGeneratedZone: true };
   }
 
-  const mappedTimeMs = sourceEndMs * (duration - timeMs) / (duration - sourceEndMs);
+  const mappedTimeMs =
+    (sourceEndMs * (duration - timeMs)) / (duration - sourceEndMs);
   return { mappedTimeMs, isGeneratedZone: true };
 }

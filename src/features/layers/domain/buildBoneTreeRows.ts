@@ -6,12 +6,11 @@ import type {
   PartNode,
 } from "@kukla2d/contracts";
 
+import type { BoneTreeRow } from "@/features/layers/domain/buildBoneTreeRows.types.js";
 import {
   doesBoneInfluenceNode,
   isNodeDirectlyAssignedToBone,
 } from "@/features/rigging";
-
-import type { BoneTreeRow } from "./buildBoneTreeRows.types.js";
 
 interface BoneTreeInput {
   bones?: readonly Bone[];

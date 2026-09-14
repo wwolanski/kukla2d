@@ -2,8 +2,8 @@ import type { Bone, ConstraintId, Node } from "@kukla2d/contracts";
 
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
-import type { MeshWeightStats } from "./meshWeighting.types.js";
-import type { ScreenRect } from "./workflowContracts.types.js";
+import type { MeshWeightStats } from "@/features/canvas/domain/meshWeighting.types.js";
+import type { ScreenRect } from "@/features/canvas/domain/workflowContracts.types.js";
 
 interface CanvasOverlayFrameTarget {
   id: ConstraintId;

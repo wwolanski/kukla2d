@@ -11,7 +11,7 @@
  */
 import type { PartNode } from "@kukla2d/contracts";
 
-import type { ViewTransform } from "../../domain/coordinates.types.js";
+import type { ViewTransform } from "@/features/canvas/domain/coordinates.types.js";
 
 interface Bounds {
   x: number;

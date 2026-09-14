@@ -1,4 +1,7 @@
-import type { TimedKeyframe, TrackBinding } from "./trackBinding.types.js";
+import type {
+  TimedKeyframe,
+  TrackBinding,
+} from "@/schema/trackBinding.types.js";
 
 export const VALUE_TYPES = {
   SCALAR: "scalar",

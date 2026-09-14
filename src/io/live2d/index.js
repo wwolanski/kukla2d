@@ -11,9 +11,9 @@
  * @module io/live2d
  */
 
-export { generateModel3Json } from './model3json.js';
-export { generateCdi3Json } from './cdi3json.js';
-export { generateMotion3Json } from './motion3json.js';
-export { generateMoc3 } from './moc3writer.js';
-export { packTextureAtlas } from './textureAtlas.js';
-export { exportLive2D, exportLive2DProject } from './exporter.js';
+export { generateModel3Json } from "@/io/live2d/model3json.js";
+export { generateCdi3Json } from "@/io/live2d/cdi3json.js";
+export { generateMotion3Json } from "@/io/live2d/motion3json.js";
+export { generateMoc3 } from "@/io/live2d/moc3writer.js";
+export { packTextureAtlas } from "@/io/live2d/textureAtlas.js";
+export { exportLive2D, exportLive2DProject } from "@/io/live2d/exporter.js";

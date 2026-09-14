@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 
-import { EditorWorkflowContext } from "./EditorWorkflowContext.js";
+import { EditorWorkflowContext } from "@/features/canvas/application/EditorWorkflowContext.js";
+import type { editorWorkflowMachine } from "@/features/canvas/application/editorWorkflowMachine.js";
+import type { WorkflowEvent } from "@/features/canvas/domain/workflowContracts.types.js";
 
-import type { editorWorkflowMachine } from "./editorWorkflowMachine.js";
-import type { WorkflowEvent } from "../domain/workflowContracts.types.js";
 import type { SnapshotFrom } from "xstate";
 
 type WorkflowSnapshot = SnapshotFrom<typeof editorWorkflowMachine>;

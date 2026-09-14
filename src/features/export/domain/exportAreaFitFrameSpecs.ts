@@ -18,7 +18,7 @@ const STAGING_SAMPLE = Object.freeze([{ animationId: null, timeMs: 0 }]);
 
 import type { ProjectDocument } from "@kukla2d/contracts";
 
-import type { ExportBoundsFrameSpec } from "./exportAreaFitFrameSpecs.types.js";
+import type { ExportBoundsFrameSpec } from "@/features/export/domain/exportAreaFitFrameSpecs.types.js";
 
 function roundMs(t: number): number {
   return Math.round(t * 1000) / 1000;

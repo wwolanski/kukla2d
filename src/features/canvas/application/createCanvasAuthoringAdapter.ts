@@ -7,8 +7,7 @@ import {
 } from "@/domain/animationProperties";
 
 import { createAnimationAuthoringApi } from "@/features/animation";
-
-import type { CanvasAuthoringAdapter } from "./createCanvasAuthoringAdapter.types.js";
+import type { CanvasAuthoringAdapter } from "@/features/canvas/application/createCanvasAuthoringAdapter.types.js";
 
 function readActiveTool(state: object): string | undefined {
   if (!("activeTool" in state)) return undefined;

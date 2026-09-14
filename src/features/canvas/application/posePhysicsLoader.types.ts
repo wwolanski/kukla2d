@@ -1,4 +1,4 @@
-import type { PhysicsRuntime } from "./evaluateEditorFramePose.types.js";
+import type { PhysicsRuntime } from "@/features/canvas/application/evaluateEditorFramePose.types.js";
 
 export interface PosePhysicsLoader {
   load(

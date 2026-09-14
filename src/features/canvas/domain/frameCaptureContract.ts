@@ -7,12 +7,12 @@
  * K6: FrameCaptureResult
  *   { ok: true, dataUrl, width, height } | { ok: false, error: { code, message } }
  */
-import { isRecord } from "@/lib/guards";
-
 import type {
   FrameCaptureRequest,
   FrameCaptureResult,
-} from "./frameCaptureContract.types.js";
+} from "@/features/canvas/domain/frameCaptureContract.types.js";
+
+import { isRecord } from "@/lib/guards";
 
 type FrameCaptureFormat = "png" | "jpg" | "webp";
 

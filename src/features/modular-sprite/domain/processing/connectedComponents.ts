@@ -1,6 +1,6 @@
 import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
 
-import type { ComponentStats } from "./connectedComponents.types.js";
+import type { ComponentStats } from "@/features/modular-sprite/domain/processing/connectedComponents.types.js";
 
 const NEIGHBORS_8 = [
   [-1, -1],

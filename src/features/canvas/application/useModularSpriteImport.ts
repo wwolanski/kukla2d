@@ -10,20 +10,21 @@ import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
 import { useProjectStore } from "@/store/projectStore";
 
 import type {
+  CanvasSceneGateway,
+  CanvasTextureCache,
+  MutableRef,
+} from "@/features/canvas/application/canvasApplication.types.js";
+import {
+  computeAlphaContours,
+  computeImageBounds,
+} from "@/features/canvas/application/imageUtils.js";
+import type {
   ModularSpriteCommitRequest,
   ModularSpriteCommitResult,
   RgbaImageData,
 } from "@/features/modular-sprite";
 
 import { uid } from "@/lib/uid";
-
-import { computeAlphaContours, computeImageBounds } from "./imageUtils.js";
-
-import type {
-  CanvasSceneGateway,
-  CanvasTextureCache,
-  MutableRef,
-} from "./canvasApplication.types.js";
 
 interface UseModularSpriteImportArgs {
   projectRef: MutableRef<ProjectDocument>;

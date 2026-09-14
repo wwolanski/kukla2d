@@ -5,13 +5,13 @@ import type {
   PortableSchemaSnapshot,
 } from "@kukla2d/modular-sprite-schema";
 
-import type { ModularSpriteSchemaMetadata } from "./schemaBinding.types.js";
+import type { ModularSpriteSchemaMetadata } from "@/features/modular-sprite/application/schemaBinding.types.js";
 import type {
   ExtractedPart,
   ModularSpriteDraftPart,
   ProcessedModularSprite,
   RgbaImageData,
-} from "../domain/contracts.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
 
 export interface ModularSpriteProcessingPort {
   process(input: {

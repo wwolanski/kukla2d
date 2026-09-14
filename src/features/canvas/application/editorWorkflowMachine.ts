@@ -1,11 +1,10 @@
 import { setup } from "xstate";
 
-import { workflowActions } from "./workflowActions.js";
-
+import { workflowActions } from "@/features/canvas/application/workflowActions.js";
 import type {
   EditorWorkflowState,
   WorkflowEvent,
-} from "../domain/workflowContracts.types.js";
+} from "@/features/canvas/domain/workflowContracts.types.js";
 
 /**
  * Editor workflow machine — application orchestration for canvas input.

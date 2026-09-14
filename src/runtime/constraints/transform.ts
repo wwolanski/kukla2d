@@ -1,6 +1,6 @@
 import type { Bone, BoneId, ConstraintId } from "@kukla2d/contracts";
 
-import type { BoneOverride } from "./ik.types.js";
+import type { BoneOverride } from "@/runtime/constraints/ik.types.js";
 
 interface TransformConstraint {
   id?: ConstraintId;

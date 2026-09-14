@@ -5,25 +5,26 @@ import { computeWorldMatrices, mat3Inverse } from "@/domain/transforms";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
 import {
-  getAssignedBoneForNode,
-  getLinkedNodesForBone,
-  isBoneLinkLocked,
-} from "@/features/rigging";
-
-import {
   getEventClientPosition,
   getEventWorldPosition,
-} from "./PixiInputDrag.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiInputDrag.js";
 import {
   getAdapterEffectiveRigState,
   getEffectiveBones,
   getEffectiveNodes,
-} from "./PixiInputState.js";
-import { canStartAnimationGesture, usesPoseDraft } from "./PixiPosePreview.js";
-
-import type { PointerInput } from "./pixiInteractionContracts.types.js";
-import type { DragState } from "./pixiInteractionDragContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiInputState.js";
+import type { PointerInput } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { DragState } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
+import {
+  canStartAnimationGesture,
+  usesPoseDraft,
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiPosePreview.js";
+import {
+  getAssignedBoneForNode,
+  getLinkedNodesForBone,
+  isBoneLinkLocked,
+} from "@/features/rigging";
 
 interface ResizeFrame {
   bboxPoints: Array<{ x: number; y: number }>;

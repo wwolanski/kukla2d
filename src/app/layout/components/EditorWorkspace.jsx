@@ -1,6 +1,11 @@
 import PropTypes from "prop-types";
 import { lazy, Suspense, useCallback } from "react";
 
+import {
+  loadAnimationListPanel,
+  loadTimelinePanel,
+} from "@/app/layout/components/editorWorkspaceLazyLoaders.js";
+
 import { AutoMotionPanel } from "@/features/auto-motion";
 import { CanvasViewport } from "@/features/canvas";
 import { Inspector } from "@/features/inspector";
@@ -20,11 +25,6 @@ import {
 } from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TooltipProvider } from "@/components/ui/tooltip";
-
-import {
-  loadAnimationListPanel,
-  loadTimelinePanel,
-} from "./editorWorkspaceLazyLoaders.js";
 
 const TimelinePanel = lazy(loadTimelinePanel);
 const AnimationListPanel = lazy(loadAnimationListPanel);

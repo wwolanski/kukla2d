@@ -11,7 +11,8 @@ import type {
 
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
-import type { CanvasDraftPoseValue } from "../../../application/canvasRenderer.types.js";
+import type { CanvasDraftPoseValue } from "@/features/canvas/application/canvasRenderer.types.js";
+
 import type { Container, FederatedPointerEvent } from "pixi.js";
 
 type TransformPatch = Partial<

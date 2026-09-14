@@ -6,7 +6,7 @@
  * projectStore imports pushPatches/isBatching/clearHistory from here.
  * useUndoRedo imports undo/redo/applyPatches from here.
  */
-import "./immerPatches.js";
+import "@/store/immerPatches.js";
 import { applyPatches as immerApplyPatches, type Patch } from "immer";
 
 interface HistoryEntryMetadata {

@@ -6,19 +6,18 @@ import type {
   ProjectDocument,
 } from "@kukla2d/contracts";
 
-import { evaluateLayers } from "./animationMixer.js";
-import { evaluatePose } from "./pose.js";
-
+import type { PoseOverrides } from "@/domain/animationEngine.types.js";
+import { evaluateLayers } from "@/runtime/animationMixer.js";
 import type {
   AnimationLayer,
   RuntimeAnimationEvent,
-} from "./animationMixer.types.js";
-import type { EvaluatedPose } from "./pose.types.js";
+} from "@/runtime/animationMixer.types.js";
+import { evaluatePose } from "@/runtime/pose.js";
+import type { EvaluatedPose } from "@/runtime/pose.types.js";
 import type {
   StateMachineState,
   StateMachineTransition,
-} from "./stateMachine.types.js";
-import type { PoseOverrides } from "../domain/animationEngine.types.js";
+} from "@/runtime/stateMachine.types.js";
 
 interface RuntimeDocument {
   animations: readonly Animation[];

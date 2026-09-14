@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { EventKeyframe, EventValue } from "./eventSchema.types.js";
+import type { EventKeyframe, EventValue } from "@/schema/eventSchema.types.js";
 
 export const EventDefinitionSchema = z.object({
   id: z.string().min(1),

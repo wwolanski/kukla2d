@@ -1,7 +1,7 @@
 import type {
   DetectedRegion,
   ModularSpriteDraftPart,
-} from "./contracts.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
 
 /**
  * The complete assignment of detected regions.  A region is either owned by

@@ -4,9 +4,9 @@ import type { Animation, ProjectDocument } from "@kukla2d/contracts";
 
 import { resolveAnimations } from "@/io/resolveAnimations";
 
+import type { ExportProgress } from "@/features/export/application/exportApplicationTypes.types.js";
 import { PHASER_ATLAS_DEFAULTS } from "@/features/export/domain/phaserAtlasContract";
 
-import type { ExportProgress } from "./exportApplicationTypes.types.js";
 import type { ExportableAnimation } from "@/io/resolveAnimations.types.js";
 
 const EMPTY_ARRAY: readonly Animation[] = [];

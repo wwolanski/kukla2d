@@ -8,14 +8,13 @@ import type { EditorStore } from "@/store/editorStoreTypes.types.js";
 import { computePoseOverrides } from "@/domain/animationEngine";
 import { computeWorldMatrices } from "@/domain/transforms";
 
-import type { ViewTransform } from "@/features/canvas/domain/coordinates.types.js";
-import { findAlphaHit } from "@/features/canvas/domain/picking.js";
-
 import type {
   CanvasSceneGateway,
   CanvasTextureCache,
   MutableRef,
-} from "./canvasApplication.types.js";
+} from "@/features/canvas/application/canvasApplication.types.js";
+import type { ViewTransform } from "@/features/canvas/domain/coordinates.types.js";
+import { findAlphaHit } from "@/features/canvas/domain/picking.js";
 
 type WorldMatrices = ReturnType<typeof computeWorldMatrices>;
 

@@ -8,14 +8,14 @@ import { useEditorStore } from "@/store/editorStore";
 import type { EditorStore } from "@/store/editorStoreTypes.types.js";
 import { useProjectStore } from "@/store/projectStore";
 
-import { FRAME_RELEVANT_EDITOR_FIELDS } from "@/features/canvas/domain/frameEditorFields.js";
-import type { EditorWorkflowState } from "@/features/canvas/domain/workflowContracts.types.js";
-
 import type {
   CanvasEditorSnapshot,
   MutableRef,
-} from "./canvasApplication.types.js";
-import type { editorWorkflowMachine } from "./editorWorkflowMachine.js";
+} from "@/features/canvas/application/canvasApplication.types.js";
+import type { editorWorkflowMachine } from "@/features/canvas/application/editorWorkflowMachine.js";
+import { FRAME_RELEVANT_EDITOR_FIELDS } from "@/features/canvas/domain/frameEditorFields.js";
+import type { EditorWorkflowState } from "@/features/canvas/domain/workflowContracts.types.js";
+
 import type { ActorRefFrom } from "xstate";
 
 type WorkflowActorRef = ActorRefFrom<typeof editorWorkflowMachine>;

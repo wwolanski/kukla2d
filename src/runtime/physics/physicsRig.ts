@@ -1,14 +1,14 @@
 import type { BoneId } from "@kukla2d/contracts";
 
-import { isRecord } from "@/lib/guards";
-import { isFiniteNumber } from "@/lib/math";
-
 import type {
   PhysicsOutput,
   PhysicsRig,
   PhysicsRigDiagnostic,
   Vector2,
-} from "./physicsRig.types.js";
+} from "@/runtime/physics/physicsRig.types.js";
+
+import { isRecord } from "@/lib/guards";
+import { isFiniteNumber } from "@/lib/math";
 
 interface PhysicsParticle {
   id: string;

@@ -7,11 +7,10 @@ import {
   evaluateReactionModifiers,
 } from "@/domain/autoMotion/modifierEvaluation.js";
 
+import type { CanvasEditorSnapshot } from "@/features/canvas/application/canvasApplication.types.js";
+import type { PhysicsRuntime } from "@/features/canvas/application/evaluateEditorFramePose.types.js";
 import { buildFramePose } from "@/features/canvas/domain/framePose.js";
 import type { FramePose } from "@/features/canvas/domain/framePose.types.js";
-
-import type { CanvasEditorSnapshot } from "./canvasApplication.types.js";
-import type { PhysicsRuntime } from "./evaluateEditorFramePose.types.js";
 
 interface EvaluateEditorFramePoseArgs {
   project: ProjectDocument;

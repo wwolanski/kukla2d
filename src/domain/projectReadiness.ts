@@ -7,7 +7,7 @@ import type {
   ProjectReadinessIssue,
   ProjectReadinessReport,
   ProjectReadinessTarget,
-} from "./projectReadiness.types.js";
+} from "@/domain/projectReadiness.types.js";
 
 type ProjectReadinessInput = Partial<ProjectDocument>;
 type IssueClassification = "baked" | "dropped";

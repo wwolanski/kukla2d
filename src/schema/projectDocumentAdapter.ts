@@ -4,7 +4,7 @@ import { createEmptyProject } from "@/core/createEmptyProject";
 
 import { normalizeAnimations } from "@/domain/animationDocument.js";
 
-import type { ValidatedProjectDocument } from "./projectSchema.types.js";
+import type { ValidatedProjectDocument } from "@/schema/projectSchema.types.js";
 
 type PersistedProjectFields = Pick<
   ProjectDocument,

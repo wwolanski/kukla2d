@@ -1,4 +1,4 @@
-import type { ExportEncoder } from "./exportApplicationTypes.types.js";
+import type { ExportEncoder } from "@/features/export/application/exportApplicationTypes.types.js";
 
 /** @param {string} variantId */
 export function resolveExportEncoder(

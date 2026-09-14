@@ -1,4 +1,4 @@
-import type { EditorStore } from "./editorStoreTypes.types.js";
+import type { EditorStore } from "@/store/editorStoreTypes.types.js";
 
 export const editorSelectors = {
   selection: (state: EditorStore) => state.selection,

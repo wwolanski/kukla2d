@@ -5,9 +5,11 @@ import type { Node, PartNode } from "@kukla2d/contracts";
 import type { EditorStore } from "@/store/editorStoreTypes.types.js";
 import type { ProjectActions } from "@/store/project/projectStoreTypes.types.js";
 
-import { useDragSession } from "./useDragSession.js";
-
-import type { DragSession, DropPosition } from "../domain/dragSession.types.js";
+import { useDragSession } from "@/features/layers/application/useDragSession.js";
+import type {
+  DragSession,
+  DropPosition,
+} from "@/features/layers/domain/dragSession.types.js";
 
 interface LayerPanelDepthDndOptions {
   nodes: readonly Node[];

@@ -10,8 +10,7 @@ import {
   getPresetDefaultParams,
 } from "@/domain/autoMotion/presetRegistry.js";
 
-import { clearPreviewModifierDraft } from "./previewModifierStore.js";
-
+import { clearPreviewModifierDraft } from "@/features/auto-motion/application/previewModifierStore.js";
 import type {
   Bindings,
   BindingValue,
@@ -20,7 +19,7 @@ import type {
   MotionPresetId,
   UseAddMotionWizardProps,
   UseAddMotionWizardResult,
-} from "./useAddMotionWizard.types.js";
+} from "@/features/auto-motion/application/useAddMotionWizard.types.js";
 
 export const IDLE_BREATHING_ID = "builtin.idleBreathing";
 export const HEAD_CHEEK_JIGGLE_ID = "builtin.headCheekJiggle";

@@ -1,4 +1,4 @@
-import type { AnimationStore } from "./animationStoreTypes.types.js";
+import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
 
 export const animationSelectors = {
   activeAnimationId: (state: AnimationStore) => state.activeAnimationId,

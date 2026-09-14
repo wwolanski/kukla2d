@@ -1,7 +1,7 @@
 /**
  * Resolve which animations to export based on animTarget.
  */
-import type { ExportableAnimation } from "./resolveAnimations.types.js";
+import type { ExportableAnimation } from "@/io/resolveAnimations.types.js";
 
 type AnimationExportTarget = string;
 

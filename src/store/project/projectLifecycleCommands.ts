@@ -2,18 +2,16 @@ import { produce } from "immer";
 
 import { createEmptyProject } from "@/core/createEmptyProject";
 
-import { clearHistory } from "@/store/undoHistory";
-
-import { notifyProjectChanged } from "@/domain/animationLifecycle.js";
-
-import { prepareLoadedProjectState } from "./projectStoreShared.js";
-
+import { prepareLoadedProjectState } from "@/store/project/projectStoreShared.js";
 import type {
   ProjectActions,
   ProjectStore,
   ProjectStoreGet,
   ProjectStoreSet,
-} from "./projectStoreTypes.types.js";
+} from "@/store/project/projectStoreTypes.types.js";
+import { clearHistory } from "@/store/undoHistory";
+
+import { notifyProjectChanged } from "@/domain/animationLifecycle.js";
 
 type ProjectLifecycleCommands = Pick<
   ProjectActions,

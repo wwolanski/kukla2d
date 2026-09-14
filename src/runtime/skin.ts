@@ -1,8 +1,7 @@
 import type { BoneId, VertexInfluence } from "@kukla2d/contracts";
 
-import { mat3Mul } from "../domain/transforms.js";
-
-import type { Matrix3 } from "../domain/transforms.types.js";
+import { mat3Mul } from "@/domain/transforms.js";
+import type { Matrix3 } from "@/domain/transforms.types.js";
 
 interface SkinningDiagnostic {
   code:

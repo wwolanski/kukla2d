@@ -13,10 +13,9 @@ import type {
   VertexInfluence,
 } from "@kukla2d/contracts";
 
-import { retriangulate } from "./mesh-generation/generate.js";
-import { applyWeightBrush } from "./meshWeighting.js";
-
-import type { MeshGenerationOptions } from "./mesh-generation/generate.types.js";
+import { retriangulate } from "@/features/canvas/domain/mesh-generation/generate.js";
+import type { MeshGenerationOptions } from "@/features/canvas/domain/mesh-generation/generate.types.js";
+import { applyWeightBrush } from "@/features/canvas/domain/meshWeighting.js";
 
 interface ImageBounds {
   minX: number;

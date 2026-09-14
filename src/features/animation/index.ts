@@ -1,12 +1,12 @@
-export { createAnimationAuthoringApi } from "./application/createAnimationAuthoringApi.js";
+export { createAnimationAuthoringApi } from "@/features/animation/application/createAnimationAuthoringApi.js";
 export type {
   AnimationAuthoringApi,
   AnimationCommitResult,
-} from "./application/createAnimationAuthoringApi.types.js";
+} from "@/features/animation/application/createAnimationAuthoringApi.types.js";
 export {
   inspectorClearPoseTarget,
   inspectorCommit,
   inspectorPosePreview,
   inspectorPreview,
   isAnimationMode,
-} from "./application/useInspectorAuthoring.js";
+} from "@/features/animation/application/useInspectorAuthoring.js";

@@ -1,8 +1,14 @@
 import type { BoneId } from "@kukla2d/contracts";
 
-import { evaluatePhysicsOutputs, resetPhysics, stepPhysics } from "./solver.js";
-
-import type { PhysicsRig, Vector2 } from "./physicsRig.types.js";
+import type {
+  PhysicsRig,
+  Vector2,
+} from "@/runtime/physics/physicsRig.types.js";
+import {
+  evaluatePhysicsOutputs,
+  resetPhysics,
+  stepPhysics,
+} from "@/runtime/physics/solver.js";
 
 interface PhysicsInputSample {
   time: number;

@@ -1,22 +1,40 @@
-import { useRef, useCallback, useState, useEffect, lazy, Suspense } from 'react';
+import {
+  useRef,
+  useCallback,
+  useState,
+  useEffect,
+  lazy,
+  Suspense,
+} from "react";
 
-import { useTheme } from '@/app/providers/theme/useTheme.js';
+import { EditorHeader } from "@/app/layout/components/EditorHeader.jsx";
+import { EditorModals } from "@/app/layout/components/EditorModals.jsx";
+import { EditorWorkspace } from "@/app/layout/components/EditorWorkspace.jsx";
+import { useBeforeUnloadWarning } from "@/app/layout/hooks/useBeforeUnloadWarning.js";
+import { useEditorModeController } from "@/app/layout/hooks/useEditorModeController.js";
+import { useTheme } from "@/app/providers/theme/useTheme.js";
 
-import { useEditorStore } from '@/store/editorStore';
-import { useProjectStore } from '@/store/projectStore';
-import { undo, redo, undoCount, redoCount, applyPatches } from '@/store/undoHistory';
+import { useEditorStore } from "@/store/editorStore";
+import { useProjectStore } from "@/store/projectStore";
+import {
+  undo,
+  redo,
+  undoCount,
+  redoCount,
+  applyPatches,
+} from "@/store/undoHistory";
 
-import { EditorWorkflowContext } from '@/features/canvas';
-import { useProjectSession, useRecoveryScheduler, RecoveryPrompt } from '@/features/projects';
-
-import { EditorHeader } from './components/EditorHeader.jsx';
-import { EditorModals } from './components/EditorModals.jsx';
-import { EditorWorkspace } from './components/EditorWorkspace.jsx';
-import { useBeforeUnloadWarning } from './hooks/useBeforeUnloadWarning.js';
-import { useEditorModeController } from './hooks/useEditorModeController.js';
+import { EditorWorkflowContext } from "@/features/canvas";
+import {
+  useProjectSession,
+  useRecoveryScheduler,
+  RecoveryPrompt,
+} from "@/features/projects";
 
 const ModeTransitionDialog = lazy(() =>
-  import('./components/ModeTransitionDialog.jsx').then(m => ({ default: m.ModeTransitionDialog }))
+  import("@/app/layout/components/ModeTransitionDialog.jsx").then((m) => ({
+    default: m.ModeTransitionDialog,
+  })),
 );
 
 export default function EditorLayout() {
@@ -28,22 +46,31 @@ export default function EditorLayout() {
   const importRef = useRef(null);
   const exportCaptureRef = useRef(null);
   const thumbCaptureRef = useRef(null);
-  const sourceIdentityRef = useRef({ sourceProjectId: null, sourceProjectName: null });
+  const sourceIdentityRef = useRef({
+    sourceProjectId: null,
+    sourceProjectName: null,
+  });
 
-  const mode = useEditorStore(s => s.editorMode);
-  const editorStarted = useEditorStore(s => s.editorStarted);
+  const mode = useEditorStore((s) => s.editorMode);
+  const editorStarted = useEditorStore((s) => s.editorStarted);
 
-  const project = useProjectStore(s => s.project);
-  const hasUnsavedChanges = useProjectStore(s => s.hasUnsavedChanges);
+  const project = useProjectStore((s) => s.project);
+  const hasUnsavedChanges = useProjectStore((s) => s.hasUnsavedChanges);
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
-  const [modularSpriteEditor, setModularSpriteEditor] = useState({ open: false, existingId: null });
+  const [modularSpriteEditor, setModularSpriteEditor] = useState({
+    open: false,
+    existingId: null,
+  });
   const [recoveryRecord, setRecoveryRecord] = useState(null);
   const [recoveryError, setRecoveryError] = useState(null);
 
   const getSourceIdentity = useCallback(() => sourceIdentityRef.current, []);
-  const recovery = useRecoveryScheduler({ enabled: editorStarted, getSourceIdentity });
+  const recovery = useRecoveryScheduler({
+    enabled: editorStarted,
+    getSourceIdentity,
+  });
   const { clearRecovery, readRecovery, status: recoveryStatus } = recovery;
 
   const projectSession = useProjectSession({
@@ -68,7 +95,7 @@ export default function EditorLayout() {
   useTheme();
   useBeforeUnloadWarning(hasUnsavedChanges);
 
-  const startEditor = useEditorStore(s => s.startEditor);
+  const startEditor = useEditorStore((s) => s.startEditor);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,38 +104,53 @@ export default function EditorLayout() {
         if (!cancelled && record) setRecoveryRecord(record);
       })
       .catch((error) => {
-        if (!cancelled) console.error('[Recovery] Failed to read recovery:', error);
+        if (!cancelled)
+          console.error("[Recovery] Failed to read recovery:", error);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [readRecovery]);
 
-  const handleRestoreRecovery = useCallback(async (record) => {
-    if (!record?.archive || !loadRef.current) return false;
-    const file = new File([record.archive], 'recovery.kk2d', { type: 'application/zip' });
-    try {
-      const result = await loadRef.current(file);
-      if (!result?.success) throw result?.error ?? new Error('Recovery load failed');
-      useProjectStore.getState().setHasUnsavedChanges(true);
-      startEditor();
-      const cleared = await clearRecovery();
-      if (!cleared) {
-        setRecoveryError('Project restored, but the recovery copy could not be removed. Try Discard again.');
+  const handleRestoreRecovery = useCallback(
+    async (record) => {
+      if (!record?.archive || !loadRef.current) return false;
+      const file = new File([record.archive], "recovery.kk2d", {
+        type: "application/zip",
+      });
+      try {
+        const result = await loadRef.current(file);
+        if (!result?.success)
+          throw result?.error ?? new Error("Recovery load failed");
+        useProjectStore.getState().setHasUnsavedChanges(true);
+        startEditor();
+        const cleared = await clearRecovery();
+        if (!cleared) {
+          setRecoveryError(
+            "Project restored, but the recovery copy could not be removed. Try Discard again.",
+          );
+          return false;
+        }
+        setRecoveryRecord(null);
+        setRecoveryError(null);
+        return true;
+      } catch (err) {
+        console.error("[Recovery] Failed to restore:", err);
+        setRecoveryError(
+          "Recovery could not be restored. The recovery copy was kept.",
+        );
         return false;
       }
-      setRecoveryRecord(null);
-      setRecoveryError(null);
-      return true;
-    } catch (err) {
-      console.error('[Recovery] Failed to restore:', err);
-      setRecoveryError('Recovery could not be restored. The recovery copy was kept.');
-      return false;
-    }
-  }, [clearRecovery, startEditor]);
+    },
+    [clearRecovery, startEditor],
+  );
 
   const handleDiscardRecovery = useCallback(async () => {
     const cleared = await clearRecovery();
     if (!cleared) {
-      setRecoveryError('Recovery could not be discarded. The recovery copy was kept.');
+      setRecoveryError(
+        "Recovery could not be discarded. The recovery copy was kept.",
+      );
       return false;
     }
     setRecoveryRecord(null);
@@ -140,7 +182,7 @@ export default function EditorLayout() {
     });
   }, []);
 
-  const isAnimationMode = mode === 'animation';
+  const isAnimationMode = mode === "animation";
   const canUndo = undoCount() > 0;
   const canRedo = redoCount() > 0;
 
@@ -173,8 +215,12 @@ export default function EditorLayout() {
           onRemesh={handleRemesh}
           onDeleteMesh={handleDeleteMesh}
           onLoadExampleProject={projectSession.handleLoadExampleProject}
-          onImportModularSprite={() => setModularSpriteEditor({ open: true, existingId: null })}
-          onEditModularSprite={(existingId) => setModularSpriteEditor({ open: true, existingId })}
+          onImportModularSprite={() =>
+            setModularSpriteEditor({ open: true, existingId: null })
+          }
+          onEditModularSprite={(existingId) =>
+            setModularSpriteEditor({ open: true, existingId })
+          }
         />
 
         <EditorModals
@@ -210,12 +256,20 @@ export default function EditorLayout() {
           />
         </Suspense>
 
-        <div className="sr-only" data-recovery-status={recoveryStatus} aria-live="polite">
+        <div
+          className="sr-only"
+          data-recovery-status={recoveryStatus}
+          aria-live="polite"
+        >
           Recovery status: {recoveryStatus}
         </div>
-        {recoveryStatus === 'failed' && (
-          <div className="fixed bottom-3 right-3 z-50 rounded-md border border-destructive/40 bg-background px-3 py-2 text-sm text-destructive" role="status">
-            Workspace recovery could not be saved. Use Save Project to protect your work.
+        {recoveryStatus === "failed" && (
+          <div
+            className="fixed bottom-3 right-3 z-50 rounded-md border border-destructive/40 bg-background px-3 py-2 text-sm text-destructive"
+            role="status"
+          >
+            Workspace recovery could not be saved. Use Save Project to protect
+            your work.
           </div>
         )}
       </div>

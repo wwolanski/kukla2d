@@ -1,5 +1,14 @@
 import type { ProjectDocument, Vertex } from "@kukla2d/contracts";
 
+import type {
+  CanvasFrame,
+  CanvasMeshData,
+  CanvasTextureSource,
+  CaptureOptions,
+  DrawFrameOptions,
+  EditorView,
+  RendererResourceRegistry,
+} from "@/features/canvas/application/canvasRenderer.types.js";
 import {
   createPerformanceCounters,
   incrementCounter,
@@ -11,27 +20,17 @@ import type {
   PixiPerformanceCounters,
   PixiRuntimeStats,
 } from "@/features/canvas/domain/pixiPerformanceMetrics.types.js";
+import { PixiAppLifecycle } from "@/features/canvas/infrastructure/rendering/pixi/PixiAppLifecycle.js";
+import { PixiCaptureService } from "@/features/canvas/infrastructure/rendering/pixi/PixiCaptureService.js";
+import { PixiFrameRenderer } from "@/features/canvas/infrastructure/rendering/pixi/PixiFrameRenderer.js";
+import type { PixiInteractionSystemOptions } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
+import { PixiLayerGraph } from "@/features/canvas/infrastructure/rendering/pixi/PixiLayerGraph.js";
+import { PixiOverlayRenderer } from "@/features/canvas/infrastructure/rendering/pixi/PixiOverlayRenderer.js";
+import { PixiResourceRegistry } from "@/features/canvas/infrastructure/rendering/pixi/PixiResourceRegistry.js";
+import type { PixiSceneGatewayOptions } from "@/features/canvas/infrastructure/rendering/pixi/PixiSceneGateway.types.js";
+import type { PixiViewportBridge } from "@/features/canvas/infrastructure/rendering/pixi/PixiViewportBridge.js";
 
-import { PixiAppLifecycle } from "./PixiAppLifecycle.js";
-import { PixiCaptureService } from "./PixiCaptureService.js";
-import { PixiFrameRenderer } from "./PixiFrameRenderer.js";
-import { PixiInteractionSystem } from "./PixiInteractionSystem.js";
-import { PixiLayerGraph } from "./PixiLayerGraph.js";
-import { PixiOverlayRenderer } from "./PixiOverlayRenderer.js";
-import { PixiResourceRegistry } from "./PixiResourceRegistry.js";
-
-import type { PixiInteractionSystemOptions } from "./pixiInteractionContracts.types.js";
-import type { PixiSceneGatewayOptions } from "./PixiSceneGateway.types.js";
-import type { PixiViewportBridge } from "./PixiViewportBridge.js";
-import type {
-  CanvasFrame,
-  CanvasMeshData,
-  CanvasTextureSource,
-  CaptureOptions,
-  DrawFrameOptions,
-  EditorView,
-  RendererResourceRegistry,
-} from "../../../application/canvasRenderer.types.js";
 import type { Application, Container } from "pixi.js";
 
 interface StagedCanvasResources {

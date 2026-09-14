@@ -6,7 +6,15 @@ import {
   type Track,
 } from "@kukla2d/contracts";
 
-import { checkBoomerangTimeBlocked } from "./animationBoomerang.js";
+import { checkBoomerangTimeBlocked } from "@/domain/animationBoomerang.js";
+import type {
+  AnimationCommandResult,
+  DeleteAnimationKeyframesPayload,
+  MoveAnimationKeyframesPayload,
+  SetAnimationKeyframeEasingPayload,
+  UpsertAnimationKeyframePayload,
+  UpsertAnimationKeyframesPayload,
+} from "@/domain/animationCommandTypes.types.js";
 import {
   assertFiniteNumber,
   assertString,
@@ -19,27 +27,18 @@ import {
   removeSupersededMaterializedKeyframes,
   sortTrackKeyframes,
   trackKey,
-} from "./animationDocumentCommandSupport.js";
-import { validateAnimationEditBatch } from "./animationKeyframeBatchCommands.js";
+} from "@/domain/animationDocumentCommandSupport.js";
+import { validateAnimationEditBatch } from "@/domain/animationKeyframeBatchCommands.js";
 import {
   easingEquals,
   isSupportedTrackProperty,
   isValidEasing,
   validateTrackValue,
-} from "./animationProperties.js";
+} from "@/domain/animationProperties.js";
 import {
   expandGestureKeyframes,
   normalizeKeyframeAuthoring,
-} from "./keyframeProvenance.js";
-
-import type {
-  AnimationCommandResult,
-  DeleteAnimationKeyframesPayload,
-  MoveAnimationKeyframesPayload,
-  SetAnimationKeyframeEasingPayload,
-  UpsertAnimationKeyframePayload,
-  UpsertAnimationKeyframesPayload,
-} from "./animationCommandTypes.types.js";
+} from "@/domain/keyframeProvenance.js";
 
 export function upsertAnimationKeyframe(
   project: ProjectDocument,

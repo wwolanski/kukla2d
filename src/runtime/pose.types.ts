@@ -1,6 +1,6 @@
 import type { BoneId, NodeId } from "@kukla2d/contracts";
 
-import type { Matrix3 } from "../domain/transforms.types.js";
+import type { Matrix3 } from "@/domain/transforms.types.js";
 
 export interface BoneTransformOverride {
   x?: number;

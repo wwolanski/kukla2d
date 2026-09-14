@@ -3,7 +3,7 @@ import type {
   DragSourceKind,
   DragTargetKind,
   DropPosition,
-} from "./dragSession.types.js";
+} from "@/features/layers/domain/dragSession.types.js";
 
 interface DropPositionInput {
   clientY?: number;

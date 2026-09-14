@@ -23,12 +23,11 @@ import {
 } from "@/domain/transforms.js";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
+import type { EffectiveMeshFrame } from "@/features/canvas/domain/meshDeformation.types.js";
+import { normalizeVertexInfluences } from "@/features/canvas/domain/meshEditing.js";
+import { buildRestGrid } from "@/features/canvas/domain/warpKeyframes.js";
+
 import { clamp, isFiniteNumber, lerp } from "@/lib/math";
-
-import { normalizeVertexInfluences } from "./meshEditing.js";
-import { buildRestGrid } from "./warpKeyframes.js";
-
-import type { EffectiveMeshFrame } from "./meshDeformation.types.js";
 
 const WARP_DEFAULTS = Object.freeze({
   col: 2,

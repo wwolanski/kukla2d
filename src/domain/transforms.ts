@@ -14,7 +14,7 @@ import { mat3 } from "gl-matrix";
 
 import type { Node, Transform } from "@kukla2d/contracts";
 
-import type { Matrix3 } from "./transforms.types.js";
+import type { Matrix3 } from "@/domain/transforms.types.js";
 
 type TransformLike = Partial<Transform> | null | undefined;
 

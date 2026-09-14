@@ -1,6 +1,6 @@
 import type { Vertex } from "@kukla2d/contracts";
 
-import type { Triangle } from "./delaunay.types.js";
+import type { Triangle } from "@/features/canvas/domain/mesh-generation/delaunay.types.js";
 
 export interface MeshGenerationOptions {
   alphaThreshold?: number;

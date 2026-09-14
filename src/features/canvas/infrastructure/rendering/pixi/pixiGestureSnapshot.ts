@@ -1,11 +1,11 @@
 import type { ProjectDocument } from "@kukla2d/contracts";
 
-import type { EditorCommand } from "@/features/canvas/domain/workflowContracts.types.js";
-
 import type {
   CanvasAnimationRuntimePort,
   CanvasDraftPoseValue,
-} from "../../../application/canvasRenderer.types.js";
+} from "@/features/canvas/application/canvasRenderer.types.js";
+import type { EditorCommand } from "@/features/canvas/domain/workflowContracts.types.js";
+
 import type { RefObject } from "react";
 
 interface GestureSnapshotPort {

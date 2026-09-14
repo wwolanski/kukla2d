@@ -8,7 +8,7 @@ import type {
   CanvasSceneGateway,
   CanvasTextureCache,
   MutableRef,
-} from "./canvasApplication.types.js";
+} from "@/features/canvas/application/canvasApplication.types.js";
 
 interface CanvasGpuSyncArgs {
   sceneGatewayRef: MutableRef<CanvasSceneGateway | null>;

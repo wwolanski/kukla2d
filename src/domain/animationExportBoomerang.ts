@@ -1,8 +1,10 @@
 import type { Animation, Keyframe, Track } from "@kukla2d/contracts";
 
-import { interpolateTrack, interpolateMeshVerts } from "./animationEngine.js";
-
-import type { AnimationEasing } from "./animationCommandTypes.types.js";
+import type { AnimationEasing } from "@/domain/animationCommandTypes.types.js";
+import {
+  interpolateTrack,
+  interpolateMeshVerts,
+} from "@/domain/animationEngine.js";
 
 /**
  * Deep-clone a plain animation object (JSON-safe only; no functions/Map/Set).

@@ -4,7 +4,7 @@ import type {
   ProjectActions,
   ProjectStore,
   ProjectStoreSet,
-} from "./projectStoreTypes.types.js";
+} from "@/store/project/projectStoreTypes.types.js";
 
 type ProjectPhysicsRuleCommands = Pick<
   ProjectActions,

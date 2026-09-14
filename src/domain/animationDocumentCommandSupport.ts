@@ -10,11 +10,10 @@ import {
   type Track,
 } from "@kukla2d/contracts";
 
+import { checkBoomerangEligibility } from "@/domain/animationBoomerang.js";
+import type { AnimationKeyframeInput } from "@/domain/animationCommandTypes.types.js";
+
 import { isFiniteNumber } from "@/lib/math";
-
-import { checkBoomerangEligibility } from "./animationBoomerang.js";
-
-import type { AnimationKeyframeInput } from "./animationCommandTypes.types.js";
 
 interface CommandErrorDetails {
   [key: string]: unknown;

@@ -1,12 +1,11 @@
 /// <reference lib="webworker" />
 
-import { handleModularSpriteTask } from "./workerTaskHandler.js";
-
 import type {
   ModularSpriteWorkerRequest,
   ModularSpriteWorkerResponse,
-} from "./workerProtocol.types.js";
-import type { ModularSpriteTaskRuntime } from "./workerTaskHandler.types.js";
+} from "@/features/modular-sprite/infrastructure/workerProtocol.types.js";
+import { handleModularSpriteTask } from "@/features/modular-sprite/infrastructure/workerTaskHandler.js";
+import type { ModularSpriteTaskRuntime } from "@/features/modular-sprite/infrastructure/workerTaskHandler.types.js";
 
 const workerScope = globalThis as typeof globalThis &
   DedicatedWorkerGlobalScope;

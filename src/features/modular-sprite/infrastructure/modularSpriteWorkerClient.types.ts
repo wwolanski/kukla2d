@@ -6,7 +6,7 @@ import type {
   ProcessedModularSprite,
   ProcessModularSpriteRequest,
   RgbaImageData,
-} from "../domain/contracts.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
 
 export interface ModularSpriteWorkerClient {
   warm(image: RgbaImageData): Promise<void>;

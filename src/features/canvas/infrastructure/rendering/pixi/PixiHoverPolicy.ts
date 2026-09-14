@@ -3,8 +3,8 @@ import {
   HOVER_SOURCE_CANVAS,
 } from "@/domain/hoverPolicy.js";
 
-import type { EditorRuntimePort } from "./pixiInteractionContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+import type { EditorRuntimePort } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
 
 export function suppressPassiveCanvasHover(
   adapter: PixiInteractionSystem,

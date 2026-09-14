@@ -12,12 +12,10 @@ import {
 } from "@/features/canvas/domain/picking.js";
 import type { buildSkeletonFrame } from "@/features/canvas/domain/skeletonFrame.js";
 import type { WarpLatticeFrame } from "@/features/canvas/domain/warpLatticeFrame.types.js";
-
-import { getAdapterEffectiveRigState } from "./PixiInputState.js";
-
-import type { PointerInput } from "./pixiInteractionContracts.types.js";
-import type { BoundListener } from "./pixiInteractionDragContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+import { getAdapterEffectiveRigState } from "@/features/canvas/infrastructure/rendering/pixi/PixiInputState.js";
+import type { PointerInput } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { BoundListener } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
 
 type SkeletonFrame = NonNullable<ReturnType<typeof buildSkeletonFrame>>;
 type PointerHandler = (event: FederatedPointerEvent) => void;

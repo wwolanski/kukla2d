@@ -5,19 +5,17 @@ import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
 import { hasActiveTimeModifiers } from "@/domain/autoMotion/modifierEvaluation.js";
 
 import { getPreviewModifierDraft } from "@/features/auto-motion";
-import { buildCanvasFrame } from "@/features/canvas/domain/canvasFrame.js";
-
-import { composeCanvasFrameState } from "./composeCanvasFrameState.js";
-import { withTransientPose } from "./poseHelpers.js";
-import { renderCanvasOverlays } from "./renderCanvasOverlays.js";
-import { syncEffectiveMeshFrames } from "./syncEffectiveMeshFrames.js";
-
 import type {
   CanvasEditorSnapshot,
   CanvasSceneGateway,
   MutableRef,
-} from "./canvasApplication.types.js";
-import type { PhysicsRuntime } from "./evaluateEditorFramePose.types.js";
+} from "@/features/canvas/application/canvasApplication.types.js";
+import { composeCanvasFrameState } from "@/features/canvas/application/composeCanvasFrameState.js";
+import type { PhysicsRuntime } from "@/features/canvas/application/evaluateEditorFramePose.types.js";
+import { withTransientPose } from "@/features/canvas/application/poseHelpers.js";
+import { renderCanvasOverlays } from "@/features/canvas/application/renderCanvasOverlays.js";
+import { syncEffectiveMeshFrames } from "@/features/canvas/application/syncEffectiveMeshFrames.js";
+import { buildCanvasFrame } from "@/features/canvas/domain/canvasFrame.js";
 
 interface CanvasSceneFrameInput {
   gateway: CanvasSceneGateway;

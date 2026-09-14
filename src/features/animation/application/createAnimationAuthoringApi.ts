@@ -14,12 +14,12 @@ import { computePoseOverrides } from "@/domain/animationEngine.js";
 import { validateAnimationEditBatch } from "@/domain/animationKeyframeBatchCommands.js";
 import { normalizeKeyframeAuthoring } from "@/domain/keyframeProvenance.js";
 
-import { uid } from "@/lib/uid";
-
 import type {
   AnimationAuthoringApi,
   AnimationCommitResult,
-} from "./createAnimationAuthoringApi.types.js";
+} from "@/features/animation/application/createAnimationAuthoringApi.types.js";
+
+import { uid } from "@/lib/uid";
 
 let _gestureId: string | null = null;
 

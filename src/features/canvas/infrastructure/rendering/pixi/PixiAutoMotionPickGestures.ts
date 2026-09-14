@@ -4,14 +4,12 @@ import { computeWorldMatrices, mat3Inverse } from "@/domain/transforms";
 
 import { worldToLocal } from "@/features/canvas/domain/coordinates.js";
 import { findAlphaHit } from "@/features/canvas/domain/picking.js";
-
-import { getAdapterEffectiveRigState } from "./PixiInputState.js";
-
+import { getAdapterEffectiveRigState } from "@/features/canvas/infrastructure/rendering/pixi/PixiInputState.js";
 import type {
   EditorRuntimePort,
   PointerInput,
-} from "./pixiInteractionContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
 
 interface WorldPoint {
   x: number;

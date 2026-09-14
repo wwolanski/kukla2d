@@ -8,7 +8,7 @@ import type { PortableSchemaSnapshot } from "@kukla2d/modular-sprite-schema";
 import type {
   ModularSpriteDraftPart,
   RgbaImageData,
-} from "../domain/contracts.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
 
 export interface ModularSpriteCommitRequest {
   existingId?: ModularSpriteId;

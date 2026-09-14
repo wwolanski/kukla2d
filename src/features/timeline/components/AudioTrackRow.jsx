@@ -1,11 +1,15 @@
 import { Settings, X } from "lucide-react";
 import { lazy, Suspense, useRef, useState, useCallback } from "react";
 
-import { LAYOUT } from "../domain/timelineLayout.js";
-import { msToFrame, frameToMs } from "../domain/timelineTime.js";
+import { LAYOUT } from "@/features/timeline/domain/timelineLayout.js";
+import {
+  msToFrame,
+  frameToMs,
+} from "@/features/timeline/domain/timelineTime.js";
 
 const AudioTrackModal = lazy(async () => {
-  const module = await import("./AudioTrackModal.jsx");
+  const module =
+    await import("@/features/timeline/components/AudioTrackModal.jsx");
   return { default: module.AudioTrackModal };
 });
 

@@ -1,13 +1,15 @@
 import { useCallback, useRef, useState } from "react";
 
-import { createDragSession, updateDragTarget } from "../domain/dragSession.js";
-
+import {
+  createDragSession,
+  updateDragTarget,
+} from "@/features/layers/domain/dragSession.js";
 import type {
   DragSession,
   DragSourceKind,
   DragTargetKind,
   DropPosition,
-} from "../domain/dragSession.types.js";
+} from "@/features/layers/domain/dragSession.types.js";
 
 interface DragSessionController {
   session: DragSession | null;

@@ -1,6 +1,6 @@
 import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
 
-import { clamp } from "../imageMath.js";
+import { clamp } from "@/features/modular-sprite/domain/imageMath.js";
 
 type OklabColor = readonly number[];
 

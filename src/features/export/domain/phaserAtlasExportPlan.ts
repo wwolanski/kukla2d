@@ -3,14 +3,13 @@ import type {
   PhaserAtlasExportPlan,
 } from "@kukla2d/contracts";
 
-import { computeExportFrameSpecs } from "./exportFrameSpecs.js";
+import { computeExportFrameSpecs } from "@/features/export/domain/exportFrameSpecs.js";
+import type { ExportFrameAnimation } from "@/features/export/domain/exportFrameSpecs.types.js";
 import {
   validatePhaserAtlasOptions,
   PHASER_ATLAS_DEFAULTS,
   PHASER_ATLAS_VARIANT_ID,
-} from "./phaserAtlasContract.js";
-
-import type { ExportFrameAnimation } from "./exportFrameSpecs.types.js";
+} from "@/features/export/domain/phaserAtlasContract.js";
 
 interface CreatePhaserAtlasExportPlanOptions {
   area: ExportAreaContract;

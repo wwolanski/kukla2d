@@ -1,4 +1,4 @@
-import { canNavigate } from "./animationAuthoring.js";
+import { canNavigate } from "@/domain/animationAuthoring.js";
 
 type EditorMode = "staging" | "animation";
 type TransitionResult = "changed" | "unchanged" | "blocked-draft";

@@ -1,4 +1,4 @@
-import type { PointerInput } from "./pixiInteractionContracts.types.js";
+import type { PointerInput } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
 
 interface CanvasSize {
   width?: number;

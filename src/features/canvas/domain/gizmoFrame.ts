@@ -3,7 +3,7 @@ import type { Node, Vertex } from "@kukla2d/contracts";
 import { mat3Identity, mat3Inverse } from "@/domain/transforms.js";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
-import type { GizmoFrame } from "./gizmoFrame.types.js";
+import type { GizmoFrame } from "@/features/canvas/domain/gizmoFrame.types.js";
 
 const ROT_OFFSET_PX = 52;
 

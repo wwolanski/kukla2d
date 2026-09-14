@@ -1,7 +1,6 @@
-import { handleMeshTask } from "./workerProtocol.js";
-import { generateMesh } from "../../domain/mesh-generation/generate.js";
-
-import type { MeshWorkerRequest } from "./workerProtocol.types.js";
+import { generateMesh } from "@/features/canvas/domain/mesh-generation/generate.js";
+import { handleMeshTask } from "@/features/canvas/infrastructure/mesh-worker/workerProtocol.js";
+import type { MeshWorkerRequest } from "@/features/canvas/infrastructure/mesh-worker/workerProtocol.types.js";
 
 declare const self: {
   onmessage: ((event: MessageEvent<MeshWorkerRequest>) => void) | null;

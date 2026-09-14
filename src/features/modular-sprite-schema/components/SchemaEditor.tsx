@@ -1,6 +1,6 @@
 import { SemanticCatalog } from "@kukla2d/modular-sprite-schema";
 
-import type { NewSchemaMetadata } from "../application/schemaMetadata.types.js";
+import type { NewSchemaMetadata } from "@/features/modular-sprite-schema/application/schemaMetadata.types.js";
 
 const catalog = new SemanticCatalog();
 export function SchemaEditor({

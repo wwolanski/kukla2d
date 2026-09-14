@@ -1,9 +1,9 @@
+import type { CanvasRendererPort as CanvasSceneGateway } from "@/features/canvas/application/canvasRenderer.types.js";
 import type {
   CoordinatePair,
   ViewTransform,
 } from "@/features/canvas/domain/coordinates.types.js";
 
-import type { CanvasRendererPort as CanvasSceneGateway } from "../../application/canvasRenderer.types.js";
 import type { RefObject } from "react";
 
 interface ViewportCoordinatesOptions {

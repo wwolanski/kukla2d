@@ -6,9 +6,9 @@ import type {
   SchemaComparisonResult,
 } from "@kukla2d/modular-sprite-schema";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { SchemaAnalysisDetailsDialog } from "@/features/modular-sprite-schema/components/SchemaAnalysisDetailsDialog.js";
 
-import { SchemaAnalysisDetailsDialog } from "./SchemaAnalysisDetailsDialog.js";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const percent = (basisPoints: number): string =>
   `${(basisPoints / 100).toFixed(2)}%`;

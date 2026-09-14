@@ -1,4 +1,4 @@
-import type { WorkflowEvent } from "./workflowContracts.types.js";
+import type { WorkflowEvent } from "@/features/canvas/domain/workflowContracts.types.js";
 
 interface RouterResult {
   type: string;

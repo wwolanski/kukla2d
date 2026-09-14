@@ -4,10 +4,9 @@ import type {
   RasterFrameSpec,
 } from "@kukla2d/contracts";
 
+import type { ExportProgress } from "@/features/export/application/exportApplicationTypes.types.js";
 import { createFrameCaptureRequestFromRasterPlan } from "@/features/export/domain/createFrameCaptureRequestFromRasterPlan";
-
-import type { ExportProgress } from "./exportApplicationTypes.types.js";
-import type { CaptureFrame } from "../domain/frameCaptureTypes.types.js";
+import type { CaptureFrame } from "@/features/export/domain/frameCaptureTypes.types.js";
 
 interface CaptureRasterFramesOptions {
   plan: Readonly<{

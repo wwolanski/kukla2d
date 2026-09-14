@@ -1,6 +1,6 @@
 import type { RasterFrameSpec } from "@kukla2d/contracts";
 
-import type { ExportFrameAnimation } from "./exportFrameSpecs.types.js";
+import type { ExportFrameAnimation } from "@/features/export/domain/exportFrameSpecs.types.js";
 
 interface ComputeExportFrameSpecsOptions {
   animsToExport: readonly ExportFrameAnimation[];

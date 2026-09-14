@@ -10,7 +10,7 @@
  */
 import type { WarpDeformerNode } from "@kukla2d/contracts";
 
-import type { WarpLatticeFrame } from "./warpLatticeFrame.types.js";
+import type { WarpLatticeFrame } from "@/features/canvas/domain/warpLatticeFrame.types.js";
 
 interface Point {
   x: number;

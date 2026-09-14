@@ -3,10 +3,15 @@ import {
   type NormalizedPoint,
 } from "@kukla2d/contracts";
 
-import { clamp, rgbToOklab } from "../imageMath.js";
-import { hasReliableKeyChroma, keyLightnessWeight } from "./keyColorProfile.js";
-
-import type { RgbaImageData } from "../contracts.types.js";
+import type { RgbaImageData } from "@/features/modular-sprite/domain/contracts.types.js";
+import {
+  clamp,
+  rgbToOklab,
+} from "@/features/modular-sprite/domain/imageMath.js";
+import {
+  hasReliableKeyChroma,
+  keyLightnessWeight,
+} from "@/features/modular-sprite/domain/processing/keyColorProfile.js";
 
 const FOUR_CONNECTED_NEIGHBORS = [
   [0, -1],

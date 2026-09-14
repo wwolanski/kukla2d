@@ -10,27 +10,26 @@ import { useImportSettingsStore } from "@/store/importSettingsStore";
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
 
 import type {
+  CanvasEditorSnapshot,
+  CanvasSceneGateway,
+  CanvasTextureCache,
+  MutableRef,
+} from "@/features/canvas/application/canvasApplication.types.js";
+import type { CanvasDropEvent } from "@/features/canvas/application/handleCanvasDrop.types.js";
+import { placeLibraryAsset } from "@/features/canvas/application/placeLibraryAsset.js";
+import { useCanvasAssetImport } from "@/features/canvas/application/useCanvasAssetImport.js";
+import { useCanvasFileRouting } from "@/features/canvas/application/useCanvasFileRouting.js";
+import { useCanvasProjectLifecycle } from "@/features/canvas/application/useCanvasProjectLifecycle.js";
+import { useCanvasProjectSave } from "@/features/canvas/application/useCanvasProjectSave.js";
+import { useModularSpriteImport } from "@/features/canvas/application/useModularSpriteImport.js";
+import type { WorkflowEvent } from "@/features/canvas/domain/workflowContracts.types.js";
+import type {
   ModularSpriteCommitRequest,
   ModularSpriteCommitResult,
 } from "@/features/modular-sprite";
 
 import { toast } from "@/components/ui/use-toast";
 
-import { placeLibraryAsset } from "./placeLibraryAsset.js";
-import { useCanvasAssetImport } from "./useCanvasAssetImport.js";
-import { useCanvasFileRouting } from "./useCanvasFileRouting.js";
-import { useCanvasProjectLifecycle } from "./useCanvasProjectLifecycle.js";
-import { useCanvasProjectSave } from "./useCanvasProjectSave.js";
-import { useModularSpriteImport } from "./useModularSpriteImport.js";
-
-import type {
-  CanvasEditorSnapshot,
-  CanvasSceneGateway,
-  CanvasTextureCache,
-  MutableRef,
-} from "./canvasApplication.types.js";
-import type { CanvasDropEvent } from "./handleCanvasDrop.types.js";
-import type { WorkflowEvent } from "../domain/workflowContracts.types.js";
 import type { ChangeEvent, Dispatch, DragEvent, SetStateAction } from "react";
 
 interface CanvasImportArgs {

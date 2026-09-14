@@ -1,6 +1,6 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import type { ModularSpriteDraftPart } from "@/features/modular-sprite/domain/contracts.types.js";
 
-import type { ModularSpriteDraftPart } from "../../domain/contracts.types.js";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const PART_COLORS = [
   "#38bdf8",

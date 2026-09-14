@@ -9,13 +9,13 @@ import { useProjectStore } from "@/store/projectStore";
 import type { DeleteSelectionIntent } from "@/domain/deleteCommands.types.js";
 import { ACTION_IDS, editorModePolicy } from "@/domain/editorModePolicy";
 
+import type { CanvasRuntimeDependencies } from "@/features/canvas/application/canvasApplication.types.js";
+import { useCanvasController } from "@/features/canvas/application/useCanvasController.js";
+import { useExportAreaMoveSession } from "@/features/canvas/application/useExportAreaMoveSession.js";
+import { bakeDefaultPoseIntoSetup } from "@/features/canvas/domain/poseBake.js";
+
 import { toast } from "@/components/ui/use-toast";
 
-import { useCanvasController } from "./useCanvasController.js";
-import { useExportAreaMoveSession } from "./useExportAreaMoveSession.js";
-import { bakeDefaultPoseIntoSetup } from "../domain/poseBake.js";
-
-import type { CanvasRuntimeDependencies } from "./canvasApplication.types.js";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 
 type ImperativeRef = RefObject<unknown> | undefined;

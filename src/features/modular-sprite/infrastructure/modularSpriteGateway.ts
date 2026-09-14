@@ -1,8 +1,7 @@
-import { createModularSpriteWorkerClient } from "./modularSpriteWorkerClient.js";
-
-import type { ModularSpriteWorkerClient } from "./modularSpriteWorkerClient.types.js";
-import type { ModularSpriteProcessingPort } from "../application/finalizeModularSpriteImport.types.js";
-import type { RgbaImageData } from "../domain/contracts.types.js";
+import type { ModularSpriteProcessingPort } from "@/features/modular-sprite/application/finalizeModularSpriteImport.types.js";
+import type { RgbaImageData } from "@/features/modular-sprite/domain/contracts.types.js";
+import { createModularSpriteWorkerClient } from "@/features/modular-sprite/infrastructure/modularSpriteWorkerClient.js";
+import type { ModularSpriteWorkerClient } from "@/features/modular-sprite/infrastructure/modularSpriteWorkerClient.types.js";
 
 interface ModularSpriteProcessingControllerPort extends ModularSpriteProcessingPort {
   warm(image: RgbaImageData): Promise<void>;

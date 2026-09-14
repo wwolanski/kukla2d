@@ -1,12 +1,12 @@
 import { produce } from "immer";
 
-import { uid } from "@/lib/uid";
-
 import type {
   ProjectActions,
   ProjectStore,
   ProjectStoreSet,
-} from "./projectStoreTypes.types.js";
+} from "@/store/project/projectStoreTypes.types.js";
+
+import { uid } from "@/lib/uid";
 
 type ProjectBlendShapeCommands = Pick<
   ProjectActions,

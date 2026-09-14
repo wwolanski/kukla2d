@@ -1,7 +1,7 @@
 import type {
   EditorCommand,
   ModifierState,
-} from "./workflowContracts.types.js";
+} from "@/features/canvas/domain/workflowContracts.types.js";
 
 interface Point2D {
   x: number;

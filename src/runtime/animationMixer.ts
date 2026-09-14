@@ -3,13 +3,12 @@ import type { Animation, AnimationId } from "@kukla2d/contracts";
 import {
   interpolateMeshVerts,
   interpolateTrack,
-} from "../domain/animationEngine.js";
-
+} from "@/domain/animationEngine.js";
+import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 import type {
   AnimationLayer,
   RuntimeAnimationEvent,
-} from "./animationMixer.types.js";
-import type { PoseOverrides } from "../domain/animationEngine.types.js";
+} from "@/runtime/animationMixer.types.js";
 
 interface LayerEvaluationResult {
   overrides: PoseOverrides;

@@ -6,25 +6,24 @@ import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
 import type { EditorActions } from "@/store/editorStoreTypes.types.js";
 import type { ProjectActions } from "@/store/project/projectStoreTypes.types.js";
 
-import { createCanvasCommandExecutor } from "@/features/canvas/application/createCanvasCommandExecutor.js";
-import {
-  CANVAS_FAILURE_CODES,
-  CANVAS_FAILURE_MESSAGES,
-} from "@/features/canvas/domain/canvasFailureCodes.js";
-
-import { renderCanvasSceneFrame } from "./renderCanvasSceneFrame.js";
-
 import type {
   CanvasEditorSnapshot,
   CanvasRuntimeDependencies,
   CanvasSceneGateway,
   MutableRef,
-} from "./canvasApplication.types.js";
-import type { CanvasAuthoringAdapter } from "./createCanvasAuthoringAdapter.types.js";
-import type { editorWorkflowMachine } from "./editorWorkflowMachine.js";
-import type { PhysicsRuntime } from "./evaluateEditorFramePose.types.js";
-import type { PosePhysicsLoader } from "./posePhysicsLoader.types.js";
-import type { CanvasFailure } from "../domain/canvasFailureCodes.types.js";
+} from "@/features/canvas/application/canvasApplication.types.js";
+import type { CanvasAuthoringAdapter } from "@/features/canvas/application/createCanvasAuthoringAdapter.types.js";
+import { createCanvasCommandExecutor } from "@/features/canvas/application/createCanvasCommandExecutor.js";
+import type { editorWorkflowMachine } from "@/features/canvas/application/editorWorkflowMachine.js";
+import type { PhysicsRuntime } from "@/features/canvas/application/evaluateEditorFramePose.types.js";
+import type { PosePhysicsLoader } from "@/features/canvas/application/posePhysicsLoader.types.js";
+import { renderCanvasSceneFrame } from "@/features/canvas/application/renderCanvasSceneFrame.js";
+import {
+  CANVAS_FAILURE_CODES,
+  CANVAS_FAILURE_MESSAGES,
+} from "@/features/canvas/domain/canvasFailureCodes.js";
+import type { CanvasFailure } from "@/features/canvas/domain/canvasFailureCodes.types.js";
+
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import type { ActorRefFrom } from "xstate";
 

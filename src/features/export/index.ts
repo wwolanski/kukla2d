@@ -1,20 +1,20 @@
-export { resolveProjectExportArea } from "./domain/projectExportArea.js";
-export { computeEvaluatedExportBounds } from "./domain/computeEvaluatedExportBounds.js";
+export { resolveProjectExportArea } from "@/features/export/domain/projectExportArea.js";
+export { computeEvaluatedExportBounds } from "@/features/export/domain/computeEvaluatedExportBounds.js";
 export {
   EXPORT_AREA_PRESETS,
   CUSTOM_PRESET_ID,
   getExportAreaPreset,
   matchExportAreaPreset,
   createExportAreaPresetPatch,
-} from "./domain/exportAreaPresets.js";
-export { buildExportAreaFitFrameSpecs } from "./domain/exportAreaFitFrameSpecs.js";
-export { createFrameCaptureRequestFromRasterPlan } from "./domain/createFrameCaptureRequestFromRasterPlan.js";
-export { createRasterExportPlan } from "./domain/rasterExportPlan.js";
-export { createPhaserAtlasExportPlan } from "./domain/phaserAtlasExportPlan.js";
-export { computeExportFrameSpecs } from "./domain/exportFrameSpecs.js";
-export { runRasterExport } from "./application/runRasterExport.js";
-export { runPhaserAtlasExport } from "./application/runPhaserAtlasExport.js";
-export { captureRasterFrames } from "./application/captureRasterFrames.js";
+} from "@/features/export/domain/exportAreaPresets.js";
+export { buildExportAreaFitFrameSpecs } from "@/features/export/domain/exportAreaFitFrameSpecs.js";
+export { createFrameCaptureRequestFromRasterPlan } from "@/features/export/domain/createFrameCaptureRequestFromRasterPlan.js";
+export { createRasterExportPlan } from "@/features/export/domain/rasterExportPlan.js";
+export { createPhaserAtlasExportPlan } from "@/features/export/domain/phaserAtlasExportPlan.js";
+export { computeExportFrameSpecs } from "@/features/export/domain/exportFrameSpecs.js";
+export { runRasterExport } from "@/features/export/application/runRasterExport.js";
+export { runPhaserAtlasExport } from "@/features/export/application/runPhaserAtlasExport.js";
+export { captureRasterFrames } from "@/features/export/application/captureRasterFrames.js";
 export {
   browserExportSink,
   buildPngFilePath,
@@ -23,10 +23,10 @@ export {
   encodePngSequence,
   encodePngSpritesheet,
   resolveExportEncoder,
-} from "./composition/exportInfrastructure.js";
-export { ExportModal } from "./composition/ExportModal.jsx";
+} from "@/features/export/composition/exportInfrastructure.js";
+export { ExportModal } from "@/features/export/composition/ExportModal.jsx";
 export {
   resolveSpritesheetLayout,
   suggestSpritesheetLayouts,
-} from "./domain/spritesheetLayout.js";
-export { ExportAreaPopover } from "./components/ExportAreaPopover.jsx";
+} from "@/features/export/domain/spritesheetLayout.js";
+export { ExportAreaPopover } from "@/features/export/components/ExportAreaPopover.jsx";

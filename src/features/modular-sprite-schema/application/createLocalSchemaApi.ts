@@ -12,7 +12,7 @@ import type {
   LocalSchemaRepository,
   SchemaCatalogCapability,
   StoredSchemaAsset,
-} from "./localSchemaApi.types.js";
+} from "@/features/modular-sprite-schema/application/localSchemaApi.types.js";
 
 interface LocalSchemaApi {
   readonly semantics: SemanticCatalog;

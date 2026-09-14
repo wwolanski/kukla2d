@@ -1,4 +1,4 @@
-import type { ThemePreset } from "./themePresets.types.js";
+import type { ThemePreset } from "@/features/preferences/domain/themePresets.types.js";
 
 export const amethystHazeLightPreset: ThemePreset = {
   id: "amethyst_haze-light",

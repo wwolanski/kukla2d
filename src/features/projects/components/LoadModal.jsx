@@ -3,6 +3,8 @@ import { useRef, useState } from "react";
 
 import { hasProjectFileExtension } from "@/io/projectFormat";
 
+import { ProjectGallery } from "@/features/projects/components/ProjectGallery.jsx";
+
 import {
   Dialog,
   DialogContent,
@@ -11,8 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import { ProjectGallery } from "./ProjectGallery.jsx";
 
 export function LoadModalView({
   externalImportFormats,

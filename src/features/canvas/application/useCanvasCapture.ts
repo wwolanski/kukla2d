@@ -9,6 +9,12 @@ import { toAnimationId, type ProjectDocument } from "@kukla2d/contracts";
 
 import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
 
+import type {
+  CanvasEditorSnapshot,
+  CanvasSceneGateway,
+  CanvasFrameRenderOptions,
+  CanvasRuntimeDependencies,
+} from "@/features/canvas/application/canvasApplication.types.js";
 import {
   createFrameCaptureRequest,
   createFrameCaptureSuccess,
@@ -20,12 +26,6 @@ import type {
   FrameCaptureResult,
 } from "@/features/canvas/domain/frameCaptureContract.types.js";
 
-import type {
-  CanvasEditorSnapshot,
-  CanvasSceneGateway,
-  CanvasFrameRenderOptions,
-  CanvasRuntimeDependencies,
-} from "./canvasApplication.types.js";
 import type { RefObject } from "react";
 
 interface CanvasCaptureOptions {

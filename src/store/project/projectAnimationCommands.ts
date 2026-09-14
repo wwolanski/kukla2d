@@ -1,5 +1,14 @@
 import { toAnimationId, type ProjectDocument } from "@kukla2d/contracts";
 
+import { executeAnimationDocumentCommand } from "@/store/project/projectStoreShared.js";
+import type {
+  AnimationDocumentCommand,
+  ProjectActions,
+  ProjectCommandResult,
+  ProjectStoreGet,
+  ProjectStoreSet,
+} from "@/store/project/projectStoreTypes.types.js";
+
 import {
   createAnimationClip,
   deleteAnimationClip,
@@ -22,15 +31,6 @@ import {
   updateAnimationAudioTrack,
 } from "@/domain/animationMetadataCommands.js";
 
-import { executeAnimationDocumentCommand } from "./projectStoreShared.js";
-
-import type {
-  AnimationDocumentCommand,
-  ProjectActions,
-  ProjectCommandResult,
-  ProjectStoreGet,
-  ProjectStoreSet,
-} from "./projectStoreTypes.types.js";
 import type { Draft } from "immer";
 
 type ProjectAnimationCommands = Pick<

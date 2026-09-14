@@ -1,11 +1,14 @@
 import { memo, useState } from "react";
 
-import { buildEasingPath } from "./easingPath.js";
-import { KeyframeContextMenu } from "./KeyframeContextMenu.jsx";
-import { getMissingProperties } from "../application/buildTimelineTrackRows.js";
-import { keyframeAddressToString } from "../application/keyframeAddress.js";
-import { LAYOUT } from "../domain/timelineLayout.js";
-import { msToFrame, frameToMs } from "../domain/timelineTime.js";
+import { getMissingProperties } from "@/features/timeline/application/buildTimelineTrackRows.js";
+import { keyframeAddressToString } from "@/features/timeline/application/keyframeAddress.js";
+import { buildEasingPath } from "@/features/timeline/components/easingPath.js";
+import { KeyframeContextMenu } from "@/features/timeline/components/KeyframeContextMenu.jsx";
+import { LAYOUT } from "@/features/timeline/domain/timelineLayout.js";
+import {
+  msToFrame,
+  frameToMs,
+} from "@/features/timeline/domain/timelineTime.js";
 
 const ROW_H = LAYOUT.ROW_H;
 

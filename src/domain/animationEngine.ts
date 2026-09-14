@@ -16,17 +16,16 @@ import type {
   Transform,
 } from "@kukla2d/contracts";
 
-import { lerp } from "@/lib/math";
-
-import { getBoomerangSourceTime } from "./animationBoomerang.js";
+import { getBoomerangSourceTime } from "@/domain/animationBoomerang.js";
+import type { AnimationEasing } from "@/domain/animationCommandTypes.types.js";
+import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 import {
   getTrackValueCategory,
   TRACK_VALUE_CATEGORIES,
-} from "./animationProperties.js";
-import { sampleTimeAtFps } from "./animationTransport.js";
+} from "@/domain/animationProperties.js";
+import { sampleTimeAtFps } from "@/domain/animationTransport.js";
 
-import type { AnimationEasing } from "./animationCommandTypes.types.js";
-import type { PoseOverrides } from "./animationEngine.types.js";
+import { lerp } from "@/lib/math";
 
 interface Point2D {
   x: number;

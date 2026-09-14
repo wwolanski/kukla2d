@@ -1,7 +1,6 @@
-import { convertScmlToProject } from "./convertScml.js";
-import { parseScml } from "./parseScml.js";
-
-import type { ExternalProjectImporter } from "../externalImport.types.js";
+import type { ExternalProjectImporter } from "@/features/projects/infrastructure/externalImport/externalImport.types.js";
+import { convertScmlToProject } from "@/features/projects/infrastructure/externalImport/scml/convertScml.js";
+import { parseScml } from "@/features/projects/infrastructure/externalImport/scml/parseScml.js";
 
 function normalizedPath(file: File): string {
   const relative =

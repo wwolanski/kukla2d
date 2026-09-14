@@ -58,6 +58,6 @@ export function durationMsFromFrameCount(
   const safeFps = isFiniteNumber(fps) && fps > 0 ? fps : ANIMATION_DEFAULTS.fps;
   return (safeFrames / safeFps) * 1000;
 }
-import { clamp, isFiniteNumber } from "@/lib/math";
+import type { AnimationSettings } from "@/domain/animationDefaults.types.js";
 
-import type { AnimationSettings } from "./animationDefaults.types.js";
+import { clamp, isFiniteNumber } from "@/lib/math";

@@ -4,7 +4,7 @@ import type {
   KeyframeAuthoringMeta,
 } from "@kukla2d/contracts";
 
-import type { KeyframeMatch } from "./keyframeProvenance.types.js";
+import type { KeyframeMatch } from "@/domain/keyframeProvenance.types.js";
 
 export function normalizeKeyframeAuthoring(
   value: unknown,

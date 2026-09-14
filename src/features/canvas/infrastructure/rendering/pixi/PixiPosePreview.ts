@@ -1,8 +1,7 @@
+import type { CanvasDraftPoseValue } from "@/features/canvas/application/canvasRenderer.types.js";
 import { clearDefaultPoseTarget } from "@/features/canvas/domain/poseModel.js";
-
-import type { EditorRuntimePort } from "./pixiInteractionContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
-import type { CanvasDraftPoseValue } from "../../../application/canvasRenderer.types.js";
+import type { EditorRuntimePort } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
 
 export function usesPoseDraft(
   editor: Pick<EditorRuntimePort, "editorMode" | "activeTool">,

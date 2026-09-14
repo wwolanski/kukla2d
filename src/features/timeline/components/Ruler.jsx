@@ -1,5 +1,5 @@
-import { LAYOUT } from "../domain/timelineLayout.js";
-import { msToFrame } from "../domain/timelineTime.js";
+import { LAYOUT } from "@/features/timeline/domain/timelineLayout.js";
+import { msToFrame } from "@/features/timeline/domain/timelineTime.js";
 
 export function Ruler({
   startFrame,

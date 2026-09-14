@@ -1,17 +1,20 @@
-import { migrate_0_1_to_1 } from "./migrations/0_1-to-1.js";
-import { migrate_1_to_2 } from "./migrations/1-to-2.js";
-import { migrate_2_to_3 } from "./migrations/2-to-3.js";
-import { migrate_3_to_4 } from "./migrations/3-to-4.js";
-import { migrate_4_to_5 } from "./migrations/4-to-5.js";
-import { migrate_5_to_6 } from "./migrations/5-to-6.js";
-import { migrate_6_to_7 } from "./migrations/6-to-7.js";
-import { migrate_7_to_8 } from "./migrations/7-to-8.js";
-import { migrate_8_to_9 } from "./migrations/8-to-9.js";
-import { migrate_9_to_10 } from "./migrations/9-to-10.js";
-import { isMigrationRecord, readRawVersion } from "./migrations/types.js";
-import { CURRENT_PROJECT_VERSION } from "./projectSchema.js";
+import { migrate_0_1_to_1 } from "@/schema/migrations/0_1-to-1.js";
+import { migrate_1_to_2 } from "@/schema/migrations/1-to-2.js";
+import { migrate_2_to_3 } from "@/schema/migrations/2-to-3.js";
+import { migrate_3_to_4 } from "@/schema/migrations/3-to-4.js";
+import { migrate_4_to_5 } from "@/schema/migrations/4-to-5.js";
+import { migrate_5_to_6 } from "@/schema/migrations/5-to-6.js";
+import { migrate_6_to_7 } from "@/schema/migrations/6-to-7.js";
+import { migrate_7_to_8 } from "@/schema/migrations/7-to-8.js";
+import { migrate_8_to_9 } from "@/schema/migrations/8-to-9.js";
+import { migrate_9_to_10 } from "@/schema/migrations/9-to-10.js";
+import {
+  isMigrationRecord,
+  readRawVersion,
+} from "@/schema/migrations/types.js";
+import { CURRENT_PROJECT_VERSION } from "@/schema/projectSchema.js";
 
-import type { MigrationDocument } from "./migrations/migrationDocument.types.js";
+import type { MigrationDocument } from "@/schema/migrations/migrationDocument.types.js";
 
 type MigrationFromKey =
   "0.1" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";

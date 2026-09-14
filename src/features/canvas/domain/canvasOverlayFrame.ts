@@ -16,16 +16,18 @@ import {
 import { computeWorldMatrices } from "@/domain/transforms";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
-import { buildFramePose } from "./framePose.js";
-import { getIkTargetRadius } from "./ikOverlaySizing.js";
-import { computeMeshWeightStats } from "./meshWeighting.js";
-import { getBoneSegment } from "./picking.js";
-
-import type { CanvasOverlayFrame } from "./canvasOverlayFrame.types.js";
-import type { ViewTransform } from "./coordinates.types.js";
-import type { FrameAnimationState, FramePose } from "./framePose.types.js";
-import type { EffectiveMeshFrame } from "./meshDeformation.types.js";
-import type { ScreenRect } from "./workflowContracts.types.js";
+import type { CanvasOverlayFrame } from "@/features/canvas/domain/canvasOverlayFrame.types.js";
+import type { ViewTransform } from "@/features/canvas/domain/coordinates.types.js";
+import { buildFramePose } from "@/features/canvas/domain/framePose.js";
+import type {
+  FrameAnimationState,
+  FramePose,
+} from "@/features/canvas/domain/framePose.types.js";
+import { getIkTargetRadius } from "@/features/canvas/domain/ikOverlaySizing.js";
+import type { EffectiveMeshFrame } from "@/features/canvas/domain/meshDeformation.types.js";
+import { computeMeshWeightStats } from "@/features/canvas/domain/meshWeighting.js";
+import { getBoneSegment } from "@/features/canvas/domain/picking.js";
+import type { ScreenRect } from "@/features/canvas/domain/workflowContracts.types.js";
 
 interface OverlayInteraction {
   kind: string;

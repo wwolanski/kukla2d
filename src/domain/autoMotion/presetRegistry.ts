@@ -1,12 +1,11 @@
 import type { ModifierDriver, ModifierOutput } from "@kukla2d/contracts";
 
-import { createHeadCheekJigglePresetDefinition } from "./headCheekJigglePreset.js";
-import { createIdleBreathingPresetDefinition } from "./idleBreathingPreset.js";
-
 import type {
   MotionPresetDefinition,
   MotionPresetRole,
-} from "./autoMotionTypes.types.js";
+} from "@/domain/autoMotion/autoMotionTypes.types.js";
+import { createHeadCheekJigglePresetDefinition } from "@/domain/autoMotion/headCheekJigglePreset.js";
+import { createIdleBreathingPresetDefinition } from "@/domain/autoMotion/idleBreathingPreset.js";
 
 const AUTO_MOTION_PRESETS = new Map<string, MotionPresetDefinition>();
 

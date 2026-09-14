@@ -6,17 +6,19 @@ import type {
   NodeId,
 } from "@kukla2d/contracts";
 
-import { isRecord } from "@/lib/guards";
-import { clamp01, finiteNumberOr, isFiniteNumber } from "@/lib/math";
-
+import type { Matrix3 } from "@/domain/transforms.types.js";
+import type {
+  BoneTransformOverride,
+  PoseOverrideMap,
+} from "@/runtime/pose.types.js";
 import {
   computeBoneWorldMatrices,
   computeInverseBindMatrices,
-} from "./skeleton.js";
-import { linearBlendSkinning } from "./skin.js";
+} from "@/runtime/skeleton.js";
+import { linearBlendSkinning } from "@/runtime/skin.js";
 
-import type { BoneTransformOverride, PoseOverrideMap } from "./pose.types.js";
-import type { Matrix3 } from "../domain/transforms.types.js";
+import { isRecord } from "@/lib/guards";
+import { clamp01, finiteNumberOr, isFiniteNumber } from "@/lib/math";
 
 interface DeformDrawItem {
   nodeId: NodeId;

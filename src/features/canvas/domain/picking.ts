@@ -16,9 +16,8 @@ import type {
 
 import { mat3Inverse } from "@/domain/transforms";
 
-import { worldToLocal } from "./coordinates.js";
-
-import type { ScreenRect } from "./workflowContracts.types.js";
+import { worldToLocal } from "@/features/canvas/domain/coordinates.js";
+import type { ScreenRect } from "@/features/canvas/domain/workflowContracts.types.js";
 
 type Matrix3 = Parameters<typeof mat3Inverse>[0];
 interface BoneSegment {

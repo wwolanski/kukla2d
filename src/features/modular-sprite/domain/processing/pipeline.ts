@@ -5,32 +5,34 @@ import {
 } from "@kukla2d/contracts";
 import { createSpriteObservation } from "@kukla2d/modular-sprite-schema";
 
-import { rgbToOklab } from "../imageMath.js";
-import { analyzeModularSpriteBackground } from "./backgroundAnalysis.js";
-import {
-  computeMatteRange,
-  createMatte,
-  PROCESSING_CHUNK_ROWS,
-} from "./chromaKey.js";
-import {
-  connectedComponents,
-  MAX_DETECTED_REGIONS,
-  restoreSplitPixels,
-} from "./connectedComponents.js";
-import { componentContour } from "./contours.js";
-import { refineChromaKeyEdgesWithMasks } from "./edgeRefinement.js";
-import { hasReliableKeyChroma } from "./keyColorProfile.js";
-import { detectionStrokesPass, matteStrokesPass } from "./maskStrokes.js";
-import { buildDetectionMask } from "./morphology.js";
-import { suggestRole } from "./regionClassification.js";
-
 import type {
   DetectedRegion,
   ProcessedModularSprite,
   ProcessModularSpriteRequest,
   RgbaImageData,
-} from "../contracts.types.js";
-import type { ProcessingHooks } from "./processing.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
+import { rgbToOklab } from "@/features/modular-sprite/domain/imageMath.js";
+import { analyzeModularSpriteBackground } from "@/features/modular-sprite/domain/processing/backgroundAnalysis.js";
+import {
+  computeMatteRange,
+  createMatte,
+  PROCESSING_CHUNK_ROWS,
+} from "@/features/modular-sprite/domain/processing/chromaKey.js";
+import {
+  connectedComponents,
+  MAX_DETECTED_REGIONS,
+  restoreSplitPixels,
+} from "@/features/modular-sprite/domain/processing/connectedComponents.js";
+import { componentContour } from "@/features/modular-sprite/domain/processing/contours.js";
+import { refineChromaKeyEdgesWithMasks } from "@/features/modular-sprite/domain/processing/edgeRefinement.js";
+import { hasReliableKeyChroma } from "@/features/modular-sprite/domain/processing/keyColorProfile.js";
+import {
+  detectionStrokesPass,
+  matteStrokesPass,
+} from "@/features/modular-sprite/domain/processing/maskStrokes.js";
+import { buildDetectionMask } from "@/features/modular-sprite/domain/processing/morphology.js";
+import type { ProcessingHooks } from "@/features/modular-sprite/domain/processing/processing.types.js";
+import { suggestRole } from "@/features/modular-sprite/domain/processing/regionClassification.js";
 
 function buildRegions(
   detection: Uint8Array,

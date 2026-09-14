@@ -5,8 +5,7 @@ import { useEditorStore } from "@/store/editorStore";
 import { useProjectStore } from "@/store/projectStore";
 
 import { createAnimationAuthoringApi } from "@/features/animation";
-
-import { msToFrame } from "../domain/timelineTime.js";
+import { msToFrame } from "@/features/timeline/domain/timelineTime.js";
 
 interface PendingDraftController {
   visible: boolean;

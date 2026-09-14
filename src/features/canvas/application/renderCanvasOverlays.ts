@@ -9,14 +9,13 @@ import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
 import { resolveVisibleHoverHit } from "@/domain/hoverPolicy.js";
 import { computeWorldMatrices } from "@/domain/transforms";
 
+import type { CanvasEditorSnapshot } from "@/features/canvas/application/canvasApplication.types.js";
+import type { CanvasSceneGateway } from "@/features/canvas/application/canvasApplication.types.js";
+import type { composeCanvasFrameState } from "@/features/canvas/application/composeCanvasFrameState.js";
 import { buildCanvasOverlayFrame } from "@/features/canvas/domain/canvasOverlayFrame.js";
 import { buildGizmoFrame } from "@/features/canvas/domain/gizmoFrame.js";
 import { buildSkeletonFrame } from "@/features/canvas/domain/skeletonFrame.js";
 import { buildWarpLatticeFrame } from "@/features/canvas/domain/warpLatticeFrame.js";
-
-import type { CanvasEditorSnapshot } from "./canvasApplication.types.js";
-import type { CanvasSceneGateway } from "./canvasApplication.types.js";
-import type { composeCanvasFrameState } from "./composeCanvasFrameState.js";
 
 interface RenderCanvasOverlaysArgs {
   gateway: CanvasSceneGateway;

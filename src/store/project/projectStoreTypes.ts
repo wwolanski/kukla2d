@@ -3,7 +3,7 @@ import type { ProjectDocument } from "@kukla2d/contracts";
 import type {
   ProjectStore,
   ProjectVersionControl,
-} from "./projectStoreTypes.types.js";
+} from "@/store/project/projectStoreTypes.types.js";
 
 export const projectSelectors = {
   project: (state: ProjectStore): ProjectDocument => state.project,

@@ -14,9 +14,9 @@ import type {
 import type {
   ModularSpriteProcessingPort,
   ModularSpriteSchemaPort,
-} from "../../application/finalizeModularSpriteImport.types.js";
-import type { ModularSpriteCommitRequest } from "../../application/importContracts.types.js";
-import type { RgbaImageData } from "../../domain/contracts.types.js";
+} from "@/features/modular-sprite/application/finalizeModularSpriteImport.types.js";
+import type { ModularSpriteCommitRequest } from "@/features/modular-sprite/application/importContracts.types.js";
+import type { RgbaImageData } from "@/features/modular-sprite/domain/contracts.types.js";
 
 interface ModularSpriteImageControllerPort {
   decode(file: File): Promise<RgbaImageData>;

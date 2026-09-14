@@ -1,4 +1,4 @@
-import type { ModularSpriteWizardStep } from "../../application/wizardState.types.js";
+import type { ModularSpriteWizardStep } from "@/features/modular-sprite/application/wizardState.types.js";
 
 const STEPS: ModularSpriteWizardStep[] = [
   "source",

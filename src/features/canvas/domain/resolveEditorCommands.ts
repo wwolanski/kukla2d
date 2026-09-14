@@ -10,7 +10,7 @@ import type {
   EditorCommand,
   EditorWorkflowState,
   WorkflowEvent,
-} from "./workflowContracts.types.js";
+} from "@/features/canvas/domain/workflowContracts.types.js";
 
 /**
  * Resolve which EditorCommands should execute for a given event + context.

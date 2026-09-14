@@ -3,7 +3,8 @@
  */
 import { useCallback, useRef } from "react";
 
-import type { ViewTransform } from "../domain/coordinates.types.js";
+import type { ViewTransform } from "@/features/canvas/domain/coordinates.types.js";
+
 import type { RefObject } from "react";
 
 interface ZoomAtPointInput {

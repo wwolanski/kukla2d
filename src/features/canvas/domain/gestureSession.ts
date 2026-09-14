@@ -1,4 +1,7 @@
-import type { GestureKind, GestureSession } from "./gestureSession.types.js";
+import type {
+  GestureKind,
+  GestureSession,
+} from "@/features/canvas/domain/gestureSession.types.js";
 
 let nextSessionId = 1;
 
