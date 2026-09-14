@@ -4,14 +4,13 @@ import type { CanvasOverlayFrame } from "@/features/canvas/domain/canvasOverlayF
 import type { GizmoFrame } from "@/features/canvas/domain/gizmoFrame.types.js";
 import type { buildSkeletonFrame } from "@/features/canvas/domain/skeletonFrame.js";
 import type { WarpLatticeFrame } from "@/features/canvas/domain/warpLatticeFrame.types.js";
-
 import {
   drawIkConstraints,
   drawMeshWireframe,
   drawWarpLattice,
   drawWeightPaint,
-} from "./PixiMeshOverlayDrawers.js";
-import { drawSkeleton } from "./PixiRigOverlayDrawers.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiMeshOverlayDrawers.js";
+import { drawSkeleton } from "@/features/canvas/infrastructure/rendering/pixi/PixiRigOverlayDrawers.js";
 
 type SkeletonFrame = NonNullable<ReturnType<typeof buildSkeletonFrame>>;
 type MeshWireframe = CanvasOverlayFrame["meshWireframe"];

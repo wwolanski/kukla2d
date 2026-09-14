@@ -12,8 +12,11 @@
  * @module io/live2d/cmo3/bodyRig
  */
 
-import { uuid } from '../xmlbuilder.js';
-import { emitSingleParamKfGrid, emitStructuralWarp } from './deformerEmit.js';
+import { uuid } from "@/io/live2d/xmlbuilder.js";
+import {
+  emitSingleParamKfGrid,
+  emitStructuralWarp,
+} from "@/io/live2d/cmo3/deformerEmit.js";
 
 /**
  * Emit the Neck Warp (CWarpDeformerSource, 6×6 grid, 3 keyforms on
@@ -41,16 +44,25 @@ import { emitSingleParamKfGrid, emitStructuralWarp } from './deformerEmit.js';
  */
 export function emitNeckWarp(x, ctx) {
   const {
-    pidParamAngleZ, neckUnionBbox, pidBodyXGuid,
-    neckGroupId, groupDeformerGuids, deformerWorldOrigins,
-    canvasToBodyXX, canvasToBodyXY,
-    pidCoord, rigDebugLog, emitCtx,
+    pidParamAngleZ,
+    neckUnionBbox,
+    pidBodyXGuid,
+    neckGroupId,
+    groupDeformerGuids,
+    deformerWorldOrigins,
+    canvasToBodyXX,
+    canvasToBodyXY,
+    pidCoord,
+    rigDebugLog,
+    emitCtx,
   } = ctx;
 
   if (!(pidParamAngleZ && neckUnionBbox && pidBodyXGuid)) return null;
 
-  const nwCol = 5, nwRow = 5;               // 6×6 control points
-  const nwGW = nwCol + 1, nwGH = nwRow + 1;
+  const nwCol = 5,
+    nwRow = 5; // 6×6 control points
+  const nwGW = nwCol + 1,
+    nwGH = nwRow + 1;
   const nwGridPts = nwGW * nwGH;
 
   // --- Structural chain integration: target NeckWarp to GroupRotation_neck if possible ---
@@ -63,13 +75,13 @@ export function emitNeckWarp(x, ctx) {
   for (let r = 0; r < nwGH; r++) {
     for (let c = 0; c < nwGW; c++) {
       const idx = (r * nwGW + c) * 2;
-      const cx = neckUnionBbox.minX + c * neckUnionBbox.W / nwCol;
-      const cy = neckUnionBbox.minY + r * neckUnionBbox.H / nwRow;
+      const cx = neckUnionBbox.minX + (c * neckUnionBbox.W) / nwCol;
+      const cy = neckUnionBbox.minY + (r * neckUnionBbox.H) / nwRow;
       if (isUnderRotation) {
-        nwRestGrid[idx]     = cx - neckGroupPivot.x;
+        nwRestGrid[idx] = cx - neckGroupPivot.x;
         nwRestGrid[idx + 1] = cy - neckGroupPivot.y;
       } else {
-        nwRestGrid[idx]     = canvasToBodyXX(cx);
+        nwRestGrid[idx] = canvasToBodyXX(cx);
         nwRestGrid[idx + 1] = canvasToBodyXY(cy);
       }
     }
@@ -86,11 +98,12 @@ export function emitNeckWarp(x, ctx) {
   if (rigDebugLog) {
     rigDebugLog.neckWarp = {
       NECK_TILT_FRAC,
-      gridCols: nwCol + 1, gridRows: nwRow + 1,
+      gridCols: nwCol + 1,
+      gridRows: nwRow + 1,
       spanX: nwSpanX,
       maxShiftX: NECK_TILT_FRAC * nwSpanX,
-      parentDeformer: isUnderRotation ? 'GroupRotation_neck' : 'Body X Warp',
-      note: `top row shift at ParamAngleZ = +30 in ${isUnderRotation ? 'pixel' : '0..1'} space`,
+      parentDeformer: isUnderRotation ? "GroupRotation_neck" : "Body X Warp",
+      note: `top row shift at ParamAngleZ = +30 in ${isUnderRotation ? "pixel" : "0..1"} space`,
     };
   }
   const nwKeys = [-30, 0, 30];
@@ -101,7 +114,7 @@ export function emitNeckWarp(x, ctx) {
       const sign = k / 30;
       for (let r = 0; r < nwGH; r++) {
         const rf = r / (nwGH - 1);
-        const gradient = Math.sin(Math.PI * (1 - rf) / 2);
+        const gradient = Math.sin((Math.PI * (1 - rf)) / 2);
         if (gradient === 0) continue;
         for (let c = 0; c < nwGW; c++) {
           const idx = (r * nwGW + c) * 2;
@@ -112,13 +125,31 @@ export function emitNeckWarp(x, ctx) {
     nwGridPositions.push(pos);
   }
 
-  const [, pidNwGuid] = x.shared('CDeformerGuid', { uuid: uuid(), note: 'NeckWarp' });
-  const { pidKfg: pidNwKfg, formGuids: nwFormGuids } =
-    emitSingleParamKfGrid(x, pidParamAngleZ, nwKeys, 'ParamAngleZ_Neck');
+  const [, pidNwGuid] = x.shared("CDeformerGuid", {
+    uuid: uuid(),
+    note: "NeckWarp",
+  });
+  const { pidKfg: pidNwKfg, formGuids: nwFormGuids } = emitSingleParamKfGrid(
+    x,
+    pidParamAngleZ,
+    nwKeys,
+    "ParamAngleZ_Neck",
+  );
   const nwTarget = neckGroupRotPid || pidBodyXGuid;
-  emitStructuralWarp(x, emitCtx,
-    'Neck Warp', 'NeckWarp', nwCol, nwRow,
-    pidNwGuid, nwTarget, pidNwKfg, pidCoord, nwFormGuids, nwGridPositions);
+  emitStructuralWarp(
+    x,
+    emitCtx,
+    "Neck Warp",
+    "NeckWarp",
+    nwCol,
+    nwRow,
+    pidNwGuid,
+    nwTarget,
+    pidNwKfg,
+    pidCoord,
+    nwFormGuids,
+    nwGridPositions,
+  );
 
   return pidNwGuid;
 }
@@ -150,25 +181,37 @@ export function emitNeckWarp(x, ctx) {
  */
 export function emitFaceRotation(x, ctx) {
   const {
-    pidParamAngleZ, facePivotCx, facePivotCy, pidBodyXGuid,
-    headGroupId, groupDeformerGuids, deformerWorldOrigins,
-    canvasToBodyXX, canvasToBodyXY,
-    allDeformerSources, pidPartGuid, pidCoord, rootPart,
+    pidParamAngleZ,
+    facePivotCx,
+    facePivotCy,
+    pidBodyXGuid,
+    headGroupId,
+    groupDeformerGuids,
+    deformerWorldOrigins,
+    canvasToBodyXX,
+    canvasToBodyXY,
+    allDeformerSources,
+    pidPartGuid,
+    pidCoord,
+    rootPart,
   } = ctx;
 
   // ── Face Rotation (CRotationDeformerSource) ──
   // ParamAngleZ range is standard ±30; Hiyori caps actual rotation at ±10° even
   // when param is pushed to its limits. 3 keyforms: param -30/0/+30 → angle -10/0/+10.
-  const [, pidFaceRotGuid] = x.shared('CDeformerGuid', { uuid: uuid(), note: 'FaceRotation' });
-  const faceRotParamKeys = [-30, 0, 30];    // ParamAngleZ keyform values
-  const faceRotAngles    = [-10, 0, 10];    // corresponding rotation angles (Hiyori)
+  const [, pidFaceRotGuid] = x.shared("CDeformerGuid", {
+    uuid: uuid(),
+    note: "FaceRotation",
+  });
+  const faceRotParamKeys = [-30, 0, 30]; // ParamAngleZ keyform values
+  const faceRotAngles = [-10, 0, 10]; // corresponding rotation angles (Hiyori)
   // --- Structural chain integration: target FaceRotation to GroupRotation_head if possible ---
   const headGroupRotPid = headGroupId && groupDeformerGuids.get(headGroupId);
   const headGroupPivot = headGroupId && deformerWorldOrigins.get(headGroupId);
   const isUnderRotation = !!headGroupRotPid;
 
   const { pidKfg: pidFaceRotKfg, formGuids: faceRotFormGuids } =
-    emitSingleParamKfGrid(x, pidParamAngleZ, faceRotParamKeys, 'ParamAngleZ');
+    emitSingleParamKfGrid(x, pidParamAngleZ, faceRotParamKeys, "ParamAngleZ");
 
   const pivotX = isUnderRotation
     ? facePivotCx - headGroupPivot.x
@@ -177,63 +220,89 @@ export function emitFaceRotation(x, ctx) {
     ? facePivotCy - headGroupPivot.y
     : canvasToBodyXY(facePivotCy);
 
-  const [faceRotDf, pidFaceRotDf] = x.shared('CRotationDeformerSource');
-  allDeformerSources.push({ pid: pidFaceRotDf, tag: 'CRotationDeformerSource' });
-  const frAcdfs = x.sub(faceRotDf, 'ACDeformerSource', { 'xs.n': 'super' });
-  const frAcpcs = x.sub(frAcdfs, 'ACParameterControllableSource', { 'xs.n': 'super' });
-  x.sub(frAcpcs, 's', { 'xs.n': 'localName' }).text = 'Face Rotation';
-  x.sub(frAcpcs, 'b', { 'xs.n': 'isVisible' }).text = 'true';
-  x.sub(frAcpcs, 'b', { 'xs.n': 'isLocked' }).text = 'false';
-  x.subRef(frAcpcs, 'CPartGuid', pidPartGuid, { 'xs.n': 'parentGuid' });
-  x.subRef(frAcpcs, 'KeyformGridSource', pidFaceRotKfg, { 'xs.n': 'keyformGridSource' });
-  const frMft = x.sub(frAcpcs, 'KeyFormMorphTargetSet', { 'xs.n': 'keyformMorphTargetSet' });
-  x.sub(frMft, 'carray_list', { 'xs.n': '_morphTargets', count: '0' });
-  const frBwc = x.sub(frMft, 'MorphTargetBlendWeightConstraintSet', { 'xs.n': 'blendWeightConstraintSet' });
-  x.sub(frBwc, 'carray_list', { 'xs.n': '_constraints', count: '0' });
-  x.sub(frAcpcs, 'carray_list', { 'xs.n': '_extensions', count: '0' });
-  x.sub(frAcpcs, 'null', { 'xs.n': 'internalColor_direct_argb' });
-  x.sub(frAcpcs, 'null', { 'xs.n': 'internalColor_indirect_argb' });
-  x.subRef(frAcdfs, 'CDeformerGuid', pidFaceRotGuid, { 'xs.n': 'guid' });
-  x.sub(frAcdfs, 'CDeformerId', { 'xs.n': 'id', idstr: 'FaceRotation' });
+  const [faceRotDf, pidFaceRotDf] = x.shared("CRotationDeformerSource");
+  allDeformerSources.push({
+    pid: pidFaceRotDf,
+    tag: "CRotationDeformerSource",
+  });
+  const frAcdfs = x.sub(faceRotDf, "ACDeformerSource", { "xs.n": "super" });
+  const frAcpcs = x.sub(frAcdfs, "ACParameterControllableSource", {
+    "xs.n": "super",
+  });
+  x.sub(frAcpcs, "s", { "xs.n": "localName" }).text = "Face Rotation";
+  x.sub(frAcpcs, "b", { "xs.n": "isVisible" }).text = "true";
+  x.sub(frAcpcs, "b", { "xs.n": "isLocked" }).text = "false";
+  x.subRef(frAcpcs, "CPartGuid", pidPartGuid, { "xs.n": "parentGuid" });
+  x.subRef(frAcpcs, "KeyformGridSource", pidFaceRotKfg, {
+    "xs.n": "keyformGridSource",
+  });
+  const frMft = x.sub(frAcpcs, "KeyFormMorphTargetSet", {
+    "xs.n": "keyformMorphTargetSet",
+  });
+  x.sub(frMft, "carray_list", { "xs.n": "_morphTargets", count: "0" });
+  const frBwc = x.sub(frMft, "MorphTargetBlendWeightConstraintSet", {
+    "xs.n": "blendWeightConstraintSet",
+  });
+  x.sub(frBwc, "carray_list", { "xs.n": "_constraints", count: "0" });
+  x.sub(frAcpcs, "carray_list", { "xs.n": "_extensions", count: "0" });
+  x.sub(frAcpcs, "null", { "xs.n": "internalColor_direct_argb" });
+  x.sub(frAcpcs, "null", { "xs.n": "internalColor_indirect_argb" });
+  x.subRef(frAcdfs, "CDeformerGuid", pidFaceRotGuid, { "xs.n": "guid" });
+  x.sub(frAcdfs, "CDeformerId", { "xs.n": "id", idstr: "FaceRotation" });
   const frTarget = headGroupRotPid || pidBodyXGuid;
-  x.subRef(frAcdfs, 'CDeformerGuid', frTarget, { 'xs.n': 'targetDeformerGuid' });
-  x.sub(faceRotDf, 'b', { 'xs.n': 'useBoneUi_testImpl' }).text = 'true';
+  x.subRef(frAcdfs, "CDeformerGuid", frTarget, {
+    "xs.n": "targetDeformerGuid",
+  });
+  x.sub(faceRotDf, "b", { "xs.n": "useBoneUi_testImpl" }).text = "true";
 
-  const frKfsList = x.sub(faceRotDf, 'carray_list', {
-    'xs.n': 'keyforms', count: String(faceRotParamKeys.length),
+  const frKfsList = x.sub(faceRotDf, "carray_list", {
+    "xs.n": "keyforms",
+    count: String(faceRotParamKeys.length),
   });
   for (let i = 0; i < faceRotParamKeys.length; i++) {
-    const rdf = x.sub(frKfsList, 'CRotationDeformerForm', {
+    const rdf = x.sub(frKfsList, "CRotationDeformerForm", {
       angle: faceRotAngles[i].toFixed(1),
       originX: pivotX.toFixed(6),
       originY: pivotY.toFixed(6),
-      scale: '1.0',
-      isReflectX: 'false',
-      isReflectY: 'false',
+      scale: "1.0",
+      isReflectX: "false",
+      isReflectY: "false",
     });
-    const rdfAdf = x.sub(rdf, 'ACDeformerForm', { 'xs.n': 'super' });
-    const rdfAcf = x.sub(rdfAdf, 'ACForm', { 'xs.n': 'super' });
-    x.subRef(rdfAcf, 'CFormGuid', faceRotFormGuids[i], { 'xs.n': 'guid' });
-    x.sub(rdfAcf, 'b', { 'xs.n': 'isAnimatedForm' }).text = 'false';
-    x.sub(rdfAcf, 'b', { 'xs.n': 'isLocalAnimatedForm' }).text = 'false';
-    x.subRef(rdfAcf, 'CRotationDeformerSource', pidFaceRotDf, { 'xs.n': '_source' });
-    x.sub(rdfAcf, 'null', { 'xs.n': 'name' });
-    x.sub(rdfAcf, 's', { 'xs.n': 'notes' }).text = '';
-    x.sub(rdfAdf, 'f', { 'xs.n': 'opacity' }).text = '1.0';
-    x.sub(rdfAdf, 'CFloatColor', {
-      'xs.n': 'multiplyColor', red: '1.0', green: '1.0', blue: '1.0', alpha: '1.0',
+    const rdfAdf = x.sub(rdf, "ACDeformerForm", { "xs.n": "super" });
+    const rdfAcf = x.sub(rdfAdf, "ACForm", { "xs.n": "super" });
+    x.subRef(rdfAcf, "CFormGuid", faceRotFormGuids[i], { "xs.n": "guid" });
+    x.sub(rdfAcf, "b", { "xs.n": "isAnimatedForm" }).text = "false";
+    x.sub(rdfAcf, "b", { "xs.n": "isLocalAnimatedForm" }).text = "false";
+    x.subRef(rdfAcf, "CRotationDeformerSource", pidFaceRotDf, {
+      "xs.n": "_source",
     });
-    x.sub(rdfAdf, 'CFloatColor', {
-      'xs.n': 'screenColor', red: '0.0', green: '0.0', blue: '0.0', alpha: '1.0',
+    x.sub(rdfAcf, "null", { "xs.n": "name" });
+    x.sub(rdfAcf, "s", { "xs.n": "notes" }).text = "";
+    x.sub(rdfAdf, "f", { "xs.n": "opacity" }).text = "1.0";
+    x.sub(rdfAdf, "CFloatColor", {
+      "xs.n": "multiplyColor",
+      red: "1.0",
+      green: "1.0",
+      blue: "1.0",
+      alpha: "1.0",
     });
-    x.subRef(rdfAdf, 'CoordType', pidCoord, { 'xs.n': 'coordType' });
+    x.sub(rdfAdf, "CFloatColor", {
+      "xs.n": "screenColor",
+      red: "0.0",
+      green: "0.0",
+      blue: "0.0",
+      alpha: "1.0",
+    });
+    x.subRef(rdfAdf, "CoordType", pidCoord, { "xs.n": "coordType" });
   }
   // Match existing rotation-deformer field order (UI metadata).
-  x.sub(faceRotDf, 'f', { 'xs.n': 'handleLengthOnCanvas' }).text = '200.0';
-  x.sub(faceRotDf, 'f', { 'xs.n': 'circleRadiusOnCanvas' }).text = '100.0';
-  x.sub(faceRotDf, 'f', { 'xs.n': 'baseAngle' }).text = '0.0';
-  rootPart.childGuidsNode.children.push(x.ref('CDeformerGuid', pidFaceRotGuid));
-  rootPart.childGuidsNode.attrs.count = String(rootPart.childGuidsNode.children.length);
+  x.sub(faceRotDf, "f", { "xs.n": "handleLengthOnCanvas" }).text = "200.0";
+  x.sub(faceRotDf, "f", { "xs.n": "circleRadiusOnCanvas" }).text = "100.0";
+  x.sub(faceRotDf, "f", { "xs.n": "baseAngle" }).text = "0.0";
+  rootPart.childGuidsNode.children.push(x.ref("CDeformerGuid", pidFaceRotGuid));
+  rootPart.childGuidsNode.attrs.count = String(
+    rootPart.childGuidsNode.children.length,
+  );
 
   return pidFaceRotGuid;
 }

@@ -1,4 +1,4 @@
-import type { TRACK_VALUE_CATEGORIES } from "./animationProperties.js";
+import type { TRACK_VALUE_CATEGORIES } from "@/domain/animationProperties.js";
 
 export type TrackValueCategory =
   (typeof TRACK_VALUE_CATEGORIES)[keyof typeof TRACK_VALUE_CATEGORIES];

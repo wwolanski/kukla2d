@@ -4,16 +4,15 @@ import type {
   RasterExportPlan,
 } from "@kukla2d/contracts";
 
-import { captureRasterFrames } from "./captureRasterFrames.js";
-import { errorMessage } from "./exportApplicationTypes.js";
-
+import { captureRasterFrames } from "@/features/export/application/captureRasterFrames.js";
+import { errorMessage } from "@/features/export/application/exportApplicationTypes.js";
 import type {
   ExportEncoder,
   ExportOutputSink,
   ExportProgress,
   ExportRunResult,
-} from "./exportApplicationTypes.types.js";
-import type { CaptureFrame } from "../domain/frameCaptureTypes.types.js";
+} from "@/features/export/application/exportApplicationTypes.types.js";
+import type { CaptureFrame } from "@/features/export/domain/frameCaptureTypes.types.js";
 
 interface AnimationFrameGroup {
   animationId: string;

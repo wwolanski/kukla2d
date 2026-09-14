@@ -11,7 +11,7 @@
 import type {
   PixiPerformanceCounters,
   PixiRuntimeStats,
-} from "./pixiPerformanceMetrics.types.js";
+} from "@/features/canvas/domain/pixiPerformanceMetrics.types.js";
 
 /**
  * @returns {PixiPerformanceCounters}

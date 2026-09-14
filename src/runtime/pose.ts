@@ -6,19 +6,18 @@ import type {
   Vertex,
 } from "@kukla2d/contracts";
 
-import { isFiniteNumber } from "@/lib/math";
-
-import {
-  computeBoneWorldMatrices,
-  computeInverseBindMatrices,
-} from "./skeleton.js";
-import { linearBlendSkinning } from "./skin.js";
-
 import type {
   BoneTransformOverride,
   EvaluatedPose,
   PoseOverrideMap,
-} from "./pose.types.js";
+} from "@/runtime/pose.types.js";
+import {
+  computeBoneWorldMatrices,
+  computeInverseBindMatrices,
+} from "@/runtime/skeleton.js";
+import { linearBlendSkinning } from "@/runtime/skin.js";
+
+import { isFiniteNumber } from "@/lib/math";
 
 interface SkinnedMesh {
   nodeId: NodeId;

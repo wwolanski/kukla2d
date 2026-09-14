@@ -6,32 +6,36 @@ import {
   findAlphaHit,
   findBoneHit,
 } from "@/features/canvas/domain/picking.js";
-
 import {
   handleAutoMotionPartPickDown,
   handleAutoMotionPartPickMove,
-} from "./PixiAutoMotionPickGestures.js";
-import { commitDrawnBone } from "./PixiBoneAssignment.js";
-import { updateCanvasHover } from "./PixiCanvasHover.js";
-import { handleExportAreaPointerDown } from "./PixiExportAreaGestures.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiAutoMotionPickGestures.js";
+import { commitDrawnBone } from "@/features/canvas/infrastructure/rendering/pixi/PixiBoneAssignment.js";
+import { updateCanvasHover } from "@/features/canvas/infrastructure/rendering/pixi/PixiCanvasHover.js";
+import { handleExportAreaPointerDown } from "@/features/canvas/infrastructure/rendering/pixi/PixiExportAreaGestures.js";
 import {
   handleIkPointerDown,
   handleIkPointerMove,
   handleIkTargetSelection,
-} from "./PixiIkConstraintGestures.js";
-import { getAdapterEffectiveRigState } from "./PixiInputState.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiIkConstraintGestures.js";
+import { getAdapterEffectiveRigState } from "@/features/canvas/infrastructure/rendering/pixi/PixiInputState.js";
+import type { PointerInput } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { DragState } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
 import {
   commitMarquee,
   shouldStartMarquee,
   startMarquee,
   updateMarquee,
-} from "./PixiMarqueeGestures.js";
-import { moveMeshGesture, startMeshGesture } from "./PixiMeshGestures.js";
-import { commitWarpDrag, cleanupWarpDrag } from "./PixiWarpGestures.js";
-
-import type { PointerInput } from "./pixiInteractionContracts.types.js";
-import type { DragState } from "./pixiInteractionDragContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiMarqueeGestures.js";
+import {
+  moveMeshGesture,
+  startMeshGesture,
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiMeshGestures.js";
+import {
+  commitWarpDrag,
+  cleanupWarpDrag,
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiWarpGestures.js";
 
 type CanvasPointerInput = PointerInput & { button: number };
 type DrawBoneDrag = Extract<DragState, { type: "drawBone" }>;

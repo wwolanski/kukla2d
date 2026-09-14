@@ -8,12 +8,14 @@ import { useProjectStore } from "@/store/projectStore";
 
 import { canNavigate } from "@/domain/animationAuthoring.js";
 
-import { buildTimelineTrackRows } from "./buildTimelineTrackRows.js";
-import { createTimelineCommandApi } from "./createTimelineCommandApi.js";
-import { frameToMs, msToFrame } from "../domain/timelineTime.js";
-
-import type { TimelineTargetDescriptor } from "./buildTimelineTrackRows.types.js";
-import type { TimelineCommandApi } from "./createTimelineCommandApi.types.js";
+import { buildTimelineTrackRows } from "@/features/timeline/application/buildTimelineTrackRows.js";
+import type { TimelineTargetDescriptor } from "@/features/timeline/application/buildTimelineTrackRows.types.js";
+import { createTimelineCommandApi } from "@/features/timeline/application/createTimelineCommandApi.js";
+import type { TimelineCommandApi } from "@/features/timeline/application/createTimelineCommandApi.types.js";
+import {
+  frameToMs,
+  msToFrame,
+} from "@/features/timeline/domain/timelineTime.js";
 
 const BONE_PREFIX = "\u{1F9B4} ";
 

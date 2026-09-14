@@ -3,14 +3,14 @@ import {
   decomposeAffineMatrix,
 } from "@/domain/transforms";
 
-import { applyNodeTransformToPixiDisplayObject } from "./pixiTransform.js";
-
-import type { PixiResourceRegistry } from "./PixiResourceRegistry.js";
-import type { PixiViewportBridge } from "./PixiViewportBridge.js";
 import type {
   CanvasFrame,
   DrawFrameOptions,
-} from "../../../application/canvasRenderer.types.js";
+} from "@/features/canvas/application/canvasRenderer.types.js";
+import type { PixiResourceRegistry } from "@/features/canvas/infrastructure/rendering/pixi/PixiResourceRegistry.js";
+import { applyNodeTransformToPixiDisplayObject } from "@/features/canvas/infrastructure/rendering/pixi/pixiTransform.js";
+import type { PixiViewportBridge } from "@/features/canvas/infrastructure/rendering/pixi/PixiViewportBridge.js";
+
 import type { Container } from "pixi.js";
 
 interface PixiFrameRendererOptions {

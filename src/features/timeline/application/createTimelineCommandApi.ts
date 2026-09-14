@@ -17,7 +17,7 @@ import type {
 } from "@/domain/animationCommandTypes.types.js";
 import { durationMsFromFrameCount } from "@/domain/animationDefaults.js";
 
-import type { TimelineCommandApi } from "./createTimelineCommandApi.types.js";
+import type { TimelineCommandApi } from "@/features/timeline/application/createTimelineCommandApi.types.js";
 
 interface TimelineCreateAnimationPayload extends CreateAnimationClipPayload {
   frameCount?: number;

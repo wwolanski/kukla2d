@@ -9,7 +9,10 @@
  * Convert client coords to canvas-element-relative world coords (image/mesh pixel space).
  * Requires a canvas element (or object with getBoundingClientRect).
  */
-import type { CoordinatePair, ViewTransform } from "./coordinates.types.js";
+import type {
+  CoordinatePair,
+  ViewTransform,
+} from "@/features/canvas/domain/coordinates.types.js";
 
 export function clientToCanvasSpace(
   canvas: Pick<HTMLCanvasElement, "getBoundingClientRect">,

@@ -18,10 +18,8 @@ import { brushWeight } from "@/features/canvas/domain/meshEditing.js";
 import { applyMeshTopologyChange } from "@/features/canvas/domain/meshTopologyCommands.js";
 import { applyWeightBrush } from "@/features/canvas/domain/meshWeighting.js";
 import { findNearestVertex } from "@/features/canvas/domain/picking.js";
-
-import { getEffectiveNodes } from "./PixiInputState.js";
-
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+import { getEffectiveNodes } from "@/features/canvas/infrastructure/rendering/pixi/PixiInputState.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
 
 interface WorldPoint {
   x: number;

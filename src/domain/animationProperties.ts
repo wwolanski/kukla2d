@@ -1,10 +1,10 @@
-import { isFiniteNumber } from "@/lib/math";
-
 import type {
   AnimationPropertySpec,
   AnimationTargetKind,
   TrackValueCategory,
-} from "./animationProperties.types.js";
+} from "@/domain/animationProperties.types.js";
+
+import { isFiniteNumber } from "@/lib/math";
 
 type InterpolationMode = "none" | "linear" | "cubic";
 

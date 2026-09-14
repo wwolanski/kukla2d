@@ -13,12 +13,10 @@ import {
   findBoneHit,
   findConstraintTargetHit,
 } from "@/features/canvas/domain/picking.js";
-
-import { getAdapterEffectiveRigState } from "./PixiInputState.js";
-import { usesPoseDraft } from "./PixiPosePreview.js";
-
-import type { PointerInput } from "./pixiInteractionContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+import { getAdapterEffectiveRigState } from "@/features/canvas/infrastructure/rendering/pixi/PixiInputState.js";
+import type { PointerInput } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
+import { usesPoseDraft } from "@/features/canvas/infrastructure/rendering/pixi/PixiPosePreview.js";
 
 interface WorldPoint {
   x: number;

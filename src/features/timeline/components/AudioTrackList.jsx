@@ -1,4 +1,4 @@
-import { AudioTrackRow } from "./AudioTrackRow.jsx";
+import { AudioTrackRow } from "@/features/timeline/components/AudioTrackRow.jsx";
 
 export function AudioTrackList({
   decodeAudioFile,

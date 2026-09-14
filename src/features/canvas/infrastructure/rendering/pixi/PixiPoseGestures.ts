@@ -2,18 +2,19 @@ import {
   buildRotatedBoneBranch,
   updatePoseHandleDrag,
 } from "@/features/canvas/domain/poseHandle.js";
-
-import { getEffectiveBones, getEffectiveNodes } from "./PixiInputState.js";
+import {
+  getEffectiveBones,
+  getEffectiveNodes,
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiInputState.js";
+import type { PointerInput } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { DragState } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
+import type { PoseHandleFrame } from "@/features/canvas/infrastructure/rendering/pixi/PixiPoseGestures.types.js";
 import {
   canStartAnimationGesture,
   previewPosePartial,
   usesPoseDraft,
-} from "./PixiPosePreview.js";
-
-import type { PointerInput } from "./pixiInteractionContracts.types.js";
-import type { DragState } from "./pixiInteractionDragContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
-import type { PoseHandleFrame } from "./PixiPoseGestures.types.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiPosePreview.js";
 
 export function startPoseHandleDrag(
   adapter: PixiInteractionSystem,

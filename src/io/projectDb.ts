@@ -7,7 +7,10 @@ import {
 
 import { isRecord } from "@/lib/guards";
 
-import type { RecoveryRecord, StoredProjectRecord } from "./projectDb.types.js";
+import type {
+  RecoveryRecord,
+  StoredProjectRecord,
+} from "@/io/projectDb.types.js";
 
 const STORE_NAME = PROJECT_STORE;
 

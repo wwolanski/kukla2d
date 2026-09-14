@@ -27,10 +27,12 @@
     "typecheck": "repoatlas typecheck",
     "check:ts-graph": "node scripts/check-typescript-graph.mjs",
     "check:typescript-migration": "node scripts/check-typescript-migration.mjs",
+    "check:import-alias": "node scripts/fix-relative-import-aliases.mjs --check",
     "check:type-locality": "repoatlas repo",
     "check:deadcode": "repoatlas dead-code",
     "check:full": "node scripts/run-check.mjs",
     "check": "npm run check:full",
+    "fix:import-alias": "node scripts/fix-relative-import-aliases.mjs --write",
     "test:e2e": "npm run build:e2e && playwright test",
     "prepare": "husky"
   },

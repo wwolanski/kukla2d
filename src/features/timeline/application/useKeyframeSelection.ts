@@ -13,18 +13,21 @@ import type { ProjectActions } from "@/store/project/projectStoreTypes.types.js"
 import { moveKeyframesPreflight } from "@/domain/moveKeyframesPreflight";
 import type { MoveKeyframesPreflightResult } from "@/domain/moveKeyframesPreflight.types.js";
 
-import { clamp } from "@/lib/math";
-
+import type { VisibleTimelineRow } from "@/features/timeline/application/buildTimelineTrackRows.types.js";
 import {
   parseKeyframeAddressSet,
   collectTrackKeyframeAddresses,
   keyframeAddressToString,
-} from "../application/keyframeAddress.js";
-import { LAYOUT } from "../domain/timelineLayout.js";
-import { msToFrame, frameToMs } from "../domain/timelineTime.js";
+} from "@/features/timeline/application/keyframeAddress.js";
+import type { KeyframeAddress } from "@/features/timeline/application/keyframeAddress.types.js";
+import { LAYOUT } from "@/features/timeline/domain/timelineLayout.js";
+import {
+  msToFrame,
+  frameToMs,
+} from "@/features/timeline/domain/timelineTime.js";
 
-import type { VisibleTimelineRow } from "./buildTimelineTrackRows.types.js";
-import type { KeyframeAddress } from "./keyframeAddress.types.js";
+import { clamp } from "@/lib/math";
+
 import type { RefObject } from "react";
 
 interface SelectionBox {

@@ -1,5 +1,6 @@
-import type { PixiViewportBridge } from "./PixiViewportBridge.js";
-import type { CaptureOptions } from "../../../application/canvasRenderer.types.js";
+import type { CaptureOptions } from "@/features/canvas/application/canvasRenderer.types.js";
+import type { PixiViewportBridge } from "@/features/canvas/infrastructure/rendering/pixi/PixiViewportBridge.js";
+
 import type { Application } from "pixi.js";
 
 interface PixiCaptureServiceOptions {

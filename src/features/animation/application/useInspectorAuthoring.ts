@@ -3,12 +3,11 @@ import type { AnimationTargetId } from "@kukla2d/contracts";
 import { useAnimationStore } from "@/store/animationStore";
 import { useEditorStore } from "@/store/editorStore";
 
-import { createAnimationAuthoringApi } from "./createAnimationAuthoringApi.js";
-
+import { createAnimationAuthoringApi } from "@/features/animation/application/createAnimationAuthoringApi.js";
 import type {
   AnimationAuthoringApi,
   AnimationCommitResult,
-} from "./createAnimationAuthoringApi.types.js";
+} from "@/features/animation/application/createAnimationAuthoringApi.types.js";
 
 const api = createAnimationAuthoringApi();
 

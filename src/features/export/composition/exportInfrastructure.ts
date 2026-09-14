@@ -1,14 +1,13 @@
-import { resolveExportEncoder as resolveExportEncoderFromRegistry } from "../application/resolveExportEncoder.js";
-import { browserExportSink as browserExportSinkAdapter } from "../infrastructure/browserExportSink.js";
-import { encodeGif as encodeGifAdapter } from "../infrastructure/encodeGif.js";
+import type { ExportEncoder } from "@/features/export/application/exportApplicationTypes.types.js";
+import { resolveExportEncoder as resolveExportEncoderFromRegistry } from "@/features/export/application/resolveExportEncoder.js";
+import { browserExportSink as browserExportSinkAdapter } from "@/features/export/infrastructure/browserExportSink.js";
+import { encodeGif as encodeGifAdapter } from "@/features/export/infrastructure/encodeGif.js";
 import {
   buildPngFilePath as buildPngFilePathAdapter,
   dataUrlToBlob as dataUrlToBlobAdapter,
   encodePngSequence as encodePngSequenceAdapter,
-} from "../infrastructure/encodePngSequence.js";
-import { encodePngSpritesheet as encodePngSpritesheetAdapter } from "../infrastructure/encodePngSpritesheet.js";
-
-import type { ExportEncoder } from "../application/exportApplicationTypes.types.js";
+} from "@/features/export/infrastructure/encodePngSequence.js";
+import { encodePngSpritesheet as encodePngSpritesheetAdapter } from "@/features/export/infrastructure/encodePngSpritesheet.js";
 
 const ENCODERS = {
   gif: encodeGifAdapter,

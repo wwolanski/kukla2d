@@ -1,6 +1,6 @@
 export const HEAD_CHEEK_JIGGLE_PRESET_ID = "builtin.headCheekJiggle";
 export const HEAD_CHEEK_JIGGLE_PRESET_VERSION = 2;
-import type { MotionPresetDefinition } from "./autoMotionTypes.types.js";
+import type { MotionPresetDefinition } from "@/domain/autoMotion/autoMotionTypes.types.js";
 
 export function createHeadCheekJigglePresetDefinition(): MotionPresetDefinition {
   return {

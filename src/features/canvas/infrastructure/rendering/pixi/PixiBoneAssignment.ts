@@ -7,9 +7,8 @@ import { getNextBoneName } from "@/features/canvas/domain/boneNaming.js";
 import { refreshIkTopology } from "@/features/canvas/domain/ikConstraintCreation.js";
 import { findAlphaHit } from "@/features/canvas/domain/picking.js";
 import { findSmartBoneAssignmentCandidate } from "@/features/canvas/domain/smartBoneAssignment.js";
-
-import type { DragState } from "./pixiInteractionDragContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+import type { DragState } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
 
 type DrawBoneDrag = Extract<DragState, { type: "drawBone" }>;
 

@@ -3,11 +3,14 @@ import {
   type ModularSpriteProcessingRecipe,
 } from "@kukla2d/contracts";
 
-import { clamp, rgbToOklab, smoothstep } from "../imageMath.js";
-import { keyLightnessWeight } from "./keyColorProfile.js";
-
-import type { RgbaImageData } from "../contracts.types.js";
-import type { ProcessingHooks } from "./processing.types.js";
+import type { RgbaImageData } from "@/features/modular-sprite/domain/contracts.types.js";
+import {
+  clamp,
+  rgbToOklab,
+  smoothstep,
+} from "@/features/modular-sprite/domain/imageMath.js";
+import { keyLightnessWeight } from "@/features/modular-sprite/domain/processing/keyColorProfile.js";
+import type { ProcessingHooks } from "@/features/modular-sprite/domain/processing/processing.types.js";
 
 export const PROCESSING_CHUNK_ROWS =
   MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.processingChunkRows;

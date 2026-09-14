@@ -1,8 +1,7 @@
 import type { Bone, BoneId, BoneSetup } from "@kukla2d/contracts";
 
-import { mat3Inverse, mat3Mul } from "../domain/transforms.js";
-
-import type { Matrix3 } from "../domain/transforms.types.js";
+import { mat3Inverse, mat3Mul } from "@/domain/transforms.js";
+import type { Matrix3 } from "@/domain/transforms.types.js";
 
 type SkeletonTopologyDiagnostic =
   | { code: "DUPLICATE_BONE_ID"; boneId: BoneId }

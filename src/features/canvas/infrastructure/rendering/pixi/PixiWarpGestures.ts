@@ -1,7 +1,6 @@
-import { getWarpGrid } from "./PixiInputState.js";
-
-import type { DragState } from "./pixiInteractionDragContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+import { getWarpGrid } from "@/features/canvas/infrastructure/rendering/pixi/PixiInputState.js";
+import type { DragState } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
 
 type WarpDrag = Extract<DragState, { type: "warp" }>;
 

@@ -6,8 +6,8 @@
  */
 import Delaunator from "delaunator";
 
-import type { Point2D } from "./contour.types.js";
-import type { Triangle } from "./delaunay.types.js";
+import type { Point2D } from "@/features/canvas/domain/mesh-generation/contour.types.js";
+import type { Triangle } from "@/features/canvas/domain/mesh-generation/delaunay.types.js";
 
 /**
  * Triangulate a set of 2-D points.

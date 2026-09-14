@@ -4,12 +4,11 @@ import {
   type ModularSpriteSchema,
 } from "@kukla2d/modular-sprite-schema";
 
-import { assertMatchRequest } from "./schemaMatcherProtocol.js";
-
+import { assertMatchRequest } from "@/features/modular-sprite-schema/infrastructure/browser/schemaMatcherProtocol.js";
 import type {
   SchemaMatcherWorkerRequest,
   SchemaMatcherWorkerResponse,
-} from "./schemaMatcherProtocol.types.js";
+} from "@/features/modular-sprite-schema/infrastructure/browser/schemaMatcherProtocol.types.js";
 
 const scope = self as DedicatedWorkerGlobalScope;
 let schemas: ModularSpriteSchema[] = [];

@@ -14,19 +14,20 @@ import {
   createUniqueName,
 } from "@/domain/libraryAssetNames.js";
 
-import { clientToCanvasSpace } from "@/features/canvas/domain/coordinates.js";
-
-import { uid } from "@/lib/uid.js";
-
-import { computeAlphaContours, computeImageBounds } from "./imageUtils.js";
-
 import type {
   CanvasEditorSnapshot,
   CanvasSceneGateway,
   CanvasTextureCache,
   MutableRef,
-} from "./canvasApplication.types.js";
-import type { CanvasDropEvent } from "./handleCanvasDrop.types.js";
+} from "@/features/canvas/application/canvasApplication.types.js";
+import type { CanvasDropEvent } from "@/features/canvas/application/handleCanvasDrop.types.js";
+import {
+  computeAlphaContours,
+  computeImageBounds,
+} from "@/features/canvas/application/imageUtils.js";
+import { clientToCanvasSpace } from "@/features/canvas/domain/coordinates.js";
+
+import { uid } from "@/lib/uid.js";
 
 type PlacedFields = "id" | "parent" | "textureId" | "draw_order";
 type PlaceablePartNode = Omit<PartNode, PlacedFields> &

@@ -4,8 +4,8 @@ import type {
   ProjectDocument,
 } from "@kukla2d/contracts";
 
-import { findHandleByRole } from "./controlHandles.js";
-import { getPresetRoles } from "./presetRegistry.js";
+import { findHandleByRole } from "@/domain/autoMotion/controlHandles.js";
+import { getPresetRoles } from "@/domain/autoMotion/presetRegistry.js";
 
 interface BindingWarning {
   code: "MISSING_BINDING" | "UNRESOLVED_BINDING";

@@ -13,15 +13,17 @@ import {
   traceAllContours,
   resampleContour,
   smoothContour,
-} from "./contour.js";
-import { triangulate } from "./delaunay.js";
-import { sampleInterior, filterByEdgePadding } from "./sample.js";
-
-import type { Point2D } from "./contour.types.js";
+} from "@/features/canvas/domain/mesh-generation/contour.js";
+import type { Point2D } from "@/features/canvas/domain/mesh-generation/contour.types.js";
+import { triangulate } from "@/features/canvas/domain/mesh-generation/delaunay.js";
 import type {
   MeshGenerationOptions,
   MeshGenerationResult,
-} from "./generate.types.js";
+} from "@/features/canvas/domain/mesh-generation/generate.types.js";
+import {
+  sampleInterior,
+  filterByEdgePadding,
+} from "@/features/canvas/domain/mesh-generation/sample.js";
 
 /**
  * Re-triangulate existing vertices without changing them.

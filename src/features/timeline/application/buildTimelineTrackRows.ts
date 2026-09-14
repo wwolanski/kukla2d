@@ -25,7 +25,7 @@ const EASING_DEFAULT = "ease-both" as const;
 import type {
   TimelineTargetDescriptor,
   VisibleTimelineRow,
-} from "./buildTimelineTrackRows.types.js";
+} from "@/features/timeline/application/buildTimelineTrackRows.types.js";
 
 type TimelineEasing = NonNullable<Keyframe["easing"]>;
 

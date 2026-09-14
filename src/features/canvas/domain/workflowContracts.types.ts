@@ -1,6 +1,7 @@
 import type { ProjectDocument } from "@kukla2d/contracts";
 
-import type { GestureSession } from "./gestureSession.types.js";
+import type { GestureSession } from "@/features/canvas/domain/gestureSession.types.js";
+
 import type { Draft } from "immer";
 
 export interface ScreenRect {

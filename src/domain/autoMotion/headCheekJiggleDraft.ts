@@ -7,21 +7,20 @@ import type {
   ProjectDocument,
 } from "@kukla2d/contracts";
 
-import { clampFiniteNumber } from "@/lib/math";
-import { uid } from "@/lib/uid";
-
-import { createControlHandle } from "./controlHandles.js";
-import { createHeadCheekJigglePresetDefinition } from "./headCheekJigglePreset.js";
-import {
-  getPresetDefaultDriver,
-  getPresetDefaultParams,
-} from "./presetRegistry.js";
-
 import type {
   AutoMotionDraftOptions,
   AutoMotionDraftResult,
   BoundingBox,
-} from "./autoMotionTypes.types.js";
+} from "@/domain/autoMotion/autoMotionTypes.types.js";
+import { createControlHandle } from "@/domain/autoMotion/controlHandles.js";
+import { createHeadCheekJigglePresetDefinition } from "@/domain/autoMotion/headCheekJigglePreset.js";
+import {
+  getPresetDefaultDriver,
+  getPresetDefaultParams,
+} from "@/domain/autoMotion/presetRegistry.js";
+
+import { clampFiniteNumber } from "@/lib/math";
+import { uid } from "@/lib/uid";
 
 export function createHeadCheekJiggleDraft({
   project,

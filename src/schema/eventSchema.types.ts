@@ -1,7 +1,7 @@
 import type {
   EventDefinitionSchema,
   EventKeyframeSchema,
-} from "./eventSchema.js";
+} from "@/schema/eventSchema.js";
 import type { z } from "zod";
 
 export type EventDefinition = z.output<typeof EventDefinitionSchema>;

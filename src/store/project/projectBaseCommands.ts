@@ -1,13 +1,11 @@
 import { produceWithPatches } from "immer";
 
-import { pushPatches } from "@/store/undoHistory";
-
-import { ensureRigCollections } from "./projectStoreShared.js";
-
+import { ensureRigCollections } from "@/store/project/projectStoreShared.js";
 import type {
   ProjectActions,
   ProjectStoreSet,
-} from "./projectStoreTypes.types.js";
+} from "@/store/project/projectStoreTypes.types.js";
+import { pushPatches } from "@/store/undoHistory";
 
 type ProjectBaseCommands = Pick<
   ProjectActions,

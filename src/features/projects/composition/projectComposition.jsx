@@ -1,8 +1,8 @@
-import { LoadModalView } from "../components/LoadModal.jsx";
+import { LoadModalView } from "@/features/projects/components/LoadModal.jsx";
 import {
   externalImportFormats,
   importExternalProject,
-} from "../infrastructure/externalImport/index.js";
+} from "@/features/projects/infrastructure/externalImport/index.js";
 
 export function LoadModal(props) {
   return (

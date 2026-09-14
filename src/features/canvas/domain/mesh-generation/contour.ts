@@ -19,7 +19,7 @@
  * @param {number}            radius    - Dilation radius in pixels (0 = no change)
  * @returns {Uint8Array}                 Binary mask (1 = inside after dilation)
  */
-import type { Point2D } from "./contour.types.js";
+import type { Point2D } from "@/features/canvas/domain/mesh-generation/contour.types.js";
 
 export function dilateAlphaMask(
   data: Uint8ClampedArray,

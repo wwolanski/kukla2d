@@ -7,20 +7,22 @@ import type {
   ProjectDocument,
 } from "@kukla2d/contracts";
 
-import { uid } from "@/lib/uid";
-
-import { createControlHandle, computePartCenter } from "./controlHandles.js";
-import { createIdleBreathingPresetDefinition } from "./idleBreathingPreset.js";
-import {
-  getPresetDefaultDriver,
-  getPresetDefaultParams,
-} from "./presetRegistry.js";
-
 import type {
   AutoMotionDraftOptions,
   AutoMotionDraftResult,
   BoundingBox,
-} from "./autoMotionTypes.types.js";
+} from "@/domain/autoMotion/autoMotionTypes.types.js";
+import {
+  createControlHandle,
+  computePartCenter,
+} from "@/domain/autoMotion/controlHandles.js";
+import { createIdleBreathingPresetDefinition } from "@/domain/autoMotion/idleBreathingPreset.js";
+import {
+  getPresetDefaultDriver,
+  getPresetDefaultParams,
+} from "@/domain/autoMotion/presetRegistry.js";
+
+import { uid } from "@/lib/uid";
 
 export function createIdleBreathingDraft({
   project,

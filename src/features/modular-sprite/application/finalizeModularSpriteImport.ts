@@ -10,22 +10,21 @@ import type {
   SchemaComparisonResult,
 } from "@kukla2d/modular-sprite-schema";
 
-import { reconcilePreviewToFullResolution } from "../domain/regionReconciliation.js";
-
 import type {
   ModularSpriteProcessingPort,
   ModularSpriteSchemaPort,
-} from "./finalizeModularSpriteImport.types.js";
-import type { ModularSpriteCommitRequest } from "./importContracts.types.js";
-import type { ModularSpriteSchemaMetadata } from "./schemaBinding.types.js";
+} from "@/features/modular-sprite/application/finalizeModularSpriteImport.types.js";
+import type { ModularSpriteCommitRequest } from "@/features/modular-sprite/application/importContracts.types.js";
+import type { ModularSpriteSchemaMetadata } from "@/features/modular-sprite/application/schemaBinding.types.js";
 import type {
   ExtractedPart,
   ModularSpriteDraftPart,
   ProcessedModularSprite,
   RgbaImageData,
-} from "../domain/contracts.types.js";
-import type { RegionGrouping } from "../domain/partGrouping.types.js";
-import type { RegionReconciliationReport } from "../domain/regionReconciliation.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
+import type { RegionGrouping } from "@/features/modular-sprite/domain/partGrouping.types.js";
+import { reconcilePreviewToFullResolution } from "@/features/modular-sprite/domain/regionReconciliation.js";
+import type { RegionReconciliationReport } from "@/features/modular-sprite/domain/regionReconciliation.types.js";
 
 interface ModularSpriteImagePort {
   encode(image: RgbaImageData): Promise<Blob>;

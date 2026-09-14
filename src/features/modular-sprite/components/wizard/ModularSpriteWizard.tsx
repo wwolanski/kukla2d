@@ -7,24 +7,22 @@ import {
   type NormalizedPoint,
 } from "@kukla2d/contracts";
 
+import { useModularSpriteWizardController } from "@/features/modular-sprite/application/useModularSpriteWizardController.js";
+import { ModularSpritePreviewCanvas } from "@/features/modular-sprite/components/preview/ModularSpritePreviewCanvas.js";
+import { BackgroundStep } from "@/features/modular-sprite/components/wizard/BackgroundStep.js";
+import type { ModularSpriteWizardProps } from "@/features/modular-sprite/components/wizard/ModularSpriteWizard.types.js";
+import { PartDetailsStep } from "@/features/modular-sprite/components/wizard/PartDetailsStep.js";
+import { RegionGroupingStep } from "@/features/modular-sprite/components/wizard/RegionGroupingStep.js";
+import { ReviewStep } from "@/features/modular-sprite/components/wizard/ReviewStep.js";
+import { SourceStep } from "@/features/modular-sprite/components/wizard/SourceStep.js";
+import { TouchupToolbar } from "@/features/modular-sprite/components/wizard/TouchupToolbar.js";
+import { WizardFooter } from "@/features/modular-sprite/components/wizard/WizardFooter.js";
+import { WizardHeader } from "@/features/modular-sprite/components/wizard/WizardHeader.js";
 import { SchemaComparisonSidebar } from "@/features/modular-sprite-schema";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-import { BackgroundStep } from "./BackgroundStep.js";
-import { PartDetailsStep } from "./PartDetailsStep.js";
-import { RegionGroupingStep } from "./RegionGroupingStep.js";
-import { ReviewStep } from "./ReviewStep.js";
-import { SourceStep } from "./SourceStep.js";
-import { TouchupToolbar } from "./TouchupToolbar.js";
-import { WizardFooter } from "./WizardFooter.js";
-import { WizardHeader } from "./WizardHeader.js";
-import { useModularSpriteWizardController } from "../../application/useModularSpriteWizardController.js";
-import { ModularSpritePreviewCanvas } from "../preview/ModularSpritePreviewCanvas.js";
-
-import type { ModularSpriteWizardProps } from "./ModularSpriteWizard.types.js";
 
 const UiButton = Button as React.ComponentType<
   React.ButtonHTMLAttributes<HTMLButtonElement> & {

@@ -1,10 +1,9 @@
-import meshWorkerUrl from "./mesh-worker/worker.ts?worker&url";
-
+import type { MeshGenerationOptions } from "@/features/canvas/domain/mesh-generation/generate.types.js";
+import meshWorkerUrl from "@/features/canvas/infrastructure/mesh-worker/worker.ts?worker&url";
 import type {
   MeshData,
   MeshImageData,
-} from "./mesh-worker/workerProtocol.types.js";
-import type { MeshGenerationOptions } from "../domain/mesh-generation/generate.types.js";
+} from "@/features/canvas/infrastructure/mesh-worker/workerProtocol.types.js";
 
 interface MeshWorkerClientOptions {
   workerUrl?: string | URL;

@@ -9,9 +9,9 @@ import type {
   Vertex,
 } from "@kukla2d/contracts";
 
-import { clampFiniteNumber } from "@/lib/math";
+import type { BoundingBox } from "@/domain/autoMotion/autoMotionTypes.types.js";
 
-import type { BoundingBox } from "./autoMotionTypes.types.js";
+import { clampFiniteNumber } from "@/lib/math";
 
 type ModifierPoseOverrides = Map<string, Record<string, unknown>>;
 

@@ -1,23 +1,22 @@
 import { toAnimationId, type ProjectDocument } from "@kukla2d/contracts";
 
-import { uid } from "@/lib/uid";
-
+import type {
+  AnimationCommandResult,
+  CreateAnimationClipPayload,
+  UpdateAnimationTimingPayload,
+} from "@/domain/animationCommandTypes.types.js";
 import {
   ANIMATION_DEFAULTS,
   durationMsFromFrameCount,
-} from "./animationDefaults.js";
+} from "@/domain/animationDefaults.js";
 import {
   assertFiniteNumber,
   assertString,
   createCommandError,
   getAnimation,
-} from "./animationDocumentCommandSupport.js";
+} from "@/domain/animationDocumentCommandSupport.js";
 
-import type {
-  AnimationCommandResult,
-  CreateAnimationClipPayload,
-  UpdateAnimationTimingPayload,
-} from "./animationCommandTypes.types.js";
+import { uid } from "@/lib/uid";
 
 export function createAnimationClip(
   project: ProjectDocument,

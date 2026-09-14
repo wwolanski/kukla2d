@@ -10,13 +10,13 @@ import {
   type SemanticCatalog,
 } from "@kukla2d/modular-sprite-schema";
 
-import type { ModularSpriteSchemaMetadata } from "./schemaBinding.types.js";
+import type { ModularSpriteSchemaMetadata } from "@/features/modular-sprite/application/schemaBinding.types.js";
 import type {
   DetectedRegion,
   ModularSpriteDraftPart,
   ProcessedModularSprite,
-} from "../domain/contracts.types.js";
-import type { RegionGrouping } from "../domain/partGrouping.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
+import type { RegionGrouping } from "@/features/modular-sprite/domain/partGrouping.types.js";
 
 interface SchemaPartFactory {
   (

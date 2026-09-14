@@ -4,7 +4,7 @@ import {
   type Track,
 } from "@kukla2d/contracts";
 
-import type { KeyframeAddress } from "./keyframeAddress.types.js";
+import type { KeyframeAddress } from "@/features/timeline/application/keyframeAddress.types.js";
 
 export function createKeyframeAddress(
   targetId: AnimationTargetId,

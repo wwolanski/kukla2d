@@ -1,7 +1,7 @@
 import type {
   StateMachineState,
   StateMachineTransition,
-} from "./stateMachine.types.js";
+} from "@/runtime/stateMachine.types.js";
 
 type TransitionEvaluation =
   | {

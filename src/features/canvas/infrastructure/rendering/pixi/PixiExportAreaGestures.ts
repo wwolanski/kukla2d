@@ -1,6 +1,6 @@
-import type { PointerInput } from "./pixiInteractionContracts.types.js";
-import type { DragState } from "./pixiInteractionDragContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+import type { PointerInput } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { DragState } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
 
 interface WorldPoint {
   x: number;

@@ -7,12 +7,12 @@ import {
   type ModularSpriteProcessingRecipe,
 } from "@kukla2d/contracts";
 
+import type { EditorTool } from "@/features/modular-sprite/components/preview/ModularSpritePreviewCanvas.types.js";
+
 import { Button } from "@/components/ui/button";
 import { HelpIcon } from "@/components/ui/help-icon";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
-
-import type { EditorTool } from "../preview/ModularSpritePreviewCanvas.types.js";
 
 const UiButton = Button as React.ComponentType<
   React.ButtonHTMLAttributes<HTMLButtonElement> & {

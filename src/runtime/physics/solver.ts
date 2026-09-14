@@ -1,12 +1,11 @@
 import type { BoneId } from "@kukla2d/contracts";
 
-import { validatePhysicsRig } from "./physicsRig.js";
-
+import { validatePhysicsRig } from "@/runtime/physics/physicsRig.js";
 import type {
   PhysicsRig,
   PhysicsRigDiagnostic,
   Vector2,
-} from "./physicsRig.types.js";
+} from "@/runtime/physics/physicsRig.types.js";
 
 interface PhysicsBoneOverride {
   x?: number;

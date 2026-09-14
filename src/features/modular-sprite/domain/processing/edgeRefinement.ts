@@ -5,17 +5,16 @@ import {
   type ModularSpriteProcessingRecipe,
 } from "@kukla2d/contracts";
 
-import { rgbToOklab } from "../imageMath.js";
-import { detectEnclosedChroma } from "./enclosedChroma.js";
-import { hasReliableKeyChroma } from "./keyColorProfile.js";
-import { rasterizeStroke } from "./maskStrokes.js";
+import type { RgbaImageData } from "@/features/modular-sprite/domain/contracts.types.js";
+import { rgbToOklab } from "@/features/modular-sprite/domain/imageMath.js";
+import { detectEnclosedChroma } from "@/features/modular-sprite/domain/processing/enclosedChroma.js";
+import { hasReliableKeyChroma } from "@/features/modular-sprite/domain/processing/keyColorProfile.js";
+import { rasterizeStroke } from "@/features/modular-sprite/domain/processing/maskStrokes.js";
 import {
   fillEnclosedHoles,
   squareMorphology,
   thresholdMatte,
-} from "./morphology.js";
-
-import type { RgbaImageData } from "../contracts.types.js";
+} from "@/features/modular-sprite/domain/processing/morphology.js";
 
 const PROPAGATION_NEIGHBORS = [
   [-1, -1],

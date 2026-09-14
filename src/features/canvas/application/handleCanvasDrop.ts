@@ -1,8 +1,7 @@
 import { readLibraryAssetDrag } from "@/domain/libraryAssetDrag.js";
 
+import type { CanvasDropEvent } from "@/features/canvas/application/handleCanvasDrop.types.js";
 import type { WorkflowEvent } from "@/features/canvas/domain/workflowContracts.types.js";
-
-import type { CanvasDropEvent } from "./handleCanvasDrop.types.js";
 
 interface CanvasDropDependencies {
   event: CanvasDropEvent;

@@ -1,12 +1,11 @@
 import { assign } from "xstate";
 
-import { createGestureSession } from "../domain/gestureSession.js";
-
-import type { GestureKind } from "../domain/gestureSession.types.js";
+import { createGestureSession } from "@/features/canvas/domain/gestureSession.js";
+import type { GestureKind } from "@/features/canvas/domain/gestureSession.types.js";
 import type {
   EditorWorkflowState,
   WorkflowEvent,
-} from "../domain/workflowContracts.types.js";
+} from "@/features/canvas/domain/workflowContracts.types.js";
 
 const MESH_TOOLS = [
   "meshEdit",

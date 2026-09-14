@@ -21,13 +21,13 @@ import type {
 } from "@/domain/animationCommandTypes.types.js";
 import { isTimelineVisibleKeyframe } from "@/domain/keyframeProvenance";
 
-import { uid } from "@/lib/uid.js";
-
 import {
   collectTrackKeyframeAddresses,
   keyframeAddressToString,
   parseKeyframeAddressSet,
-} from "./keyframeAddress.js";
+} from "@/features/timeline/application/keyframeAddress.js";
+
+import { uid } from "@/lib/uid.js";
 
 interface KeyframeClipboard {
   properties: Record<string, unknown>;

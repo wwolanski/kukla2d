@@ -3,16 +3,15 @@ import {
   type ModularSpriteProcessingRecipe,
 } from "@kukla2d/contracts";
 
-import { precomputeOklabAsync } from "../domain/processing/chromaKey.js";
-import { extractModularSpriteParts } from "../domain/processing/extractParts.js";
-import { processModularSpriteAsync } from "../domain/processing/pipeline.js";
-
+import type { RgbaImageData } from "@/features/modular-sprite/domain/contracts.types.js";
+import { precomputeOklabAsync } from "@/features/modular-sprite/domain/processing/chromaKey.js";
+import { extractModularSpriteParts } from "@/features/modular-sprite/domain/processing/extractParts.js";
+import { processModularSpriteAsync } from "@/features/modular-sprite/domain/processing/pipeline.js";
 import type {
   ModularSpriteWorkerRequest,
   ModularSpriteWorkerResponse,
-} from "./workerProtocol.types.js";
-import type { ModularSpriteTaskRuntime } from "./workerTaskHandler.types.js";
-import type { RgbaImageData } from "../domain/contracts.types.js";
+} from "@/features/modular-sprite/infrastructure/workerProtocol.types.js";
+import type { ModularSpriteTaskRuntime } from "@/features/modular-sprite/infrastructure/workerTaskHandler.types.js";
 
 interface ModularSpriteTaskResult {
   response: Exclude<ModularSpriteWorkerResponse, { type: "progress" }>;

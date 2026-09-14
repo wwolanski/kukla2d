@@ -1,4 +1,4 @@
-import type { PosePhysicsLoader } from "./posePhysicsLoader.types.js";
+import type { PosePhysicsLoader } from "@/features/canvas/application/posePhysicsLoader.types.js";
 
 export function createPosePhysicsLoader(): PosePhysicsLoader {
   let inFlight: Promise<void> | null = null;

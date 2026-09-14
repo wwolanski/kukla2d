@@ -13,18 +13,17 @@ import type {
 
 import type { ProjectReadinessReport } from "@/domain/projectReadiness.types.js";
 
+import { errorMessage } from "@/features/export/application/exportApplicationTypes.js";
+import type {
+  ExportOutputSink,
+  ExportProgress,
+} from "@/features/export/application/exportApplicationTypes.types.js";
+import { runPhaserAtlasExport } from "@/features/export/application/runPhaserAtlasExport.js";
+import type { CaptureFrame } from "@/features/export/domain/frameCaptureTypes.types.js";
 import { buildPhaserAtlasFrameIdentity } from "@/features/export/domain/phaserAtlasContract";
 import { createPhaserAtlasExportPlan } from "@/features/export/domain/phaserAtlasExportPlan";
 import { resolveProjectExportArea } from "@/features/export/domain/projectExportArea";
 
-import { errorMessage } from "./exportApplicationTypes.js";
-import { runPhaserAtlasExport } from "./runPhaserAtlasExport.js";
-
-import type {
-  ExportOutputSink,
-  ExportProgress,
-} from "./exportApplicationTypes.types.js";
-import type { CaptureFrame } from "../domain/frameCaptureTypes.types.js";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 
 interface PhaserAtlasExportJobOptions {

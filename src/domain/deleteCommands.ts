@@ -6,10 +6,9 @@ import type {
   ProjectDocument,
 } from "@kukla2d/contracts";
 
+import type { AnimationCommandResult } from "@/domain/animationCommandTypes.types.js";
 import { findModifiersAffectedByProjectChange } from "@/domain/autoMotion/guardrails.js";
-
-import type { AnimationCommandResult } from "./animationCommandTypes.types.js";
-import type { DeleteSelectionIntent } from "./deleteCommands.types.js";
+import type { DeleteSelectionIntent } from "@/domain/deleteCommands.types.js";
 
 interface DeleteSelection {
   nodeIds?: readonly string[];

@@ -10,15 +10,17 @@ import { editorModePolicy, ACTION_IDS } from "@/domain/editorModePolicy.js";
 import {
   getEventClientPosition,
   getEventWorldPosition,
-} from "./PixiInputDrag.js";
-import { getAdapterEffectiveRigState } from "./PixiInputState.js";
-import { canStartAnimationGesture, usesPoseDraft } from "./PixiPosePreview.js";
-
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiInputDrag.js";
+import { getAdapterEffectiveRigState } from "@/features/canvas/infrastructure/rendering/pixi/PixiInputState.js";
 import type {
   EditorRuntimePort,
   PointerInput,
-} from "./pixiInteractionContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
+import {
+  canStartAnimationGesture,
+  usesPoseDraft,
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiPosePreview.js";
 
 function selectedBoneIds(
   editor: EditorRuntimePort,

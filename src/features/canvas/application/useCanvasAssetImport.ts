@@ -18,19 +18,18 @@ import {
   createUniqueName,
 } from "@/domain/libraryAssetNames.js";
 
-import { uid } from "@/lib/uid.js";
-
-import {
-  basename,
-  computeAlphaContours,
-  computeImageBounds,
-} from "./imageUtils.js";
-
 import type {
   CanvasSceneGateway,
   CanvasTextureCache,
   MutableRef,
-} from "./canvasApplication.types.js";
+} from "@/features/canvas/application/canvasApplication.types.js";
+import {
+  basename,
+  computeAlphaContours,
+  computeImageBounds,
+} from "@/features/canvas/application/imageUtils.js";
+
+import { uid } from "@/lib/uid.js";
 
 type PartAssetId = NodeId & AssetId;
 type ImportedPartNode = Omit<PartNode, "id"> & { id: PartAssetId };

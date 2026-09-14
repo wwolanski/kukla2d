@@ -1,6 +1,9 @@
-import { Loader2, Download, Library, AlertTriangle } from 'lucide-react';
+import { Loader2, Download, Library, AlertTriangle } from "lucide-react";
 
-import { formatProjectError } from '@/io/projectErrorMessages';
+import { formatProjectError } from "@/io/projectErrorMessages";
+
+import { useSaveProject } from "@/features/projects/application/useSaveProject.js";
+import { ProjectGallery } from "@/features/projects/components/ProjectGallery.jsx";
 
 import {
   AlertDialog,
@@ -12,23 +15,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-import { ProjectGallery } from './ProjectGallery.jsx';
-import { useSaveProject } from '../application/useSaveProject.js';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function formatIssues(issues) {
-  return issues.map((i) => `[${i.code}] ${i.path}: ${i.message}`).join('\n');
+  return issues.map((i) => `[${i.code}] ${i.path}: ${i.message}`).join("\n");
 }
 
 export function SaveModal({
@@ -85,7 +85,10 @@ export function SaveModal({
             <div className="p-6 border-b bg-muted/20 shrink-0">
               <div className="flex flex-col gap-4 max-w-lg">
                 <div className="grid gap-2">
-                  <Label htmlFor="name" className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Label
+                    htmlFor="name"
+                    className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
                     Project Name
                   </Label>
                   <div className="flex gap-2">
@@ -96,8 +99,14 @@ export function SaveModal({
                       placeholder="Enter project name..."
                       className="h-10"
                     />
-                    <Button onClick={handleSaveNew} disabled={isSaving || !name.trim()} className="shrink-0 h-10 px-6">
-                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button
+                      onClick={handleSaveNew}
+                      disabled={isSaving || !name.trim()}
+                      className="shrink-0 h-10 px-6"
+                    >
+                      {isSaving && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
                       Save
                     </Button>
                   </div>
@@ -113,13 +122,23 @@ export function SaveModal({
                   </div>
                 </div>
 
-                <Tabs value={saveMode} onValueChange={setSaveMode} className="w-full">
+                <Tabs
+                  value={saveMode}
+                  onValueChange={setSaveMode}
+                  className="w-full"
+                >
                   <TabsList className="grid w-full grid-cols-2 h-12">
-                    <TabsTrigger value="library" className="flex items-center gap-2 text-sm font-medium h-10">
+                    <TabsTrigger
+                      value="library"
+                      className="flex items-center gap-2 text-sm font-medium h-10"
+                    >
                       <Library className="h-4 w-4" />
                       Save to Library
                     </TabsTrigger>
-                    <TabsTrigger value="download" className="flex items-center gap-2 text-sm font-medium h-10">
+                    <TabsTrigger
+                      value="download"
+                      className="flex items-center gap-2 text-sm font-medium h-10"
+                    >
                       <Download className="h-4 w-4" />
                       Download File
                     </TabsTrigger>
@@ -150,8 +169,9 @@ export function SaveModal({
               Overwrite project?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to overwrite <strong>&quot;{overwriteProject?.name}&quot;</strong>? 
-              This will replace the project data and thumbnail in your library.
+              Are you sure you want to overwrite{" "}
+              <strong>&quot;{overwriteProject?.name}&quot;</strong>? This will
+              replace the project data and thumbnail in your library.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -177,11 +197,15 @@ export function SaveModal({
               Cannot save — project has errors
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto text-destructive">{preflightErrors ? formatIssues(preflightErrors) : ''}</pre>
+              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto text-destructive">
+                {preflightErrors ? formatIssues(preflightErrors) : ""}
+              </pre>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setPreflightErrors(null)}>Close</AlertDialogAction>
+            <AlertDialogAction onClick={() => setPreflightErrors(null)}>
+              Close
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -197,12 +221,16 @@ export function SaveModal({
               Save warnings
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto">{preflightWarnings ? formatIssues(preflightWarnings) : ''}</pre>
+              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto">
+                {preflightWarnings ? formatIssues(preflightWarnings) : ""}
+              </pre>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={continueAfterWarnings}>Continue</AlertDialogAction>
+            <AlertDialogAction onClick={continueAfterWarnings}>
+              Continue
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -218,11 +246,15 @@ export function SaveModal({
               Save failed
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto text-destructive">{saveError ? formatProjectError(saveError) : ''}</pre>
+              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto text-destructive">
+                {saveError ? formatProjectError(saveError) : ""}
+              </pre>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setSaveError(null)}>Close</AlertDialogAction>
+            <AlertDialogAction onClick={() => setSaveError(null)}>
+              Close
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

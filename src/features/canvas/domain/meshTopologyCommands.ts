@@ -5,10 +5,9 @@ import type {
   ProjectDocument,
 } from "@kukla2d/contracts";
 
-import { retriangulate } from "./mesh-generation/generate.js";
-
-import type { MeshGenerationResult } from "./mesh-generation/generate.types.js";
-import type { MeshTopologyImpact } from "./meshTopologyCommands.types.js";
+import { retriangulate } from "@/features/canvas/domain/mesh-generation/generate.js";
+import type { MeshGenerationResult } from "@/features/canvas/domain/mesh-generation/generate.types.js";
+import type { MeshTopologyImpact } from "@/features/canvas/domain/meshTopologyCommands.types.js";
 
 interface MeshTrackAddress {
   animationId: AnimationId;

@@ -1,13 +1,14 @@
 import { lazy, Suspense, useState } from "react";
 
+import { useLayerPanelController } from "@/features/layers/application/useLayerPanelController.js";
+import { BoneTreeTab } from "@/features/layers/components/BoneTreeTab.jsx";
+import { DepthTab } from "@/features/layers/components/DepthTab.jsx";
 import { TextureReplacementModal } from "@/features/texture-replacement";
 
-import { BoneTreeTab } from "./BoneTreeTab.jsx";
-import { DepthTab } from "./DepthTab.jsx";
-import { useLayerPanelController } from "../application/useLayerPanelController.js";
-
 const LibraryTab = lazy(() =>
-  import("./LibraryTab.jsx").then((m) => ({ default: m.LibraryTab })),
+  import("@/features/layers/components/LibraryTab.jsx").then((m) => ({
+    default: m.LibraryTab,
+  })),
 );
 
 export function LayerPanelView({

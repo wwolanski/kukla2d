@@ -1,11 +1,10 @@
 import { semanticRoleIdForLegacyRole } from "@kukla2d/modular-sprite-schema";
 
-import { createDefaultExtractionFrame } from "../domain/processing/extractParts.js";
-
 import type {
   DetectedRegion,
   ModularSpriteDraftPart,
-} from "../domain/contracts.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
+import { createDefaultExtractionFrame } from "@/features/modular-sprite/domain/processing/extractParts.js";
 
 export function slugPartKey(value: string): string {
   return (

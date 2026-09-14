@@ -1,4 +1,4 @@
-import { REASON_CODES } from "./editorModePolicy.js";
+import { REASON_CODES } from "@/domain/editorModePolicy.js";
 
 /**
  * Canonical feedback catalog — pure, no React/icons/store.

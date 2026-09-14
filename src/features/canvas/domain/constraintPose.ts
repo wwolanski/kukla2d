@@ -9,7 +9,7 @@ import type { Bone, BoneSetup, ProjectDocument } from "@kukla2d/contracts";
 import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 import { solveIK } from "@/runtime/constraints/ik.js";
 
-import { applyBoneHierarchyOverrides } from "./poseModel.js";
+import { applyBoneHierarchyOverrides } from "@/features/canvas/domain/poseModel.js";
 
 type BoneOverride = Partial<
   Pick<BoneSetup, "x" | "y" | "rotation" | "scaleX" | "scaleY" | "length">

@@ -1,9 +1,8 @@
 import {
   isAuthorableProperty,
   isPropertyAllowedForTargetKind,
-} from "./animationProperties.js";
-
-import type { AnimationTargetKind } from "./animationProperties.types.js";
+} from "@/domain/animationProperties.js";
+import type { AnimationTargetKind } from "@/domain/animationProperties.types.js";
 
 type PolicyTargetKind =
   AnimationTargetKind | "image" | "tool" | "navigation" | "modeTransition";

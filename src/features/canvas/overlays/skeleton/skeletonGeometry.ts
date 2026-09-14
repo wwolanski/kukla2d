@@ -8,7 +8,7 @@
 /**
  * Convert a world-space point to image-space (scaled by view.zoom, translated by pan).
  */
-import type { ViewTransform } from "../../domain/coordinates.types.js";
+import type { ViewTransform } from "@/features/canvas/domain/coordinates.types.js";
 
 interface OverlayPoint {
   x: number;

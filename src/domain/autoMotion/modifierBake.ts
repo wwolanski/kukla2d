@@ -4,9 +4,8 @@ import {
   type AnimationModifier,
 } from "@kukla2d/contracts";
 
-import { evaluateTimeDriver } from "./modifierEvaluation.js";
-
-import type { AnimationKeyframeInput } from "../animationCommandTypes.types.js";
+import type { AnimationKeyframeInput } from "@/domain/animationCommandTypes.types.js";
+import { evaluateTimeDriver } from "@/domain/autoMotion/modifierEvaluation.js";
 
 const SUPPORTED_OUTPUT_KINDS = new Set([
   "blendShapeValue",

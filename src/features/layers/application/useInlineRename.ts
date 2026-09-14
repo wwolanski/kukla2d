@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 
-import { validateRenameValue } from "../domain/inlineRename.js";
+import { validateRenameValue } from "@/features/layers/domain/inlineRename.js";
 
 import type {
   Dispatch,

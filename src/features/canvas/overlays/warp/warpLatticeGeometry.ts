@@ -7,7 +7,7 @@
 /**
  * Convert world to screen for lattice points.
  */
-import type { ViewTransform } from "../../domain/coordinates.types.js";
+import type { ViewTransform } from "@/features/canvas/domain/coordinates.types.js";
 
 interface LatticePoint {
   x: number;

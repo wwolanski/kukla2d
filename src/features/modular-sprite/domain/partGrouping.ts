@@ -1,18 +1,17 @@
 import type { NormalizedRect } from "@kukla2d/contracts";
 
-import { clamp } from "./imageMath.js";
-
 import type {
   DetectedRegion,
   ModularSpriteDraftPart,
   ProcessedModularSprite,
-} from "./contracts.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
+import { clamp } from "@/features/modular-sprite/domain/imageMath.js";
 import type {
   GroupingValidation,
   PartFactory,
   RegionGrouping,
   RegionGroupingChange,
-} from "./partGrouping.types.js";
+} from "@/features/modular-sprite/domain/partGrouping.types.js";
 
 function asRegions(
   input: Pick<ProcessedModularSprite, "regions"> | readonly DetectedRegion[],

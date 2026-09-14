@@ -1,19 +1,18 @@
 import { toAnimationId } from "@kukla2d/contracts";
 
+import { deepClone } from "@/store/project/projectStoreShared.js";
+import type {
+  ProjectActions,
+  ProjectStoreGet,
+  ProjectStoreSet,
+} from "@/store/project/projectStoreTypes.types.js";
+
 import { upsertAnimationKeyframes } from "@/domain/animationKeyframeCommands.js";
 import { createHeadCheekJiggleDraft } from "@/domain/autoMotion/headCheekJiggleDraft.js";
 import { createIdleBreathingDraft } from "@/domain/autoMotion/idleBreathingDraft.js";
 import { createBakeKeyframes } from "@/domain/autoMotion/modifierBake.js";
 
 import { uid } from "@/lib/uid";
-
-import { deepClone } from "./projectStoreShared.js";
-
-import type {
-  ProjectActions,
-  ProjectStoreGet,
-  ProjectStoreSet,
-} from "./projectStoreTypes.types.js";
 
 type ProjectControlMotionCommands = Pick<
   ProjectActions,

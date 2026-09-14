@@ -4,21 +4,19 @@ import type { ModularSpriteId, ProjectDocument } from "@kukla2d/contracts";
 
 import { useProjectStore } from "@/store/projectStore";
 
-import { localSchemaApi } from "@/features/modular-sprite-schema";
-
 import {
   createModularSpriteSchema,
   portableModularSpriteSchema,
-} from "../application/schemaBinding.js";
-import { ModularSpriteWizard as WizardView } from "../components/wizard/ModularSpriteWizard.js";
+} from "@/features/modular-sprite/application/schemaBinding.js";
+import { ModularSpriteWizard as WizardView } from "@/features/modular-sprite/components/wizard/ModularSpriteWizard.js";
+import type { ModularSpriteWizardProps as WizardViewProps } from "@/features/modular-sprite/components/wizard/ModularSpriteWizard.types.js";
 import {
   createPreviewImage,
   decodeModularSpriteFile,
   encodeRgbaPng,
-} from "../infrastructure/imageCodec.js";
-import { createModularSpriteGateway } from "../infrastructure/modularSpriteGateway.js";
-
-import type { ModularSpriteWizardProps as WizardViewProps } from "../components/wizard/ModularSpriteWizard.types.js";
+} from "@/features/modular-sprite/infrastructure/imageCodec.js";
+import { createModularSpriteGateway } from "@/features/modular-sprite/infrastructure/modularSpriteGateway.js";
+import { localSchemaApi } from "@/features/modular-sprite-schema";
 
 interface ModularSpriteWizardCompositionProps {
   open: boolean;

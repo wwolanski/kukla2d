@@ -23,7 +23,7 @@ import type {
   ScmlRef,
   ScmlTimeline,
   ScmlTransform,
-} from "./scmlModel.types.js";
+} from "@/features/projects/infrastructure/externalImport/scml/scmlModel.types.js";
 
 interface ConvertScmlOptions {
   sources: ReadonlyMap<string, { url: string; size: number }>;

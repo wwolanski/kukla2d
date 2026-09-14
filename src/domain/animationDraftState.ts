@@ -5,12 +5,11 @@ import {
   type KeyframeAuthoringMeta,
 } from "@kukla2d/contracts";
 
+import type { AnimationDraft } from "@/domain/animationDraftState.types.js";
 import {
   isAuthorableProperty,
   validateTrackValue,
-} from "./animationProperties.js";
-
-import type { AnimationDraft } from "./animationDraftState.types.js";
+} from "@/domain/animationProperties.js";
 
 type DraftChannelValue = unknown;
 

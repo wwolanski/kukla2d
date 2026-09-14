@@ -9,11 +9,11 @@ import type { EditorActions } from "@/store/editorStoreTypes.types.js";
 import { editorModePolicy, ACTION_IDS } from "@/domain/editorModePolicy";
 
 import { createAnimationAuthoringApi } from "@/features/animation";
+import type { CanvasEditorSnapshot } from "@/features/canvas/application/canvasApplication.types.js";
+import type { WorkflowEvent } from "@/features/canvas/domain/workflowContracts.types.js";
 
 import { toast } from "@/components/ui/use-toast";
 
-import type { CanvasEditorSnapshot } from "./canvasApplication.types.js";
-import type { WorkflowEvent } from "../domain/workflowContracts.types.js";
 import type { RefObject } from "react";
 
 type ToolShortcutKey = "b" | "c" | "w";

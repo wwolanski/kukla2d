@@ -5,7 +5,7 @@ import type {
   ModularSpriteDraftPart,
   ProcessedModularSprite,
   RgbaImageData,
-} from "../domain/contracts.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
 
 export type ModularSpriteWorkerRequest =
   | { type: "abort"; requestId: string }

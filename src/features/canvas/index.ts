@@ -1,34 +1,34 @@
 // Public domain constants load before CanvasViewport, which reads editorStore.
-export { CANVAS_DEFAULTS } from "./domain/canvasDefaults.js";
+export { CANVAS_DEFAULTS } from "@/features/canvas/domain/canvasDefaults.js";
 
 // Canvas feature - WebGL viewport, gizmos, picking
-export { CanvasViewport } from "./composition/CanvasViewport.jsx";
-export { EditorWorkflowContext } from "./application/EditorWorkflowContext.js";
+export { CanvasViewport } from "@/features/canvas/composition/CanvasViewport.jsx";
+export { EditorWorkflowContext } from "@/features/canvas/application/EditorWorkflowContext.js";
 export {
   useWorkflowActor,
   useWorkflowSelector,
   useWorkflowSnapshot,
-} from "./application/useWorkflowActor.js";
-export type { WorkflowEvent } from "./domain/workflowContracts.types.js";
+} from "@/features/canvas/application/useWorkflowActor.js";
+export type { WorkflowEvent } from "@/features/canvas/domain/workflowContracts.types.js";
 export {
   refreshIkTopology,
   trySetBoneParent,
-} from "./domain/ikConstraintCreation.js";
-export { WEIGHT_PAINT_MODES } from "./domain/meshWeighting.js";
+} from "@/features/canvas/domain/ikConstraintCreation.js";
+export { WEIGHT_PAINT_MODES } from "@/features/canvas/domain/meshWeighting.js";
 export {
   applyAutoMeshWeights,
   bindUnweightedVerticesToBone,
   computeMeshWeightStats,
   unbindMeshFromBone,
-} from "./domain/meshWeighting.js";
-export { analyzeMeshTopologyImpact } from "./domain/meshTopologyCommands.js";
-export { getBoneSegment } from "./domain/picking.js";
-export { buildFramePose } from "./domain/framePose.js";
-export { buildExportAreaOverlayFrame } from "./domain/canvasOverlayFrame.js";
+} from "@/features/canvas/domain/meshWeighting.js";
+export { analyzeMeshTopologyImpact } from "@/features/canvas/domain/meshTopologyCommands.js";
+export { getBoneSegment } from "@/features/canvas/domain/picking.js";
+export { buildFramePose } from "@/features/canvas/domain/framePose.js";
+export { buildExportAreaOverlayFrame } from "@/features/canvas/domain/canvasOverlayFrame.js";
 export {
   createFrameCaptureRequest,
   createFrameCaptureSuccess,
   createFrameCaptureError,
   isFrameCaptureRequest,
   isFrameCaptureResult,
-} from "./domain/frameCaptureContract.js";
+} from "@/features/canvas/domain/frameCaptureContract.js";

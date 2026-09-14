@@ -19,16 +19,18 @@ import {
 } from "@/domain/animationEngine";
 import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 
-import { applyBoneConstraintOverrides } from "./constraintPose.js";
-import { buildEffectiveMeshFrame } from "./meshDeformation.js";
+import { applyBoneConstraintOverrides } from "@/features/canvas/domain/constraintPose.js";
+import type {
+  FrameAnimationState,
+  FramePose,
+} from "@/features/canvas/domain/framePose.types.js";
+import { buildEffectiveMeshFrame } from "@/features/canvas/domain/meshDeformation.js";
+import type { EffectiveMeshFrame } from "@/features/canvas/domain/meshDeformation.types.js";
 import {
   applyBoneLinkedNodeOverrides,
   mergePoseLayers,
   poseRecordToMap,
-} from "./poseModel.js";
-
-import type { FrameAnimationState, FramePose } from "./framePose.types.js";
-import type { EffectiveMeshFrame } from "./meshDeformation.types.js";
+} from "@/features/canvas/domain/poseModel.js";
 
 type DraftPose = Map<string, Record<string, unknown>>;
 

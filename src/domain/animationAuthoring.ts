@@ -25,8 +25,8 @@ import type {
   ProjectDocument,
 } from "@kukla2d/contracts";
 
-import type { UpsertAnimationKeyframePayload } from "./animationCommandTypes.types.js";
-import type { AnimationDraft } from "./animationDraftState.types.js";
+import type { UpsertAnimationKeyframePayload } from "@/domain/animationCommandTypes.types.js";
+import type { AnimationDraft } from "@/domain/animationDraftState.types.js";
 
 interface AnimationCommitBatch {
   edits: UpsertAnimationKeyframePayload[];

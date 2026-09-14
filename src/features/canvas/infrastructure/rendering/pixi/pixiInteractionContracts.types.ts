@@ -8,18 +8,18 @@ import type {
 
 import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 
+import type {
+  CanvasAnimationRuntimePort,
+  CanvasDraftPoseValue,
+} from "@/features/canvas/application/canvasRenderer.types.js";
 import type { PixiPerformanceCounters } from "@/features/canvas/domain/pixiPerformanceMetrics.types.js";
 import type {
   EditorCommand,
   ProjectMutator,
   WorkflowEvent,
 } from "@/features/canvas/domain/workflowContracts.types.js";
+import type { PixiViewportBridge } from "@/features/canvas/infrastructure/rendering/pixi/PixiViewportBridge.js";
 
-import type { PixiViewportBridge } from "./PixiViewportBridge.js";
-import type {
-  CanvasAnimationRuntimePort,
-  CanvasDraftPoseValue,
-} from "../../../application/canvasRenderer.types.js";
 import type { Container } from "pixi.js";
 import type { RefObject } from "react";
 

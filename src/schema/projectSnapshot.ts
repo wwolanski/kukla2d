@@ -1,12 +1,12 @@
 import type { Mesh, Node, ProjectDocument } from "@kukla2d/contracts";
 
-import { pickPersistedProjectFields } from "./projectDocumentAdapter.js";
-import { validateProject } from "./projectSchema.js";
+import { pickPersistedProjectFields } from "@/schema/projectDocumentAdapter.js";
+import { validateProject } from "@/schema/projectSchema.js";
 
 import type {
   JsonValue,
   PortableProjectDocument,
-} from "./projectSnapshot.types.js";
+} from "@/schema/projectSnapshot.types.js";
 
 type PortableMesh = Omit<Mesh, "uvs"> & { uvs: number[] };
 

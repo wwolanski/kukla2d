@@ -1,6 +1,5 @@
-import { createPixiSceneGateway } from "./pixi/createPixiSceneGateway.js";
-
-import type { EditorView } from "../../application/canvasRenderer.types.js";
+import type { EditorView } from "@/features/canvas/application/canvasRenderer.types.js";
+import { createPixiSceneGateway } from "@/features/canvas/infrastructure/rendering/pixi/createPixiSceneGateway.js";
 
 interface CreateCanvasRendererOptions {
   canvas: HTMLCanvasElement;

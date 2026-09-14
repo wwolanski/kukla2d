@@ -1,4 +1,4 @@
-import type { MigrationDocument } from "./migrationDocument.types.js";
+import type { MigrationDocument } from "@/schema/migrations/migrationDocument.types.js";
 
 export const FROM_VERSION = 1 as const;
 export const TO_VERSION = 2 as const;

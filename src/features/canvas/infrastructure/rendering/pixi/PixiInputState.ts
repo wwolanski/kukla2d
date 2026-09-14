@@ -8,19 +8,18 @@ import type {
 import { computePoseOverrides } from "@/domain/animationEngine";
 import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 
+import type { CanvasAnimationRuntimePort } from "@/features/canvas/application/canvasRenderer.types.js";
 import { applyBoneConstraintOverrides } from "@/features/canvas/domain/constraintPose.js";
 import {
   mergePoseLayers,
   poseRecordToMap,
 } from "@/features/canvas/domain/poseModel.js";
 import { buildRestGrid } from "@/features/canvas/domain/warpKeyframes.js";
-
 import type {
   EditorRuntimePort,
   FramePoseSnapshot,
-} from "./pixiInteractionContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
-import type { CanvasAnimationRuntimePort } from "../../../application/canvasRenderer.types.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
 
 const ANIM_TRANSFORM_KEYS = ["x", "y", "rotation", "scaleX", "scaleY"] as const;
 

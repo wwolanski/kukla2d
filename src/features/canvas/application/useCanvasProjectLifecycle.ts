@@ -10,17 +10,16 @@ import { prepareLoadedProjectState } from "@/store/project/projectStoreShared.js
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
 import { useProjectStore } from "@/store/projectStore";
 
-import {
-  commitWorkspaceLoad,
-  stageWorkspaceLoad,
-} from "./workspaceLoadTransaction.js";
-
 import type {
   CanvasSceneGateway,
   CanvasTextureCache,
   MutableRef,
-} from "./canvasApplication.types.js";
-import type { WorkspaceLoadStage } from "./workspaceLoadTransaction.types.js";
+} from "@/features/canvas/application/canvasApplication.types.js";
+import {
+  commitWorkspaceLoad,
+  stageWorkspaceLoad,
+} from "@/features/canvas/application/workspaceLoadTransaction.js";
+import type { WorkspaceLoadStage } from "@/features/canvas/application/workspaceLoadTransaction.types.js";
 
 type LoadProjectResult = { success: true } | { success: false; error: unknown };
 

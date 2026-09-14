@@ -4,6 +4,13 @@ import type { EditorStore } from "@/store/editorStoreTypes.types.js";
 import type { ProjectActions } from "@/store/project/projectStoreTypes.types.js";
 
 import { trySetBoneParent } from "@/features/canvas";
+import { useDragSession } from "@/features/layers/application/useDragSession.js";
+import { isBoneDescendant } from "@/features/layers/domain/buildBoneTreeRows.js";
+import type {
+  DragSession,
+  DragSourceKind,
+  DragTargetKind,
+} from "@/features/layers/domain/dragSession.types.js";
 import {
   assignProjectNodeToBone,
   clearProjectNodeBoneAssignment,
@@ -11,15 +18,6 @@ import {
 } from "@/features/rigging";
 
 import { useToast } from "@/components/ui/use-toast";
-
-import { useDragSession } from "./useDragSession.js";
-import { isBoneDescendant } from "../domain/buildBoneTreeRows.js";
-
-import type {
-  DragSession,
-  DragSourceKind,
-  DragTargetKind,
-} from "../domain/dragSession.types.js";
 
 type BoneTreeDragSource = {
   kind: Extract<DragSourceKind, "node" | "bone">;

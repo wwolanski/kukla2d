@@ -1,10 +1,10 @@
-import { ArrowLeftRight, EyeOff, Images, Rows3 } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeftRight, EyeOff, Images, Rows3 } from "lucide-react";
+import { useState } from "react";
 
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { BoneTreeRow } from "@/features/layers/components/rows/BoneTreeRow.jsx";
+import { findNodePreviewTexture } from "@/features/layers/domain/findNodePreviewTexture.js";
 
-import { BoneTreeRow } from './rows/BoneTreeRow.jsx';
-import { findNodePreviewTexture } from '../domain/findNodePreviewTexture.js';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 function groupRowsByRootFamily(rows) {
   const groups = [];
@@ -14,7 +14,11 @@ function groupRowsByRootFamily(rows) {
     if (familyId && previous?.familyId === familyId) {
       previous.rows.push(row);
     } else {
-      groups.push({ key: familyId ? `family:${familyId}` : row.key, familyId, rows: [row] });
+      groups.push({
+        key: familyId ? `family:${familyId}` : row.key,
+        familyId,
+        rows: [row],
+      });
     }
   }
   return groups;
@@ -56,57 +60,87 @@ export function BoneTreeTab({
 }) {
   const [panelHoverFamilyId, setPanelHoverFamilyId] = useState(null);
   const draggedRow = dragSession
-    ? rows.find(row => (
-      dragSession.sourceKind === 'bone'
-        ? row.kind === 'bone' && row.bone.id === dragSession.sourceId
-        : row.kind === 'node' && row.node.id === dragSession.sourceId
-    ))
+    ? rows.find((row) =>
+        dragSession.sourceKind === "bone"
+          ? row.kind === "bone" && row.bone.id === dragSession.sourceId
+          : row.kind === "node" && row.node.id === dragSession.sourceId,
+      )
     : null;
-  const detachTarget = draggedRow?.kind === 'bone' && draggedRow.bone.parentId
-    ? { kind: 'root', label: 'Detach from parent' }
-    : draggedRow?.kind === 'node' && draggedRow.boneId
-      ? { kind: 'unassigned', label: 'Make unassigned' }
+  const detachTarget =
+    draggedRow?.kind === "bone" && draggedRow.bone.parentId
+      ? { kind: "root", label: "Detach from parent" }
+      : draggedRow?.kind === "node" && draggedRow.boneId
+        ? { kind: "unassigned", label: "Make unassigned" }
+        : null;
+  const hoveredConstraintId =
+    typeof hoverHit === "string" && hoverHit.startsWith("constraint:")
+      ? hoverHit.slice("constraint:".length)
       : null;
-  const hoveredConstraintId = typeof hoverHit === 'string' && hoverHit.startsWith('constraint:')
-    ? hoverHit.slice('constraint:'.length)
-    : null;
-  const canvasHoverFamilyIds = new Set(rows.filter(row => {
-    if (row.kind === 'bone') {
-      if (hoverHit === `bone:${row.bone.id}`) return true;
-      return row.ikConstraints?.some(constraint => (
-        constraint.id === hoveredConstraintId && constraint.assignedBoneId === row.bone.id
-      ));
-    }
-    return (row.kind === 'node' || row.kind === 'meshInfluence') && hoverHit === row.node.id;
-  }).map(row => row.familyId).filter(Boolean));
-  const selectedFamilyIds = new Set(rows.filter(row => (
-    row.kind === 'bone'
-      ? activeBoneId === row.bone.id || selection.includes(row.bone.id)
-      : (row.kind === 'node' || row.kind === 'meshInfluence') && selection.includes(row.node.id)
-  )).map(row => row.familyId).filter(Boolean));
+  const canvasHoverFamilyIds = new Set(
+    rows
+      .filter((row) => {
+        if (row.kind === "bone") {
+          if (hoverHit === `bone:${row.bone.id}`) return true;
+          return row.ikConstraints?.some(
+            (constraint) =>
+              constraint.id === hoveredConstraintId &&
+              constraint.assignedBoneId === row.bone.id,
+          );
+        }
+        return (
+          (row.kind === "node" || row.kind === "meshInfluence") &&
+          hoverHit === row.node.id
+        );
+      })
+      .map((row) => row.familyId)
+      .filter(Boolean),
+  );
+  const selectedFamilyIds = new Set(
+    rows
+      .filter((row) =>
+        row.kind === "bone"
+          ? activeBoneId === row.bone.id || selection.includes(row.bone.id)
+          : (row.kind === "node" || row.kind === "meshInfluence") &&
+            selection.includes(row.node.id),
+      )
+      .map((row) => row.familyId)
+      .filter(Boolean),
+  );
   const rowGroups = groupRowsByRootFamily(rows);
 
   const clearPanelHover = () => {
     setPanelHoverFamilyId(null);
     onClearHover();
   };
-  const renderRow = row => (
+  const renderRow = (row) => (
     <BoneTreeRow
       key={row.key}
       row={row}
-      previewTexture={row.node ? findNodePreviewTexture(row.node, allNodes, textureMap) : null}
-      isSelected={row.kind === 'bone'
-        ? activeBoneId === row.bone.id || selection.includes(row.bone.id)
-        : row.kind === 'node' || row.kind === 'meshInfluence'
-          ? selection.includes(row.node.id)
-          : false}
-      isHovered={row.kind === 'bone'
-        ? hoverHit === `bone:${row.bone.id}` || row.ikConstraints?.some(constraint => (
-          constraint.id === hoveredConstraintId && constraint.assignedBoneId === row.bone.id
-        ))
-        : (row.kind === 'node' || row.kind === 'meshInfluence') && hoverHit === row.node.id}
+      previewTexture={
+        row.node ? findNodePreviewTexture(row.node, allNodes, textureMap) : null
+      }
+      isSelected={
+        row.kind === "bone"
+          ? activeBoneId === row.bone.id || selection.includes(row.bone.id)
+          : row.kind === "node" || row.kind === "meshInfluence"
+            ? selection.includes(row.node.id)
+            : false
+      }
+      isHovered={
+        row.kind === "bone"
+          ? hoverHit === `bone:${row.bone.id}` ||
+            row.ikConstraints?.some(
+              (constraint) =>
+                constraint.id === hoveredConstraintId &&
+                constraint.assignedBoneId === row.bone.id,
+            )
+          : (row.kind === "node" || row.kind === "meshInfluence") &&
+            hoverHit === row.node.id
+      }
       hoveredConstraintId={hoveredConstraintId}
-      isExpanded={row.kind === 'bone' ? expanded.has(`bone:${row.bone.id}`) : false}
+      isExpanded={
+        row.kind === "bone" ? expanded.has(`bone:${row.bone.id}`) : false
+      }
       dragSession={dragSession}
       detachTargetKind={detachTarget?.kind ?? null}
       editorMode={editorMode}
@@ -140,32 +174,48 @@ export function BoneTreeTab({
           type="button"
           aria-pressed={allExpanded}
           className={`inline-flex h-6 flex-1 items-center justify-center gap-1 rounded px-1.5 text-[10px] font-medium transition-colors hover:bg-muted ${
-            allExpanded ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
+            allExpanded
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:text-foreground"
           }`}
           onClick={onToggleAll}
-          title={allExpanded ? 'Collapse all bone rows' : 'Show all bone rows'}
+          title={allExpanded ? "Collapse all bone rows" : "Show all bone rows"}
         >
           <Rows3 className="h-3 w-3 shrink-0" />
-          {allExpanded ? 'Collapse all' : 'Show all'}
+          {allExpanded ? "Collapse all" : "Show all"}
         </button>
         <button
           type="button"
           aria-pressed={showImages}
           className={`ml-1 inline-flex h-6 flex-1 items-center justify-center gap-1 rounded px-1.5 text-[10px] font-medium transition-colors hover:bg-muted ${
-            showImages ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
+            showImages
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:text-foreground"
           }`}
           onClick={onToggleImages}
-          title={showImages ? 'Hide image rows in the bone tree' : 'Show image rows in the bone tree'}
+          title={
+            showImages
+              ? "Hide image rows in the bone tree"
+              : "Show image rows in the bone tree"
+          }
         >
-          {showImages ? <EyeOff className="h-3 w-3 shrink-0" /> : <Images className="h-3 w-3 shrink-0" />}
-          {showImages ? 'Hide images' : 'Show images'}
+          {showImages ? (
+            <EyeOff className="h-3 w-3 shrink-0" />
+          ) : (
+            <Images className="h-3 w-3 shrink-0" />
+          )}
+          {showImages ? "Hide images" : "Show images"}
         </button>
         <button
           type="button"
           className="ml-1 inline-flex h-6 flex-1 items-center justify-center gap-1 rounded px-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
           onClick={onReplaceTextures}
-          disabled={editorMode === 'animation'}
-          title={editorMode === 'animation' ? 'Texture replacement is locked in Animation mode' : 'Replace one or many textures from Library'}
+          disabled={editorMode === "animation"}
+          title={
+            editorMode === "animation"
+              ? "Texture replacement is locked in Animation mode"
+              : "Replace one or many textures from Library"
+          }
         >
           <ArrowLeftRight className="h-3 w-3 shrink-0" />
           Replace
@@ -174,11 +224,12 @@ export function BoneTreeTab({
 
       <ScrollArea className="flex-1" onMouseLeave={clearPanelHover}>
         <div className="p-1 space-y-0.5">
-          {rowGroups.map(group => {
+          {rowGroups.map((group) => {
             if (!group.familyId) return renderRow(group.rows[0]);
             const showsFamilyLine = group.rows.length > 1;
-            const familyHovered = panelHoverFamilyId === group.familyId
-              || canvasHoverFamilyIds.has(group.familyId);
+            const familyHovered =
+              panelHoverFamilyId === group.familyId ||
+              canvasHoverFamilyIds.has(group.familyId);
             const familySelected = selectedFamilyIds.has(group.familyId);
             return (
               <div key={group.key} className="flex min-w-0 items-stretch gap-1">
@@ -186,13 +237,13 @@ export function BoneTreeTab({
                   {showsFamilyLine && (
                     <span
                       className={[
-                        'pointer-events-none absolute inset-y-0 left-1/2 -translate-x-1/2 rounded-full transition-all',
+                        "pointer-events-none absolute inset-y-0 left-1/2 -translate-x-1/2 rounded-full transition-all",
                         familyHovered
-                          ? 'w-0.5 bg-sky-400 shadow-[0_0_5px_rgba(56,189,248,0.9)]'
+                          ? "w-0.5 bg-sky-400 shadow-[0_0_5px_rgba(56,189,248,0.9)]"
                           : familySelected
-                            ? 'w-0.5 bg-primary/80'
-                            : 'w-px bg-border/65',
-                      ].join(' ')}
+                            ? "w-0.5 bg-primary/80"
+                            : "w-px bg-border/65",
+                      ].join(" ")}
                     />
                   )}
                 </span>

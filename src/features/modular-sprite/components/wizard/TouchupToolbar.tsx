@@ -11,6 +11,8 @@ import { useState } from "react";
 
 import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
 
+import type { EditorTool } from "@/features/modular-sprite/components/preview/ModularSpritePreviewCanvas.types.js";
+
 import { cn } from "@/lib/utils";
 
 import { FeatureDisabledTooltip } from "@/components/ui/feature-disabled-tooltip";
@@ -21,8 +23,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-import type { EditorTool } from "../preview/ModularSpritePreviewCanvas.types.js";
 
 const UiSlider = Slider as React.ComponentType<{
   min?: number;

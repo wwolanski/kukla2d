@@ -1,6 +1,6 @@
-import type { ProjectDocument, Vertex } from '@kukla2d/contracts';
+import type { ProjectDocument, Vertex } from "@kukla2d/contracts";
 
-import { buildFramePose } from './framePose.js';
+import { buildFramePose } from "@/features/canvas/domain/framePose.js";
 
 type PoseValue = Record<string, unknown>;
 type DraftPose = ReadonlyMap<string, Readonly<PoseValue>>;
@@ -12,7 +12,10 @@ type DraftPose = ReadonlyMap<string, Readonly<PoseValue>>;
  * Uses the same deformation pipeline as the renderer (buildFramePose/effectiveMeshes)
  * so baked mesh vertices match the displayed frame.
  */
-export function bakeDefaultPoseIntoSetup(project: ProjectDocument, draftPose: DraftPose): boolean {
+export function bakeDefaultPoseIntoSetup(
+  project: ProjectDocument,
+  draftPose: DraftPose,
+): boolean {
   const authored = new Map<string, PoseValue>();
   for (const [targetId, partial] of Object.entries(project.defaultPose ?? {})) {
     authored.set(targetId, { ...(partial ?? {}) });
@@ -25,7 +28,7 @@ export function bakeDefaultPoseIntoSetup(project: ProjectDocument, draftPose: Dr
 
   const frame = buildFramePose({
     project,
-    editorState: { editorMode: 'staging' },
+    editorState: { editorMode: "staging" },
     animationState: {
       activeAnimationId: null,
       currentTime: 0,
@@ -37,29 +40,42 @@ export function bakeDefaultPoseIntoSetup(project: ProjectDocument, draftPose: Dr
   });
 
   for (const bone of project.bones ?? []) {
-    const effective = frame.effectiveBones.find(candidate => candidate.id === bone.id);
-    if (effective) bone.setup = { ...(bone.setup ?? {}), ...(effective.setup ?? {}) };
+    const effective = frame.effectiveBones.find(
+      (candidate) => candidate.id === bone.id,
+    );
+    if (effective)
+      bone.setup = { ...(bone.setup ?? {}), ...(effective.setup ?? {}) };
   }
 
   for (const constraint of project.constraints ?? []) {
     const override = authored.get(constraint.id);
-    if (typeof override?.targetX === 'number') constraint.targetX = override.targetX;
-    if (typeof override?.targetY === 'number') constraint.targetY = override.targetY;
-    if (typeof override?.mix === 'number') constraint.mix = override.mix;
-    if (typeof override?.fkIk === 'number') constraint.fkIk = override.fkIk;
-    if (typeof override?.bendPositive === 'boolean') constraint.bendPositive = override.bendPositive;
+    if (typeof override?.targetX === "number")
+      constraint.targetX = override.targetX;
+    if (typeof override?.targetY === "number")
+      constraint.targetY = override.targetY;
+    if (typeof override?.mix === "number") constraint.mix = override.mix;
+    if (typeof override?.fkIk === "number") constraint.fkIk = override.fkIk;
+    if (typeof override?.bendPositive === "boolean")
+      constraint.bendPositive = override.bendPositive;
   }
 
   for (const node of project.nodes ?? []) {
-    const effective = frame.effectiveNodes.find(candidate => candidate.id === node.id);
+    const effective = frame.effectiveNodes.find(
+      (candidate) => candidate.id === node.id,
+    );
     if (effective) {
-      node.transform = { ...(node.transform ?? {}), ...(effective.transform ?? {}) };
+      node.transform = {
+        ...(node.transform ?? {}),
+        ...(effective.transform ?? {}),
+      };
       node.opacity = effective.opacity;
       node.visible = effective.visible;
     }
     const meshFrame = frame.effectiveMeshes?.get(node.id);
-    if (node.type === 'part' && node.mesh && meshFrame?.vertices) {
-      node.mesh.vertices = meshFrame.vertices.map((vertex: Vertex) => ({ ...vertex }));
+    if (node.type === "part" && node.mesh && meshFrame?.vertices) {
+      node.mesh.vertices = meshFrame.vertices.map((vertex: Vertex) => ({
+        ...vertex,
+      }));
     }
   }
 

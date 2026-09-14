@@ -5,6 +5,8 @@ import type {
   SemanticDefinition,
 } from "@kukla2d/modular-sprite-schema";
 
+import { SemanticRoleIcon } from "@/features/modular-sprite-schema/components/SemanticRoleIcon.js";
+
 import {
   Select,
   SelectContent,
@@ -12,8 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import { SemanticRoleIcon } from "./SemanticRoleIcon.js";
 
 type SelectRootProps = {
   value?: string;

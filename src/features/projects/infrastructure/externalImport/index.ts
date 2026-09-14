@@ -1,8 +1,7 @@
 import { saveProject } from "@/io/projectFile";
 
-import { scmlImporter } from "./scml/scmlImporter.js";
-
-import type { ExternalProjectImporter } from "./externalImport.types.js";
+import type { ExternalProjectImporter } from "@/features/projects/infrastructure/externalImport/externalImport.types.js";
+import { scmlImporter } from "@/features/projects/infrastructure/externalImport/scml/scmlImporter.js";
 
 const IMPORTERS: readonly ExternalProjectImporter[] = [scmlImporter];
 

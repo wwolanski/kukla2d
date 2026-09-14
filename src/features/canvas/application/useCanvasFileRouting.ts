@@ -2,10 +2,10 @@ import { useCallback } from "react";
 
 import { hasProjectFileExtension } from "@/io/projectFormat";
 
-import { handleCanvasDrop } from "./handleCanvasDrop.js";
+import { handleCanvasDrop } from "@/features/canvas/application/handleCanvasDrop.js";
+import type { CanvasDropEvent } from "@/features/canvas/application/handleCanvasDrop.types.js";
+import type { WorkflowEvent } from "@/features/canvas/domain/workflowContracts.types.js";
 
-import type { CanvasDropEvent } from "./handleCanvasDrop.types.js";
-import type { WorkflowEvent } from "../domain/workflowContracts.types.js";
 import type { ChangeEvent, DragEvent } from "react";
 
 interface CanvasFileRoutingArgs {

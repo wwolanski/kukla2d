@@ -7,7 +7,7 @@ import type {
   ScmlRef,
   ScmlTimeline,
   ScmlTransform,
-} from "./scmlModel.types.js";
+} from "@/features/projects/infrastructure/externalImport/scml/scmlModel.types.js";
 
 function numberAttr(element: Element, name: string, fallback = 0): number {
   const raw = element.getAttribute(name);

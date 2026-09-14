@@ -5,9 +5,15 @@ import {
   type ProjectDocument,
 } from "@kukla2d/contracts";
 
-import { uid } from "@/lib/uid";
-
-import { checkBoomerangEligibility } from "./animationBoomerang.js";
+import { checkBoomerangEligibility } from "@/domain/animationBoomerang.js";
+import type {
+  AddAnimationAudioTrackPayload,
+  AddAnimationMarkerPayload,
+  AnimationCommandResult,
+  RemoveAnimationAudioTrackPayload,
+  SetAnimationTargetBoomerangPayload,
+  UpdateAnimationAudioTrackPayload,
+} from "@/domain/animationCommandTypes.types.js";
 import {
   assertFiniteNumber,
   assertString,
@@ -16,16 +22,9 @@ import {
   getAnimation,
   normalizeAudioTrackPatch,
   normalizeMarkers,
-} from "./animationDocumentCommandSupport.js";
+} from "@/domain/animationDocumentCommandSupport.js";
 
-import type {
-  AddAnimationAudioTrackPayload,
-  AddAnimationMarkerPayload,
-  AnimationCommandResult,
-  RemoveAnimationAudioTrackPayload,
-  SetAnimationTargetBoomerangPayload,
-  UpdateAnimationAudioTrackPayload,
-} from "./animationCommandTypes.types.js";
+import { uid } from "@/lib/uid";
 
 export function addAnimationMarker(
   project: ProjectDocument,

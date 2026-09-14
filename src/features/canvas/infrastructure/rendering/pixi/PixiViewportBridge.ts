@@ -1,8 +1,11 @@
 import { Viewport } from "pixi-viewport";
 
-import { DEFAULT_WORLD_WIDTH, DEFAULT_WORLD_HEIGHT } from "./pixiConstants.js";
+import type { EditorView } from "@/features/canvas/application/canvasRenderer.types.js";
+import {
+  DEFAULT_WORLD_WIDTH,
+  DEFAULT_WORLD_HEIGHT,
+} from "@/features/canvas/infrastructure/rendering/pixi/pixiConstants.js";
 
-import type { EditorView } from "../../../application/canvasRenderer.types.js";
 import type { Application, Point } from "pixi.js";
 
 interface PixiViewportBridgeOptions {

@@ -5,11 +5,11 @@ import type {
   NormalizedPoint,
 } from "@kukla2d/contracts";
 
-import type { EditorTool } from "./ModularSpritePreviewCanvas.types.js";
+import type { EditorTool } from "@/features/modular-sprite/components/preview/ModularSpritePreviewCanvas.types.js";
 import type {
   ProcessedModularSprite,
   RgbaImageData,
-} from "../../domain/contracts.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
 
 type PreviewMode = "original" | "matte" | "result";
 

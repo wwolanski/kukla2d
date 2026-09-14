@@ -24,43 +24,42 @@ import type {
   SemanticCatalog,
 } from "@kukla2d/modular-sprite-schema";
 
-import { finalizeModularSpriteImport } from "./finalizeModularSpriteImport.js";
+import { finalizeModularSpriteImport } from "@/features/modular-sprite/application/finalizeModularSpriteImport.js";
+import type {
+  ModularSpriteProcessingPort,
+  ModularSpriteSchemaPort,
+} from "@/features/modular-sprite/application/finalizeModularSpriteImport.types.js";
+import type { ModularSpriteCommitRequest } from "@/features/modular-sprite/application/importContracts.types.js";
 import {
   createDraftPart,
   createEmptyDraftPart,
   partKeyForName,
-} from "./partDraftFactory.js";
-import { groupingFromSchemaMatch } from "./schemaBinding.js";
+} from "@/features/modular-sprite/application/partDraftFactory.js";
+import { groupingFromSchemaMatch } from "@/features/modular-sprite/application/schemaBinding.js";
 import {
   canContinue,
   createInitialWizardState,
   hasUnsavedChanges,
   isWizardBusy,
   wizardReducer,
-} from "./wizardState.js";
-import { matchRegionsToTemplate } from "../domain/matching.js";
-import {
-  createInitialGrouping,
-  excludeRegions,
-  moveRegionsToPart,
-  renamePart,
-} from "../domain/partGrouping.js";
-import { analyzeModularSpriteBackground } from "../domain/processing/backgroundAnalysis.js";
-import { reconcileRegionGrouping } from "../domain/regionReconciliation.js";
-
-import type {
-  ModularSpriteProcessingPort,
-  ModularSpriteSchemaPort,
-} from "./finalizeModularSpriteImport.types.js";
-import type { ModularSpriteCommitRequest } from "./importContracts.types.js";
-import type { WizardState } from "./wizardState.types.js";
+} from "@/features/modular-sprite/application/wizardState.js";
+import type { WizardState } from "@/features/modular-sprite/application/wizardState.types.js";
 import type {
   DetectedRegion,
   ModularSpriteDraftPart,
   ProcessedModularSprite,
   RgbaImageData,
-} from "../domain/contracts.types.js";
-import type { RegionGrouping } from "../domain/partGrouping.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
+import { matchRegionsToTemplate } from "@/features/modular-sprite/domain/matching.js";
+import {
+  createInitialGrouping,
+  excludeRegions,
+  moveRegionsToPart,
+  renamePart,
+} from "@/features/modular-sprite/domain/partGrouping.js";
+import type { RegionGrouping } from "@/features/modular-sprite/domain/partGrouping.types.js";
+import { analyzeModularSpriteBackground } from "@/features/modular-sprite/domain/processing/backgroundAnalysis.js";
+import { reconcileRegionGrouping } from "@/features/modular-sprite/domain/regionReconciliation.js";
 
 interface ModularSpriteProcessingControllerPort extends ModularSpriteProcessingPort {
   warm(image: RgbaImageData): Promise<void>;

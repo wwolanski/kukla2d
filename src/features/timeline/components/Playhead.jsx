@@ -1,4 +1,4 @@
-import { LAYOUT } from "../domain/timelineLayout.js";
+import { LAYOUT } from "@/features/timeline/domain/timelineLayout.js";
 
 export function Playhead({ frac, labelWidth, trackPad }) {
   if (frac < 0 || frac > 1) return null;

@@ -5,7 +5,7 @@ import {
   type ModularSpriteSchema,
 } from "@kukla2d/modular-sprite-schema";
 
-import type { SchemaCatalogCapability } from "./localSchemaApi.types.js";
+import type { SchemaCatalogCapability } from "@/features/modular-sprite-schema/application/localSchemaApi.types.js";
 
 interface SchemaCatalogRepository {
   list(): Promise<ModularSpriteSchema[]>;

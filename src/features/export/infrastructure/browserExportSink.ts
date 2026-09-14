@@ -1,6 +1,6 @@
 import type { ExportArtifact } from "@kukla2d/contracts";
 
-import type { ExportOutputSink } from "../application/exportApplicationTypes.types.js";
+import type { ExportOutputSink } from "@/features/export/application/exportApplicationTypes.types.js";
 
 type BrowserExportDestination = "download" | "folder" | "zip";
 

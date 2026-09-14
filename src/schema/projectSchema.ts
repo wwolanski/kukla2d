@@ -15,17 +15,17 @@ import {
 } from "@kukla2d/contracts";
 
 import {
+  CanvasSchema,
+  NodeSchema,
+  TransformSchema,
+} from "@/schema/projectNodeSchemas.js";
+
+import {
   isSupportedTrackProperty,
   validateTrackValue,
 } from "@/domain/animationProperties.js";
 
-import {
-  CanvasSchema,
-  NodeSchema,
-  TransformSchema,
-} from "./projectNodeSchemas.js";
-
-import type { ValidatedProjectDocument } from "./projectSchema.types.js";
+import type { ValidatedProjectDocument } from "@/schema/projectSchema.types.js";
 
 export const CURRENT_PROJECT_VERSION = 10 as const;
 

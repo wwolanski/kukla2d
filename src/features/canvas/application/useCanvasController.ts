@@ -9,6 +9,10 @@ import { useAnimationStore } from "@/store/animationStore";
 import { useEditorStore } from "@/store/editorStore";
 import { useProjectStore } from "@/store/projectStore";
 
+import type {
+  CanvasEditorSnapshot,
+  CanvasRuntimeDependencies,
+} from "@/features/canvas/application/canvasApplication.types.js";
 import { EditorWorkflowContext } from "@/features/canvas/application/EditorWorkflowContext.js";
 import { useCanvasCapture } from "@/features/canvas/application/useCanvasCapture.js";
 import { useCanvasGpuSync } from "@/features/canvas/application/useCanvasGpuSync.js";
@@ -19,13 +23,8 @@ import { useCanvasKeyboardShortcuts } from "@/features/canvas/application/useCan
 import { useCanvasScene } from "@/features/canvas/application/useCanvasScene.js";
 import { useMeshCommands } from "@/features/canvas/application/useMeshCommands.js";
 import { useWorkflowActor } from "@/features/canvas/application/useWorkflowActor.js";
+import { computeViewportFit } from "@/features/canvas/application/viewportFit.js";
 
-import { computeViewportFit } from "./viewportFit.js";
-
-import type {
-  CanvasEditorSnapshot,
-  CanvasRuntimeDependencies,
-} from "./canvasApplication.types.js";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 
 interface CanvasControllerProps {

@@ -1,8 +1,8 @@
-import { createLocalSchemaApi } from "../application/createLocalSchemaApi.js";
-import { SchemaCatalog } from "../application/schemaCatalog.js";
-import { IndexedDbSchemaRepository } from "../infrastructure/browser/indexedDbSchemaRepository.js";
-import { WorkerSchemaMatchGateway } from "../infrastructure/browser/workerSchemaMatchGateway.js";
-import { BUNDLED_SCHEMAS } from "../infrastructure/bundled/bundledSchemaSource.js";
+import { createLocalSchemaApi } from "@/features/modular-sprite-schema/application/createLocalSchemaApi.js";
+import { SchemaCatalog } from "@/features/modular-sprite-schema/application/schemaCatalog.js";
+import { IndexedDbSchemaRepository } from "@/features/modular-sprite-schema/infrastructure/browser/indexedDbSchemaRepository.js";
+import { WorkerSchemaMatchGateway } from "@/features/modular-sprite-schema/infrastructure/browser/workerSchemaMatchGateway.js";
+import { BUNDLED_SCHEMAS } from "@/features/modular-sprite-schema/infrastructure/bundled/bundledSchemaSource.js";
 
 const repository = new IndexedDbSchemaRepository();
 const catalog = new SchemaCatalog(repository, BUNDLED_SCHEMAS);

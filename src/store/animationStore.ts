@@ -9,6 +9,11 @@ import {
 
 import { loadAnimationSettings } from "@/platform/animationSettingsRepository.js";
 
+import {
+  type AnimationState,
+  type AnimationStore,
+  type DraftPoseValue,
+} from "@/store/animationStoreTypes.types.js";
 import { useProjectStore } from "@/store/projectStore";
 
 import { onProjectChanged } from "@/domain/animationLifecycle.js";
@@ -21,12 +26,6 @@ import {
   advanceAnimationTransport,
   frameToTime,
 } from "@/domain/animationTransport.js";
-
-import {
-  type AnimationState,
-  type AnimationStore,
-  type DraftPoseValue,
-} from "./animationStoreTypes.types.js";
 
 interface AnimationTransportState {
   currentTime: number;

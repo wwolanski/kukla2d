@@ -4,6 +4,7 @@ import type { Animation, ProjectDocument } from "@kukla2d/contracts";
 
 import { resolveAnimations } from "@/io/resolveAnimations";
 
+import type { ExportProgress } from "@/features/export/application/exportApplicationTypes.types.js";
 import {
   getDefaultExportFormat,
   getExportVariantForSelection,
@@ -14,7 +15,6 @@ import type {
 } from "@/features/export/domain/exportVariantRegistry.types.js";
 import { suggestSpritesheetLayouts } from "@/features/export/domain/spritesheetLayout";
 
-import type { ExportProgress } from "./exportApplicationTypes.types.js";
 import type { ExportableAnimation } from "@/io/resolveAnimations.types.js";
 
 const EMPTY_ARRAY: readonly Animation[] = [];

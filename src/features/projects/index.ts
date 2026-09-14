@@ -1,11 +1,11 @@
 export {
   WorkspaceToolbar,
   PoseToolButton,
-} from "./components/WorkspaceToolbar.jsx";
-export { ToolSettingsBar } from "./components/ToolSettingsBar.jsx";
-export { WorkspaceStatus } from "./components/WorkspaceStatus.jsx";
-export { useProjectSession } from "./application/useProjectSession.js";
-export { useRecoveryScheduler } from "./application/useRecoveryScheduler.js";
-export { RecoveryPrompt } from "./components/RecoveryPrompt.jsx";
-export { LoadModal } from "./composition/projectComposition.jsx";
-export { loadExampleProjectFile } from "./composition/exampleProjectComposition.js";
+} from "@/features/projects/components/WorkspaceToolbar.jsx";
+export { ToolSettingsBar } from "@/features/projects/components/ToolSettingsBar.jsx";
+export { WorkspaceStatus } from "@/features/projects/components/WorkspaceStatus.jsx";
+export { useProjectSession } from "@/features/projects/application/useProjectSession.js";
+export { useRecoveryScheduler } from "@/features/projects/application/useRecoveryScheduler.js";
+export { RecoveryPrompt } from "@/features/projects/components/RecoveryPrompt.jsx";
+export { LoadModal } from "@/features/projects/composition/projectComposition.jsx";
+export { loadExampleProjectFile } from "@/features/projects/composition/exampleProjectComposition.js";

@@ -1,8 +1,7 @@
 import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
 
-import { normalizedPoint } from "../imageMath.js";
-
-import type { ComponentStats } from "./connectedComponents.types.js";
+import { normalizedPoint } from "@/features/modular-sprite/domain/imageMath.js";
+import type { ComponentStats } from "@/features/modular-sprite/domain/processing/connectedComponents.types.js";
 
 const MAX_CONTOUR_CANDIDATES =
   MODULAR_SPRITE_PROCESSING_CONFIG.algorithm.maxContourCandidates;

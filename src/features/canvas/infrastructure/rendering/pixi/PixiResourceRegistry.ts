@@ -6,7 +6,8 @@ import type {
   CanvasMeshData,
   CanvasTextureSource,
   RendererResourceRegistry,
-} from "../../../application/canvasRenderer.types.js";
+} from "@/features/canvas/application/canvasRenderer.types.js";
+
 import type { Application, Container } from "pixi.js";
 
 interface PixiResourceRegistryOptions {

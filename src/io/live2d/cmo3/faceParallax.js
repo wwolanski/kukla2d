@@ -18,8 +18,8 @@
  * @module io/live2d/cmo3/faceParallax
  */
 
-import { uuid } from '../xmlbuilder.js';
-import { emitKfBinding } from './deformerEmit.js';
+import { uuid } from "@/io/live2d/xmlbuilder.js";
+import { emitKfBinding } from "@/io/live2d/cmo3/deformerEmit.js";
 
 /**
  * Emit the FaceParallax warp. Returns `pidFpGuid` (so face rig warps can
@@ -45,18 +45,26 @@ import { emitKfBinding } from './deformerEmit.js';
  */
 export function emitFaceParallax(x, ctx) {
   const {
-    pidParamAngleX, pidParamAngleY,
+    pidParamAngleX,
+    pidParamAngleY,
     pidFaceRotGuid,
-    faceUnionBbox, facePivotCx, facePivotCy, faceMeshBbox,
+    faceUnionBbox,
+    facePivotCx,
+    facePivotCy,
+    faceMeshBbox,
     meshes,
-    allDeformerSources, rootPart,
-    pidPartGuid, pidCoord,
+    allDeformerSources,
+    rootPart,
+    pidPartGuid,
+    pidCoord,
     rigDebugLog,
   } = ctx;
 
   // ── FaceParallax warps (7 groups, 6×6 grid, 9kf on AngleX × AngleY) ──
-  const fpCol = 5, fpRow = 5; // 6×6 control points (matches Hiyori)
-  const fpGW = fpCol + 1, fpGH = fpRow + 1;
+  const fpCol = 5,
+    fpRow = 5; // 6×6 control points (matches Hiyori)
+  const fpGW = fpCol + 1,
+    fpGH = fpRow + 1;
   const fpGridPts = fpGW * fpGH;
   // Hiyori keyform order: Y-fast (AngleY inner, AngleX outer).
   // Binding array order: AngleY first, AngleX second.
@@ -89,8 +97,10 @@ export function emitFaceParallax(x, ctx) {
   for (let r = 0; r < fpGH; r++) {
     for (let c = 0; c < fpGW; c++) {
       const idx = (r * fpGW + c) * 2;
-      fpRestLocal[idx]     = (faceUnionBbox.minX + c * faceUnionBbox.W / fpCol) - facePivotCx;
-      fpRestLocal[idx + 1] = (faceUnionBbox.minY + r * faceUnionBbox.H / fpRow) - facePivotCy;
+      fpRestLocal[idx] =
+        faceUnionBbox.minX + (c * faceUnionBbox.W) / fpCol - facePivotCx;
+      fpRestLocal[idx + 1] =
+        faceUnionBbox.minY + (r * faceUnionBbox.H) / fpRow - facePivotCy;
     }
   }
   // Span for scaling bow magnitudes — canvas-pixel width/height of face bbox.
@@ -134,7 +144,7 @@ export function emitFaceParallax(x, ctx) {
     // Phase A.1: symmetric half-width = max of (centerX - minX, maxX - centerX).
     // Extends the shorter side so left and right match. Y stays as-is
     // (vertical asymmetry is expected — chin below eyes).
-    const halfLeft  = faceMeshCxLocal - faceMeshBbox.minX;
+    const halfLeft = faceMeshCxLocal - faceMeshBbox.minX;
     const halfRight = faceMeshBbox.maxX - faceMeshCxLocal;
     fpRadiusX = Math.max(halfLeft, halfRight);
     fpRadiusY = (faceMeshBbox.maxY - faceMeshBbox.minY) / 2;
@@ -142,8 +152,8 @@ export function emitFaceParallax(x, ctx) {
     fpRadiusX = fpSpanX_bx / 2;
     fpRadiusY = fpSpanY_bx / 2;
   }
-  const FP_DEPTH_K         = 0.80;  // Z at face center (cylindrical fallback)
-  const FP_EDGE_DEPTH_K    = 0.30;  // Z at face edges (cylindrical fallback)
+  const FP_DEPTH_K = 0.8; // Z at face center (cylindrical fallback)
+  const FP_EDGE_DEPTH_K = 0.3; // Z at face edges (cylindrical fallback)
   const FP_MAX_ANGLE_X_DEG = 15;
   // Session 25b: reduced 12° → 8° because user reported "goblin" on
   // shelby at AngleY=±30 — the combination of AMP=3.0 (from A.4) and
@@ -175,17 +185,27 @@ export function emitFaceParallax(x, ctx) {
     // under head rotation. Bumped from 0.95 to 1.00 so eye sub-meshes don't
     // drift apart at extreme angles (fixes per-feature "stretch-to-goblin"
     // on realistic art when geometric depth drives protection).
-    'eyelash':     1.00, 'eyelash-l':  1.00, 'eyelash-r':  1.00,
-    'eyewhite':    1.00, 'eyewhite-l': 1.00, 'eyewhite-r': 1.00,
-    'irides':      1.00, 'irides-l':   1.00, 'irides-r':   1.00,
+    eyelash: 1.0,
+    "eyelash-l": 1.0,
+    "eyelash-r": 1.0,
+    eyewhite: 1.0,
+    "eyewhite-l": 1.0,
+    "eyewhite-r": 1.0,
+    irides: 1.0,
+    "irides-l": 1.0,
+    "irides-r": 1.0,
     // Ears and eyebrows also translate rigidly. Previously unprotected
     // (ears) or half-protected (eyebrow 0.50), which left them free to
     // bend under the grid's bow → user-reported "too strong" deformation.
-    'ears':        0.90, 'ears-l':     0.90, 'ears-r':     0.90,
-    'eyebrow':     0.80, 'eyebrow-l':  0.80, 'eyebrow-r':  0.80,
+    ears: 0.9,
+    "ears-l": 0.9,
+    "ears-r": 0.9,
+    eyebrow: 0.8,
+    "eyebrow-l": 0.8,
+    "eyebrow-r": 0.8,
     // Nose and mouth partial — these SHOULD flex slightly with face curvature.
-    'mouth':       0.30,
-    'nose':        0.30,
+    mouth: 0.3,
+    nose: 0.3,
   };
   // Extra falloff buffer around each region (in normalized u/v units).
   // Larger = smoother transition to natural parallax.
@@ -199,8 +219,8 @@ export function emitFaceParallax(x, ctx) {
   // produced averaging artifacts where left and right eyes received
   // inconsistent rigid shifts (left drifts while right stays).
   const SUPER_GROUPS = {
-    'eye-l': ['eyelash-l', 'eyewhite-l', 'irides-l'],
-    'eye-r': ['eyelash-r', 'eyewhite-r', 'irides-r'],
+    "eye-l": ["eyelash-l", "eyewhite-l", "irides-l"],
+    "eye-r": ["eyelash-r", "eyewhite-r", "irides-r"],
   };
   const meshByTag = new Map();
   for (const m of meshes) {
@@ -215,14 +235,17 @@ export function emitFaceParallax(x, ctx) {
 
   // Helper: compute vertex bbox union across multiple meshes.
   const unionVertexBbox = (meshList) => {
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
     let count = 0;
     for (const mm of meshList) {
       const vv = mm.vertices;
       if (!vv || vv.length < 2) continue;
       for (let i = 0; i < vv.length; i += 2) {
-        if (vv[i]     < minX) minX = vv[i];
-        if (vv[i]     > maxX) maxX = vv[i];
+        if (vv[i] < minX) minX = vv[i];
+        if (vv[i] > maxX) maxX = vv[i];
         if (vv[i + 1] < minY) minY = vv[i + 1];
         if (vv[i + 1] > maxY) maxY = vv[i + 1];
       }
@@ -241,7 +264,9 @@ export function emitFaceParallax(x, ctx) {
   // Grid cells OUTSIDE outer boundary skip this region.
   const protectedRegions = [];
   for (const [groupTag, memberTags] of Object.entries(SUPER_GROUPS)) {
-    const memberMeshes = memberTags.map(t => meshByTag.get(t)).filter(Boolean);
+    const memberMeshes = memberTags
+      .map((t) => meshByTag.get(t))
+      .filter(Boolean);
     if (!memberMeshes.length) continue;
     const bbox = unionVertexBbox(memberMeshes);
     if (!bbox) continue;
@@ -250,13 +275,18 @@ export function emitFaceParallax(x, ctx) {
     const ru = fpRadiusX > 0 ? (rcx - faceMeshCxLocal) / fpRadiusX : 0;
     const rv = fpRadiusY > 0 ? (rcy - faceMeshCyLocal) / fpRadiusY : 0;
     const rz = fpZAt(rcx, rcy, ru);
-    const halfU = fpRadiusX > 0 ? (bbox.maxX - bbox.minX) / (2 * fpRadiusX) : 0.05;
-    const halfV = fpRadiusY > 0 ? (bbox.maxY - bbox.minY) / (2 * fpRadiusY) : 0.05;
+    const halfU =
+      fpRadiusX > 0 ? (bbox.maxX - bbox.minX) / (2 * fpRadiusX) : 0.05;
+    const halfV =
+      fpRadiusY > 0 ? (bbox.maxY - bbox.minY) / (2 * fpRadiusY) : 0.05;
     protectedRegions.push({
       tag: groupTag,
-      protection: 1.00 * FP_PROTECTION_STRENGTH,
-      u: ru, v: rv, z: rz,
-      halfU, halfV,
+      protection: 1.0 * FP_PROTECTION_STRENGTH,
+      u: ru,
+      v: rv,
+      z: rz,
+      halfU,
+      halfV,
       falloffU: halfU + FP_PROTECTION_FALLOFF_BUFFER,
       falloffV: halfV + FP_PROTECTION_FALLOFF_BUFFER,
     });
@@ -267,10 +297,13 @@ export function emitFaceParallax(x, ctx) {
     if (basePro == null) continue;
     const v = m.vertices;
     if (!v || v.length < 2) continue;
-    let rMinX = Infinity, rMinY = Infinity, rMaxX = -Infinity, rMaxY = -Infinity;
+    let rMinX = Infinity,
+      rMinY = Infinity,
+      rMaxX = -Infinity,
+      rMaxY = -Infinity;
     for (let i = 0; i < v.length; i += 2) {
-      if (v[i]     < rMinX) rMinX = v[i];
-      if (v[i]     > rMaxX) rMaxX = v[i];
+      if (v[i] < rMinX) rMinX = v[i];
+      if (v[i] > rMaxX) rMaxX = v[i];
       if (v[i + 1] < rMinY) rMinY = v[i + 1];
       if (v[i + 1] > rMaxY) rMaxY = v[i + 1];
     }
@@ -285,8 +318,11 @@ export function emitFaceParallax(x, ctx) {
     protectedRegions.push({
       tag: m.tag,
       protection: basePro * FP_PROTECTION_STRENGTH,
-      u: ru, v: rv, z: rz,
-      halfU, halfV,
+      u: ru,
+      v: rv,
+      z: rz,
+      halfU,
+      halfV,
       falloffU: halfU + FP_PROTECTION_FALLOFF_BUFFER,
       falloffV: halfV + FP_PROTECTION_FALLOFF_BUFFER,
     });
@@ -303,8 +339,8 @@ export function emitFaceParallax(x, ctx) {
   //
   {
     const pairKeyFor = (tag) => {
-      if (tag.endsWith('-l')) return tag.slice(0, -2);
-      if (tag.endsWith('-r')) return tag.slice(0, -2);
+      if (tag.endsWith("-l")) return tag.slice(0, -2);
+      if (tag.endsWith("-r")) return tag.slice(0, -2);
       return null;
     };
     const pairs = new Map(); // base tag → { L, R } indices into protectedRegions
@@ -312,7 +348,7 @@ export function emitFaceParallax(x, ctx) {
       const r = protectedRegions[i];
       const base = pairKeyFor(r.tag);
       if (!base) continue;
-      const slot = r.tag.endsWith('-l') ? 'L' : 'R';
+      const slot = r.tag.endsWith("-l") ? "L" : "R";
       if (!pairs.has(base)) pairs.set(base, {});
       pairs.get(base)[slot] = i;
     }
@@ -326,18 +362,24 @@ export function emitFaceParallax(x, ctx) {
       rL.u = rL.u < 0 ? -uAbs : uAbs;
       rR.u = rR.u < 0 ? -uAbs : uAbs;
       // v, z, half-extents, falloff — plain average.
-      const vAvg      = (rL.v + rR.v) / 2;
-      const zAvg      = (rL.z + rR.z) / 2;
-      const halfUAvg  = (rL.halfU + rR.halfU) / 2;
-      const halfVAvg  = (rL.halfV + rR.halfV) / 2;
+      const vAvg = (rL.v + rR.v) / 2;
+      const zAvg = (rL.z + rR.z) / 2;
+      const halfUAvg = (rL.halfU + rR.halfU) / 2;
+      const halfVAvg = (rL.halfV + rR.halfV) / 2;
       const falloffUAvg = halfUAvg + FP_PROTECTION_FALLOFF_BUFFER;
       const falloffVAvg = halfVAvg + FP_PROTECTION_FALLOFF_BUFFER;
-      rL.v = vAvg; rR.v = vAvg;
-      rL.z = zAvg; rR.z = zAvg;
-      rL.halfU = halfUAvg; rR.halfU = halfUAvg;
-      rL.halfV = halfVAvg; rR.halfV = halfVAvg;
-      rL.falloffU = falloffUAvg; rR.falloffU = falloffUAvg;
-      rL.falloffV = falloffVAvg; rR.falloffV = falloffVAvg;
+      rL.v = vAvg;
+      rR.v = vAvg;
+      rL.z = zAvg;
+      rR.z = zAvg;
+      rL.halfU = halfUAvg;
+      rR.halfU = halfUAvg;
+      rL.halfV = halfVAvg;
+      rR.halfV = halfVAvg;
+      rL.falloffU = falloffUAvg;
+      rR.falloffU = falloffUAvg;
+      rL.falloffV = falloffVAvg;
+      rR.falloffV = falloffVAvg;
     }
   }
 
@@ -366,8 +408,8 @@ export function emitFaceParallax(x, ctx) {
   // result is slightly less parallax detail in the immediate neighborhood of
   // protected features, traded for guaranteed L/R symmetry.
   {
-    const cellU = fpRadiusX > 0 ? (faceUnionBbox.W / fpCol) / fpRadiusX : 0;
-    const cellV = fpRadiusY > 0 ? (faceUnionBbox.H / fpRow) / fpRadiusY : 0;
+    const cellU = fpRadiusX > 0 ? faceUnionBbox.W / fpCol / fpRadiusX : 0;
+    const cellV = fpRadiusY > 0 ? faceUnionBbox.H / fpRow / fpRadiusY : 0;
     for (const r of protectedRegions) {
       // Preserve the pre-expansion (A.3-averaged mesh) halves, so features
       // like far-eye squash (#5) can scope their effect to the actual
@@ -391,12 +433,12 @@ export function emitFaceParallax(x, ctx) {
   for (let r = 0; r < fpGH; r++) {
     for (let c = 0; c < fpGW; c++) {
       const gi = r * fpGW + c;
-      const canvasGx = faceUnionBbox.minX + c * faceUnionBbox.W / fpCol;
-      const canvasGy = faceUnionBbox.minY + r * faceUnionBbox.H / fpRow;
+      const canvasGx = faceUnionBbox.minX + (c * faceUnionBbox.W) / fpCol;
+      const canvasGy = faceUnionBbox.minY + (r * faceUnionBbox.H) / fpRow;
       const u = fpRadiusX > 0 ? (canvasGx - faceMeshCxLocal) / fpRadiusX : 0;
       const v = fpRadiusY > 0 ? (canvasGy - faceMeshCyLocal) / fpRadiusY : 0;
       const z = fpZAt(canvasGx, canvasGy, u);
-      fpUVZ[gi * 3]     = u;
+      fpUVZ[gi * 3] = u;
       fpUVZ[gi * 3 + 1] = v;
       fpUVZ[gi * 3 + 2] = z;
     }
@@ -404,15 +446,17 @@ export function emitFaceParallax(x, ctx) {
 
   if (rigDebugLog) {
     // Peak shift: at center (u=0, v=0, z=FP_DEPTH_K), rotation by θ gives u' = z·sin θ.
-    const peakThetaX = FP_MAX_ANGLE_X_DEG * Math.PI / 180;
-    const peakThetaY = FP_MAX_ANGLE_Y_DEG * Math.PI / 180;
+    const peakThetaX = (FP_MAX_ANGLE_X_DEG * Math.PI) / 180;
+    const peakThetaY = (FP_MAX_ANGLE_Y_DEG * Math.PI) / 180;
     const peakX = FP_DEPTH_K * Math.sin(peakThetaX) * fpRadiusX;
     const peakY = FP_DEPTH_K * Math.sin(peakThetaY) * fpRadiusY;
     rigDebugLog.faceParallax = {
-      algorithm: 'depth-weighted-cylindrical + protected-regions',
+      algorithm: "depth-weighted-cylindrical + protected-regions",
       depthAmpScalar: FP_DEPTH_AMP,
-      gridCols: fpGW, gridRows: fpGH,
-      spanX_canvasPx: fpSpanX_bx, spanY_canvasPx: fpSpanY_bx,
+      gridCols: fpGW,
+      gridRows: fpGH,
+      spanX_canvasPx: fpSpanX_bx,
+      spanY_canvasPx: fpSpanY_bx,
       faceMeshCenter: { cx: faceMeshCxLocal, cy: faceMeshCyLocal },
       fpRadius: { x: fpRadiusX, y: fpRadiusY },
       constants: {
@@ -427,26 +471,28 @@ export function emitFaceParallax(x, ctx) {
         angleX_plus30_center: peakX,
         angleY_plus30_center: peakY,
       },
-      protectedRegions: protectedRegions.map(r => ({
+      protectedRegions: protectedRegions.map((r) => ({
         tag: r.tag,
         protection: r.protection,
         centerUVZ: { u: r.u, v: r.v, z: r.z },
         falloff: { u: r.falloffU, v: r.falloffV },
       })),
-      note: 'Grid point Z from ellipsoidal falloff + per-region protection blend. Protected regions (eyes, brows, mouth, nose) rigidly translate via their center-shift; skin/hair/ears get full depth parallax. FaceParallax grid in canvas-px offsets from facePivot.',
+      note: "Grid point Z from ellipsoidal falloff + per-region protection blend. Protected regions (eyes, brows, mouth, nose) rigidly translate via their center-shift; skin/hair/ears get full depth parallax. FaceParallax grid in canvas-px offsets from facePivot.",
     };
   }
   // Helper: compute a keyform's grid position at (ax, ay) directly via
   // the 3D rotation math. Separated so we can use it for the canonical
   // +ax side and then MIRROR to the -ax side for guaranteed symmetry.
   const computeFpKeyform = (ax, ay) => {
-    const thetaX = (ax / 30) * FP_MAX_ANGLE_X_DEG * Math.PI / 180;
-    const thetaY = (ay / 30) * FP_MAX_ANGLE_Y_DEG * Math.PI / 180;
-    const cosX = Math.cos(thetaX), sinX = Math.sin(thetaX);
-    const cosY = Math.cos(thetaY), sinY = Math.sin(thetaY);
+    const thetaX = ((ax / 30) * FP_MAX_ANGLE_X_DEG * Math.PI) / 180;
+    const thetaY = ((ay / 30) * FP_MAX_ANGLE_Y_DEG * Math.PI) / 180;
+    const cosX = Math.cos(thetaX),
+      sinX = Math.sin(thetaX);
+    const cosY = Math.cos(thetaY),
+      sinY = Math.sin(thetaY);
     const pos = new Float64Array(fpRestLocal);
     if (ax === 0 && ay === 0) return pos;
-    const regionShifts = protectedRegions.map(r => {
+    const regionShifts = protectedRegions.map((r) => {
       const rUy = r.u * cosX + r.z * sinX;
       const rZy = -r.u * sinX + r.z * cosX;
       const rVp = r.v * cosY - rZy * sinY;
@@ -461,7 +507,7 @@ export function emitFaceParallax(x, ctx) {
     const EYE_PARALLAX_AMP_X = 1.3;
     for (let ri = 0; ri < protectedRegions.length; ri++) {
       const t = protectedRegions[ri].tag;
-      if (t === 'eye-l' || t === 'eye-r') {
+      if (t === "eye-l" || t === "eye-r") {
         regionShifts[ri].shiftU *= EYE_PARALLAX_AMP_X;
       }
     }
@@ -518,13 +564,15 @@ export function emitFaceParallax(x, ctx) {
       const effP = Math.min(1, totalWeight);
       let finalShiftU, finalShiftV;
       if (totalWeight > 0) {
-        finalShiftU = natShiftU * (1 - effP) + (rigidShiftU / totalWeight) * effP;
-        finalShiftV = natShiftV * (1 - effP) + (rigidShiftV / totalWeight) * effP;
+        finalShiftU =
+          natShiftU * (1 - effP) + (rigidShiftU / totalWeight) * effP;
+        finalShiftV =
+          natShiftV * (1 - effP) + (rigidShiftV / totalWeight) * effP;
       } else {
         finalShiftU = natShiftU;
         finalShiftV = natShiftV;
       }
-      pos[gi * 2]     += finalShiftU * fpRadiusX;
+      pos[gi * 2] += finalShiftU * fpRadiusX;
       pos[gi * 2 + 1] += finalShiftV * fpRadiusY;
     }
     // ── 3D punch-up: far-eye squash (Session 25f, effect #5) ──
@@ -547,8 +595,8 @@ export function emitFaceParallax(x, ctx) {
       const FAR_EYE_SQUASH_AMP = 0.18; // peak inward shift per |sinX|=1
       for (let ri = 0; ri < protectedRegions.length; ri++) {
         const r = protectedRegions[ri];
-        if (r.tag !== 'eye-l' && r.tag !== 'eye-r') continue;
-        if ((r.u * sinX) >= 0) continue; // near eye — skip
+        if (r.tag !== "eye-l" && r.tag !== "eye-r") continue;
+        if (r.u * sinX >= 0) continue; // near eye — skip
         const squash = Math.abs(sinX) * FAR_EYE_SQUASH_AMP;
         const signU = r.u > 0 ? 1 : -1;
         for (let row = 0; row < fpGH; row++) {
@@ -599,17 +647,17 @@ export function emitFaceParallax(x, ctx) {
         const giR = r * fpGW + mc;
         const restXL = fpRestLocal[giL * 2];
         const restXR = fpRestLocal[giR * 2];
-        const restY  = fpRestLocal[giL * 2 + 1]; // same as giR (same row)
-        const sxL = pos[giL * 2]     - restXL;
+        const restY = fpRestLocal[giL * 2 + 1]; // same as giR (same row)
+        const sxL = pos[giL * 2] - restXL;
         const syL = pos[giL * 2 + 1] - restY;
-        const sxR = pos[giR * 2]     - restXR;
+        const sxR = pos[giR * 2] - restXR;
         const syR = pos[giR * 2 + 1] - restY;
-        const avgAsymSx = (sxL - sxR) / 2;   // antisymmetric X shift
-        const avgSymSy  = (syL + syR) / 2;   // symmetric   Y shift
-        pos[giL * 2]     = restXL + avgAsymSx;
-        pos[giL * 2 + 1] = restY  + avgSymSy;
-        pos[giR * 2]     = restXR - avgAsymSx;
-        pos[giR * 2 + 1] = restY  + avgSymSy;
+        const avgAsymSx = (sxL - sxR) / 2; // antisymmetric X shift
+        const avgSymSy = (syL + syR) / 2; // symmetric   Y shift
+        pos[giL * 2] = restXL + avgAsymSx;
+        pos[giL * 2 + 1] = restY + avgSymSy;
+        pos[giR * 2] = restXR - avgAsymSx;
+        pos[giR * 2 + 1] = restY + avgSymSy;
       }
       // Center column (odd fpGW): under symmetric physics, its shift_x
       // at ax=0 should be 0; at ax≠0 it inherits a real nonzero shift
@@ -627,66 +675,96 @@ export function emitFaceParallax(x, ctx) {
     let pos = computeFpKeyform(ax, ay);
     if (ax === 0) pos = symmetrizeKeyform(pos);
     fpGridPositions.push(pos);
-    const [, pidForm] = x.shared('CFormGuid', {
-      uuid: uuid(), note: `FaceParallax_ax${ax}_ay${ay}`,
+    const [, pidForm] = x.shared("CFormGuid", {
+      uuid: uuid(),
+      note: `FaceParallax_ax${ax}_ay${ay}`,
     });
     fpFormGuids.push(pidForm);
   }
 
   // Emit the single FaceParallax deformer (CWarpDeformerSource) targeting Body X.
-  const [, pidFpGuid] = x.shared('CDeformerGuid', {
-    uuid: uuid(), note: 'FaceParallax',
+  const [, pidFpGuid] = x.shared("CDeformerGuid", {
+    uuid: uuid(),
+    note: "FaceParallax",
   });
 
   // KeyformBindings — AngleY first, AngleX second (Hiyori convention).
-  const [fpKfbY, pidFpKfbY] = x.shared('KeyformBindingSource');
-  const [fpKfbX, pidFpKfbX] = x.shared('KeyformBindingSource');
-  const [fpKfg, pidFpKfg]   = x.shared('KeyformGridSource');
-  const fpKfogList = x.sub(fpKfg, 'array_list', {
-    'xs.n': 'keyformsOnGrid', count: String(fpKeyCombos.length),
+  const [fpKfbY, pidFpKfbY] = x.shared("KeyformBindingSource");
+  const [fpKfbX, pidFpKfbX] = x.shared("KeyformBindingSource");
+  const [fpKfg, pidFpKfg] = x.shared("KeyformGridSource");
+  const fpKfogList = x.sub(fpKfg, "array_list", {
+    "xs.n": "keyformsOnGrid",
+    count: String(fpKeyCombos.length),
   });
   for (let ki = 0; ki < fpKeyCombos.length; ki++) {
-    const ax = fpKeyCombos[ki][0], ay = fpKeyCombos[ki][1];
+    const ax = fpKeyCombos[ki][0],
+      ay = fpKeyCombos[ki][1];
     const xi = fpAngleKeys.indexOf(ax);
     const yi = fpAngleKeys.indexOf(ay);
-    const kog = x.sub(fpKfogList, 'KeyformOnGrid');
-    const ak = x.sub(kog, 'KeyformGridAccessKey', { 'xs.n': 'accessKey' });
-    const kop = x.sub(ak, 'array_list', { 'xs.n': '_keyOnParameterList', count: '2' });
-    const konY = x.sub(kop, 'KeyOnParameter');
-    x.subRef(konY, 'KeyformBindingSource', pidFpKfbY, { 'xs.n': 'binding' });
-    x.sub(konY, 'i', { 'xs.n': 'keyIndex' }).text = String(yi);
-    const konX = x.sub(kop, 'KeyOnParameter');
-    x.subRef(konX, 'KeyformBindingSource', pidFpKfbX, { 'xs.n': 'binding' });
-    x.sub(konX, 'i', { 'xs.n': 'keyIndex' }).text = String(xi);
-    x.subRef(kog, 'CFormGuid', fpFormGuids[ki], { 'xs.n': 'keyformGuid' });
+    const kog = x.sub(fpKfogList, "KeyformOnGrid");
+    const ak = x.sub(kog, "KeyformGridAccessKey", { "xs.n": "accessKey" });
+    const kop = x.sub(ak, "array_list", {
+      "xs.n": "_keyOnParameterList",
+      count: "2",
+    });
+    const konY = x.sub(kop, "KeyOnParameter");
+    x.subRef(konY, "KeyformBindingSource", pidFpKfbY, { "xs.n": "binding" });
+    x.sub(konY, "i", { "xs.n": "keyIndex" }).text = String(yi);
+    const konX = x.sub(kop, "KeyOnParameter");
+    x.subRef(konX, "KeyformBindingSource", pidFpKfbX, { "xs.n": "binding" });
+    x.sub(konX, "i", { "xs.n": "keyIndex" }).text = String(xi);
+    x.subRef(kog, "CFormGuid", fpFormGuids[ki], { "xs.n": "keyformGuid" });
   }
-  const fpKfbList = x.sub(fpKfg, 'array_list', { 'xs.n': 'keyformBindings', count: '2' });
-  x.subRef(fpKfbList, 'KeyformBindingSource', pidFpKfbY);
-  x.subRef(fpKfbList, 'KeyformBindingSource', pidFpKfbX);
-  emitKfBinding(x, fpKfbY, pidFpKfg, pidParamAngleY,
-    fpAngleKeys.map(k => k + '.0'), 'ParamAngleY');
-  emitKfBinding(x, fpKfbX, pidFpKfg, pidParamAngleX,
-    fpAngleKeys.map(k => k + '.0'), 'ParamAngleX');
+  const fpKfbList = x.sub(fpKfg, "array_list", {
+    "xs.n": "keyformBindings",
+    count: "2",
+  });
+  x.subRef(fpKfbList, "KeyformBindingSource", pidFpKfbY);
+  x.subRef(fpKfbList, "KeyformBindingSource", pidFpKfbX);
+  emitKfBinding(
+    x,
+    fpKfbY,
+    pidFpKfg,
+    pidParamAngleY,
+    fpAngleKeys.map((k) => k + ".0"),
+    "ParamAngleY",
+  );
+  emitKfBinding(
+    x,
+    fpKfbX,
+    pidFpKfg,
+    pidParamAngleX,
+    fpAngleKeys.map((k) => k + ".0"),
+    "ParamAngleX",
+  );
 
   // Emit the CWarpDeformerSource
-  const [fpDf, pidFpDf] = x.shared('CWarpDeformerSource');
-  allDeformerSources.push({ pid: pidFpDf, tag: 'CWarpDeformerSource' });
-  const fpAcdfs = x.sub(fpDf, 'ACDeformerSource', { 'xs.n': 'super' });
-  const fpAcpcs = x.sub(fpAcdfs, 'ACParameterControllableSource', { 'xs.n': 'super' });
-  x.sub(fpAcpcs, 's', { 'xs.n': 'localName' }).text = 'FaceParallax';
-  x.sub(fpAcpcs, 'b', { 'xs.n': 'isVisible' }).text = 'true';
-  x.sub(fpAcpcs, 'b', { 'xs.n': 'isLocked' }).text = 'false';
-  x.subRef(fpAcpcs, 'CPartGuid', pidPartGuid, { 'xs.n': 'parentGuid' });
-  x.subRef(fpAcpcs, 'KeyformGridSource', pidFpKfg, { 'xs.n': 'keyformGridSource' });
-  const fpMft = x.sub(fpAcpcs, 'KeyFormMorphTargetSet', { 'xs.n': 'keyformMorphTargetSet' });
-  x.sub(fpMft, 'carray_list', { 'xs.n': '_morphTargets', count: '0' });
-  const fpBwc = x.sub(fpMft, 'MorphTargetBlendWeightConstraintSet', { 'xs.n': 'blendWeightConstraintSet' });
-  x.sub(fpBwc, 'carray_list', { 'xs.n': '_constraints', count: '0' });
-  x.sub(fpAcpcs, 'carray_list', { 'xs.n': '_extensions', count: '0' });
-  x.sub(fpAcpcs, 'null', { 'xs.n': 'internalColor_direct_argb' });
-  x.sub(fpAcpcs, 'null', { 'xs.n': 'internalColor_indirect_argb' });
-  x.subRef(fpAcdfs, 'CDeformerGuid', pidFpGuid, { 'xs.n': 'guid' });
-  x.sub(fpAcdfs, 'CDeformerId', { 'xs.n': 'id', idstr: 'FaceParallax' });
+  const [fpDf, pidFpDf] = x.shared("CWarpDeformerSource");
+  allDeformerSources.push({ pid: pidFpDf, tag: "CWarpDeformerSource" });
+  const fpAcdfs = x.sub(fpDf, "ACDeformerSource", { "xs.n": "super" });
+  const fpAcpcs = x.sub(fpAcdfs, "ACParameterControllableSource", {
+    "xs.n": "super",
+  });
+  x.sub(fpAcpcs, "s", { "xs.n": "localName" }).text = "FaceParallax";
+  x.sub(fpAcpcs, "b", { "xs.n": "isVisible" }).text = "true";
+  x.sub(fpAcpcs, "b", { "xs.n": "isLocked" }).text = "false";
+  x.subRef(fpAcpcs, "CPartGuid", pidPartGuid, { "xs.n": "parentGuid" });
+  x.subRef(fpAcpcs, "KeyformGridSource", pidFpKfg, {
+    "xs.n": "keyformGridSource",
+  });
+  const fpMft = x.sub(fpAcpcs, "KeyFormMorphTargetSet", {
+    "xs.n": "keyformMorphTargetSet",
+  });
+  x.sub(fpMft, "carray_list", { "xs.n": "_morphTargets", count: "0" });
+  const fpBwc = x.sub(fpMft, "MorphTargetBlendWeightConstraintSet", {
+    "xs.n": "blendWeightConstraintSet",
+  });
+  x.sub(fpBwc, "carray_list", { "xs.n": "_constraints", count: "0" });
+  x.sub(fpAcpcs, "carray_list", { "xs.n": "_extensions", count: "0" });
+  x.sub(fpAcpcs, "null", { "xs.n": "internalColor_direct_argb" });
+  x.sub(fpAcpcs, "null", { "xs.n": "internalColor_indirect_argb" });
+  x.subRef(fpAcdfs, "CDeformerGuid", pidFpGuid, { "xs.n": "guid" });
+  x.sub(fpAcdfs, "CDeformerId", { "xs.n": "id", idstr: "FaceParallax" });
   // FaceParallax targets Face Rotation → Body X.  Coord scales:
   //   - Face Rotation pivot:  in Body X 0..1  (its parent is a warp)
   //   - FaceParallax grid:    in canvas-pixel OFFSETS from Face Rotation's pivot
@@ -695,37 +773,53 @@ export function emitFaceParallax(x, ctx) {
   // At rest (ParamAngleZ=0) Face Rotation is identity, so the chain is transparent.
   // At ±30 (mapped to ±10° rotation) Face Rotation rotates FaceParallax's grid
   // around the face pivot, producing head tilt for all face rig warp descendants.
-  x.subRef(fpAcdfs, 'CDeformerGuid', pidFaceRotGuid, { 'xs.n': 'targetDeformerGuid' });
-  x.sub(fpDf, 'i', { 'xs.n': 'col' }).text = String(fpCol);
-  x.sub(fpDf, 'i', { 'xs.n': 'row' }).text = String(fpRow);
-  x.sub(fpDf, 'b', { 'xs.n': 'isQuadTransform' }).text = 'false';
-  const fpKfsList = x.sub(fpDf, 'carray_list', {
-    'xs.n': 'keyforms', count: String(fpKeyCombos.length),
+  x.subRef(fpAcdfs, "CDeformerGuid", pidFaceRotGuid, {
+    "xs.n": "targetDeformerGuid",
+  });
+  x.sub(fpDf, "i", { "xs.n": "col" }).text = String(fpCol);
+  x.sub(fpDf, "i", { "xs.n": "row" }).text = String(fpRow);
+  x.sub(fpDf, "b", { "xs.n": "isQuadTransform" }).text = "false";
+  const fpKfsList = x.sub(fpDf, "carray_list", {
+    "xs.n": "keyforms",
+    count: String(fpKeyCombos.length),
   });
   for (let ki = 0; ki < fpKeyCombos.length; ki++) {
-    const wdf = x.sub(fpKfsList, 'CWarpDeformerForm');
-    const wdfAdf = x.sub(wdf, 'ACDeformerForm', { 'xs.n': 'super' });
-    const wdfAcf = x.sub(wdfAdf, 'ACForm', { 'xs.n': 'super' });
-    x.subRef(wdfAcf, 'CFormGuid', fpFormGuids[ki], { 'xs.n': 'guid' });
-    x.sub(wdfAcf, 'b', { 'xs.n': 'isAnimatedForm' }).text = 'false';
-    x.sub(wdfAcf, 'b', { 'xs.n': 'isLocalAnimatedForm' }).text = 'false';
-    x.subRef(wdfAcf, 'CWarpDeformerSource', pidFpDf, { 'xs.n': '_source' });
-    x.sub(wdfAcf, 'null', { 'xs.n': 'name' });
-    x.sub(wdfAcf, 's', { 'xs.n': 'notes' }).text = '';
-    x.sub(wdfAdf, 'f', { 'xs.n': 'opacity' }).text = '1.0';
-    x.sub(wdfAdf, 'CFloatColor', {
-      'xs.n': 'multiplyColor', red: '1.0', green: '1.0', blue: '1.0', alpha: '1.0',
+    const wdf = x.sub(fpKfsList, "CWarpDeformerForm");
+    const wdfAdf = x.sub(wdf, "ACDeformerForm", { "xs.n": "super" });
+    const wdfAcf = x.sub(wdfAdf, "ACForm", { "xs.n": "super" });
+    x.subRef(wdfAcf, "CFormGuid", fpFormGuids[ki], { "xs.n": "guid" });
+    x.sub(wdfAcf, "b", { "xs.n": "isAnimatedForm" }).text = "false";
+    x.sub(wdfAcf, "b", { "xs.n": "isLocalAnimatedForm" }).text = "false";
+    x.subRef(wdfAcf, "CWarpDeformerSource", pidFpDf, { "xs.n": "_source" });
+    x.sub(wdfAcf, "null", { "xs.n": "name" });
+    x.sub(wdfAcf, "s", { "xs.n": "notes" }).text = "";
+    x.sub(wdfAdf, "f", { "xs.n": "opacity" }).text = "1.0";
+    x.sub(wdfAdf, "CFloatColor", {
+      "xs.n": "multiplyColor",
+      red: "1.0",
+      green: "1.0",
+      blue: "1.0",
+      alpha: "1.0",
     });
-    x.sub(wdfAdf, 'CFloatColor', {
-      'xs.n': 'screenColor', red: '0.0', green: '0.0', blue: '0.0', alpha: '1.0',
+    x.sub(wdfAdf, "CFloatColor", {
+      "xs.n": "screenColor",
+      red: "0.0",
+      green: "0.0",
+      blue: "0.0",
+      alpha: "1.0",
     });
-    x.subRef(wdfAdf, 'CoordType', pidCoord, { 'xs.n': 'coordType' });
-    x.sub(wdf, 'float-array', {
-      'xs.n': 'positions', count: String(fpGridPts * 2),
-    }).text = Array.from(fpGridPositions[ki]).map(v => v.toFixed(6)).join(' ');
+    x.subRef(wdfAdf, "CoordType", pidCoord, { "xs.n": "coordType" });
+    x.sub(wdf, "float-array", {
+      "xs.n": "positions",
+      count: String(fpGridPts * 2),
+    }).text = Array.from(fpGridPositions[ki])
+      .map((v) => v.toFixed(6))
+      .join(" ");
   }
-  rootPart.childGuidsNode.children.push(x.ref('CDeformerGuid', pidFpGuid));
-  rootPart.childGuidsNode.attrs.count = String(rootPart.childGuidsNode.children.length);
+  rootPart.childGuidsNode.children.push(x.ref("CDeformerGuid", pidFpGuid));
+  rootPart.childGuidsNode.attrs.count = String(
+    rootPart.childGuidsNode.children.length,
+  );
 
   return pidFpGuid;
 }

@@ -4,13 +4,13 @@ import type { ProjectDocument, Transform } from "@kukla2d/contracts";
 
 import { prepareLoadedProjectDocument } from "@/schema/projectDocumentAdapter";
 
-import { pushPatches, transaction } from "@/store/undoHistory";
-
 import type {
   AnimationDocumentCommand,
   ProjectCommandResult,
   ProjectStore,
-} from "./projectStoreTypes.types.js";
+} from "@/store/project/projectStoreTypes.types.js";
+import { pushPatches, transaction } from "@/store/undoHistory";
+
 import type { ValidatedProjectDocument } from "@/schema/projectSchema.types";
 
 interface PreparedProjectState {

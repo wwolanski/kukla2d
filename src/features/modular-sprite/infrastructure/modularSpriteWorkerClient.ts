@@ -1,19 +1,18 @@
 import type { ModularSpriteProcessingRecipe } from "@kukla2d/contracts";
 
-import modularSpriteWorkerUrl from "./worker.ts?worker&url";
-
-import type { ModularSpriteWorkerClient } from "./modularSpriteWorkerClient.types.js";
-import type {
-  ModularSpriteWorkerRequest,
-  ModularSpriteWorkerResponse,
-} from "./workerProtocol.types.js";
 import type {
   ExtractedPart,
   ModularSpriteDraftPart,
   ProcessedModularSprite,
   ProcessModularSpriteRequest,
   RgbaImageData,
-} from "../domain/contracts.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
+import type { ModularSpriteWorkerClient } from "@/features/modular-sprite/infrastructure/modularSpriteWorkerClient.types.js";
+import modularSpriteWorkerUrl from "@/features/modular-sprite/infrastructure/worker.ts?worker&url";
+import type {
+  ModularSpriteWorkerRequest,
+  ModularSpriteWorkerResponse,
+} from "@/features/modular-sprite/infrastructure/workerProtocol.types.js";
 
 interface ModularSpriteWorkerClientOptions {
   workerUrl?: string | URL;

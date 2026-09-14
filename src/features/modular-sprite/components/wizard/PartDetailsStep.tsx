@@ -1,6 +1,13 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { PartThumbnail } from "@/features/modular-sprite/components/preview/PartThumbnail.js";
+import { FieldLabel } from "@/features/modular-sprite/components/wizard/FieldLabel.js";
+import type {
+  ModularSpriteDraftPart,
+  ProcessedModularSprite,
+} from "@/features/modular-sprite/domain/contracts.types.js";
+import type { RegionGrouping } from "@/features/modular-sprite/domain/partGrouping.types.js";
 import {
   SchemaEditor,
   type NewSchemaMetadata,
@@ -9,15 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-import { FieldLabel } from "./FieldLabel.js";
-import { PartThumbnail } from "../preview/PartThumbnail.js";
-
-import type {
-  ModularSpriteDraftPart,
-  ProcessedModularSprite,
-} from "../../domain/contracts.types.js";
-import type { RegionGrouping } from "../../domain/partGrouping.types.js";
 
 const UiButton = Button as React.ComponentType<
   React.ButtonHTMLAttributes<HTMLButtonElement> & {

@@ -16,7 +16,7 @@
  * otherwise rejected, and historical records frequently omit these fields.
  */
 
-import type { MigrationDocument } from "./migrationDocument.types.js";
+import type { MigrationDocument } from "@/schema/migrations/migrationDocument.types.js";
 
 /**
  * Guard R1: verify record and version first, then access fields. Inputs are

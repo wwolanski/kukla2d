@@ -1,12 +1,12 @@
 import type {
+  MeshGenerationOptions,
+  MeshGenerationResult,
+} from "@/features/canvas/domain/mesh-generation/generate.types.js";
+import type {
   MeshData,
   MeshImageData,
   MeshWorkerRequest,
-} from "./workerProtocol.types.js";
-import type {
-  MeshGenerationOptions,
-  MeshGenerationResult,
-} from "../../domain/mesh-generation/generate.types.js";
+} from "@/features/canvas/infrastructure/mesh-worker/workerProtocol.types.js";
 
 type MeshTaskRequest = Extract<MeshWorkerRequest, { requestId: string }>;
 type MeshTaskResponse =

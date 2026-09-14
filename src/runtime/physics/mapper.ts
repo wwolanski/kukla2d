@@ -1,10 +1,9 @@
 import type { Bone, BoneId, PhysicsRule } from "@kukla2d/contracts";
 
+import { createPendulumChain } from "@/runtime/physics/physicsRig.js";
+import type { PhysicsRig } from "@/runtime/physics/physicsRig.types.js";
+
 import { isFiniteNumber } from "@/lib/math";
-
-import { createPendulumChain } from "./physicsRig.js";
-
-import type { PhysicsRig } from "./physicsRig.types.js";
 
 interface PhysicsMappingResult {
   rig: PhysicsRig;

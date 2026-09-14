@@ -1,16 +1,16 @@
-import { Copy, Sparkles, Trash2 } from 'lucide-react';
+import { Copy, Sparkles, Trash2 } from "lucide-react";
+
+import { DepthRow } from "@/features/layers/components/rows/DepthRow.jsx";
+import { findNodePreviewTexture } from "@/features/layers/domain/findNodePreviewTexture.js";
 
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from '@/components/ui/context-menu';
-import { FeatureDisabledTooltip } from '@/components/ui/feature-disabled-tooltip';
-import { ScrollArea } from '@/components/ui/scroll-area';
-
-import { DepthRow } from './rows/DepthRow.jsx';
-import { findNodePreviewTexture } from '../domain/findNodePreviewTexture.js';
+} from "@/components/ui/context-menu";
+import { FeatureDisabledTooltip } from "@/components/ui/feature-disabled-tooltip";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function DepthTab({
   nodes,
@@ -30,7 +30,7 @@ export function DepthTab({
   onDelete,
   onRename,
 }) {
-  const isStructureBlocked = editorMode === 'animation';
+  const isStructureBlocked = editorMode === "animation";
   return (
     <>
       <div className="flex h-8 items-center border-b px-2 shrink-0">
@@ -48,14 +48,20 @@ export function DepthTab({
       <ScrollArea className="flex-1" onMouseLeave={onClearHover}>
         <div className="p-1 space-y-0.5">
           {nodes.length === 0 ? (
-            <p className="text-xs text-muted-foreground p-3 text-center">No layers yet.</p>
+            <p className="text-xs text-muted-foreground p-3 text-center">
+              No layers yet.
+            </p>
           ) : (
-            nodes.map(node => (
+            nodes.map((node) => (
               <ContextMenu key={node.id}>
                 <ContextMenuTrigger>
                   <DepthRow
                     node={node}
-                    previewTexture={findNodePreviewTexture(node, allNodes, textureMap)}
+                    previewTexture={findNodePreviewTexture(
+                      node,
+                      allNodes,
+                      textureMap,
+                    )}
                     isSelected={selection.includes(node.id)}
                     dragSession={dragSession}
                     onSelect={onSelect}
@@ -69,7 +75,10 @@ export function DepthTab({
                   />
                 </ContextMenuTrigger>
                 <ContextMenuContent className="w-56">
-                  <ContextMenuItem disabled={isStructureBlocked} onSelect={() => onDuplicate(node.id)}>
+                  <ContextMenuItem
+                    disabled={isStructureBlocked}
+                    onSelect={() => onDuplicate(node.id)}
+                  >
                     <Copy className="w-4 h-4 mr-2 opacity-70" />
                     Duplicate
                   </ContextMenuItem>

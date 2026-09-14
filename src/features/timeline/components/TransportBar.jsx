@@ -1,12 +1,18 @@
-import { Disc, RotateCcw, Repeat, SkipBack, SkipForward, Music } from 'lucide-react';
+import {
+  Disc,
+  RotateCcw,
+  Repeat,
+  SkipBack,
+  SkipForward,
+  Music,
+} from "lucide-react";
 
-import { FeatureDisabledTooltip } from '@/components/ui/feature-disabled-tooltip';
-import { toast } from '@/components/ui/use-toast';
+import { NumField } from "@/features/timeline/components/NumField.jsx";
+import { TransportButton } from "@/features/timeline/components/TransportButton.jsx";
+import { buildFpsTimingChange } from "@/features/timeline/domain/timelineTime.js";
 
-import { NumField } from './NumField.jsx';
-import { TransportButton } from './TransportButton.jsx';
-import { buildFpsTimingChange } from '../domain/timelineTime.js';
-
+import { FeatureDisabledTooltip } from "@/components/ui/feature-disabled-tooltip";
+import { toast } from "@/components/ui/use-toast";
 
 export function TransportBar({
   animation,
@@ -53,11 +59,20 @@ export function TransportBar({
 
   return (
     <div className="flex min-w-0 shrink-0 flex-wrap content-start items-center gap-x-2 gap-y-1 overflow-x-hidden border-b border-border bg-card px-2 py-1">
-      <TransportButton disabled={!hasAnimation} onClick={stop} title="First Frame">
+      <TransportButton
+        disabled={!hasAnimation}
+        onClick={stop}
+        title="First Frame"
+      >
         <SkipBack size={14} />
       </TransportButton>
 
-      <TransportButton disabled={!hasAnimation} onClick={togglePlay} active={isPlaying} title={isPlaying ? 'Pause' : 'Play'}>
+      <TransportButton
+        disabled={!hasAnimation}
+        onClick={togglePlay}
+        active={isPlaying}
+        title={isPlaying ? "Pause" : "Play"}
+      >
         {isPlaying ? (
           <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
             <rect x="1.5" y="1" width="2.5" height="8" rx="0.5" />
@@ -70,11 +85,20 @@ export function TransportBar({
         )}
       </TransportButton>
 
-      <TransportButton disabled={!hasAnimation} onClick={lastFrame} title="Last Frame">
+      <TransportButton
+        disabled={!hasAnimation}
+        onClick={lastFrame}
+        title="Last Frame"
+      >
         <SkipForward size={14} />
       </TransportButton>
 
-      <TransportButton disabled={!hasAnimation} onClick={() => setLoop(!loop)} active={loop} title="Repeat">
+      <TransportButton
+        disabled={!hasAnimation}
+        onClick={() => setLoop(!loop)}
+        active={loop}
+        title="Repeat"
+      >
         <Repeat size={14} />
       </TransportButton>
 
@@ -126,18 +150,25 @@ export function TransportBar({
         tip="Animation sampling rate. Changing FPS preserves duration and keyframe timing."
       />
 
-      <label className="flex items-center gap-1 ml-1" title="Preview-only playback speed. Does not change animation timing or export.">
-        <span className="text-[10px] text-muted-foreground whitespace-nowrap">Speed</span>
+      <label
+        className="flex items-center gap-1 ml-1"
+        title="Preview-only playback speed. Does not change animation timing or export."
+      >
+        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+          Speed
+        </span>
         <input
           type="range"
           min={0}
           max={2}
           step={0.05}
           value={speed}
-          onChange={e => setSpeed(parseFloat(e.target.value))}
+          onChange={(e) => setSpeed(parseFloat(e.target.value))}
           className="w-16 h-1 accent-primary"
         />
-        <span className="text-[10px] text-muted-foreground w-6">{speed.toFixed(1)}×</span>
+        <span className="text-[10px] text-muted-foreground w-6">
+          {speed.toFixed(1)}×
+        </span>
       </label>
 
       <div className="w-px h-4 bg-border mx-1" />
@@ -155,7 +186,7 @@ export function TransportBar({
         disabled={!hasAnimation}
         onClick={() => setAutoKeyframe(!autoKeyframe)}
         active={autoKeyframe}
-        className={autoKeyframe ? 'animate-recording' : ''}
+        className={autoKeyframe ? "animate-recording" : ""}
         title="Auto Keyframe: Automatically commit values to track when properties are changed"
       >
         <Disc size={14} strokeWidth={2} />
@@ -164,7 +195,10 @@ export function TransportBar({
       <TransportButton
         featureDisabled
         onClick={() => {
-          const name = window.prompt('Audio track name:', `Audio ${(animation?.audioTracks?.length ?? 0) + 1}`);
+          const name = window.prompt(
+            "Audio track name:",
+            `Audio ${(animation?.audioTracks?.length ?? 0) + 1}`,
+          );
           if (name) {
             addAudioTrack({
               animationId: animation.id,
@@ -172,7 +206,11 @@ export function TransportBar({
             });
           }
         }}
-        title={!hasAnimation ? "Create an animation first to add audio" : "Add audio track"}
+        title={
+          !hasAnimation
+            ? "Create an animation first to add audio"
+            : "Add audio track"
+        }
       >
         <Music size={14} />
       </TransportButton>
@@ -184,7 +222,7 @@ export function TransportBar({
           type="button"
           className="text-[10px] px-2 py-1 rounded border border-border opacity-50 cursor-not-allowed transition-colors"
         >
-          {timelineMode === 'dope' ? 'Dope' : 'Graph'}
+          {timelineMode === "dope" ? "Dope" : "Graph"}
         </button>
       </FeatureDisabledTooltip>
       <button
@@ -200,13 +238,17 @@ export function TransportBar({
         onClick={() => {
           const result = copyPose();
           if (result?.changed) {
-            toast({ description: `Copied pose from Frame ${result.sourceFrame}` });
+            toast({
+              description: `Copied pose from Frame ${result.sourceFrame}`,
+            });
           }
         }}
         className="text-[10px] px-2 py-1 rounded border border-border hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30"
-        title={canCopyPose
-          ? 'Copy all keyframes at current frame'
-          : 'No keyframes at current frame'}
+        title={
+          canCopyPose
+            ? "Copy all keyframes at current frame"
+            : "No keyframes at current frame"
+        }
       >
         Copy Pose
       </button>
@@ -215,7 +257,9 @@ export function TransportBar({
         onClick={() => {
           const result = pastePose(false);
           if (result?.changed) {
-            toast({ description: `Pasted pose from memory: Frame ${result.sourceFrame}` });
+            toast({
+              description: `Pasted pose from memory: Frame ${result.sourceFrame}`,
+            });
           }
         }}
         className="text-[10px] px-2 py-1 rounded border border-border hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30"
@@ -228,7 +272,9 @@ export function TransportBar({
         onClick={() => {
           const result = pastePose(true);
           if (result?.changed) {
-            toast({ description: `Pasted pose from memory: Frame ${result.sourceFrame}` });
+            toast({
+              description: `Pasted pose from memory: Frame ${result.sourceFrame}`,
+            });
           }
         }}
         className="text-[10px] px-2 py-1 rounded border border-border hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30"
@@ -241,7 +287,10 @@ export function TransportBar({
       <span className="flex-1" />
 
       {animation && (
-        <span className="text-[10px] text-muted-foreground truncate max-w-[100px]" title={animation.name}>
+        <span
+          className="text-[10px] text-muted-foreground truncate max-w-[100px]"
+          title={animation.name}
+        >
           {animation.name}
         </span>
       )}
@@ -255,7 +304,10 @@ export function TransportBar({
         </button>
       )}
 
-      <span className="text-[10px] text-muted-foreground border border-border/40 px-1 py-0.5 font-mono" title="Smart K: key existing animated channels. New child bones default to rotation so parent motion stays inherited.">
+      <span
+        className="text-[10px] text-muted-foreground border border-border/40 px-1 py-0.5 font-mono"
+        title="Smart K: key existing animated channels. New child bones default to rotation so parent motion stays inherited."
+      >
         K
       </span>
     </div>

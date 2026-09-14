@@ -17,9 +17,9 @@ import {
   handlesFromTuple,
   buildSegmentPath,
   buildGraphPoints,
-} from "../application/graphModel.js";
-import { parseKeyframeAddress } from "../application/keyframeAddress.js";
-import { LAYOUT } from "../domain/timelineLayout.js";
+} from "@/features/timeline/application/graphModel.js";
+import { parseKeyframeAddress } from "@/features/timeline/application/keyframeAddress.js";
+import { LAYOUT } from "@/features/timeline/domain/timelineLayout.js";
 
 const ROW_H = LAYOUT.ROW_H;
 const POINT_R = 4;

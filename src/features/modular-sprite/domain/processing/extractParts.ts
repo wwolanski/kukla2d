@@ -3,14 +3,17 @@ import {
   type NormalizedRect,
 } from "@kukla2d/contracts";
 
-import { clamp, normalizedRect, pixelRect } from "../imageMath.js";
-
 import type {
   DetectedRegion,
   ExtractedPart,
   ModularSpriteDraftPart,
   ProcessedModularSprite,
-} from "../contracts.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
+import {
+  clamp,
+  normalizedRect,
+  pixelRect,
+} from "@/features/modular-sprite/domain/imageMath.js";
 
 export function createDefaultExtractionFrame(
   region: DetectedRegion,

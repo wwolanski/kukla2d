@@ -1,6 +1,6 @@
 import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
 
-import type { RgbaImageData } from "../contracts.types.js";
+import type { RgbaImageData } from "@/features/modular-sprite/domain/contracts.types.js";
 
 interface BackgroundAnalysis {
   mode: "alpha" | "chroma";

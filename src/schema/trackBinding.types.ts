@@ -1,4 +1,4 @@
-import type { TARGET_TYPES, VALUE_TYPES } from "./trackBinding.js";
+import type { TARGET_TYPES, VALUE_TYPES } from "@/schema/trackBinding.js";
 
 export type ValueType = (typeof VALUE_TYPES)[keyof typeof VALUE_TYPES];
 

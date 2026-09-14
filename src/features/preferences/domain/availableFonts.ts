@@ -1,4 +1,4 @@
-import type { AvailableFont } from "./availableFonts.types.js";
+import type { AvailableFont } from "@/features/preferences/domain/availableFonts.types.js";
 
 export const AVAILABLE_FONTS: readonly AvailableFont[] = [
   {

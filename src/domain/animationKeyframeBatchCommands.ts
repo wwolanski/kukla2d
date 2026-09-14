@@ -5,29 +5,28 @@ import {
   type Track,
 } from "@kukla2d/contracts";
 
-import { isFiniteNumber } from "@/lib/math";
-
-import { checkBoomerangTimeBlocked } from "./animationBoomerang.js";
+import { checkBoomerangTimeBlocked } from "@/domain/animationBoomerang.js";
+import type {
+  AnimationCommandResult,
+  AnimationKeyframeInput,
+  EditAnimationKeyframesPayload,
+} from "@/domain/animationCommandTypes.types.js";
 import {
   assertString,
   createCommandError,
   getAnimation,
   sortTrackKeyframes,
   trackKey,
-} from "./animationDocumentCommandSupport.js";
+} from "@/domain/animationDocumentCommandSupport.js";
 import {
   easingEquals,
   isSupportedTrackProperty,
   isValidEasing,
   validateTrackValue,
-} from "./animationProperties.js";
-import { normalizeKeyframeAuthoring } from "./keyframeProvenance.js";
+} from "@/domain/animationProperties.js";
+import { normalizeKeyframeAuthoring } from "@/domain/keyframeProvenance.js";
 
-import type {
-  AnimationCommandResult,
-  AnimationKeyframeInput,
-  EditAnimationKeyframesPayload,
-} from "./animationCommandTypes.types.js";
+import { isFiniteNumber } from "@/lib/math";
 
 type AnimationEditBatchValidation =
   | { valid: true }

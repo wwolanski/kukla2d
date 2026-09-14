@@ -4,7 +4,7 @@ import type { ProjectDocument } from "@kukla2d/contracts";
 
 import { useProjectStore } from "@/store/projectStore";
 
-import { useRecoveryRepository } from "./useRecoveryRepository.js";
+import { useRecoveryRepository } from "@/features/projects/application/useRecoveryRepository.js";
 
 import type { RecoveryRecord } from "@/io/projectDb.types.js";
 

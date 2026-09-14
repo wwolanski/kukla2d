@@ -1,6 +1,8 @@
-import { clamp, rectIntersectionOverUnion } from "./imageMath.js";
-
-import type { DetectedRegion } from "./contracts.types.js";
+import type { DetectedRegion } from "@/features/modular-sprite/domain/contracts.types.js";
+import {
+  clamp,
+  rectIntersectionOverUnion,
+} from "@/features/modular-sprite/domain/imageMath.js";
 
 interface ModularSpriteTemplatePart {
   partKey: string;

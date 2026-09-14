@@ -10,10 +10,10 @@ import { resolveVisibleHoverHit } from "@/domain/hoverPolicy.js";
 import { mat3Identity } from "@/domain/transforms.js";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
-import { clamp } from "@/lib/math";
+import { getBoneSegment } from "@/features/canvas/domain/picking.js";
+import { buildPoseHandle } from "@/features/canvas/domain/poseHandle.js";
 
-import { getBoneSegment } from "./picking.js";
-import { buildPoseHandle } from "./poseHandle.js";
+import { clamp } from "@/lib/math";
 
 const SKELETON_CONNECTIONS: readonly (readonly [string, string])[] = [
   ["torso", "neck"],

@@ -1,16 +1,15 @@
-import { handleExportAreaDragMove } from "./PixiExportAreaGestures.js";
-import { handleTransformDrag } from "./PixiInputTransformDrag.js";
-import { readClientCoordinates } from "./PixiPointerBounds.js";
-import { handlePoseHandleDrag } from "./PixiPoseGestures.js";
+import type { CanvasDraftPoseValue } from "@/features/canvas/application/canvasRenderer.types.js";
+import { handleExportAreaDragMove } from "@/features/canvas/infrastructure/rendering/pixi/PixiExportAreaGestures.js";
+import { handleTransformDrag } from "@/features/canvas/infrastructure/rendering/pixi/PixiInputTransformDrag.js";
+import type { PointerInput } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { DragState } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
+import { readClientCoordinates } from "@/features/canvas/infrastructure/rendering/pixi/PixiPointerBounds.js";
+import { handlePoseHandleDrag } from "@/features/canvas/infrastructure/rendering/pixi/PixiPoseGestures.js";
 import {
   clearSetupPoseTargets,
   previewPosePartial,
-} from "./PixiPosePreview.js";
-
-import type { PointerInput } from "./pixiInteractionContracts.types.js";
-import type { DragState } from "./pixiInteractionDragContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
-import type { CanvasDraftPoseValue } from "../../../application/canvasRenderer.types.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiPosePreview.js";
 
 function previewDraft(
   adapter: PixiInteractionSystem,

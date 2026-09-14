@@ -15,7 +15,7 @@ import {
 import type {
   LocalSchemaRepository,
   StoredSchemaAsset,
-} from "../../application/localSchemaApi.types.js";
+} from "@/features/modular-sprite-schema/application/localSchemaApi.types.js";
 
 interface SchemaCatalogSyncState {
   sourceId: string;

@@ -11,8 +11,8 @@ import type {
 import type {
   ProcessedModularSprite,
   RgbaImageData,
-} from "../domain/contracts.types.js";
-import type { RegionGrouping } from "../domain/partGrouping.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
+import type { RegionGrouping } from "@/features/modular-sprite/domain/partGrouping.types.js";
 
 export type ModularSpriteWizardStep =
   "source" | "background" | "regions" | "parts" | "review";

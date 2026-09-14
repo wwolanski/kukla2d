@@ -1,11 +1,13 @@
 import { create } from "zustand";
 
+import { editorSelectors } from "@/store/editorStoreTypes.js";
+import type {
+  EditorActions,
+  EditorStore,
+} from "@/store/editorStoreTypes.types.js";
+
 import { CANVAS_DEFAULTS } from "@/features/canvas";
 import { BONE_TOOL_DEFAULTS } from "@/features/rigging";
-
-import { editorSelectors } from "./editorStoreTypes.js";
-
-import type { EditorActions, EditorStore } from "./editorStoreTypes.types.js";
 
 type DrawBoneAutoAssignMode = "smart" | "classic";
 type WeightPaintBrushMode = "add" | "subtract" | "replace" | "smooth";

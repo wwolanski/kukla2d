@@ -1,6 +1,6 @@
 import type { Bone, Constraint } from "@kukla2d/contracts";
 
-import type { BoneOverride } from "./ik.types.js";
+import type { BoneOverride } from "@/runtime/constraints/ik.types.js";
 
 /** Solve one- and two-bone IK chains without mutating bind-pose bones. */
 export function solveIK(

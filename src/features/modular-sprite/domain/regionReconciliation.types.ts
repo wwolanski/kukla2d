@@ -1,4 +1,4 @@
-import type { RegionGrouping } from "./partGrouping.types.js";
+import type { RegionGrouping } from "@/features/modular-sprite/domain/partGrouping.types.js";
 
 export interface RegionMapping {
   previousRegionId: number;

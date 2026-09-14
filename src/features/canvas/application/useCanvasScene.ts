@@ -7,26 +7,25 @@ import type { EditorActions } from "@/store/editorStoreTypes.types.js";
 import type { ProjectActions } from "@/store/project/projectStoreTypes.types.js";
 
 import { getPreviewModifierDraft } from "@/features/auto-motion";
-import { buildCanvasFrame } from "@/features/canvas/domain/canvasFrame.js";
-
-import { useCanvasSceneLifecycle } from "./canvasSceneLifecycle.js";
-import { composeCanvasFrameState } from "./composeCanvasFrameState.js";
-import { createCanvasAuthoringAdapter } from "./createCanvasAuthoringAdapter.js";
-import { withTransientPose } from "./poseHelpers.js";
-import { createPosePhysicsLoader } from "./posePhysicsLoader.js";
-import { syncEffectiveMeshFrames } from "./syncEffectiveMeshFrames.js";
-import { useCanvasFrameSubscriptions } from "./useCanvasFrameSubscriptions.js";
-
 import type {
   CanvasEditorSnapshot,
   CanvasFrameRenderOptions,
   CanvasRuntimeDependencies,
   CanvasSceneGateway,
-} from "./canvasApplication.types.js";
-import type { CanvasAuthoringAdapter } from "./createCanvasAuthoringAdapter.types.js";
-import type { editorWorkflowMachine } from "./editorWorkflowMachine.js";
-import type { PhysicsRuntime } from "./evaluateEditorFramePose.types.js";
-import type { CanvasFailure } from "../domain/canvasFailureCodes.types.js";
+} from "@/features/canvas/application/canvasApplication.types.js";
+import { useCanvasSceneLifecycle } from "@/features/canvas/application/canvasSceneLifecycle.js";
+import { composeCanvasFrameState } from "@/features/canvas/application/composeCanvasFrameState.js";
+import { createCanvasAuthoringAdapter } from "@/features/canvas/application/createCanvasAuthoringAdapter.js";
+import type { CanvasAuthoringAdapter } from "@/features/canvas/application/createCanvasAuthoringAdapter.types.js";
+import type { editorWorkflowMachine } from "@/features/canvas/application/editorWorkflowMachine.js";
+import type { PhysicsRuntime } from "@/features/canvas/application/evaluateEditorFramePose.types.js";
+import { withTransientPose } from "@/features/canvas/application/poseHelpers.js";
+import { createPosePhysicsLoader } from "@/features/canvas/application/posePhysicsLoader.js";
+import { syncEffectiveMeshFrames } from "@/features/canvas/application/syncEffectiveMeshFrames.js";
+import { useCanvasFrameSubscriptions } from "@/features/canvas/application/useCanvasFrameSubscriptions.js";
+import type { CanvasFailure } from "@/features/canvas/domain/canvasFailureCodes.types.js";
+import { buildCanvasFrame } from "@/features/canvas/domain/canvasFrame.js";
+
 import type { RefObject } from "react";
 import type { ActorRefFrom } from "xstate";
 

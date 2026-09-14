@@ -10,33 +10,32 @@ import {
 import { getDefaultValue } from "@/domain/animationTargets";
 
 import { createAnimationAuthoringApi } from "@/features/animation";
-
-import { toast } from "@/components/ui/use-toast";
-
-import { AudioTrackList } from "./AudioTrackList.jsx";
-import { EditableGraphEditor } from "./EditableGraphEditor.jsx";
-import { KeyguideLabels } from "./KeyframeGuide.jsx";
-import { MarkerDialog } from "./MarkerDialog.jsx";
-import { PendingDraftBanner } from "./PendingDraftBanner.jsx";
-import { Playhead } from "./Playhead.jsx";
-import { Ruler } from "./Ruler.jsx";
-import { SelectionBox } from "./SelectionBox.jsx";
-import { TrackList } from "./TrackList.jsx";
-import { TransportBar } from "./TransportBar.jsx";
-import { flattenVisibleRows } from "../application/buildTimelineTrackRows.js";
+import { flattenVisibleRows } from "@/features/timeline/application/buildTimelineTrackRows.js";
 import {
   parseKeyframeAddress,
   keyframeAddressToString,
-} from "../application/keyframeAddress.js";
-import { buildKeyguideFrames } from "../application/keyframeGuide.js";
-import { computeRulerTicks } from "../application/rulerTicks.js";
-import { useAnimationBootstrap } from "../application/useAnimationBootstrap.js";
-import { useAudioSync } from "../application/useAudioSync.js";
-import { useKeyframeActions } from "../application/useKeyframeActions.js";
-import { useKeyframeSelection } from "../application/useKeyframeSelection.js";
-import { useTimelineController } from "../application/useTimelineController.js";
-import { useTimelineGeometry } from "../application/useTimelineGeometry.js";
-import { LAYOUT } from "../domain/timelineLayout.js";
+} from "@/features/timeline/application/keyframeAddress.js";
+import { buildKeyguideFrames } from "@/features/timeline/application/keyframeGuide.js";
+import { computeRulerTicks } from "@/features/timeline/application/rulerTicks.js";
+import { useAnimationBootstrap } from "@/features/timeline/application/useAnimationBootstrap.js";
+import { useAudioSync } from "@/features/timeline/application/useAudioSync.js";
+import { useKeyframeActions } from "@/features/timeline/application/useKeyframeActions.js";
+import { useKeyframeSelection } from "@/features/timeline/application/useKeyframeSelection.js";
+import { useTimelineController } from "@/features/timeline/application/useTimelineController.js";
+import { useTimelineGeometry } from "@/features/timeline/application/useTimelineGeometry.js";
+import { AudioTrackList } from "@/features/timeline/components/AudioTrackList.jsx";
+import { EditableGraphEditor } from "@/features/timeline/components/EditableGraphEditor.jsx";
+import { KeyguideLabels } from "@/features/timeline/components/KeyframeGuide.jsx";
+import { MarkerDialog } from "@/features/timeline/components/MarkerDialog.jsx";
+import { PendingDraftBanner } from "@/features/timeline/components/PendingDraftBanner.jsx";
+import { Playhead } from "@/features/timeline/components/Playhead.jsx";
+import { Ruler } from "@/features/timeline/components/Ruler.jsx";
+import { SelectionBox } from "@/features/timeline/components/SelectionBox.jsx";
+import { TrackList } from "@/features/timeline/components/TrackList.jsx";
+import { TransportBar } from "@/features/timeline/components/TransportBar.jsx";
+import { LAYOUT } from "@/features/timeline/domain/timelineLayout.js";
+
+import { toast } from "@/components/ui/use-toast";
 
 export function TimelinePanelView({ decodeAudioFile }) {
   const ctrl = useTimelineController();

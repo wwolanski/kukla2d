@@ -17,24 +17,22 @@ import {
 } from "@/domain/libraryAssetNames.js";
 
 import { useWorkflowActor } from "@/features/canvas";
-
-import { uid } from "@/lib/uid";
-
-import { useDragSession } from "./useDragSession.js";
-import { useLayerPanelBoneTreeDnD } from "./useLayerPanelBoneTreeDnD.js";
-import { useLayerPanelDepthDnD } from "./useLayerPanelDepthDnD.js";
-import { useLayerPanelSelection } from "./useLayerPanelSelection.js";
-import { buildBoneTreeRows } from "../domain/buildBoneTreeRows.js";
+import { useDragSession } from "@/features/layers/application/useDragSession.js";
+import { useLayerPanelBoneTreeDnD } from "@/features/layers/application/useLayerPanelBoneTreeDnD.js";
+import { useLayerPanelDepthDnD } from "@/features/layers/application/useLayerPanelDepthDnD.js";
+import { useLayerPanelSelection } from "@/features/layers/application/useLayerPanelSelection.js";
+import { buildBoneTreeRows } from "@/features/layers/domain/buildBoneTreeRows.js";
 import {
   buildLibraryTree,
   flattenLibraryTree,
-} from "../domain/buildLibraryTree.js";
-import { removeLibraryAssets } from "../domain/removeLibraryAssets.js";
-
+} from "@/features/layers/domain/buildLibraryTree.js";
 import type {
   DragTargetKind,
   DropPosition,
-} from "../domain/dragSession.types.js";
+} from "@/features/layers/domain/dragSession.types.js";
+import { removeLibraryAssets } from "@/features/layers/domain/removeLibraryAssets.js";
+
+import { uid } from "@/lib/uid";
 
 interface LayerPanelControllerOptions {
   onImportClick?: () => void;

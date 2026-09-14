@@ -1,18 +1,21 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-import { Button } from '@/components/ui/button';
+import { useMeshInspectorController } from "@/features/inspector/application/useMeshInspectorController.js";
+import {
+  SectionTitle,
+  InspectorRow,
+} from "@/features/inspector/components/fields/InspectorRow.jsx";
+import { SliderRow } from "@/features/inspector/components/fields/SliderRow.jsx";
+import { MeshWeightsPanel } from "@/features/inspector/components/node/MeshWeightsPanel.jsx";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-
-import { MeshWeightsPanel } from './MeshWeightsPanel.jsx';
-import { useMeshInspectorController } from '../../application/useMeshInspectorController.js';
-import { SectionTitle, InspectorRow } from '../fields/InspectorRow.jsx';
-import { SliderRow } from '../fields/SliderRow.jsx';
+} from "@/components/ui/dialog";
 
 export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
   const [expanded, setExpanded] = useState(false);
@@ -49,7 +52,9 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <SectionTitle help="Vertex mesh for deformation. Generate creates a triangulated grid; Edit Mode allows vertex sculpting and adjustment.">Mesh</SectionTitle>
+        <SectionTitle help="Vertex mesh for deformation. Generate creates a triangulated grid; Edit Mode allows vertex sculpting and adjustment.">
+          Mesh
+        </SectionTitle>
         <div className="flex items-center gap-1">
           {node.mesh && (
             <Button
@@ -76,10 +81,14 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
         <div className="space-y-2">
           <div className="space-y-1">
             <InspectorRow label="Vertices">
-              <span className="text-xs tabular-nums">{node.mesh?.vertices?.length ?? '—'}</span>
+              <span className="text-xs tabular-nums">
+                {node.mesh?.vertices?.length ?? "—"}
+              </span>
             </InspectorRow>
             <InspectorRow label="Triangles">
-              <span className="text-xs tabular-nums">{node.mesh?.triangles?.length ?? '—'}</span>
+              <span className="text-xs tabular-nums">
+                {node.mesh?.triangles?.length ?? "—"}
+              </span>
             </InspectorRow>
           </div>
         </div>
@@ -89,14 +98,16 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
 
       {!node.mesh && (
         <p className="text-xs text-muted-foreground leading-relaxed">
-          No mesh. Generate one to enable vertex editing and mesh warp animation.
+          No mesh. Generate one to enable vertex editing and mesh warp
+          animation.
         </p>
       )}
 
       {showRigWarning && (
-          <p className="text-xs leading-relaxed rounded px-2 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400">
-            ⚠ Mesh was generated before rigging. Click <strong>Remesh</strong> to enable elbow/knee deformation.
-          </p>
+        <p className="text-xs leading-relaxed rounded px-2 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400">
+          ⚠ Mesh was generated before rigging. Click <strong>Remesh</strong> to
+          enable elbow/knee deformation.
+        </p>
       )}
 
       <div className="space-y-1">
@@ -104,7 +115,7 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
           onClick={() => setExpanded(!expanded)}
           className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground py-0.5"
         >
-          <span>{expanded ? '▼' : '▶'}</span>
+          <span>{expanded ? "▼" : "▶"}</span>
           <span className="font-medium">Settings</span>
         </button>
         {expanded && (
@@ -114,7 +125,7 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
               value={opts.alphaThreshold}
               min={1}
               max={254}
-              onChange={(v) => setOption('alphaThreshold', v)}
+              onChange={(v) => setOption("alphaThreshold", v)}
               help="Pixel opacity threshold (0–255). Higher = stricter boundary detection."
             />
             <SliderRow
@@ -122,7 +133,7 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
               value={opts.smoothPasses}
               min={0}
               max={10}
-              onChange={(v) => setOption('smoothPasses', v)}
+              onChange={(v) => setOption("smoothPasses", v)}
               help="Laplacian smoothing iterations on the contour. Smooths jagged edges."
             />
             <SliderRow
@@ -130,7 +141,7 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
               value={opts.gridSpacing}
               min={6}
               max={100}
-              onChange={(v) => setOption('gridSpacing', v)}
+              onChange={(v) => setOption("gridSpacing", v)}
               help="Distance between interior sample points. Lower = more vertices, higher detail."
             />
             <SliderRow
@@ -138,7 +149,7 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
               value={opts.edgePadding}
               min={0}
               max={40}
-              onChange={(v) => setOption('edgePadding', v)}
+              onChange={(v) => setOption("edgePadding", v)}
               help="Minimum distance interior points must be from the boundary. Prevents clustering."
             />
             <SliderRow
@@ -146,7 +157,7 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
               value={opts.numEdgePoints}
               min={8}
               max={300}
-              onChange={(v) => setOption('numEdgePoints', v)}
+              onChange={(v) => setOption("numEdgePoints", v)}
               help="Number of points sampled along the contour. More = smoother outline."
             />
           </div>
@@ -158,14 +169,15 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
         className="w-full h-7 text-xs mt-1"
         onClick={handleRemeshClick}
       >
-        {node.mesh ? 'Remesh' : 'Generate Mesh'}
+        {node.mesh ? "Remesh" : "Generate Mesh"}
       </Button>
 
       <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <DialogContent>
           <DialogTitle>Delete Mesh?</DialogTitle>
           <DialogDescription>
-            This will delete the mesh for &quot;{node.name || node.id}&quot;. You can undo this action.
+            This will delete the mesh for &quot;{node.name || node.id}&quot;.
+            You can undo this action.
           </DialogDescription>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmDelete(false)}>
@@ -185,10 +197,16 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
             {remeshImpact && (
               <span className="space-y-1 block">
                 {remeshImpact.blendShapeIds.length > 0 && (
-                  <span className="block">{remeshImpact.blendShapeIds.length} shape key(s) will be removed.</span>
+                  <span className="block">
+                    {remeshImpact.blendShapeIds.length} shape key(s) will be
+                    removed.
+                  </span>
                 )}
                 {remeshImpact.meshTrackAddresses.length > 0 && (
-                  <span className="block">{remeshImpact.meshTrackAddresses.length} mesh animation track(s) will be removed.</span>
+                  <span className="block">
+                    {remeshImpact.meshTrackAddresses.length} mesh animation
+                    track(s) will be removed.
+                  </span>
                 )}
                 {remeshImpact.hasWeights && (
                   <span className="block">Vertex weights will be cleared.</span>
@@ -201,9 +219,7 @@ export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
             <Button variant="outline" onClick={() => setConfirmRemesh(false)}>
               Cancel
             </Button>
-            <Button onClick={handleConfirmRemesh}>
-              Remesh
-            </Button>
+            <Button onClick={handleConfirmRemesh}>Remesh</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

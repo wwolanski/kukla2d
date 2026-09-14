@@ -1,1 +1,1 @@
-export { LayerPanel } from "./composition/LayerPanel.jsx";
+export { LayerPanel } from "@/features/layers/composition/LayerPanel.jsx";

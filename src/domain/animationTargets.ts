@@ -20,9 +20,8 @@ import type {
 import {
   getAnimationPropertySpec,
   isSupportedTrackProperty,
-} from "./animationProperties.js";
-
-import type { AnimationTargetKind as TargetKind } from "./animationProperties.types.js";
+} from "@/domain/animationProperties.js";
+import type { AnimationTargetKind as TargetKind } from "@/domain/animationProperties.types.js";
 
 type AnimationTarget = Node | Bone | Constraint | Slot;
 

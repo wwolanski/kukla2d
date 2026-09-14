@@ -4,6 +4,16 @@ import { toAssetId } from "@kukla2d/contracts";
 import type { NodeId } from "@kukla2d/contracts";
 import type { Node } from "@kukla2d/contracts";
 
+import {
+  deepClone,
+  DEFAULT_TRANSFORM,
+} from "@/store/project/projectStoreShared.js";
+import type {
+  ProjectActions,
+  ProjectStore,
+  ProjectStoreGet,
+  ProjectStoreSet,
+} from "@/store/project/projectStoreTypes.types.js";
 import { pushPatches, transaction } from "@/store/undoHistory";
 
 import {
@@ -15,14 +25,6 @@ import {
 
 import { uid } from "@/lib/uid";
 
-import { deepClone, DEFAULT_TRANSFORM } from "./projectStoreShared.js";
-
-import type {
-  ProjectActions,
-  ProjectStore,
-  ProjectStoreGet,
-  ProjectStoreSet,
-} from "./projectStoreTypes.types.js";
 import type { Draft } from "immer";
 
 type ProjectNodeHierarchyCommands = Pick<

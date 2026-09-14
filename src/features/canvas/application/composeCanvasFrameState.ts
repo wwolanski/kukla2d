@@ -9,13 +9,11 @@ import type { AnimationState } from "@/store/animationStoreTypes.types.js";
 
 import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 
+import type { CanvasEditorSnapshot } from "@/features/canvas/application/canvasApplication.types.js";
+import { evaluateEditorFramePose } from "@/features/canvas/application/evaluateEditorFramePose.js";
+import type { PhysicsRuntime } from "@/features/canvas/application/evaluateEditorFramePose.types.js";
 import { buildEffectiveNodes } from "@/features/canvas/domain/framePose.js";
 import type { FramePose } from "@/features/canvas/domain/framePose.types.js";
-
-import { evaluateEditorFramePose } from "./evaluateEditorFramePose.js";
-
-import type { CanvasEditorSnapshot } from "./canvasApplication.types.js";
-import type { PhysicsRuntime } from "./evaluateEditorFramePose.types.js";
 
 function collectVisibleDescendantParts(
   project: ProjectDocument,

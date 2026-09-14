@@ -6,15 +6,13 @@ import {
   selectElementsInRect,
 } from "@/features/canvas/domain/picking.js";
 import type { ModifierState } from "@/features/canvas/domain/workflowContracts.types.js";
-
-import { getAdapterEffectiveRigState } from "./PixiInputState.js";
-
+import { getAdapterEffectiveRigState } from "@/features/canvas/infrastructure/rendering/pixi/PixiInputState.js";
 import type {
   EditorRuntimePort,
   PointerInput,
-} from "./pixiInteractionContracts.types.js";
-import type { DragState } from "./pixiInteractionDragContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
+} from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { DragState } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
 
 type MarqueeDrag = Extract<DragState, { type: "marquee" }>;
 

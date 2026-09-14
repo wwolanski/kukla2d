@@ -7,17 +7,16 @@ import {
   type SchemaMatchResponse,
 } from "@kukla2d/modular-sprite-schema";
 
-import workerUrl from "./schemaMatcher.worker.ts?worker&url";
+import type { CatalogAwareSchemaMatchGateway } from "@/features/modular-sprite-schema/application/localSchemaApi.types.js";
+import workerUrl from "@/features/modular-sprite-schema/infrastructure/browser/schemaMatcher.worker.ts?worker&url";
 import {
   assertMatchRequest,
   assertMatchResponse,
-} from "./schemaMatcherProtocol.js";
-
+} from "@/features/modular-sprite-schema/infrastructure/browser/schemaMatcherProtocol.js";
 import type {
   SchemaMatcherWorkerRequest,
   SchemaMatcherWorkerResponse,
-} from "./schemaMatcherProtocol.types.js";
-import type { CatalogAwareSchemaMatchGateway } from "../../application/localSchemaApi.types.js";
+} from "@/features/modular-sprite-schema/infrastructure/browser/schemaMatcherProtocol.types.js";
 
 interface Pending {
   resolve: (value: SchemaMatchResponse) => void;

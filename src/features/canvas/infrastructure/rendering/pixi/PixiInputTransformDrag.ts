@@ -11,6 +11,13 @@ import {
   scaleAroundWorldPoint,
 } from "@/features/canvas/domain/dragMath.js";
 import { resolveLinkedNodeAuthoredTransform } from "@/features/canvas/domain/linkedNodeAuthoring.js";
+import type { PointerInput } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import type { DragState } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionDragContracts.types.js";
+import type { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
+import {
+  clearSetupPoseTargets,
+  previewPosePartial,
+} from "@/features/canvas/infrastructure/rendering/pixi/PixiPosePreview.js";
 import {
   rotateLinkedBoneSelection,
   rotateLinkedNodeGroup,
@@ -19,15 +26,6 @@ import {
   translateLinkedBoneSelection,
   translateLinkedNodeGroup,
 } from "@/features/rigging";
-
-import {
-  clearSetupPoseTargets,
-  previewPosePartial,
-} from "./PixiPosePreview.js";
-
-import type { PointerInput } from "./pixiInteractionContracts.types.js";
-import type { DragState } from "./pixiInteractionDragContracts.types.js";
-import type { PixiInteractionSystem } from "./PixiInteractionSystem.js";
 
 type MoveDrag = Extract<DragState, { type: "move" }>;
 type RotateDrag = Extract<DragState, { type: "rotate" }>;

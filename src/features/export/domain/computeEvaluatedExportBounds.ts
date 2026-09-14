@@ -17,8 +17,7 @@ import { computeWorldMatrices } from "@/domain/transforms";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
 import { buildFramePose } from "@/features/canvas";
-
-import type { ExportBoundsFrameSpec } from "./exportAreaFitFrameSpecs.types.js";
+import type { ExportBoundsFrameSpec } from "@/features/export/domain/exportAreaFitFrameSpecs.types.js";
 
 const DEFAULT_PADDING = 20;
 

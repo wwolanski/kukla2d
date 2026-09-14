@@ -1,1 +1,1 @@
-export { PhysicsPanel } from './components/PhysicsPanel.jsx';
+export { PhysicsPanel } from "@/features/physics/components/PhysicsPanel.jsx";

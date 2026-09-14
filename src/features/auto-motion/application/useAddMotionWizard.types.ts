@@ -3,7 +3,7 @@ import type { MotionPresetRole } from "@/domain/autoMotion/autoMotionTypes.types
 import type {
   HEAD_CHEEK_JIGGLE_ID,
   IDLE_BREATHING_ID,
-} from "./useAddMotionWizard.js";
+} from "@/features/auto-motion/application/useAddMotionWizard.js";
 
 export type MotionPresetId =
   typeof IDLE_BREATHING_ID | typeof HEAD_CHEEK_JIGGLE_ID;

@@ -3,13 +3,17 @@ import type { Mesh, Node } from "@kukla2d/contracts";
 import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
 import type { EditorStore } from "@/store/editorStoreTypes.types.js";
 
-import type { CanvasRendererPort, EditorView } from "./canvasRenderer.types.js";
-import type { ResourceRegistry } from "./workspaceLoadTransaction.types.js";
+import type {
+  CanvasRendererPort,
+  EditorView,
+} from "@/features/canvas/application/canvasRenderer.types.js";
+import type { ResourceRegistry } from "@/features/canvas/application/workspaceLoadTransaction.types.js";
 import type {
   MeshGenerationOptions,
   MeshGenerationResult,
-} from "../domain/mesh-generation/generate.types.js";
-import type { EditorWorkflowState } from "../domain/workflowContracts.types.js";
+} from "@/features/canvas/domain/mesh-generation/generate.types.js";
+import type { EditorWorkflowState } from "@/features/canvas/domain/workflowContracts.types.js";
+
 import type { RefObject } from "react";
 
 export type CanvasEditorSnapshot = EditorStore & Partial<EditorWorkflowState>;

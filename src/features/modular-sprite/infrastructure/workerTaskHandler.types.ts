@@ -1,4 +1,4 @@
-import type { RgbaImageData } from "../domain/contracts.types.js";
+import type { RgbaImageData } from "@/features/modular-sprite/domain/contracts.types.js";
 
 export interface ModularSpriteTaskRuntime {
   warmCache: {

@@ -1,10 +1,12 @@
 import type { BoneId, Mesh, VertexInfluence } from "@kukla2d/contracts";
 
+import {
+  normalizeVertexInfluences,
+  brushWeight,
+} from "@/features/canvas/domain/meshEditing.js";
+import type { MeshWeightStats } from "@/features/canvas/domain/meshWeighting.types.js";
+
 import { finiteNumberOr } from "@/lib/math";
-
-import { normalizeVertexInfluences, brushWeight } from "./meshEditing.js";
-
-import type { MeshWeightStats } from "./meshWeighting.types.js";
 
 export const WEIGHT_PAINT_MODES = [
   "add",

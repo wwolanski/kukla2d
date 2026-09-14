@@ -12,12 +12,12 @@ import type {
 import type {
   ModularSpriteWizardStep,
   WizardState,
-} from "./wizardState.types.js";
+} from "@/features/modular-sprite/application/wizardState.types.js";
 import type {
   ProcessedModularSprite,
   RgbaImageData,
-} from "../domain/contracts.types.js";
-import type { RegionGrouping } from "../domain/partGrouping.types.js";
+} from "@/features/modular-sprite/domain/contracts.types.js";
+import type { RegionGrouping } from "@/features/modular-sprite/domain/partGrouping.types.js";
 
 type WizardHistoryKind = "recipe" | "discrete" | "parts";
 

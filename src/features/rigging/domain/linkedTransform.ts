@@ -24,7 +24,10 @@ import {
 } from "@/domain/transforms.js";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
-import { isBoneLinkLocked, isNodeAssignedToBone } from "./boneAssignment.js";
+import {
+  isBoneLinkLocked,
+  isNodeAssignedToBone,
+} from "@/features/rigging/domain/boneAssignment.js";
 
 type RigProject = Pick<ProjectDocument, "bones" | "nodes">;
 interface TranslationOptions {

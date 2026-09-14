@@ -4,12 +4,11 @@ import type {
   ProjectResourceOwner,
 } from "@kukla2d/contracts";
 
-import { computeAlphaContours } from "./imageUtils.js";
-
+import { computeAlphaContours } from "@/features/canvas/application/imageUtils.js";
 import type {
   ResourceRegistry,
   WorkspaceLoadStage,
-} from "./workspaceLoadTransaction.types.js";
+} from "@/features/canvas/application/workspaceLoadTransaction.types.js";
 
 interface WorkspaceCommitPort {
   commitProject(project: ProjectDocument): void;
