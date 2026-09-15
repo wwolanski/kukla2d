@@ -45,6 +45,7 @@ export function LibraryTab({
   onRenameFolder,
   onRenameAsset,
   onRemoveFolder,
+  onRemoveFromPackage,
   onRemoveAsset,
   onRegenerateModularSprite,
   onDragStartAsset,
@@ -145,6 +146,11 @@ export function LibraryTab({
                 name: row.name,
               }),
             )
+          }
+          onRemoveFromPackage={
+            row.modularKind === "part"
+              ? () => onRemoveFromPackage?.(row.id)
+              : undefined
           }
           onRegenerateModularSprite={onRegenerateModularSprite}
           onDragStart={onDragStartAsset}

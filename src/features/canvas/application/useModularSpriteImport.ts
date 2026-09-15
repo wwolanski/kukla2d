@@ -9,6 +9,8 @@ import { useEditorStore } from "@/store/editorStore";
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
 import { useProjectStore } from "@/store/projectStore";
 
+import { validateUniqueLibraryFolderName } from "@/domain/libraryFolderNames.js";
+
 import type {
   CanvasSceneGateway,
   CanvasTextureCache,
@@ -18,6 +20,8 @@ import {
   computeAlphaContours,
   computeImageBounds,
 } from "@/features/canvas/application/imageUtils.js";
+import { removeLibraryAssets } from "@/features/layers";
+import { pixelRect } from "@/features/modular-sprite";
 import type {
   ModularSpriteCommitRequest,
   ModularSpriteCommitResult,
@@ -118,23 +122,18 @@ export function useModularSpriteImport({
       if ([...partAssetIds.values()].includes(sourceAssetId))
         throw new Error("The package source cannot also be used as a part");
 
-      if (existing) {
+      if (existing && !request.force) {
         for (const part of request.parts) {
           const oldPart = oldPartForDraft(part.draft);
           if (!oldPart) continue;
-          const expectedWidth =
-            Math.ceil(
-              (oldPart.extractionFrame.x + oldPart.extractionFrame.width) *
-                existing.source.width,
-            ) - Math.floor(oldPart.extractionFrame.x * existing.source.width);
-          const expectedHeight =
-            Math.ceil(
-              (oldPart.extractionFrame.y + oldPart.extractionFrame.height) *
-                existing.source.height,
-            ) - Math.floor(oldPart.extractionFrame.y * existing.source.height);
+          const expectedFrame = pixelRect(
+            oldPart.extractionFrame,
+            existing.source.width,
+            existing.source.height,
+          );
           if (
-            part.image.width !== expectedWidth ||
-            part.image.height !== expectedHeight
+            part.image.width !== expectedFrame.width ||
+            part.image.height !== expectedFrame.height
           ) {
             throw new Error(
               `Part "${part.draft.name}" changed its stable extraction frame; save it as a new modular sprite`,
@@ -158,6 +157,17 @@ export function useModularSpriteImport({
         currentProject.assetPlacements.find(
           (placement) => placement.assetId === sourceAssetId,
         )?.folderId ?? uid();
+      const packageName = validateUniqueLibraryFolderName(
+        currentProject.libraryFolders,
+        request.name,
+        folderId,
+      );
+      const nextPartAssetIds = new Set(partAssetIds.values());
+      const removedAssetIds = new Set(
+        existing?.parts
+          .map((part) => part.assetId)
+          .filter((assetId) => !nextPartAssetIds.has(assetId)) ?? [],
+      );
       const createdNodeIds: string[] = [];
       let layoutGroupId: ReturnType<typeof toNodeId> | null = null;
       const imageDataByKey = new Map(
@@ -169,32 +179,39 @@ export function useModularSpriteImport({
 
       try {
         updateProject((projectDraft, versionControl) => {
+          const validatedPackageName = validateUniqueLibraryFolderName(
+            projectDraft.libraryFolders,
+            request.name,
+            folderId,
+          );
           const sourceTexture = projectDraft.textures.find(
             (texture) => texture.id === sourceAssetId,
           );
           if (sourceTexture) {
             sourceTexture.source = sourceUrl;
-            sourceTexture.name = `${request.name} Source`;
+            sourceTexture.name = `${validatedPackageName} Source`;
             sourceTexture.fileName = pngFileName(request.sourceFileName);
             sourceTexture.fileSize = request.sourceBlob.size;
           } else {
             projectDraft.textures.push({
               id: sourceAssetId,
               source: sourceUrl,
-              name: `${request.name} Source`,
+              name: `${validatedPackageName} Source`,
               fileName: pngFileName(request.sourceFileName),
               fileSize: request.sourceBlob.size,
             });
           }
 
-          if (
-            !projectDraft.libraryFolders.some(
-              (folder) => folder.id === folderId,
-            )
-          ) {
+          const packageFolder = projectDraft.libraryFolders.find(
+            (folder) => folder.id === folderId,
+          );
+          if (packageFolder) {
+            packageFolder.name = validatedPackageName;
+            packageFolder.sourceFileName = request.sourceFileName;
+          } else {
             projectDraft.libraryFolders.push({
               id: folderId,
-              name: request.name,
+              name: validatedPackageName,
               parentId: null,
               sourceFileName: request.sourceFileName,
               origin: "import",
@@ -208,6 +225,33 @@ export function useModularSpriteImport({
             else projectDraft.assetPlacements.push({ assetId, folderId });
           };
           ensurePlacement(sourceAssetId);
+
+          if (request.includeAssetId) {
+            for (const modularSprite of projectDraft.modularSprites) {
+              if (modularSprite.id === modularSpriteId) continue;
+              const hadIncludedPart = modularSprite.parts.some(
+                (part) => part.assetId === request.includeAssetId,
+              );
+              modularSprite.parts = modularSprite.parts.filter(
+                (part) => part.assetId !== request.includeAssetId,
+              );
+              if (!hadIncludedPart || !modularSprite.schemaBinding) continue;
+              const remainingPartKeys = new Set(
+                modularSprite.parts.map((part) => part.partKey),
+              );
+              modularSprite.schemaBinding.slotToPartKey = Object.fromEntries(
+                Object.entries(modularSprite.schemaBinding.slotToPartKey).filter(
+                  ([, partKey]) => remainingPartKeys.has(partKey),
+                ),
+              );
+              modularSprite.schemaBinding.snapshot.slots =
+                modularSprite.schemaBinding.snapshot.slots.filter((slot) => {
+                  if (typeof slot !== "object" || slot === null) return true;
+                  const slotKey = (slot as { slotKey?: unknown }).slotKey;
+                  return typeof slotKey !== "string" || remainingPartKeys.has(slotKey);
+                });
+            }
+          }
 
           for (const part of request.parts) {
             const assetId = partAssetIds.get(part.draft.partKey)!;
@@ -235,7 +279,7 @@ export function useModularSpriteImport({
           const nextDocument = {
             id: modularSpriteId,
             schemaVersion: 1 as const,
-            name: request.name,
+            name: packageName,
             sourceAssetId,
             source: {
               width: request.sourceImage.width,
@@ -377,6 +421,32 @@ export function useModularSpriteImport({
           versionControl.textureVersion += 1;
           versionControl.geometryVersion += 1;
           if (createdNodeIds.length > 0) versionControl.transformVersion += 1;
+
+          if (removedAssetIds.size > 0) {
+            if (request.removeFromLibrary === false) {
+              for (const assetId of removedAssetIds) {
+                const placement = projectDraft.assetPlacements.find(
+                  (candidate) => candidate.assetId === assetId,
+                );
+                if (placement) placement.folderId = null;
+                else projectDraft.assetPlacements.push({ assetId, folderId: null });
+              }
+            } else {
+              const sourceAssetIds = new Set(
+                projectDraft.modularSprites.map(
+                  (modularSprite) => modularSprite.sourceAssetId,
+                ),
+              );
+              removeLibraryAssets(
+                projectDraft,
+                new Set(
+                  [...removedAssetIds].filter(
+                    (assetId) => !sourceAssetIds.has(assetId),
+                  ),
+                ),
+              );
+            }
+          }
         });
       } catch (error) {
         stagedResources.dispose();

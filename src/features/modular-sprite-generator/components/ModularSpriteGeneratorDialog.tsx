@@ -1,11 +1,10 @@
 import { Layers3, Loader2, PackagePlus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { AssetId } from "@kukla2d/contracts";
 
 import { useProjectStore } from "@/store/projectStore";
 
-import { removeLibraryAssets } from "@/features/layers";
 import type {
   ModularSpriteCommitRequest,
   ModularSpriteCommitResult,
@@ -70,6 +69,8 @@ export interface ModularSpriteGeneratorIntent {
   existingId: string;
   includeAssetId?: string;
   removeAssetId?: string;
+  force?: boolean;
+  removeFromLibrary?: boolean;
 }
 
 interface ModularSpriteGeneratorImagePort {
@@ -131,9 +132,23 @@ export function ModularSpriteGeneratorDialog({
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initializedSessionRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!open || !target) return;
+    if (!open) {
+      initializedSessionRef.current = null;
+      return;
+    }
+    if (!target) return;
+    const sessionKey = [
+      target.id,
+      intent?.includeAssetId ?? "",
+      intent?.removeAssetId ?? "",
+      intent?.force ? "force" : "",
+      intent?.removeFromLibrary ? "library" : "package",
+    ].join(":");
+    if (initializedSessionRef.current === sessionKey) return;
+    initializedSessionRef.current = sessionKey;
     setName(target.name);
     setSelectedLooseAssets(
       new Set(intent?.includeAssetId ? [intent.includeAssetId] : []),
@@ -144,7 +159,14 @@ export function ModularSpriteGeneratorDialog({
     );
     setBusy(false);
     setError(null);
-  }, [intent?.includeAssetId, intent?.removeAssetId, open, target]);
+  }, [
+    intent?.force,
+    intent?.includeAssetId,
+    intent?.removeAssetId,
+    intent?.removeFromLibrary,
+    open,
+    target,
+  ]);
 
   const packageAssetIds = useMemo(
     () =>
@@ -197,7 +219,7 @@ export function ModularSpriteGeneratorDialog({
       const assets = await Promise.all(
         uniqueAssetIds.map((assetId) => loadAsset(project, assetId, image)),
       );
-      const request = await generateModularSprite(
+      const generatedRequest = await generateModularSprite(
         {
           project,
           name,
@@ -206,12 +228,37 @@ export function ModularSpriteGeneratorDialog({
         },
         { encode: image.encode },
       );
+      const request: ModularSpriteCommitRequest = {
+        ...generatedRequest,
+        ...(intent?.includeAssetId
+          ? { includeAssetId: intent.includeAssetId }
+          : {}),
+        ...(intent?.force !== undefined ? { force: intent.force } : {}),
+        ...(intent?.removeFromLibrary !== undefined
+          ? { removeFromLibrary: intent.removeFromLibrary }
+          : {}),
+      };
       const removedFromTarget = target.parts
         .map((part) => part.assetId)
         .filter((assetId) => removedTargetAssets.has(assetId));
-      const mergedIds = new Set(selectedOtherPackages.map((sprite) => sprite.id));
+      const includedAssetOwnerId = intent?.includeAssetId
+        ? project.modularSprites.find(
+            (sprite) =>
+              sprite.id !== target.id &&
+              sprite.parts.some(
+                (part) => part.assetId === intent.includeAssetId,
+              ),
+          )?.id
+        : undefined;
+      const mergedIds = new Set(
+        selectedOtherPackages
+          .map((sprite) => sprite.id)
+          .filter((id) => id !== includedAssetOwnerId),
+      );
       const mergedSourceIds = new Set<string>(
-        selectedOtherPackages.map((sprite) => String(sprite.sourceAssetId)),
+        selectedOtherPackages
+          .filter((sprite) => mergedIds.has(sprite.id))
+          .map((sprite) => String(sprite.sourceAssetId)),
       );
       const mergedFolderIds = new Set(
         project.assetPlacements
@@ -232,7 +279,15 @@ export function ModularSpriteGeneratorDialog({
         draft.libraryFolders = draft.libraryFolders.filter(
           (folder) => !mergedFolderIds.has(folder.id),
         );
-        removeLibraryAssets(draft, new Set(removedFromTarget));
+        if (request.removeFromLibrary === false) {
+          for (const assetId of removedFromTarget) {
+            const placement = draft.assetPlacements.find(
+              (candidate) => candidate.assetId === assetId,
+            );
+            if (placement) placement.folderId = null;
+            else draft.assetPlacements.push({ assetId, folderId: null });
+          }
+        }
       });
       onOpenChange(false);
     } catch (reason) {

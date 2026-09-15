@@ -12,6 +12,9 @@ import type {
 
 export interface ModularSpriteCommitRequest {
   existingId?: ModularSpriteId;
+  includeAssetId?: string;
+  force?: boolean;
+  removeFromLibrary?: boolean;
   name: string;
   sourceFileName: string;
   sourceImage: RgbaImageData;

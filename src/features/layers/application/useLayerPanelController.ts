@@ -15,6 +15,7 @@ import {
   buildUniqueTextureNameMap,
   createUniqueName,
 } from "@/domain/libraryAssetNames.js";
+import { validateUniqueLibraryFolderName } from "@/domain/libraryFolderNames.js";
 
 import { useWorkflowActor } from "@/features/canvas";
 import { useDragSession } from "@/features/layers/application/useDragSession.js";
@@ -34,6 +35,8 @@ import { removeLibraryAssets } from "@/features/layers/domain/removeLibraryAsset
 
 import { uid } from "@/lib/uid";
 
+import { useToast } from "@/components/ui/use-toast";
+
 interface LayerPanelControllerOptions {
   onImportClick?: () => void;
   onImportFiles?: (files: FileList) => void;
@@ -42,7 +45,12 @@ interface LayerPanelControllerOptions {
   }) => void;
   onRegenerateModularSprite?: (
     id: string,
-    options?: { includeAssetId?: string; removeAssetId?: string },
+    options?: {
+      includeAssetId?: string;
+      removeAssetId?: string;
+      force?: boolean;
+      removeFromLibrary?: boolean;
+    },
   ) => void;
   getDragImage?: () => HTMLCanvasElement | null;
 }
@@ -130,6 +138,7 @@ function useLayerPanelControllerImpl(
     })),
   );
 
+  const { toast } = useToast();
   const { send } = useWorkflowActor();
   const setRiggingMode = useCallback(
     (riggingMode: string) => send({ type: "SET_RIGGING_MODE", riggingMode }),
@@ -398,9 +407,13 @@ function useLayerPanelControllerImpl(
   const onCreateFolder = useCallback(() => {
     updateProject((projectDraft) => {
       if (!projectDraft.libraryFolders) projectDraft.libraryFolders = [];
+      const folderName = createUniqueName(
+        "New Folder",
+        projectDraft.libraryFolders.map((folder) => folder.name),
+      );
       projectDraft.libraryFolders.push({
         id: uid(),
-        name: "New Folder",
+        name: folderName,
         parentId: null,
         origin: "user",
       });
@@ -409,81 +422,127 @@ function useLayerPanelControllerImpl(
 
   const onRenameFolder = useCallback(
     (folderId: string, newName: string) => {
-      updateProject((projectDraft) => {
-        const folder = (projectDraft.libraryFolders ?? []).find(
-          (f) => f.id === folderId,
-        );
-        if (folder) folder.name = newName;
-        const packageDocument = projectDraft.modularSprites.find((sprite) =>
-          projectDraft.assetPlacements.some(
-            (placement) =>
-              placement.assetId === sprite.sourceAssetId &&
-              placement.folderId === folderId,
-          ),
-        );
-        if (packageDocument) {
-          packageDocument.name = newName;
-          const sourceTexture = projectDraft.textures.find(
-            (texture) => texture.id === packageDocument.sourceAssetId,
+      try {
+        updateProject((projectDraft) => {
+          const folders = projectDraft.libraryFolders ?? [];
+          const folder = folders.find((f) => f.id === folderId);
+          if (!folder) return;
+          const validatedName = validateUniqueLibraryFolderName(
+            folders,
+            newName,
+            folderId,
           );
-          if (sourceTexture) sourceTexture.name = `${newName} Source`;
-        }
-      });
+          folder.name = validatedName;
+          const packageDocument = projectDraft.modularSprites.find((sprite) =>
+            projectDraft.assetPlacements.some(
+              (placement) =>
+                placement.assetId === sprite.sourceAssetId &&
+                placement.folderId === folderId,
+            ),
+          );
+          if (packageDocument) {
+            packageDocument.name = validatedName;
+            const sourceTexture = projectDraft.textures.find(
+              (texture) => texture.id === packageDocument.sourceAssetId,
+            );
+            if (sourceTexture)
+              sourceTexture.name = `${validatedName} Source`;
+          }
+        });
+      } catch (error) {
+        toast({
+          title: "Cannot rename library folder",
+          description: error instanceof Error ? error.message : String(error),
+          variant: "destructive",
+        });
+      }
     },
-    [updateProject],
+    [toast, updateProject],
   );
 
   const onRenameLibraryAsset = useCallback(
     (assetId: string, newName: string) => {
-      updateProject((projectDraft) => {
-        const modularSprite = projectDraft.modularSprites.find(
-          (candidate) => candidate.sourceAssetId === assetId,
-        );
-        if (modularSprite) {
-          modularSprite.name = newName;
-          const sourceTexture = projectDraft.textures.find(
+      try {
+        updateProject((projectDraft) => {
+          const modularSprite = projectDraft.modularSprites.find(
+            (candidate) => candidate.sourceAssetId === assetId,
+          );
+          if (modularSprite) {
+            const placement = projectDraft.assetPlacements.find(
+              (candidate) => candidate.assetId === assetId,
+            );
+            const folder = placement?.folderId
+              ? projectDraft.libraryFolders.find(
+                  (candidate) => candidate.id === placement.folderId,
+                )
+              : undefined;
+            const validatedName = validateUniqueLibraryFolderName(
+              projectDraft.libraryFolders,
+              newName,
+              folder?.id,
+            );
+            modularSprite.name = validatedName;
+            const sourceTexture = projectDraft.textures.find(
+              (candidate) => candidate.id === assetId,
+            );
+            if (sourceTexture)
+              sourceTexture.name = `${validatedName} Source`;
+            if (folder) folder.name = validatedName;
+            return;
+          }
+          const existingNames = [
+            ...buildUniqueTextureNameMap(
+              projectDraft.textures,
+              projectDraft.nodes,
+            ).entries(),
+          ]
+            .filter(([textureId]) => textureId !== assetId)
+            .map(([, name]) => name);
+          const uniqueName = createUniqueName(newName, existingNames);
+          const texture = projectDraft.textures.find(
             (candidate) => candidate.id === assetId,
           );
-          if (sourceTexture) sourceTexture.name = `${newName} Source`;
-          const placement = projectDraft.assetPlacements.find(
-            (candidate) => candidate.assetId === assetId,
-          );
-          const folder = placement?.folderId
-            ? projectDraft.libraryFolders.find(
-                (candidate) => candidate.id === placement.folderId,
-              )
-            : undefined;
-          if (folder) folder.name = newName;
-          return;
-        }
-        const existingNames = [
-          ...buildUniqueTextureNameMap(
-            projectDraft.textures,
-            projectDraft.nodes,
-          ).entries(),
-        ]
-          .filter(([textureId]) => textureId !== assetId)
-          .map(([, name]) => name);
-        const uniqueName = createUniqueName(newName, existingNames);
-        const texture = projectDraft.textures.find(
-          (candidate) => candidate.id === assetId,
-        );
-        if (texture) texture.name = uniqueName;
-        const node = projectDraft.nodes.find((n) => n.id === assetId);
-        if (node) node.name = uniqueName;
+          if (texture) texture.name = uniqueName;
+          const node = projectDraft.nodes.find((n) => n.id === assetId);
+          if (node) node.name = uniqueName;
+        });
+      } catch (error) {
+        toast({
+          title: "Cannot rename library asset",
+          description: error instanceof Error ? error.message : String(error),
+          variant: "destructive",
+        });
+      }
+    },
+    [toast, updateProject],
+  );
+
+  const onRemoveFromPackage = useCallback(
+    (assetId: string) => {
+      const packageDocument = modularSprites.find((sprite) =>
+        sprite.parts.some((part) => part.assetId === assetId),
+      );
+      if (!packageDocument) return;
+      onRegenerateModularSprite?.(packageDocument.id, {
+        removeAssetId: assetId,
+        force: true,
+        removeFromLibrary: false,
       });
     },
-    [updateProject],
+    [modularSprites, onRegenerateModularSprite],
   );
 
   const onRemoveLibraryAsset = useCallback(
     (assetId: string) => {
-      const packagePart = modularSprites.find((sprite) =>
+      const packageDocument = modularSprites.find((sprite) =>
         sprite.parts.some((part) => part.assetId === assetId),
       );
-      if (packagePart) {
-        onRegenerateModularSprite?.(packagePart.id, {
+      if (packageDocument) {
+        setSelection([]);
+        onRegenerateModularSprite?.(packageDocument.id, {
           removeAssetId: assetId,
+          force: true,
+          removeFromLibrary: true,
         });
         return;
       }
@@ -590,8 +649,19 @@ function useLayerPanelControllerImpl(
               return sourcePlacement?.folderId === targetId;
             })
           : undefined;
-      if (sourcePackage) {
-        onRegenerateModularSprite?.(sourcePackage.id);
+      const sourceIsPackageSource =
+        source.kind === "asset" && sourcePackage?.sourceAssetId === source.id;
+      const sourceIsPackagePart = Boolean(
+        source.kind === "asset" &&
+          sourcePackage?.parts.some((part) => part.assetId === source.id),
+      );
+      if (sourceIsPackageSource) return;
+      if (sourceIsPackagePart) {
+        if (!targetPackage || targetPackage.id === sourcePackage?.id) return;
+        onRegenerateModularSprite?.(targetPackage.id, {
+          includeAssetId: source.id,
+          force: true,
+        });
         return;
       }
       if (source.kind === "folder") {
@@ -601,15 +671,12 @@ function useLayerPanelControllerImpl(
           );
           return sourcePlacement?.folderId === source.id;
         });
-        if (lockedPackage) {
-          onRegenerateModularSprite?.(lockedPackage.id);
-          return;
-        }
+        if (lockedPackage) return;
       }
-      if (targetPackage) {
+      if (targetPackage && source.kind === "asset") {
         onRegenerateModularSprite?.(
           targetPackage.id,
-          source.kind === "asset" ? { includeAssetId: source.id } : undefined,
+          { includeAssetId: source.id },
         );
         return;
       }
@@ -692,6 +759,7 @@ function useLayerPanelControllerImpl(
       onRenameFolder,
       onRenameAsset: onRenameLibraryAsset,
       onRemoveFolder: onRemoveLibraryFolder,
+      onRemoveFromPackage,
       onRemoveAsset: onRemoveLibraryAsset,
       onDragStartAsset: handleLibraryDragStartAsset,
       onDragStartFolder: handleLibraryDragStartFolder,

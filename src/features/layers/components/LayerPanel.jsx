@@ -63,6 +63,7 @@ export function LayerPanelView({
             onRenameFolder={library.onRenameFolder}
             onRenameAsset={library.onRenameAsset}
             onRemoveFolder={library.onRemoveFolder}
+            onRemoveFromPackage={library.onRemoveFromPackage}
             onRemoveAsset={library.onRemoveAsset}
             onDragStartAsset={library.onDragStartAsset}
             onDragStartFolder={library.onDragStartFolder}

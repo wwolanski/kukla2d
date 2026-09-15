@@ -22,6 +22,7 @@ export function LibraryAssetRow({
   onSelect,
   onRename,
   onRemove,
+  onRemoveFromPackage,
   onRegenerateModularSprite,
   onDragStart,
   onDragOver,
@@ -126,9 +127,12 @@ export function LibraryAssetRow({
               </span>
             )}
             {asset.modularKind === "part" && (
-              <span className="inline-flex items-center gap-0.5 rounded bg-primary/10 px-1 py-0.5 text-[8px] font-semibold uppercase text-primary/80">
-                <Boxes className="h-2.5 w-2.5" />
-                Package Part
+              <span
+                className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded bg-primary/10 text-primary/80"
+                title="Package part"
+                aria-label="Package part"
+              >
+                <Boxes className="h-2.5 w-2.5" aria-hidden="true" />
               </span>
             )}
             {formatFileSize(asset.size)}
@@ -136,35 +140,37 @@ export function LibraryAssetRow({
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-56">
-        {asset.modularKind === "source" && onRegenerateModularSprite && (
-          <ContextMenuItem
-            onSelect={() => onRegenerateModularSprite(asset.modularSpriteId)}
-          >
-            <Boxes className="mr-2 h-4 w-4 opacity-70" />
-            Open generator
-          </ContextMenuItem>
-        )}
-        {asset.modularKind !== "part" && (
-          <ContextMenuItem onSelect={() => requestAnimationFrame(startEdit)}>
-            <Pencil className="mr-2 h-4 w-4 opacity-70" />
-            {asset.modularKind === "source" ? "Rename set" : "Rename"}
-          </ContextMenuItem>
-        )}
         {asset.modularKind === "part" ? (
-          onRegenerateModularSprite && (
+          <>
             <ContextMenuItem
-              onSelect={() =>
-                onRegenerateModularSprite(asset.modularSpriteId, {
-                  removeAssetId: asset.id,
-                })
-              }
+              onSelect={() => onRemoveFromPackage?.(asset.id)}
             >
               <Boxes className="mr-2 h-4 w-4 opacity-70" />
-              Regenerate package…
+              Remove from package
             </ContextMenuItem>
-          )
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              className="text-destructive focus:text-destructive"
+              onSelect={() => onRemove?.(asset.id)}
+            >
+              <Trash2 className="mr-2 h-4 w-4 opacity-70" />
+              Remove from library
+            </ContextMenuItem>
+          </>
         ) : (
           <>
+            {asset.modularKind === "source" && onRegenerateModularSprite && (
+              <ContextMenuItem
+                onSelect={() => onRegenerateModularSprite(asset.modularSpriteId)}
+              >
+                <Boxes className="mr-2 h-4 w-4 opacity-70" />
+                Regenerate package…
+              </ContextMenuItem>
+            )}
+            <ContextMenuItem onSelect={() => requestAnimationFrame(startEdit)}>
+              <Pencil className="mr-2 h-4 w-4 opacity-70" />
+              {asset.modularKind === "source" ? "Rename set" : "Rename"}
+            </ContextMenuItem>
             <ContextMenuSeparator />
             <ContextMenuItem
               className="text-destructive focus:text-destructive"
