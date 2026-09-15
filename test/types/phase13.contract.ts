@@ -1,14 +1,14 @@
 import type { MoveAnimationKeyframesPayload } from "@/domain/animationCommandTypes.types.js";
 import type { ProjectCommandResult } from "@/store/project/projectStoreTypes.types.js";
-import type { TimelineCommandApi } from "@/features/timeline/application/createTimelineCommandApi.types.js";
+import type { TimelineCommandApi } from "@/features/timeline";
 import type {
   DragSession,
   DragSourceKind,
   DragTargetKind,
   DropPosition,
-} from "@/features/layers/domain/dragSession.types.js";
-import type { validateRename } from "@/features/layers/domain/inlineRename";
-import type { resolveEffectiveInspectorTarget } from "@/features/inspector/application/useEffectiveInspectorTarget";
+} from "@/features/layers";
+import type { validateRename } from "@/features/layers";
+import type { resolveEffectiveInspectorTarget } from "@/features/inspector";
 
 type RenameValidationResult = ReturnType<typeof validateRename>;
 

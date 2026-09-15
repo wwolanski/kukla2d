@@ -7,11 +7,9 @@ export { EditorWorkflowContext } from "@/features/canvas/application/EditorWorkf
 export {
   useWorkflowActor,
   useWorkflowSelector,
-  useWorkflowSnapshot,
 } from "@/features/canvas/application/useWorkflowActor.js";
 export type { WorkflowEvent } from "@/features/canvas/domain/workflowContracts.types.js";
 export {
-  refreshIkTopology,
   trySetBoneParent,
 } from "@/features/canvas/domain/ikConstraintCreation.js";
 export { WEIGHT_PAINT_MODES } from "@/features/canvas/domain/meshWeighting.js";
@@ -19,16 +17,12 @@ export {
   applyAutoMeshWeights,
   bindUnweightedVerticesToBone,
   computeMeshWeightStats,
+  applyWeightBrush,
   unbindMeshFromBone,
 } from "@/features/canvas/domain/meshWeighting.js";
 export { analyzeMeshTopologyImpact } from "@/features/canvas/domain/meshTopologyCommands.js";
 export { getBoneSegment } from "@/features/canvas/domain/picking.js";
 export { buildFramePose } from "@/features/canvas/domain/framePose.js";
-export { buildExportAreaOverlayFrame } from "@/features/canvas/domain/canvasOverlayFrame.js";
 export {
   createFrameCaptureRequest,
-  createFrameCaptureSuccess,
-  createFrameCaptureError,
-  isFrameCaptureRequest,
-  isFrameCaptureResult,
 } from "@/features/canvas/domain/frameCaptureContract.js";

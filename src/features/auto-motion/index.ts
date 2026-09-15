@@ -1,6 +1,5 @@
 export { AutoMotionPanel } from "@/features/auto-motion/components/AutoMotionPanel.jsx";
 export {
-  clearPreviewModifierDraft,
   getPreviewModifierDraft,
   setPreviewModifierDraft,
 } from "@/features/auto-motion/application/previewModifierStore.js";

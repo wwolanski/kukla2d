@@ -12,6 +12,7 @@ import type {
 } from "@/features/modular-sprite/index.js";
 import { commitGeneratedPackage } from "@/features/modular-sprite-generator/application/commitGeneratedPackage.js";
 import { generateModularSprite } from "@/features/modular-sprite-generator/application/generateModularSprite.js";
+import type { ModularSpriteGeneratorIntent } from "@/features/modular-sprite-generator/components/ModularSpriteGeneratorDialog.types.js";
 
 import { Button } from "@/components/ui/button.jsx";
 import { Checkbox } from "@/components/ui/checkbox.jsx";
@@ -64,14 +65,6 @@ const UiCheckbox = Checkbox as React.ComponentType<{
 const UiButton = Button as React.ComponentType<
   React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string }
 >;
-
-export interface ModularSpriteGeneratorIntent {
-  existingId: string;
-  includeAssetId?: string;
-  removeAssetId?: string;
-  force?: boolean;
-  removeFromLibrary?: boolean;
-}
 
 interface ModularSpriteGeneratorImagePort {
   decode: (source: Blob | File) => Promise<RgbaImageData>;

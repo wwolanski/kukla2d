@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { handleMeshTask } from '../../src/features/canvas/infrastructure/mesh-worker/workerProtocol.js';
+import { handleMeshTask } from '@/features/canvas/infrastructure/mesh-worker/workerProtocol.js';
 
 function mockGenerateMesh(_data, _width, _height, _opts) {
   return {

@@ -42,12 +42,12 @@ typescript:
     - test/domain/animationTargets.test.ts
     - test/domain/editorModeFeedback.test.ts
     - test/layers/buildLibraryTree.test.ts
-    - test/modularSpriteProcessor.test.ts
-    - test/modularSpriteGrouping.test.ts
-    - test/modularSpriteWizardState.test.ts
-    - test/modularSpriteFinalize.test.ts
-    - test/modularSpriteProjectSchema.test.ts
-    - test/modularSpriteSchema.test.ts
+    - test/modular-sprite/modularSpriteProcessor.test.ts
+    - test/modular-sprite/modularSpriteGrouping.test.ts
+    - test/modular-sprite/modularSpriteWizardState.test.ts
+    - test/modular-sprite/modularSpriteFinalize.test.ts
+    - test/modular-sprite/modularSpriteProjectSchema.test.ts
+    - test/modular-sprite-schema/modularSpriteSchema.test.ts
     - test/runtime/pathConstraint.test.ts
     - test/runtime/physicsRig.test.ts
     - test/runtime/skin.test.ts

@@ -8,7 +8,7 @@ import type {
   SchemaLibraryStatus,
 } from "@/features/schema-library/application/schemaLibrarySource.types.js";
 
-export interface SchemaLibraryController {
+interface SchemaLibraryController {
   status: SchemaLibraryStatus;
   error: string | null;
   schemas: readonly ModularSpriteSchema[];

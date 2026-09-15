@@ -4,9 +4,8 @@ import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
-import { convertScmlToProject } from '@/features/projects/infrastructure/externalImport/scml/convertScml';
-import { parseScml } from '@/features/projects/infrastructure/externalImport/scml/parseScml';
-import { buildFramePose } from '@/features/canvas/domain/framePose';
+import { convertScmlToProject, parseScml } from '@/features/projects';
+import { buildFramePose } from '@/features/canvas';
 import { buildBoneTreeRows } from '@/features/layers/domain/buildBoneTreeRows';
 import { validateProject } from '@/schema/projectSchema';
 

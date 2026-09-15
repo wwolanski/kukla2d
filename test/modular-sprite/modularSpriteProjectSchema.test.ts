@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
 
 import { createEmptyProject } from "@/core/createEmptyProject";
-import { removeLibraryAssets } from "@/features/layers/domain/removeLibraryAssets";
+import { removeLibraryAssets } from "@/features/layers";
 import { migrate_9_to_10 } from "@/schema/migrations/9-to-10";
 import { validateProject } from "@/schema/projectSchema";
 

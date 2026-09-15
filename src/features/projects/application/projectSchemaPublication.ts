@@ -21,12 +21,12 @@ import {
 
 const REGION_DISTANCE_THRESHOLD = 0.2;
 
-export interface ProjectSchemaEligibility {
+interface ProjectSchemaEligibility {
   enabled: boolean;
   reason: string;
 }
 
-export interface ProjectSchemaPublicationPorts {
+interface ProjectSchemaPublicationPorts {
   decode(source: Blob | File): Promise<RgbaImageData>;
   process(input: {
     image: RgbaImageData;
@@ -45,7 +45,7 @@ export interface ProjectSchemaPublicationPorts {
   };
 }
 
-export interface ProjectSchemaPublicationResult {
+interface ProjectSchemaPublicationResult {
   project: ProjectDocument;
   publishedCount: number;
 }

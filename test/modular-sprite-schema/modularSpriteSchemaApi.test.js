@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { SemanticCatalog } from "@kukla2d/modular-sprite-schema";
 
-import { createLocalSchemaApi } from "../src/features/modular-sprite-schema/application/createLocalSchemaApi.js";
+import { createLocalSchemaApi } from "@/features/modular-sprite-schema/application/createLocalSchemaApi.js";
 
 describe("local schema application capability", () => {
   it("coordinates injected catalog, repository, and match gateway", async () => {

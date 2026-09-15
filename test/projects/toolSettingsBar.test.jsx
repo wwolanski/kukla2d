@@ -3,8 +3,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createRoot } from 'react-dom/client';
 import { act, useEffect } from 'react';
-import { EditorWorkflowContext } from '@/features/canvas/application/EditorWorkflowContext.js';
-import { useWorkflowActor } from '@/features/canvas';
+import { EditorWorkflowContext, useWorkflowActor } from '@/features/canvas';
 import { ToolSettingsBar } from '@/features/projects';
 import { useEditorStore } from '@/store/editorStore';
 import { useProjectStore } from '@/store/projectStore';

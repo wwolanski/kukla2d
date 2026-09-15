@@ -5,7 +5,7 @@ import {
   autoPairTextures,
   collectTextureReplacementCandidates,
   collectTextureReplacementSources,
-} from '@/features/texture-replacement';
+} from '@/features/texture-replacement/domain/textureReplacement.js';
 
 function projectFixture() {
   return {

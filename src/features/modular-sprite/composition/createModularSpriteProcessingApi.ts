@@ -7,7 +7,7 @@ import {
 } from "@/features/modular-sprite/infrastructure/imageCodec.js";
 import { createModularSpriteGateway } from "@/features/modular-sprite/infrastructure/modularSpriteGateway.js";
 
-export interface ModularSpriteProcessingApi {
+interface ModularSpriteProcessingApi {
   decode(source: Blob | File): Promise<RgbaImageData>;
   encode(image: RgbaImageData): Promise<Blob>;
   process(input: {

@@ -10,16 +10,17 @@ import { createEmptyProject } from "@/core/createEmptyProject";
 import {
   createModularSpriteSchema,
   portableModularSpriteSchema,
-} from "@/features/modular-sprite/application/schemaBinding.js";
+} from "@/features/modular-sprite";
 import type {
   ProcessedModularSprite,
   RgbaImageData,
-} from "@/features/modular-sprite/domain/contracts.types.js";
+} from "@/features/modular-sprite";
 import {
   analyzeProjectSchemaEligibility,
   publishProjectSchemas,
-  type ProjectSchemaPublicationPorts,
 } from "@/features/projects/application/projectSchemaPublication.js";
+
+type ProjectSchemaPublicationPorts = Parameters<typeof publishProjectSchemas>[1];
 
 const recipe: ModularSpriteProcessingRecipe = {
   background: {

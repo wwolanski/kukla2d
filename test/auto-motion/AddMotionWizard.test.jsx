@@ -4,7 +4,8 @@ import { createRoot } from 'react-dom/client';
 import { act } from 'react';
 import { useEditorStore } from '@/store/editorStore';
 import { useProjectStore } from '@/store/projectStore';
-import { getPreviewModifierDraft, clearPreviewModifierDraft } from '@/features/auto-motion';
+import { getPreviewModifierDraft } from '@/features/auto-motion';
+import { clearPreviewModifierDraft } from '@/features/auto-motion/application/previewModifierStore.js';
 
 vi.mock('@/app/providers/theme/useTheme.js', () => ({
   useTheme: () => ({ theme: 'dark', setTheme: () => {}, resolvedTheme: 'dark' }),
