@@ -1,6 +1,6 @@
 import type { ProjectDocument, Canvas } from "@kukla2d/contracts";
 
-import { createEmptyProject } from "@/core/createEmptyProject";
+import { createEmptyProject } from "@/core/createEmptyProject.js";
 
 import { normalizeAnimations } from "@/domain/animationDocument.js";
 

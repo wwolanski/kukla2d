@@ -1,4 +1,4 @@
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import { useEffectiveInspectorTarget } from "@/features/inspector/application/useEffectiveInspectorTarget.js";
 import { MeshPanel } from "@/features/inspector/components/node/MeshPanel.jsx";
@@ -11,8 +11,8 @@ import { IkConstraintInspector } from "@/features/inspector/components/rig/IkCon
 import { IkInfluencePanel } from "@/features/inspector/components/rig/IkInfluencePanel.jsx";
 import { WarpDeformerPanel } from "@/features/inspector/components/WarpDeformerPanel.jsx";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
+import { Separator } from "@/components/ui/separator.jsx";
 
 export function Inspector({ onRemesh, onDeleteMesh }) {
   const { mode, target } = useEffectiveInspectorTarget();

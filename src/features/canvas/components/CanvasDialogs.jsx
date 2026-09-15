@@ -7,15 +7,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/alert-dialog.jsx";
+import { Button } from "@/components/ui/button.jsx";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog.jsx";
 
 export default function CanvasDialogs({
   confirmWipeOpen, setConfirmWipeOpen, handleConfirmWipe, handleImportPsdToLibrary, canImportPendingPsdToLibrary,

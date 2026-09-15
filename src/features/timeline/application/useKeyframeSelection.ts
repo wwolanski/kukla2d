@@ -10,7 +10,7 @@ import {
 
 import type { ProjectActions } from "@/store/project/projectStoreTypes.types.js";
 
-import { moveKeyframesPreflight } from "@/domain/moveKeyframesPreflight";
+import { moveKeyframesPreflight } from "@/domain/moveKeyframesPreflight.js";
 import type { MoveKeyframesPreflightResult } from "@/domain/moveKeyframesPreflight.types.js";
 
 import type { VisibleTimelineRow } from "@/features/timeline/application/buildTimelineTrackRows.types.js";
@@ -26,7 +26,7 @@ import {
   frameToMs,
 } from "@/features/timeline/domain/timelineTime.js";
 
-import { clamp } from "@/lib/math";
+import { clamp } from "@/lib/math.js";
 
 import type { RefObject } from "react";
 

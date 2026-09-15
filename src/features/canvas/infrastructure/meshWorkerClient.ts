@@ -1,5 +1,5 @@
 import type { MeshGenerationOptions } from "@/features/canvas/domain/mesh-generation/generate.types.js";
-import meshWorkerUrl from "@/features/canvas/infrastructure/mesh-worker/worker.ts?worker&url";
+import meshWorkerUrl from "@/features/canvas/infrastructure/mesh-worker/worker.js?worker&url";
 import type {
   MeshData,
   MeshImageData,

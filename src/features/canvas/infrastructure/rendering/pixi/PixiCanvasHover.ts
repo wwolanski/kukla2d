@@ -1,4 +1,4 @@
-import { computeWorldMatrices } from "@/domain/transforms";
+import { computeWorldMatrices } from "@/domain/transforms.js";
 
 import {
   findAlphaHit,

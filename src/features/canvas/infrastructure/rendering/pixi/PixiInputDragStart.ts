@@ -1,7 +1,7 @@
 import type { Node } from "@kukla2d/contracts";
 
 import { editorModePolicy, ACTION_IDS } from "@/domain/editorModePolicy.js";
-import { computeWorldMatrices, mat3Inverse } from "@/domain/transforms";
+import { computeWorldMatrices, mat3Inverse } from "@/domain/transforms.js";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
 import {
@@ -24,7 +24,7 @@ import {
   getAssignedBoneForNode,
   getLinkedNodesForBone,
   isBoneLinkLocked,
-} from "@/features/rigging";
+} from "@/features/rigging/index.js";
 
 interface ResizeFrame {
   bboxPoints: Array<{ x: number; y: number }>;

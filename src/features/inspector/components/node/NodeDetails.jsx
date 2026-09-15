@@ -5,7 +5,7 @@ import {
 } from "@/features/inspector/components/fields/InspectorRow.jsx";
 import { SliderRow } from "@/features/inspector/components/fields/SliderRow.jsx";
 
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@/components/ui/switch.jsx";
 
 export function NodeDetails({ node }) {
   const { editorMode, setOpacity, previewOpacity, commitOpacity, setVisible } =

@@ -2,17 +2,17 @@ import { useEffect } from "react";
 
 import { toAnimationTargetId, type ProjectDocument } from "@kukla2d/contracts";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
 import type { EditorActions } from "@/store/editorStoreTypes.types.js";
 
-import { editorModePolicy, ACTION_IDS } from "@/domain/editorModePolicy";
+import { editorModePolicy, ACTION_IDS } from "@/domain/editorModePolicy.js";
 
-import { createAnimationAuthoringApi } from "@/features/animation";
+import { createAnimationAuthoringApi } from "@/features/animation/index.js";
 import type { CanvasEditorSnapshot } from "@/features/canvas/application/canvasApplication.types.js";
 import type { WorkflowEvent } from "@/features/canvas/domain/workflowContracts.types.js";
 
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast.js";
 
 import type { RefObject } from "react";
 

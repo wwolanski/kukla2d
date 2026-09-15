@@ -1,7 +1,7 @@
 import {
   computeWorldMatrices,
   decomposeAffineMatrix,
-} from "@/domain/transforms";
+} from "@/domain/transforms.js";
 
 import type {
   CanvasFrame,

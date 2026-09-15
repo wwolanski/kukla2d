@@ -8,14 +8,14 @@ import {
 import { SliderRow } from "@/features/inspector/components/fields/SliderRow.jsx";
 import { MeshWeightsPanel } from "@/features/inspector/components/node/MeshWeightsPanel.jsx";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.jsx";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog.jsx";
 
 export function MeshPanel({ node, onRemesh, onDeleteMesh }) {
   const [expanded, setExpanded] = useState(false);

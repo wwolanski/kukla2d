@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from "react";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
-import { createAnimationAuthoringApi } from "@/features/animation";
+import { createAnimationAuthoringApi } from "@/features/animation/index.js";
 import { msToFrame } from "@/features/timeline/domain/timelineTime.js";
 
 interface PendingDraftController {

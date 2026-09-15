@@ -6,7 +6,7 @@ import type {
   Texture,
 } from "@kukla2d/contracts";
 
-import { buildUniqueTextureNameMap } from "@/domain/libraryAssetNames";
+import { buildUniqueTextureNameMap } from "@/domain/libraryAssetNames.js";
 
 interface LibraryTreeInput {
   libraryFolders?: readonly LibraryFolder[];

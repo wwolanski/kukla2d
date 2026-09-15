@@ -1,6 +1,6 @@
-import { useEditorStore } from "@/store/editorStore";
+import { useEditorStore } from "@/store/editorStore.js";
 
-import { useWorkflowSelector } from "@/features/canvas";
+import { useWorkflowSelector } from "@/features/canvas/index.js";
 import { useLinkedTargetInfo } from "@/features/projects/application/useLinkedTargetInfo.js";
 
 const TOOL_LABEL = {

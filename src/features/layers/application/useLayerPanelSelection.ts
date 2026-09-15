@@ -5,15 +5,15 @@ import type { Bone, BoneId, Node } from "@kukla2d/contracts";
 import type { EditorStore } from "@/store/editorStoreTypes.types.js";
 import type { ProjectActions } from "@/store/project/projectStoreTypes.types.js";
 
-import type { WorkflowEvent } from "@/features/canvas";
+import type { WorkflowEvent } from "@/features/canvas/index.js";
 import type { BoneTreeRow } from "@/features/layers/domain/buildBoneTreeRows.types.js";
 import {
   assignNodeToBone,
   createBoneSetupFromNode,
   isNodeAssignedToBone,
-} from "@/features/rigging";
+} from "@/features/rigging/index.js";
 
-import { uid } from "@/lib/uid";
+import { uid } from "@/lib/uid.js";
 
 interface SelectionModifiers {
   shiftKey: boolean;

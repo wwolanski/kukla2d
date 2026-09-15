@@ -4,7 +4,7 @@ import { useState } from "react";
 import { BoneTreeRow } from "@/features/layers/components/rows/BoneTreeRow.jsx";
 import { findNodePreviewTexture } from "@/features/layers/domain/findNodePreviewTexture.js";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
 
 function groupRowsByRootFamily(rows) {
   const groups = [];

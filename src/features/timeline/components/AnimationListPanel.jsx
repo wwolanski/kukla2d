@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { useTimelineController } from "@/features/timeline/application/useTimelineController.js";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.jsx";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +11,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@/components/ui/dialog.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
 
 export function AnimationListPanel() {
   const ctrl = useTimelineController();

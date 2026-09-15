@@ -3,11 +3,11 @@ import { useCallback } from "react";
 import { toAssetId, toModularSpriteId, toNodeId } from "@kukla2d/contracts";
 import type { ProjectDocument, ProjectResourceOwner } from "@kukla2d/contracts";
 
-import { createProjectResourceOwner } from "@/platform/projectResourceOwner";
+import { createProjectResourceOwner } from "@/platform/projectResourceOwner.js";
 
-import { useEditorStore } from "@/store/editorStore";
+import { useEditorStore } from "@/store/editorStore.js";
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import { validateUniqueLibraryFolderName } from "@/domain/libraryFolderNames.js";
 
@@ -20,15 +20,15 @@ import {
   computeAlphaContours,
   computeImageBounds,
 } from "@/features/canvas/application/imageUtils.js";
-import { removeLibraryAssets } from "@/features/layers";
-import { pixelRect } from "@/features/modular-sprite";
+import { removeLibraryAssets } from "@/features/layers/index.js";
+import { pixelRect } from "@/features/modular-sprite/index.js";
 import type {
   ModularSpriteCommitRequest,
   ModularSpriteCommitResult,
   RgbaImageData,
-} from "@/features/modular-sprite";
+} from "@/features/modular-sprite/index.js";
 
-import { uid } from "@/lib/uid";
+import { uid } from "@/lib/uid.js";
 
 interface UseModularSpriteImportArgs {
   projectRef: MutableRef<ProjectDocument>;

@@ -26,7 +26,7 @@ import {
 } from "@/domain/animationProperties.js";
 import { normalizeKeyframeAuthoring } from "@/domain/keyframeProvenance.js";
 
-import { isFiniteNumber } from "@/lib/math";
+import { isFiniteNumber } from "@/lib/math.js";
 
 type AnimationEditBatchValidation =
   | { valid: true }

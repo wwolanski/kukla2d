@@ -18,11 +18,11 @@ import { SourceStep } from "@/features/modular-sprite/components/wizard/SourceSt
 import { TouchupToolbar } from "@/features/modular-sprite/components/wizard/TouchupToolbar.js";
 import { WizardFooter } from "@/features/modular-sprite/components/wizard/WizardFooter.js";
 import { WizardHeader } from "@/features/modular-sprite/components/wizard/WizardHeader.js";
-import { SchemaComparisonSidebar } from "@/features/modular-sprite-schema";
+import { SchemaComparisonSidebar } from "@/features/modular-sprite-schema/index.js";
 
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button.jsx";
+import { Dialog, DialogContent } from "@/components/ui/dialog.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
 
 const UiButton = Button as React.ComponentType<
   React.ButtonHTMLAttributes<HTMLButtonElement> & {

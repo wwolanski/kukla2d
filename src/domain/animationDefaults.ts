@@ -60,4 +60,4 @@ export function durationMsFromFrameCount(
 }
 import type { AnimationSettings } from "@/domain/animationDefaults.types.js";
 
-import { clamp, isFiniteNumber } from "@/lib/math";
+import { clamp, isFiniteNumber } from "@/lib/math.js";

@@ -5,7 +5,7 @@ import type {
 } from "@kukla2d/contracts";
 
 import type { ExportProgress } from "@/features/export/application/exportApplicationTypes.types.js";
-import { createFrameCaptureRequestFromRasterPlan } from "@/features/export/domain/createFrameCaptureRequestFromRasterPlan";
+import { createFrameCaptureRequestFromRasterPlan } from "@/features/export/domain/createFrameCaptureRequestFromRasterPlan.js";
 import type { CaptureFrame } from "@/features/export/domain/frameCaptureTypes.types.js";
 
 interface CaptureRasterFramesOptions {

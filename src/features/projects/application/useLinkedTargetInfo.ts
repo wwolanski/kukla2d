@@ -2,8 +2,8 @@ import { useMemo } from "react";
 
 import type { Bone, BoneId, NodeId } from "@kukla2d/contracts";
 
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
 interface LinkedTargetInfo {
   nodeId: NodeId;

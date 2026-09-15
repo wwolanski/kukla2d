@@ -7,7 +7,7 @@ import type {
 import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
 
 import { resolveVisibleHoverHit } from "@/domain/hoverPolicy.js";
-import { computeWorldMatrices } from "@/domain/transforms";
+import { computeWorldMatrices } from "@/domain/transforms.js";
 
 import type { CanvasEditorSnapshot } from "@/features/canvas/application/canvasApplication.types.js";
 import type { CanvasSceneGateway } from "@/features/canvas/application/canvasApplication.types.js";

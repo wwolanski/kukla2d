@@ -8,8 +8,8 @@ import {
 import { NumericInput } from "@/features/inspector/components/fields/NumericInput.jsx";
 import { SliderRow } from "@/features/inspector/components/fields/SliderRow.jsx";
 
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button.jsx";
+import { Switch } from "@/components/ui/switch.jsx";
 
 export function IkConstraintInspector({ constraint, bones }) {
   const {

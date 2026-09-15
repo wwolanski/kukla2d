@@ -1,4 +1,4 @@
-import { makeLocalMatrix, mat3Inverse, mat3Mul } from "@/domain/transforms";
+import { makeLocalMatrix, mat3Inverse, mat3Mul } from "@/domain/transforms.js";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
 import {
@@ -25,7 +25,7 @@ import {
   scaleBoneSelectionLengths,
   translateLinkedBoneSelection,
   translateLinkedNodeGroup,
-} from "@/features/rigging";
+} from "@/features/rigging/index.js";
 
 type MoveDrag = Extract<DragState, { type: "move" }>;
 type RotateDrag = Extract<DragState, { type: "rotate" }>;

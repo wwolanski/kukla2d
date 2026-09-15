@@ -5,21 +5,21 @@ import type {
   ProjectArchiveManifest,
 } from "@kukla2d/contracts";
 
-import { loadZipAdapter } from "@/platform/lazy/loadZipAdapter";
-import { createProjectResourceOwner } from "@/platform/projectResourceOwner";
+import { loadZipAdapter } from "@/platform/lazy/loadZipAdapter.js";
+import { createProjectResourceOwner } from "@/platform/projectResourceOwner.js";
 
 import {
   PROJECT_ARCHIVE_FORMAT_ID,
   PROJECT_ARCHIVE_VERSION,
   PROJECT_JSON_PATH,
   PROJECT_MANIFEST_PATH,
-} from "@/io/projectFormat";
-import { migrateProject } from "@/schema/migrateProject";
-import { prepareLoadedProjectDocument } from "@/schema/projectDocumentAdapter";
-import { validateProject } from "@/schema/projectSchema";
-import { createPortableProjectSnapshot } from "@/schema/projectSnapshot";
+} from "@/io/projectFormat.js";
+import { migrateProject } from "@/schema/migrateProject.js";
+import { prepareLoadedProjectDocument } from "@/schema/projectDocumentAdapter.js";
+import { validateProject } from "@/schema/projectSchema.js";
+import { createPortableProjectSnapshot } from "@/schema/projectSnapshot.js";
 
-import { isRecord } from "@/lib/guards";
+import { isRecord } from "@/lib/guards.js";
 
 import type { ValidatedProjectDocument } from "@/schema/projectSchema.types";
 

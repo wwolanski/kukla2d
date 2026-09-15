@@ -1,6 +1,6 @@
 import type { ProjectDocument } from '@kukla2d/contracts';
 
-import { CURRENT_PROJECT_VERSION } from '@/schema/projectSchema';
+import { CURRENT_PROJECT_VERSION } from '@/schema/projectSchema.js';
 
 export function createEmptyProject(): ProjectDocument {
   return {

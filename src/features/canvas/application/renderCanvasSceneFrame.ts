@@ -4,7 +4,7 @@ import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
 
 import { hasActiveTimeModifiers } from "@/domain/autoMotion/modifierEvaluation.js";
 
-import { getPreviewModifierDraft } from "@/features/auto-motion";
+import { getPreviewModifierDraft } from "@/features/auto-motion/index.js";
 import type {
   CanvasEditorSnapshot,
   CanvasSceneGateway,

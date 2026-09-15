@@ -1,6 +1,6 @@
 import { Loader2, Download, Library, AlertTriangle } from "lucide-react";
 
-import { formatProjectError } from "@/io/projectErrorMessages";
+import { formatProjectError } from "@/io/projectErrorMessages.js";
 
 import { useSaveProject } from "@/features/projects/application/useSaveProject.js";
 import { ProjectGallery } from "@/features/projects/components/ProjectGallery.jsx";
@@ -14,19 +14,19 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/alert-dialog.jsx";
+import { Button } from "@/components/ui/button.jsx";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@/components/ui/dialog.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
+import { Switch } from "@/components/ui/switch.jsx";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
 
 function formatIssues(issues) {
   return issues.map((i) => `[${i.code}] ${i.path}: ${i.message}`).join("\n");

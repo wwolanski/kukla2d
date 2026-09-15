@@ -12,7 +12,7 @@ import { createHeadCheekJiggleDraft } from "@/domain/autoMotion/headCheekJiggleD
 import { createIdleBreathingDraft } from "@/domain/autoMotion/idleBreathingDraft.js";
 import { createBakeKeyframes } from "@/domain/autoMotion/modifierBake.js";
 
-import { uid } from "@/lib/uid";
+import { uid } from "@/lib/uid.js";
 
 type ProjectControlMotionCommands = Pick<
   ProjectActions,

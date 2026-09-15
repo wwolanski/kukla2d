@@ -14,10 +14,10 @@ import type {
   ExportProgress,
 } from "@/features/export/application/exportApplicationTypes.types.js";
 import { runRasterExport } from "@/features/export/application/runRasterExport.js";
-import { resolveActiveExportVariant } from "@/features/export/domain/exportVariantRegistry";
+import { resolveActiveExportVariant } from "@/features/export/domain/exportVariantRegistry.js";
 import type { CaptureFrame } from "@/features/export/domain/frameCaptureTypes.types.js";
-import { resolveProjectExportArea } from "@/features/export/domain/projectExportArea";
-import { createRasterExportPlan } from "@/features/export/domain/rasterExportPlan";
+import { resolveProjectExportArea } from "@/features/export/domain/projectExportArea.js";
+import { createRasterExportPlan } from "@/features/export/domain/rasterExportPlan.js";
 
 import type { Dispatch, RefObject, SetStateAction } from "react";
 

@@ -1,26 +1,26 @@
 import { useCallback } from "react";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
-import { useExportReadinessGate } from "@/features/export/application/useExportReadinessGate";
-import { usePhaserAtlasExportForm } from "@/features/export/application/usePhaserAtlasExportForm";
-import { usePhaserAtlasExportJob } from "@/features/export/application/usePhaserAtlasExportJob";
-import { useRasterExportForm } from "@/features/export/application/useRasterExportForm";
-import { useRasterExportJob } from "@/features/export/application/useRasterExportJob";
-import { ExportProgress } from "@/features/export/components/ExportProgress";
-import { ExportTypeOptions } from "@/features/export/components/ExportTypeOptions";
-import { FrameExportOptions } from "@/features/export/components/FrameExportOptions";
-import { PhaserAtlasExportOptions } from "@/features/export/components/PhaserAtlasExportOptions";
-import { resolveActiveExportVariant } from "@/features/export/domain/exportVariantRegistry";
+import { useExportReadinessGate } from "@/features/export/application/useExportReadinessGate.js";
+import { usePhaserAtlasExportForm } from "@/features/export/application/usePhaserAtlasExportForm.js";
+import { usePhaserAtlasExportJob } from "@/features/export/application/usePhaserAtlasExportJob.js";
+import { useRasterExportForm } from "@/features/export/application/useRasterExportForm.js";
+import { useRasterExportJob } from "@/features/export/application/useRasterExportJob.js";
+import { ExportProgress } from "@/features/export/components/ExportProgress.jsx";
+import { ExportTypeOptions } from "@/features/export/components/ExportTypeOptions.jsx";
+import { FrameExportOptions } from "@/features/export/components/FrameExportOptions.jsx";
+import { PhaserAtlasExportOptions } from "@/features/export/components/PhaserAtlasExportOptions.jsx";
+import { resolveActiveExportVariant } from "@/features/export/domain/exportVariantRegistry.js";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.jsx";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog.jsx";
 
 export function ExportModal({
   open,

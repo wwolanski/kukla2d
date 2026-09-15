@@ -2,16 +2,16 @@ import { useState, useEffect, useCallback } from "react";
 
 import type { ProjectDocument } from "@kukla2d/contracts";
 
-import { saveToDb } from "@/io/projectDb";
+import { saveToDb } from "@/io/projectDb.js";
 import {
   PROJECT_ARCHIVE_FORMAT_ID,
   PROJECT_ARCHIVE_VERSION,
   PROJECT_FILE_EXTENSION,
   buildProjectFileName,
-} from "@/io/projectFormat";
+} from "@/io/projectFormat.js";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import { analyzeProjectReadiness } from "@/domain/projectReadiness.js";
 import type { ProjectReadinessIssue } from "@/domain/projectReadiness.types.js";
@@ -131,7 +131,7 @@ export function useSaveProject({
       setIsSaving(true);
       setSaveError(null);
       try {
-        const { saveProject } = await import("@/io/projectFile");
+        const { saveProject } = await import("@/io/projectFile.js");
         const authorToUse = author.trim();
         const activeAnimationId =
           useAnimationStore.getState().activeAnimationId;

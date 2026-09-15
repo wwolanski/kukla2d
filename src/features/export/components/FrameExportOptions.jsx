@@ -1,16 +1,16 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils.js';
 
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Input } from '@/components/ui/input.jsx';
+import { Label } from '@/components/ui/label.jsx';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group.jsx';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
+} from '@/components/ui/select.jsx';
+import { Separator } from '@/components/ui/separator.jsx';
 
 
 export function FrameExportOptions({ frame, animations }) {

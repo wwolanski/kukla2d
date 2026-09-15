@@ -2,11 +2,11 @@ import { useEffect } from "react";
 
 import type { ProjectDocument } from "@kukla2d/contracts";
 
-import { useAnimationStore } from "@/store/animationStore";
+import { useAnimationStore } from "@/store/animationStore.js";
 import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
-import { useEditorStore } from "@/store/editorStore";
+import { useEditorStore } from "@/store/editorStore.js";
 import type { EditorStore } from "@/store/editorStoreTypes.types.js";
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import type {
   CanvasEditorSnapshot,

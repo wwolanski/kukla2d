@@ -17,7 +17,7 @@ import {
 } from "@/runtime/skeleton.js";
 import { linearBlendSkinning } from "@/runtime/skin.js";
 
-import { isFiniteNumber } from "@/lib/math";
+import { isFiniteNumber } from "@/lib/math.js";
 
 interface SkinnedMesh {
   nodeId: NodeId;

@@ -11,8 +11,8 @@ import type {
   ModularSpriteCommitRequest,
   ModularSpriteDraftPart,
   RgbaImageData,
-} from "@/features/modular-sprite";
-import { normalizedPixelFrame, slugPartKey } from "@/features/modular-sprite";
+} from "@/features/modular-sprite/index.js";
+import { normalizedPixelFrame, slugPartKey } from "@/features/modular-sprite/index.js";
 
 interface GeneratorAsset {
   assetId: AssetId;

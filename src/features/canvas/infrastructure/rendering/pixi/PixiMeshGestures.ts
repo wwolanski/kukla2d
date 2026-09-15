@@ -10,7 +10,7 @@ import {
   computeWorldMatrices,
   mat3Inverse,
   mat3Identity,
-} from "@/domain/transforms";
+} from "@/domain/transforms.js";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
 import { worldToLocal } from "@/features/canvas/domain/coordinates.js";

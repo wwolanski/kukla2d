@@ -24,7 +24,7 @@ import {
   normalizeMarkers,
 } from "@/domain/animationDocumentCommandSupport.js";
 
-import { uid } from "@/lib/uid";
+import { uid } from "@/lib/uid.js";
 
 export function addAnimationMarker(
   project: ProjectDocument,

@@ -2,13 +2,13 @@ import { useCallback } from "react";
 
 import type { ProjectResourceOwner } from "@kukla2d/contracts";
 
-import { createProjectResourceOwner } from "@/platform/projectResourceOwner";
+import { createProjectResourceOwner } from "@/platform/projectResourceOwner.js";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
 import { prepareLoadedProjectState } from "@/store/project/projectStoreShared.js";
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import type {
   CanvasSceneGateway,
@@ -52,7 +52,7 @@ export function useCanvasProjectLifecycle({
       let stagedLoad: WorkspaceLoadStage | null = null;
       let loadedResources: ProjectResourceOwner | null = null;
       try {
-        const { loadProject } = await import("@/io/projectFile");
+        const { loadProject } = await import("@/io/projectFile.js");
         const {
           project: loadedProject,
           images,

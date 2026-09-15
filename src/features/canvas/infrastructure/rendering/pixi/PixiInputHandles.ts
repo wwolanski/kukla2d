@@ -2,7 +2,7 @@ import { Graphics, type Container, type FederatedPointerEvent } from "pixi.js";
 
 import type { BoneId } from "@kukla2d/contracts";
 
-import { computeWorldMatrices } from "@/domain/transforms";
+import { computeWorldMatrices } from "@/domain/transforms.js";
 
 import type { GizmoFrame } from "@/features/canvas/domain/gizmoFrame.types.js";
 import {

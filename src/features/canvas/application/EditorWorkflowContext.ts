@@ -1,7 +1,7 @@
 import { createActorContext } from "@xstate/react";
 
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import { editorWorkflowMachine } from "@/features/canvas/application/editorWorkflowMachine.js";
 import { executeCommandBatch } from "@/features/canvas/application/workflowCommandRuntime.js";

@@ -1,7 +1,7 @@
 import { Slot } from "@radix-ui/react-slot";
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 import { buttonVariants } from "@/components/ui/button-variants.js";
 import { FeatureDisabledTooltip } from "@/components/ui/feature-disabled-tooltip.jsx";

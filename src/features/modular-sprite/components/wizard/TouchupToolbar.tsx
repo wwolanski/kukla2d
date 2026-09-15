@@ -13,16 +13,16 @@ import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
 
 import type { EditorTool } from "@/features/modular-sprite/components/preview/ModularSpritePreviewCanvas.types.js";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
-import { FeatureDisabledTooltip } from "@/components/ui/feature-disabled-tooltip";
-import { Slider } from "@/components/ui/slider";
+import { FeatureDisabledTooltip } from "@/components/ui/feature-disabled-tooltip.jsx";
+import { Slider } from "@/components/ui/slider.jsx";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/ui/tooltip.jsx";
 
 const UiSlider = Slider as React.ComponentType<{
   min?: number;

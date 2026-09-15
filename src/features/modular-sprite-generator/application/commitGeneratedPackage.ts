@@ -1,10 +1,10 @@
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
-import { transaction } from "@/store/undoHistory";
+import { transaction } from "@/store/undoHistory.js";
 
 import type {
   ModularSpriteCommitRequest,
   ModularSpriteCommitResult,
-} from "@/features/modular-sprite";
+} from "@/features/modular-sprite/index.js";
 
 type ProjectUpdate = ProjectStore["updateProject"];
 type ProjectRecipe = Parameters<ProjectUpdate>[0];

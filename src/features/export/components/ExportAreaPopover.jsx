@@ -1,9 +1,9 @@
 import { Move, SquareChartGantt } from "lucide-react";
 import { useCallback, useState, useEffect, useRef } from "react";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import { computeEvaluatedExportBounds } from "@/features/export/domain/computeEvaluatedExportBounds.js";
 import { buildExportAreaFitFrameSpecs } from "@/features/export/domain/exportAreaFitFrameSpecs.js";
@@ -14,16 +14,16 @@ import {
   createExportAreaPresetPatch,
 } from "@/features/export/domain/exportAreaPresets.js";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label.jsx";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/components/ui/popover.jsx";
 import {
   Select,
   SelectGroup,
@@ -33,9 +33,9 @@ import {
   SelectLabel,
   SelectItem,
   SelectSeparator,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { toast } from "@/components/ui/use-toast";
+} from "@/components/ui/select.jsx";
+import { Switch } from "@/components/ui/switch.jsx";
+import { toast } from "@/components/ui/use-toast.js";
 
 export function ExportAreaPopover() {
   const [open, setOpen] = useState(false);

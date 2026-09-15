@@ -1,6 +1,6 @@
 import type { EncoderInput, ExportArtifact } from '@kukla2d/contracts';
 
-import { resolveSpritesheetLayout } from '@/features/export/domain/spritesheetLayout';
+import { resolveSpritesheetLayout } from '@/features/export/domain/spritesheetLayout.js';
 
 type OutputCanvas = OffscreenCanvas | HTMLCanvasElement;
 

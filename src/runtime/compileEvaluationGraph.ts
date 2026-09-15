@@ -5,7 +5,7 @@ import type {
   ProjectDocument,
 } from "@kukla2d/contracts";
 
-import { isRecord } from "@/lib/guards";
+import { isRecord } from "@/lib/guards.js";
 
 type EvaluationNode =
   | { type: "bone"; id: BoneId }

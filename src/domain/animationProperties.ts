@@ -4,7 +4,7 @@ import type {
   TrackValueCategory,
 } from "@/domain/animationProperties.types.js";
 
-import { isFiniteNumber } from "@/lib/math";
+import { isFiniteNumber } from "@/lib/math.js";
 
 type InterpolationMode = "none" | "linear" | "cubic";
 

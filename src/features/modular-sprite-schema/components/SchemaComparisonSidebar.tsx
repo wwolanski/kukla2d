@@ -8,7 +8,7 @@ import type {
 
 import { SchemaAnalysisDetailsDialog } from "@/features/modular-sprite-schema/components/SchemaAnalysisDetailsDialog.js";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
 
 const percent = (basisPoints: number): string =>
   `${(basisPoints / 100).toFixed(2)}%`;

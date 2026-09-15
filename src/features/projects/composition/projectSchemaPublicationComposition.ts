@@ -4,8 +4,8 @@ import {
   createModularSpriteProcessingApi,
   createModularSpriteSchema,
   portableModularSpriteSchema,
-} from "@/features/modular-sprite";
-import { localSchemaApi } from "@/features/modular-sprite-schema";
+} from "@/features/modular-sprite/index.js";
+import { localSchemaApi } from "@/features/modular-sprite-schema/index.js";
 import { publishProjectSchemas } from "@/features/projects/application/projectSchemaPublication.js";
 
 export async function publishProjectSchemasToLocalDatabase(

@@ -22,7 +22,7 @@ import {
   getPresetDefaultParams,
 } from "@/domain/autoMotion/presetRegistry.js";
 
-import { uid } from "@/lib/uid";
+import { uid } from "@/lib/uid.js";
 
 export function createIdleBreathingDraft({
   project,

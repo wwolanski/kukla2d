@@ -14,7 +14,7 @@ import type {
   ProjectStoreGet,
   ProjectStoreSet,
 } from "@/store/project/projectStoreTypes.types.js";
-import { pushPatches, transaction } from "@/store/undoHistory";
+import { pushPatches, transaction } from "@/store/undoHistory.js";
 
 import {
   buildDeleteSelectionIntent,
@@ -23,7 +23,7 @@ import {
   deletePartNodes,
 } from "@/domain/deleteCommands.js";
 
-import { uid } from "@/lib/uid";
+import { uid } from "@/lib/uid.js";
 
 import type { Draft } from "immer";
 

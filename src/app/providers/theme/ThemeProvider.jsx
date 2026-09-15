@@ -9,14 +9,14 @@ import {
   lightThemePresets,
   modernMinimalDarkPreset,
   sunsetHorizonDarkPreset,
-} from "@/features/preferences";
+} from "@/features/preferences/index.js";
 
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog.jsx";
 
 const DEFAULT_FONT_FAMILY = AVAILABLE_FONTS[0].id;
 const DEFAULT_FONT_SIZE = 16;

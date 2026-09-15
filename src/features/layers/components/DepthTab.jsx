@@ -8,9 +8,9 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { FeatureDisabledTooltip } from "@/components/ui/feature-disabled-tooltip";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@/components/ui/context-menu.jsx";
+import { FeatureDisabledTooltip } from "@/components/ui/feature-disabled-tooltip.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
 
 export function DepthTab({
   nodes,

@@ -1,7 +1,7 @@
 import { Files, FolderOpen, LoaderCircle, Plus } from "lucide-react";
 import { useRef, useState } from "react";
 
-import { hasProjectFileExtension } from "@/io/projectFormat";
+import { hasProjectFileExtension } from "@/io/projectFormat.js";
 
 import { ProjectGallery } from "@/features/projects/components/ProjectGallery.jsx";
 
@@ -10,9 +10,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@/components/ui/dialog.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
 
 export function LoadModalView({
   externalImportFormats,

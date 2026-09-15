@@ -1,6 +1,6 @@
 import type { ModularSpriteWizardStep } from "@/features/modular-sprite/application/wizardState.types.js";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.jsx";
 
 const UiButton = Button as React.ComponentType<
   React.ButtonHTMLAttributes<HTMLButtonElement> & {

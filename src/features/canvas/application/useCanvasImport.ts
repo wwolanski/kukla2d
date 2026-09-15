@@ -2,11 +2,11 @@ import { useCallback } from "react";
 
 import type { ProjectDocument, ProjectResourceOwner } from "@kukla2d/contracts";
 
-import { formatProjectError } from "@/io/projectErrorMessages";
-import { hasProjectFileExtension } from "@/io/projectFormat";
+import { formatProjectError } from "@/io/projectErrorMessages.js";
+import { hasProjectFileExtension } from "@/io/projectFormat.js";
 
 import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
-import { useImportSettingsStore } from "@/store/importSettingsStore";
+import { useImportSettingsStore } from "@/store/importSettingsStore.js";
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
 
 import type {
@@ -26,9 +26,9 @@ import type { WorkflowEvent } from "@/features/canvas/domain/workflowContracts.t
 import type {
   ModularSpriteCommitRequest,
   ModularSpriteCommitResult,
-} from "@/features/modular-sprite";
+} from "@/features/modular-sprite/index.js";
 
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast.js";
 
 import type { ChangeEvent, Dispatch, DragEvent, SetStateAction } from "react";
 

@@ -1,12 +1,12 @@
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
 
 import {
   isAuthorableProperty,
   validateTrackValue,
-} from "@/domain/animationProperties";
+} from "@/domain/animationProperties.js";
 
-import { createAnimationAuthoringApi } from "@/features/animation";
+import { createAnimationAuthoringApi } from "@/features/animation/index.js";
 import type { CanvasAuthoringAdapter } from "@/features/canvas/application/createCanvasAuthoringAdapter.types.js";
 
 function readActiveTool(state: object): string | undefined {

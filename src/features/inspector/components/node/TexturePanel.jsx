@@ -1,7 +1,7 @@
 import { useTextureInspectorController } from "@/features/inspector/application/useNodeInspectorController.js";
 import { SectionTitle } from "@/features/inspector/components/fields/InspectorRow.jsx";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.jsx";
 
 export function TexturePanel({ node }) {
   const { exportTexture: handleExport } = useTextureInspectorController(node);

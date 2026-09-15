@@ -3,10 +3,10 @@ import React from "react";
 
 import { usePhysicsPanelController } from "@/features/physics/application/usePhysicsPanelController.js";
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button.jsx";
+import { Checkbox } from "@/components/ui/checkbox.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label.jsx";
 
 const CATEGORY_LABELS = {
   hair: "Hair",

@@ -9,11 +9,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { useImportSettingsStore } from "@/store/importSettingsStore";
+import { useImportSettingsStore } from "@/store/importSettingsStore.js";
 
 import { LibraryAssetRow } from "@/features/layers/components/rows/LibraryAssetRow.jsx";
 import { LibraryFolderRow } from "@/features/layers/components/rows/LibraryFolderRow.jsx";
-import { loadExampleProjectFile } from "@/features/projects";
+import { loadExampleProjectFile } from "@/features/projects/index.js";
 
 import {
   AlertDialog,
@@ -24,15 +24,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { BorderBeam } from "@/components/ui/border-beam";
+} from "@/components/ui/alert-dialog.jsx";
+import { BorderBeam } from "@/components/ui/border-beam.jsx";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Switch } from "@/components/ui/switch";
+} from "@/components/ui/popover.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
+import { Switch } from "@/components/ui/switch.jsx";
 
 export function LibraryTab({
   tree,

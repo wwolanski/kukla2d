@@ -3,8 +3,8 @@ import { useShallow } from "zustand/react/shallow";
 
 import type { PartNode, Texture } from "@kukla2d/contracts";
 
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import {
   HOVER_SOURCE_PANEL,
@@ -17,7 +17,7 @@ import {
 } from "@/domain/libraryAssetNames.js";
 import { validateUniqueLibraryFolderName } from "@/domain/libraryFolderNames.js";
 
-import { useWorkflowActor } from "@/features/canvas";
+import { useWorkflowActor } from "@/features/canvas/index.js";
 import { useDragSession } from "@/features/layers/application/useDragSession.js";
 import { useLayerPanelBoneTreeDnD } from "@/features/layers/application/useLayerPanelBoneTreeDnD.js";
 import { useLayerPanelDepthDnD } from "@/features/layers/application/useLayerPanelDepthDnD.js";
@@ -33,9 +33,9 @@ import type {
 } from "@/features/layers/domain/dragSession.types.js";
 import { removeLibraryAssets } from "@/features/layers/domain/removeLibraryAssets.js";
 
-import { uid } from "@/lib/uid";
+import { uid } from "@/lib/uid.js";
 
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast.js";
 
 interface LayerPanelControllerOptions {
   onImportClick?: () => void;

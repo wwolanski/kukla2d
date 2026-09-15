@@ -13,7 +13,7 @@ import type { Matrix3 } from "@/domain/transforms.types.js";
 import { getBoneSegment } from "@/features/canvas/domain/picking.js";
 import { buildPoseHandle } from "@/features/canvas/domain/poseHandle.js";
 
-import { clamp } from "@/lib/math";
+import { clamp } from "@/lib/math.js";
 
 const SKELETON_CONNECTIONS: readonly (readonly [string, string])[] = [
   ["torso", "neck"],

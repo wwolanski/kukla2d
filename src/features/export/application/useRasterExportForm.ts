@@ -2,18 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { Animation, ProjectDocument } from "@kukla2d/contracts";
 
-import { resolveAnimations } from "@/io/resolveAnimations";
+import { resolveAnimations } from "@/io/resolveAnimations.js";
 
 import type { ExportProgress } from "@/features/export/application/exportApplicationTypes.types.js";
 import {
   getDefaultExportFormat,
   getExportVariantForSelection,
-} from "@/features/export/domain/exportVariantRegistry";
+} from "@/features/export/domain/exportVariantRegistry.js";
 import type {
   ExportFormat,
   ExportTypeId,
 } from "@/features/export/domain/exportVariantRegistry.types.js";
-import { suggestSpritesheetLayouts } from "@/features/export/domain/spritesheetLayout";
+import { suggestSpritesheetLayouts } from "@/features/export/domain/spritesheetLayout.js";
 
 import type { ExportableAnimation } from "@/io/resolveAnimations.types.js";
 

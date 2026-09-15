@@ -2,14 +2,14 @@ import { produceWithPatches, type Draft } from "immer";
 
 import type { ProjectDocument, Transform } from "@kukla2d/contracts";
 
-import { prepareLoadedProjectDocument } from "@/schema/projectDocumentAdapter";
+import { prepareLoadedProjectDocument } from "@/schema/projectDocumentAdapter.js";
 
 import type {
   AnimationDocumentCommand,
   ProjectCommandResult,
   ProjectStore,
 } from "@/store/project/projectStoreTypes.types.js";
-import { pushPatches, transaction } from "@/store/undoHistory";
+import { pushPatches, transaction } from "@/store/undoHistory.js";
 
 import type { ValidatedProjectDocument } from "@/schema/projectSchema.types";
 

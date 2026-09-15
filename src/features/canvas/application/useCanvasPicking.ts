@@ -5,8 +5,8 @@ import type { Node, PartNode, ProjectDocument } from "@kukla2d/contracts";
 import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
 import type { EditorStore } from "@/store/editorStoreTypes.types.js";
 
-import { computePoseOverrides } from "@/domain/animationEngine";
-import { computeWorldMatrices } from "@/domain/transforms";
+import { computePoseOverrides } from "@/domain/animationEngine.js";
+import { computeWorldMatrices } from "@/domain/transforms.js";
 
 import type {
   CanvasSceneGateway,

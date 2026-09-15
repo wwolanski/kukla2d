@@ -1,8 +1,8 @@
 import { Loader2, Upload } from "lucide-react";
 import { useState } from "react";
 
-import { BorderBeam } from "@/components/ui/border-beam";
-import { Input } from "@/components/ui/input";
+import { BorderBeam } from "@/components/ui/border-beam.jsx";
+import { Input } from "@/components/ui/input.jsx";
 
 const UiInput = Input as React.ComponentType<
   React.InputHTMLAttributes<HTMLInputElement>

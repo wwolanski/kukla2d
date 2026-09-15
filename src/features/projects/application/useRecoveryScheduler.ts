@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 
 import type { ProjectDocument } from "@kukla2d/contracts";
 
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import { useRecoveryRepository } from "@/features/projects/application/useRecoveryRepository.js";
 
@@ -76,7 +76,7 @@ export function useRecoveryScheduler({
     setStatus("saving");
     const saveOperation = (async (): Promise<void> => {
       try {
-        const { saveProject } = await import("@/io/projectFile");
+        const { saveProject } = await import("@/io/projectFile.js");
         while (mountedRef.current) {
           const snapshot = snapshotRef.current;
           if (!snapshot) {

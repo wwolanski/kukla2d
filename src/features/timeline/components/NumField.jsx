@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { clamp } from '@/lib/math';
+import { clamp } from '@/lib/math.js';
 
 export function NumField({ label, value, onChange, min, max, step = 1, className = '', tip }) {
   const [local, setLocal] = useState(String(value));

@@ -1,13 +1,13 @@
 import { useRef, useEffect, useMemo, useCallback } from "react";
 import { useShallow } from "zustand/react/shallow";
 
-import { createProjectResourceOwner } from "@/platform/projectResourceOwner";
+import { createProjectResourceOwner } from "@/platform/projectResourceOwner.js";
 
 import { useTheme } from "@/app/providers/theme/useTheme.js";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import type {
   CanvasEditorSnapshot,

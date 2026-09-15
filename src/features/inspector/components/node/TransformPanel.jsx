@@ -5,8 +5,8 @@ import {
 } from "@/features/inspector/components/fields/InspectorRow.jsx";
 import { NumericInput } from "@/features/inspector/components/fields/NumericInput.jsx";
 
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button.jsx";
+import { Label } from "@/components/ui/label.jsx";
 
 export function TransformPanel({ node, allNodes }) {
   const { editorMode, setTransformField, commitTransform, resetTransform } =

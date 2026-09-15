@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { readRecovery } from "@/io/projectDb";
+import { readRecovery } from "@/io/projectDb.js";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import type { DeleteSelectionIntent } from "@/domain/deleteCommands.types.js";
-import { ACTION_IDS, editorModePolicy } from "@/domain/editorModePolicy";
+import { ACTION_IDS, editorModePolicy } from "@/domain/editorModePolicy.js";
 
 import type { CanvasRuntimeDependencies } from "@/features/canvas/application/canvasApplication.types.js";
 import { useCanvasController } from "@/features/canvas/application/useCanvasController.js";
 import { useExportAreaMoveSession } from "@/features/canvas/application/useExportAreaMoveSession.js";
 import { bakeDefaultPoseIntoSetup } from "@/features/canvas/domain/poseBake.js";
 
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast.js";
 
 import type { Dispatch, RefObject, SetStateAction } from "react";
 

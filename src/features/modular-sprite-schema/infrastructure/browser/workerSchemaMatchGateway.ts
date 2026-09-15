@@ -8,7 +8,7 @@ import {
 } from "@kukla2d/modular-sprite-schema";
 
 import type { CatalogAwareSchemaMatchGateway } from "@/features/modular-sprite-schema/application/localSchemaApi.types.js";
-import workerUrl from "@/features/modular-sprite-schema/infrastructure/browser/schemaMatcher.worker.ts?worker&url";
+import workerUrl from "@/features/modular-sprite-schema/infrastructure/browser/schemaMatcher.worker.js?worker&url";
 import {
   assertMatchRequest,
   assertMatchResponse,

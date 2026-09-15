@@ -4,7 +4,7 @@ import {
   InspectorRow,
 } from "@/features/inspector/components/fields/InspectorRow.jsx";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.jsx";
 
 export function MeshWeightsPanel({ node: inspectedNode }) {
   const {

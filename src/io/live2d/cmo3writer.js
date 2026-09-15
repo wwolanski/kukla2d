@@ -26,7 +26,7 @@ import {
   COMPRESS_RAW,
   COMPRESS_FAST,
 } from "@/io/live2d/caffPacker.js";
-import { makeLocalMatrix, mat3Mul } from "@/domain/transforms.ts";
+import { makeLocalMatrix, mat3Mul } from "@/domain/transforms.js";
 import { XmlBuilder, uuid } from "@/io/live2d/xmlbuilder.js";
 import { analyzeBody } from "@/io/live2d/bodyAnalyzer.js";
 import {

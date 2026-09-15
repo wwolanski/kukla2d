@@ -1,7 +1,7 @@
 import type { Bone, BoneId, Node } from "@kukla2d/contracts";
 
-import { editorModePolicy, ACTION_IDS } from "@/domain/editorModePolicy";
-import { computeWorldMatrices } from "@/domain/transforms";
+import { editorModePolicy, ACTION_IDS } from "@/domain/editorModePolicy.js";
+import { computeWorldMatrices } from "@/domain/transforms.js";
 
 import { getNextBoneName } from "@/features/canvas/domain/boneNaming.js";
 import { refreshIkTopology } from "@/features/canvas/domain/ikConstraintCreation.js";

@@ -12,7 +12,7 @@ import type {
   FrameCaptureResult,
 } from "@/features/canvas/domain/frameCaptureContract.types.js";
 
-import { isRecord } from "@/lib/guards";
+import { isRecord } from "@/lib/guards.js";
 
 type FrameCaptureFormat = "png" | "jpg" | "webp";
 

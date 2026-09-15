@@ -7,9 +7,9 @@ import {
   useMemo,
 } from "react";
 
-import { getDefaultValue } from "@/domain/animationTargets";
+import { getDefaultValue } from "@/domain/animationTargets.js";
 
-import { createAnimationAuthoringApi } from "@/features/animation";
+import { createAnimationAuthoringApi } from "@/features/animation/index.js";
 import { flattenVisibleRows } from "@/features/timeline/application/buildTimelineTrackRows.js";
 import {
   parseKeyframeAddress,
@@ -35,7 +35,7 @@ import { TrackList } from "@/features/timeline/components/TrackList.jsx";
 import { TransportBar } from "@/features/timeline/components/TransportBar.jsx";
 import { LAYOUT } from "@/features/timeline/domain/timelineLayout.js";
 
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast.js";
 
 export function TimelinePanelView({ decodeAudioFile }) {
   const ctrl = useTimelineController();

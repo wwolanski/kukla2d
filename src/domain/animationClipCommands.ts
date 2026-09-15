@@ -16,7 +16,7 @@ import {
   getAnimation,
 } from "@/domain/animationDocumentCommandSupport.js";
 
-import { uid } from "@/lib/uid";
+import { uid } from "@/lib/uid.js";
 
 export function createAnimationClip(
   project: ProjectDocument,

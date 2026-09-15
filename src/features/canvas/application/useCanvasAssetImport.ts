@@ -10,7 +10,7 @@ import type {
 
 import { applyHistoricalClipToPartId } from "@/io/psdOrganizer.js";
 
-import { useImportSettingsStore } from "@/store/importSettingsStore";
+import { useImportSettingsStore } from "@/store/importSettingsStore.js";
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
 
 import {
@@ -340,7 +340,7 @@ export function useCanvasAssetImport({
   const processPsdFile = useCallback(
     async (file: File, libraryOnly = false): Promise<void> => {
       try {
-        const { importPsd } = await import("@/io/psd");
+        const { importPsd } = await import("@/io/psd.js");
         const parsed = await importPsd(await file.arrayBuffer());
         if (parsed.layers.length > 0) {
           finalizePsdImport(

@@ -1,8 +1,8 @@
 import { Check, X } from 'lucide-react';
 import { useEffect } from 'react';
 
-import { useEditorStore } from '@/store/editorStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useEditorStore } from '@/store/editorStore.js';
+import { useProjectStore } from '@/store/projectStore.js';
 
 import {
   assignConstraintToBone,

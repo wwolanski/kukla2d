@@ -10,7 +10,7 @@ import {
   SCHEMA_STORE,
   SCHEMA_SYNC_STORE,
   SEMANTIC_STORE,
-} from "@/io/appDb";
+} from "@/io/appDb.js";
 
 import type {
   LocalSchemaRepository,

@@ -3,18 +3,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { AssetId } from "@kukla2d/contracts";
 
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import type {
   ModularSpriteCommitRequest,
   ModularSpriteCommitResult,
   RgbaImageData,
-} from "@/features/modular-sprite";
+} from "@/features/modular-sprite/index.js";
 import { commitGeneratedPackage } from "@/features/modular-sprite-generator/application/commitGeneratedPackage.js";
 import { generateModularSprite } from "@/features/modular-sprite-generator/application/generateModularSprite.js";
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button.jsx";
+import { Checkbox } from "@/components/ui/checkbox.jsx";
 import {
   Dialog,
   DialogContent,
@@ -22,10 +22,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@/components/ui/dialog.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
 
 const UiDialog = Dialog as React.ComponentType<{
   open: boolean;

@@ -17,7 +17,7 @@ import {
   type ModularSpriteDraftPart,
   type ProcessedModularSprite,
   type RgbaImageData,
-} from "@/features/modular-sprite";
+} from "@/features/modular-sprite/index.js";
 
 const REGION_DISTANCE_THRESHOLD = 0.2;
 

@@ -13,7 +13,7 @@ import {
   HOVER_SOURCE_PANEL,
   resolveVisibleHoverHit,
 } from "@/domain/hoverPolicy.js";
-import { computeWorldMatrices } from "@/domain/transforms";
+import { computeWorldMatrices } from "@/domain/transforms.js";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
 import type { CanvasOverlayFrame } from "@/features/canvas/domain/canvasOverlayFrame.types.js";

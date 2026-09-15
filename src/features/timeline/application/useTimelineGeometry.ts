@@ -2,7 +2,7 @@ import { useCallback } from "react";
 
 import { LAYOUT } from "@/features/timeline/domain/timelineLayout.js";
 
-import { clamp } from "@/lib/math";
+import { clamp } from "@/lib/math.js";
 
 import type { RefObject } from "react";
 

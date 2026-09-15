@@ -3,7 +3,7 @@ import type { AnimationTargetId, Keyframe, Track } from "@kukla2d/contracts";
 import type {
   checkBoomerangEligibility,
   getBoomerangCutoff,
-} from "@/domain/animationBoomerang";
+} from "@/domain/animationBoomerang.js";
 import type { TrackValueCategory } from "@/domain/animationProperties.types.js";
 
 export interface TimelineTargetDescriptor {
