@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function formatIssues(issues) {
@@ -40,12 +41,15 @@ export function SaveModal({
   currentDbProjectName,
   onSavedToDb,
   onSaveSuccess,
+  publishSchemas,
 }) {
   const {
     name,
     author,
     saveMode,
     isSaving,
+    saveToSchemaDatabase,
+    schemaEligibility,
     overwriteProject,
     preflightErrors,
     preflightWarnings,
@@ -53,6 +57,7 @@ export function SaveModal({
     setName,
     setAuthor,
     setSaveMode,
+    setSaveToSchemaDatabase,
     handleSaveNew,
     handleOverwrite,
     confirmOverwrite,
@@ -71,6 +76,7 @@ export function SaveModal({
     onSavedToDb,
     onSaveSuccess,
     onOpenChange,
+    publishSchemas,
   });
 
   return (
@@ -144,6 +150,30 @@ export function SaveModal({
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
+
+                <div className="flex items-start gap-3 rounded-md border bg-background p-3">
+                  <Switch
+                    id="save-project-schema-database"
+                    checked={saveToSchemaDatabase}
+                    disabled={!schemaEligibility.enabled || isSaving}
+                    onCheckedChange={setSaveToSchemaDatabase}
+                    aria-label="Save to schema database"
+                    className="mt-0.5"
+                  />
+                  <label
+                    htmlFor="save-project-schema-database"
+                    className={schemaEligibility.enabled ? "cursor-pointer" : "cursor-not-allowed opacity-60"}
+                  >
+                    <span className="block text-xs font-medium">
+                      Save to schema database
+                    </span>
+                    <span className="mt-0.5 block text-[10px] leading-relaxed text-muted-foreground">
+                      {schemaEligibility.enabled
+                        ? `${schemaEligibility.reason} Destination: local (indexedDB).`
+                        : schemaEligibility.reason}
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
 

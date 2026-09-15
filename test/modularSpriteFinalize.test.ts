@@ -1,4 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+import type {
+  ModularSpriteSchema,
+  SchemaComparisonResult,
+} from "@kukla2d/modular-sprite-schema";
 
 import { finalizeModularSpriteImport } from "@/features/modular-sprite/application/finalizeModularSpriteImport";
 
@@ -69,21 +74,28 @@ const grouping: RegionGrouping = {
   excludedRegionIds: [],
 };
 
-const schemaPort: ModularSpriteSchemaPort = {
-  createSchema: () => {
-    throw new Error("not used");
-  },
-  saveAsset: () => Promise.resolve(),
-  save: () => Promise.resolve(),
-  portableSnapshot: () => ({
-    formatVersion: 1,
-    schemaId: "unused",
-    revision: 1,
-    compositionId: "unused",
-    name: "unused",
-    slots: [],
-  }),
-};
+const portableSnapshot = vi.fn(() => ({
+  formatVersion: 1,
+  schemaId: "unused",
+  revision: 1,
+  compositionId: "unused",
+  name: "unused",
+  slots: [],
+}));
+
+const schemaPort: ModularSpriteSchemaPort = { portableSnapshot };
+
+const appliedSchema = {
+  schemaId: "existing-schema",
+  revision: 2,
+  slots: [{ slotKey: "body" }],
+} as unknown as ModularSpriteSchema;
+
+const appliedMatch = {
+  schemaId: "existing-schema",
+  schemaRevision: 2,
+  assignments: [{ slotKey: "body", componentIds: [1], scoreBp: 10000 }],
+} as unknown as SchemaComparisonResult;
 
 describe("finalizeModularSpriteImport", () => {
   it("validates, reconciles full-resolution IDs, extracts and builds a commit request", async () => {
@@ -117,7 +129,6 @@ describe("finalizeModularSpriteImport", () => {
     };
     const outcome = await finalizeModularSpriteImport(
       {
-        existingId: null,
         source: { file: new File([], "hero.png"), image, preview: image },
         recipe: {
           background: {
@@ -141,15 +152,10 @@ describe("finalizeModularSpriteImport", () => {
         name: "Hero",
         addToCanvas: true,
         schema: {
-          applied: null,
-          addSchema: false,
-          saveMode: "new",
-          metadata: {
-            name: "Hero schema",
-            description: "",
-            characterTypeIds: [],
-            characterClassIds: [],
-            tags: [],
+          applied: {
+            schema: appliedSchema,
+            match: appliedMatch,
+            modified: false,
           },
         },
       },
@@ -168,6 +174,24 @@ describe("finalizeModularSpriteImport", () => {
     expect(outcome.request.parts[0]?.draft.partKey).toBe("body");
     expect(outcome.request.parts[0]?.blob.type).toBe("image/png");
     expect(outcome.reconciliation.lostPreviousRegionIds).toEqual([]);
+    expect(outcome.request.schemaBinding).toEqual({
+      schemaId: "existing-schema",
+      schemaRevision: 2,
+      compositionId: undefined,
+      slotToPartKey: { body: "body" },
+      snapshot: {
+        formatVersion: 1,
+        schemaId: "unused",
+        revision: 1,
+        compositionId: "unused",
+        name: "unused",
+        slots: [],
+      },
+    });
+    expect(portableSnapshot).toHaveBeenCalledWith(appliedSchema);
+    expect("createSchema" in schemaPort).toBe(false);
+    expect("saveAsset" in schemaPort).toBe(false);
+    expect("save" in schemaPort).toBe(false);
   });
 
   it("rejects an unconfirmed or empty part before invoking processing", async () => {
@@ -209,15 +233,6 @@ describe("finalizeModularSpriteImport", () => {
           addToCanvas: false,
           schema: {
             applied: null,
-            addSchema: false,
-            saveMode: "new",
-            metadata: {
-              name: "",
-              description: "",
-              characterTypeIds: [],
-              characterClassIds: [],
-              tags: [],
-            },
           },
         },
         {

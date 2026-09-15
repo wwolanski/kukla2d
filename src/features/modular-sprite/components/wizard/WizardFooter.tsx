@@ -17,7 +17,6 @@ export function WizardFooter({
   onBack,
   onNext,
   onFinalize,
-  isExisting,
 }: {
   step: ModularSpriteWizardStep;
   busy: boolean;
@@ -26,7 +25,6 @@ export function WizardFooter({
   onBack: () => void;
   onNext: () => void;
   onFinalize: () => void;
-  isExisting: boolean;
 }): React.ReactElement {
   return (
     <footer className="flex items-center gap-2 border-t px-6 py-3">
@@ -46,7 +44,7 @@ export function WizardFooter({
       )}
       {step === "review" && (
         <UiButton disabled={busy} onClick={onFinalize}>
-          {busy ? "Finalizing…" : isExisting ? "Update set" : "Import set"}
+          {busy ? "Finalizing…" : "Import set"}
         </UiButton>
       )}
       {busy && step === "review" && (

@@ -4,10 +4,6 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/features/modular-sprite-schema", () => ({
-  SchemaEditor: () => null,
-}));
-
 vi.mock(
   "@/features/modular-sprite/components/preview/PartThumbnail.js",
   () => ({
@@ -43,20 +39,7 @@ function mountPartDetails(onUpdatePart = vi.fn()) {
         }}
         resultRef={{ current: null }}
         resultVersion={0}
-        schema={{
-          addSchema: false,
-          saveMode: "new",
-          metadata: {
-            name: "",
-            description: "",
-            characterTypeIds: [],
-            characterClassIds: [],
-            tags: [],
-          },
-          applied: false,
-        }}
         onUpdatePart={onUpdatePart}
-        onSchemaEditorChange={vi.fn()}
       />,
     );
   });

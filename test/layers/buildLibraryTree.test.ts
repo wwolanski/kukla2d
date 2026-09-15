@@ -129,6 +129,28 @@ describe("buildLibraryTree", () => {
     });
   });
 
+  it("projects the modular source placement onto its package folder", () => {
+    const rows = buildLibraryTree({
+      libraryFolders: [{ id: "package-folder", name: "Hero" }],
+      assetPlacements: [{ assetId: "source", folderId: "package-folder" }],
+      textures: [texture("source")],
+      nodes: [],
+      modularSprites: [
+        {
+          id: "set-1",
+          sourceAssetId: "source",
+          parts: [],
+        } as never,
+      ],
+    });
+
+    expect(rows[0]).toMatchObject({
+      kind: "folder",
+      modularSpriteId: "set-1",
+      isModularSpritePackage: true,
+    });
+  });
+
   it("falls back to texture id for name", () => {
     const rows = buildLibraryTree({
       textures: [texture("t1", { fileName: null })],
@@ -180,6 +202,8 @@ describe("flattenLibraryTree", () => {
         name: "Root",
         sourceFileName: null,
         origin: null,
+        modularSpriteId: null,
+        isModularSpritePackage: false,
         children: [
           {
             kind: "asset" as const,

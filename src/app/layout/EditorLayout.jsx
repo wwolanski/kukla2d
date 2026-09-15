@@ -61,8 +61,11 @@ export default function EditorLayout() {
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const [modularSpriteEditor, setModularSpriteEditor] = useState({
     open: false,
-    existingId: null,
     highlightFirstExample: false,
+  });
+  const [modularSpriteGenerator, setModularSpriteGenerator] = useState({
+    open: false,
+    intent: null,
   });
   const [recoveryRecord, setRecoveryRecord] = useState(null);
   const [recoveryError, setRecoveryError] = useState(null);
@@ -219,15 +222,13 @@ export default function EditorLayout() {
           onImportModularSprite={(options) =>
             setModularSpriteEditor({
               open: true,
-              existingId: null,
               highlightFirstExample: Boolean(options?.highlightFirstExample),
             })
           }
-          onEditModularSprite={(existingId) =>
-            setModularSpriteEditor({
+          onRegenerateModularSprite={(existingId, options = {}) =>
+            setModularSpriteGenerator({
               open: true,
-              existingId,
-              highlightFirstExample: false,
+              intent: { existingId, ...options },
             })
           }
         />
@@ -244,6 +245,8 @@ export default function EditorLayout() {
           importRef={importRef}
           modularSpriteEditor={modularSpriteEditor}
           setModularSpriteEditor={setModularSpriteEditor}
+          modularSpriteGenerator={modularSpriteGenerator}
+          setModularSpriteGenerator={setModularSpriteGenerator}
         />
 
         <Suspense fallback={null}>

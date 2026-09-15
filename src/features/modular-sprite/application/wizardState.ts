@@ -1,8 +1,4 @@
-import type {
-  ModularSpriteDocument,
-  ModularSpriteId,
-  ModularSpriteProcessingRecipe,
-} from "@kukla2d/contracts";
+import type { ModularSpriteProcessingRecipe } from "@kukla2d/contracts";
 import { DEFAULT_MODULAR_SPRITE_RECIPE } from "@kukla2d/contracts";
 import type {
   ModularSpriteSchema,
@@ -25,7 +21,6 @@ interface WizardSource {
   file: File;
   image: RgbaImageData;
   preview: RgbaImageData;
-  existingDocument?: ModularSpriteDocument;
 }
 
 interface WizardSnapshot {
@@ -33,18 +28,6 @@ interface WizardSnapshot {
   grouping: RegionGrouping | null;
   groupingTouched: boolean;
 }
-
-type WizardSchemaEditorValue = Partial<{
-  addSchema: boolean;
-  saveMode: "new" | "revision";
-  metadata: {
-    name: string;
-    description: string;
-    characterTypeIds: string[];
-    characterClassIds: string[];
-    tags: string[];
-  };
-}>;
 
 type WizardEvent =
   | { type: "RESET" }
@@ -54,7 +37,6 @@ type WizardEvent =
       source: WizardSource;
       recipe: ModularSpriteProcessingRecipe;
       name: string;
-      existingId?: ModularSpriteId | null;
     }
   | { type: "LOAD_FAILED"; message: string }
   | { type: "PROCESSING_STARTED"; stage?: string }
@@ -94,7 +76,6 @@ type WizardEvent =
       grouping: RegionGrouping;
     }
   | { type: "SET_AUTO_MATCH"; value: boolean }
-  | { type: "SET_SCHEMA_EDITOR"; value: WizardSchemaEditorValue }
   | { type: "SET_NAME"; name: string }
   | { type: "SET_ADD_TO_CANVAS"; value: boolean }
   | { type: "FINALIZATION_STARTED" }
@@ -119,15 +100,6 @@ export function createInitialWizardState(): WizardState {
       matching: false,
       progress: { completed: 0, total: 0 },
       autoMatch: true,
-      addSchema: false,
-      saveMode: "new",
-      metadata: {
-        name: "New modular sprite schema",
-        description: "",
-        characterTypeIds: [],
-        characterClassIds: [],
-        tags: [],
-      },
     },
     history: [],
     future: [],
@@ -136,7 +108,6 @@ export function createInitialWizardState(): WizardState {
     name: "Modular Sprite",
     addToCanvas: true,
     processingRevision: 0,
-    existingId: null,
     lastHistory: null,
   };
 }
@@ -203,7 +174,6 @@ export function wizardReducer(
         future: [],
         error: null,
         name: event.name,
-        existingId: event.existingId ?? null,
         lastHistory: null,
         progress: { value: 0, stage: "Processing" },
         processingRevision: 0,
@@ -320,17 +290,6 @@ export function wizardReducer(
       };
     case "SET_AUTO_MATCH":
       return { ...state, schema: { ...state.schema, autoMatch: event.value } };
-    case "SET_SCHEMA_EDITOR":
-      return {
-        ...state,
-        schema: {
-          ...state.schema,
-          ...event.value,
-          ...(event.value.metadata
-            ? { metadata: structuredClone(event.value.metadata) }
-            : {}),
-        },
-      };
     case "SET_NAME":
       return { ...state, name: event.name };
     case "SET_ADD_TO_CANVAS":

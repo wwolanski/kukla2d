@@ -12,7 +12,7 @@ import { TransportButton } from "@/features/timeline/components/TransportButton.
 import { buildFpsTimingChange } from "@/features/timeline/domain/timelineTime.js";
 
 import { FeatureDisabledTooltip } from "@/components/ui/feature-disabled-tooltip";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from '@/components/ui/use-toast';
 
 export function TransportBar({
   animation,

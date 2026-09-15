@@ -7,7 +7,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
 
 function runScript(name) {
-  return execSync(`node scripts/scripts_legacy/${name}`, { cwd: root, timeout: 30000 });
+  return execSync(`node --import tsx scripts/scripts_legacy/${name}`, {
+    cwd: root,
+    timeout: 30000,
+  });
 }
 
 describe('verify scripts', () => {

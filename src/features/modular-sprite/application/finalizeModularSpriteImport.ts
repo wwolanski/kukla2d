@@ -1,12 +1,9 @@
 import type {
-  ModularSpriteDocument,
-  ModularSpriteId,
   ModularSpriteProcessingRecipe,
   NormalizedPoint,
 } from "@kukla2d/contracts";
 import type {
   ModularSpriteSchema,
-  SchemaAssetRef,
   SchemaComparisonResult,
 } from "@kukla2d/modular-sprite-schema";
 
@@ -15,7 +12,6 @@ import type {
   ModularSpriteSchemaPort,
 } from "@/features/modular-sprite/application/finalizeModularSpriteImport.types.js";
 import type { ModularSpriteCommitRequest } from "@/features/modular-sprite/application/importContracts.types.js";
-import type { ModularSpriteSchemaMetadata } from "@/features/modular-sprite/application/schemaBinding.types.js";
 import type {
   ExtractedPart,
   ModularSpriteDraftPart,
@@ -34,7 +30,6 @@ interface WizardSource {
   file: File;
   image: RgbaImageData;
   preview: RgbaImageData;
-  existingDocument?: ModularSpriteDocument;
 }
 
 interface AppliedSchema {
@@ -52,7 +47,6 @@ interface ModularSpriteCommitPart {
 }
 
 interface FinalizeModularSpriteImportInput {
-  existingId?: ModularSpriteId | null;
   source: WizardSource;
   recipe: ModularSpriteProcessingRecipe;
   previewResult: ProcessedModularSprite;
@@ -61,9 +55,6 @@ interface FinalizeModularSpriteImportInput {
   addToCanvas: boolean;
   schema: {
     applied: AppliedSchema | null;
-    addSchema: boolean;
-    saveMode: "new" | "revision";
-    metadata: ModularSpriteSchemaMetadata;
   };
 }
 
@@ -122,54 +113,13 @@ function previewPartForSlot(
 
 function createSchemaBinding(
   input: FinalizeModularSpriteImportInput,
-  fullResult: ProcessedModularSprite,
   fullGrouping: RegionGrouping,
-  sourceBlob: Blob,
-  schemaPort: ModularSpriteSchemaPort,
-): Promise<{
+): {
   schema: ModularSpriteSchema;
   slotToPartKey: Record<string, string>;
-}> {
-  let schema = input.schema.applied?.schema ?? null;
-  if (input.schema.addSchema) {
-    const revisionTarget =
-      input.schema.saveMode === "revision" &&
-      input.schema.applied?.schema.origin.kind === "user"
-        ? input.schema.applied.schema
-        : undefined;
-    const referenceAsset: SchemaAssetRef = {
-      assetId: `schema-asset-${crypto.randomUUID()}`,
-      mimeType: "image/png",
-      width: input.source.image.width,
-      height: input.source.image.height,
-    };
-    schema = schemaPort.createSchema({
-      metadata: {
-        ...input.schema.metadata,
-        name: input.schema.metadata.name.trim() || `${input.name} schema`,
-      },
-      parts: fullGrouping.parts,
-      observation: fullResult.observation,
-      referenceAsset,
-      ...(revisionTarget
-        ? {
-            schemaId: revisionTarget.schemaId,
-            revision: revisionTarget.revision + 1,
-          }
-        : {}),
-    });
-    schema = { ...schema, thumbnailAsset: schema.referenceAsset };
-  }
-  if (!schema)
-    return Promise.reject(
-      new Error("Schema binding was requested without a schema"),
-    );
-  const saveSchema = input.schema.addSchema
-    ? Promise.all([
-        schemaPort.saveAsset({ ...schema.referenceAsset, blob: sourceBlob }),
-        schemaPort.save(schema),
-      ]).then(() => undefined)
-    : Promise.resolve();
+} {
+  const schema = input.schema.applied?.schema;
+  if (!schema) throw new Error("Schema binding was requested without a schema");
   const slotToPartKey: Record<string, string> = {};
   for (const slot of schema.slots) {
     const previewPart = previewPartForSlot(
@@ -184,7 +134,7 @@ function createSchemaBinding(
     );
     if (part) slotToPartKey[slot.slotKey] = part.partKey;
   }
-  return saveSchema.then(() => ({ schema, slotToPartKey }));
+  return { schema, slotToPartKey };
 }
 
 function commitParts(
@@ -237,14 +187,8 @@ export async function finalizeModularSpriteImport(
   const parts = await commitParts(extracted, fullParts, ports.image);
   let boundSchema: ModularSpriteSchema | null = null;
   let schemaBinding: ModularSpriteCommitRequest["schemaBinding"];
-  if (input.schema.addSchema || input.schema.applied) {
-    const binding = await createSchemaBinding(
-      input,
-      fullResult,
-      reconciled.grouping,
-      sourceBlob,
-      ports.schema,
-    );
+  if (input.schema.applied) {
+    const binding = createSchemaBinding(input, reconciled.grouping);
     boundSchema = binding.schema;
     schemaBinding = {
       schemaId: boundSchema.schemaId,
@@ -256,7 +200,6 @@ export async function finalizeModularSpriteImport(
   }
   return {
     request: {
-      ...(input.existingId ? { existingId: input.existingId } : {}),
       name: input.name.trim() || "Modular Sprite",
       sourceFileName: input.source.file.name,
       sourceImage: input.source.image,

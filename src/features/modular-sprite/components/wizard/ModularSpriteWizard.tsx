@@ -46,18 +46,15 @@ const PREVIEW_CONTENT_PADDING = 32;
 
 export function ModularSpriteWizard({
   open,
-  existingId,
   highlightFirstExample = false,
   onOpenChange,
   onCommit,
   ports,
   semanticCatalog,
-  onSaveSemantic,
   confirmDiscard,
 }: ModularSpriteWizardProps): React.ReactElement {
   const controller = useModularSpriteWizardController({
     open,
-    ...(existingId !== undefined ? { existingId } : {}),
     onOpenChange,
     onCommit,
     ports,
@@ -130,10 +127,7 @@ export function ModularSpriteWizard({
   const protectionAvailable =
     state.recipe.background.mode === "chroma" &&
     refinement.protectIslandInteriors;
-  const existingName = source?.existingDocument?.name;
-  const title = existingName
-    ? `Edit ${existingName}`
-    : "Import 2D Modular Sprite";
+  const title = "Import 2D Modular Sprite";
   const onStroke = (
     kind: ModularSpriteMaskStrokeKind,
     points: { x: number; y: number }[],
@@ -206,7 +200,6 @@ export function ModularSpriteWizard({
                     onSelectRegion={controller.toggleRegionSelection}
                     onUpdatePart={controller.updatePart}
                     semanticCatalog={semanticCatalog}
-                    onSaveSemantic={onSaveSemantic}
                     onPendingNameSuggestionsChange={
                       setHasPendingPartNameSuggestions
                     }
@@ -360,14 +353,7 @@ export function ModularSpriteWizard({
               grouping={state.grouping}
               resultRef={controller.resultRef}
               resultVersion={controller.resultVersion}
-              schema={{
-                addSchema: state.schema.addSchema,
-                saveMode: state.schema.saveMode,
-                metadata: state.schema.metadata,
-                applied: Boolean(state.schema.applied),
-              }}
               onUpdatePart={controller.updatePart}
-              onSchemaEditorChange={controller.setSchemaEditor}
             />
           )}
 
@@ -417,7 +403,6 @@ export function ModularSpriteWizard({
           onFinalize={() => {
             void controller.finalize();
           }}
-          isExisting={Boolean(existingId)}
         />
       </UiDialogContent>
     </UiDialog>

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { Buffer } from "node:buffer";
 import { readFileSync } from "node:fs";
 
-test("imports a synthetic modular sprite and reopens its protected source", async ({
+test("imports a synthetic modular sprite and opens its generator", async ({
   page,
 }) => {
   await page.goto("/?renderer=pixi");
@@ -79,8 +79,8 @@ test("imports a synthetic modular sprite and reopens its protected source", asyn
     await page.locator('#layers-panel span[title="synthetic-sheet"]').click();
   await expect(page.getByText("Modular Source")).toBeVisible();
   await sourceName.click({ button: "right" });
-  await page.getByRole("menuitem", { name: "Edit modular sprite" }).click();
+  await page.getByRole("menuitem", { name: "Open generator" }).click();
   await expect(
-    page.getByRole("heading", { name: "Edit synthetic-sheet" }),
+    page.getByRole("heading", { name: "Regenerate modular sprite" }),
   ).toBeVisible();
 });

@@ -8,11 +8,8 @@ import {
 } from "react";
 
 import type {
-  ModularSpriteDocument,
-  ModularSpriteId,
   ModularSpriteMaskStrokeKind,
   ModularSpriteProcessingRecipe,
-  NormalizedPoint,
 } from "@kukla2d/contracts";
 import { MODULAR_SPRITE_PROCESSING_CONFIG } from "@kukla2d/contracts";
 import type {
@@ -50,7 +47,6 @@ import type {
   ProcessedModularSprite,
   RgbaImageData,
 } from "@/features/modular-sprite/domain/contracts.types.js";
-import { matchRegionsToTemplate } from "@/features/modular-sprite/domain/matching.js";
 import {
   createInitialGrouping,
   excludeRegions,
@@ -89,23 +85,14 @@ interface ModularSpriteSchemaControllerPort extends ModularSpriteSchemaPort {
   semantics?: SemanticCatalog;
 }
 
-interface ModularSpriteExistingSource {
-  file: File;
-  document: ModularSpriteDocument;
-}
-
 interface ModularSpriteWizardControllerPorts {
   image: ModularSpriteImageControllerPort;
   processing: ModularSpriteProcessingControllerPort;
   schema: ModularSpriteSchemaControllerPort;
-  resolveExisting?: (
-    id: ModularSpriteId,
-  ) => Promise<ModularSpriteExistingSource>;
 }
 
 interface ModularSpriteWizardControllerProps {
   open: boolean;
-  existingId?: ModularSpriteId | null;
   onOpenChange: (open: boolean) => void;
   onCommit: (request: ModularSpriteCommitRequest) => Promise<unknown>;
   ports: ModularSpriteWizardControllerPorts;
@@ -143,10 +130,7 @@ interface ModularSpriteWizardController {
   assignments: ReadonlyMap<number, RegionAssignment>;
   busy: boolean;
   canGoNext: boolean;
-  loadFile: (
-    file: File,
-    existingDocument?: ModularSpriteDocument,
-  ) => Promise<void>;
+  loadFile: (file: File) => Promise<void>;
   changeRecipe: (
     change: (recipe: ModularSpriteProcessingRecipe) => void,
     kind?: "recipe" | "discrete" | "parts",
@@ -165,11 +149,6 @@ interface ModularSpriteWizardController {
   redo: () => void;
   applySchemaMatch: (match: SchemaComparisonResult) => void;
   setAutoMatch: (value: boolean) => void;
-  setSchemaEditor: (
-    value: Partial<
-      Pick<WizardState["schema"], "addSchema" | "saveMode" | "metadata">
-    >,
-  ) => void;
   setName: (name: string) => void;
   setAddToCanvas: (value: boolean) => void;
   next: () => void;
@@ -191,70 +170,6 @@ const PART_COLORS = [
   "#2dd4bf",
   "#e879f9",
 ];
-
-function nearestRegionId(
-  point: NormalizedPoint,
-  regions: readonly DetectedRegion[],
-  used: Set<number>,
-): number | null {
-  let best: DetectedRegion | null = null;
-  let bestDistance = Number.POSITIVE_INFINITY;
-  for (const region of regions) {
-    if (used.has(region.id)) continue;
-    const distance = Math.hypot(
-      point.x - region.centroid.x,
-      point.y - region.centroid.y,
-    );
-    if (distance < bestDistance) {
-      best = region;
-      bestDistance = distance;
-    }
-  }
-  if (!best || bestDistance > 0.2) return null;
-  used.add(best.id);
-  return best.id;
-}
-
-function existingGrouping(
-  document: ModularSpriteDocument,
-  result: ProcessedModularSprite,
-): RegionGrouping {
-  const used = new Set<number>();
-  const fallback = matchRegionsToTemplate(
-    document.parts.map((part) => ({
-      partKey: part.partKey,
-      required: part.required,
-      contentBounds: part.contentBounds,
-    })),
-    result.regions,
-  );
-  const parts = document.parts.map((part) => {
-    const ids = part.componentSeeds
-      .map((seed) => nearestRegionId(seed, result.regions, used))
-      .filter((regionId): regionId is number => regionId !== null);
-    if (ids.length === 0) {
-      const match = fallback.find(
-        (candidate) => candidate.partKey === part.partKey,
-      );
-      if (
-        match &&
-        match.confidence >= 0.55 &&
-        match.regionId !== null &&
-        !used.has(match.regionId)
-      ) {
-        used.add(match.regionId);
-        ids.push(match.regionId);
-      }
-    }
-    return { ...structuredClone(part), regionIds: [...new Set(ids)] };
-  });
-  return {
-    parts,
-    excludedRegionIds: result.regions
-      .map((region) => region.id)
-      .filter((regionId) => !used.has(regionId)),
-  };
-}
 
 function partFactoryFor(result: ProcessedModularSprite | null) {
   return (
@@ -281,7 +196,6 @@ function colorForPart(
 
 export function useModularSpriteWizardController({
   open,
-  existingId = null,
   onOpenChange,
   onCommit,
   ports,
@@ -296,7 +210,6 @@ export function useModularSpriteWizardController({
   stateRef.current = state;
   const resultRef = useRef<ProcessedModularSprite | null>(null);
   const processGeneration = useRef(0);
-  const loadedExistingId = useRef<string | null>(null);
   const lastAutoApplied = useRef("");
   const [resultVersion, setResultVersion] = useState(0);
   const [previewMode, setPreviewMode] = useState<PreviewMode>("result");
@@ -345,16 +258,13 @@ export function useModularSpriteWizardController({
   );
 
   const loadFile = useCallback(
-    async (
-      nextFile: File,
-      existingDocument?: ModularSpriteDocument,
-    ): Promise<void> => {
+    async (nextFile: File): Promise<void> => {
       dispatch({ type: "SOURCE_SELECTED" });
       try {
         const decoded = await ports.image.decode(nextFile);
         const preview = ports.image.preview(decoded);
         const detected = analyzeModularSpriteBackground(preview);
-        const recipe = existingDocument?.recipe ?? {
+        const recipe = {
           ...structuredClone(stateRef.current.recipe),
           background: {
             ...stateRef.current.recipe.background,
@@ -367,16 +277,12 @@ export function useModularSpriteWizardController({
           file: nextFile,
           image: decoded,
           preview,
-          ...(existingDocument ? { existingDocument } : {}),
         };
         dispatch({
           type: "SOURCE_LOADED",
           source,
           recipe,
-          name:
-            existingDocument?.name ??
-            (nextFile.name.replace(/\.[^.]+$/, "") || "Modular Sprite"),
-          ...(existingDocument ? { existingId: existingDocument.id } : {}),
+          name: nextFile.name.replace(/\.[^.]+$/, "") || "Modular Sprite",
         });
       } catch (loadError) {
         dispatch({
@@ -390,34 +296,6 @@ export function useModularSpriteWizardController({
     },
     [ports.image, ports.processing],
   );
-
-  useEffect(() => {
-    if (
-      !open ||
-      !existingId ||
-      loadedExistingId.current === existingId ||
-      !ports.resolveExisting
-    )
-      return;
-    loadedExistingId.current = existingId;
-    void ports
-      .resolveExisting(existingId)
-      .then((existing) => loadFile(existing.file, existing.document))
-      .catch((error) =>
-        dispatch({
-          type: "LOAD_FAILED",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Could not open the source image",
-        }),
-      );
-  }, [existingId, loadFile, open, ports.resolveExisting]);
-
-  useEffect(() => {
-    if (!open || existingId) return;
-    loadedExistingId.current = null;
-  }, [existingId, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -465,9 +343,10 @@ export function useModularSpriteWizardController({
           const previousResult = current.processingResult;
           let grouping: RegionGrouping;
           if (!current.grouping) {
-            grouping = source.existingDocument
-              ? existingGrouping(source.existingDocument, nextResult)
-              : createInitialGrouping(nextResult, partFactoryFor(nextResult));
+            grouping = createInitialGrouping(
+              nextResult,
+              partFactoryFor(nextResult),
+            );
           } else if (previousResult) {
             grouping = reconcileRegionGrouping(
               current.grouping,
@@ -758,7 +637,6 @@ export function useModularSpriteWizardController({
     try {
       const outcome = await finalizeModularSpriteImport(
         {
-          existingId: current.existingId,
           source: current.source,
           recipe: current.recipe,
           previewResult: current.processingResult,
@@ -767,9 +645,6 @@ export function useModularSpriteWizardController({
           addToCanvas: current.addToCanvas,
           schema: {
             applied: current.schema.applied,
-            addSchema: current.schema.addSchema,
-            saveMode: current.schema.saveMode,
-            metadata: current.schema.metadata,
           },
         },
         {
@@ -809,7 +684,6 @@ export function useModularSpriteWizardController({
     if (hasUnsavedChanges(stateRef.current) && !(confirmDiscard?.() ?? true))
       return false;
     reset();
-    loadedExistingId.current = null;
     onOpenChange(false);
     return true;
   }, [confirmDiscard, onOpenChange, reset]);
@@ -818,14 +692,6 @@ export function useModularSpriteWizardController({
   const redo = useCallback(() => dispatch({ type: "REDO" }), []);
   const setAutoMatch = useCallback(
     (value: boolean) => dispatch({ type: "SET_AUTO_MATCH", value }),
-    [],
-  );
-  const setSchemaEditor = useCallback(
-    (
-      value: Partial<
-        Pick<WizardState["schema"], "addSchema" | "saveMode" | "metadata">
-      >,
-    ) => dispatch({ type: "SET_SCHEMA_EDITOR", value }),
     [],
   );
   const setName = useCallback(
@@ -873,7 +739,6 @@ export function useModularSpriteWizardController({
     redo,
     applySchemaMatch,
     setAutoMatch,
-    setSchemaEditor,
     setName,
     setAddToCanvas,
     next,

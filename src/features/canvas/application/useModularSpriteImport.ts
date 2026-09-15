@@ -104,9 +104,19 @@ export function useModularSpriteImport({
       const partAssetIds = new Map(
         request.parts.map((part) => [
           part.draft.partKey,
-          oldPartForDraft(part.draft)?.assetId ?? toAssetId(uid()),
+          oldPartForDraft(part.draft)?.assetId ??
+            (part.draft.assetId &&
+            currentProject.textures.some(
+              (texture) => texture.id === part.draft.assetId,
+            )
+              ? part.draft.assetId
+              : toAssetId(uid())),
         ]),
       );
+      if (new Set(partAssetIds.values()).size !== partAssetIds.size)
+        throw new Error("A Library asset cannot fill more than one package part");
+      if ([...partAssetIds.values()].includes(sourceAssetId))
+        throw new Error("The package source cannot also be used as a part");
 
       if (existing) {
         for (const part of request.parts) {

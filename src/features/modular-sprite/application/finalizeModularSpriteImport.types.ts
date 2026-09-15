@@ -1,11 +1,9 @@
 import type { ModularSpriteProcessingRecipe } from "@kukla2d/contracts";
 import type {
   ModularSpriteSchema,
-  SchemaAssetRef,
   PortableSchemaSnapshot,
 } from "@kukla2d/modular-sprite-schema";
 
-import type { ModularSpriteSchemaMetadata } from "@/features/modular-sprite/application/schemaBinding.types.js";
 import type {
   ExtractedPart,
   ModularSpriteDraftPart,
@@ -24,20 +22,6 @@ export interface ModularSpriteProcessingPort {
   ): Promise<ExtractedPart[]>;
 }
 
-interface StoredSchemaAsset extends SchemaAssetRef {
-  blob: Blob;
-}
-
 export interface ModularSpriteSchemaPort {
-  createSchema(input: {
-    metadata: ModularSpriteSchemaMetadata;
-    parts: readonly ModularSpriteDraftPart[];
-    observation: ProcessedModularSprite["observation"];
-    referenceAsset: SchemaAssetRef;
-    schemaId?: string;
-    revision?: number;
-  }): ModularSpriteSchema;
-  saveAsset(asset: StoredSchemaAsset): Promise<void>;
-  save(schema: ModularSpriteSchema): Promise<void>;
   portableSnapshot(schema: ModularSpriteSchema): PortableSchemaSnapshot;
 }

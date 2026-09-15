@@ -9,6 +9,12 @@ export {
   processModularSpriteAsync,
 } from "@/features/modular-sprite/domain/processing/pipeline.js";
 export { matchRegionsToTemplate } from "@/features/modular-sprite/domain/matching.js";
+export { slugPartKey } from "@/features/modular-sprite/application/partDraftFactory.js";
+export {
+  createModularSpriteSchema,
+  portableModularSpriteSchema,
+} from "@/features/modular-sprite/application/schemaBinding.js";
+export { createModularSpriteProcessingApi } from "@/features/modular-sprite/composition/createModularSpriteProcessingApi.js";
 export {
   createInitialGrouping,
   createPartFromRegions,

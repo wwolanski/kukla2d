@@ -1,6 +1,8 @@
 import PropTypes from "prop-types";
 import { lazy, Suspense } from "react";
 
+import { publishProjectSchemasToLocalDatabase } from "@/features/projects";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,11 +40,18 @@ function loadModularSpriteWizard() {
   }));
 }
 
+function loadModularSpriteGenerator() {
+  return import("@/features/modular-sprite-generator").then((m) => ({
+    default: m.ModularSpriteGeneratorComposition,
+  }));
+}
+
 const ExportModal = lazy(loadExportModal);
 const PreferencesModal = lazy(loadPreferencesModal);
 const SaveModal = lazy(loadSaveModal);
 const LoadModal = lazy(loadLoadModal);
 const ModularSpriteWizard = lazy(loadModularSpriteWizard);
+const ModularSpriteGenerator = lazy(loadModularSpriteGenerator);
 
 export function EditorModals({
   exportModalOpen,
@@ -56,6 +65,8 @@ export function EditorModals({
   importRef,
   modularSpriteEditor,
   setModularSpriteEditor,
+  modularSpriteGenerator,
+  setModularSpriteGenerator,
 }) {
   return (
     <>
@@ -91,6 +102,7 @@ export function EditorModals({
             currentDbProjectName={projectSession.currentDbProjectName}
             onSavedToDb={projectSession.handleSavedToDb}
             onSaveSuccess={projectSession.handleSaveSuccess}
+            publishSchemas={publishProjectSchemasToLocalDatabase}
           />
         </Suspense>
       )}
@@ -110,10 +122,26 @@ export function EditorModals({
         <Suspense fallback={null}>
           <ModularSpriteWizard
             open={modularSpriteEditor.open}
-            existingId={modularSpriteEditor.existingId}
             highlightFirstExample={modularSpriteEditor.highlightFirstExample}
             onOpenChange={(open) =>
               setModularSpriteEditor((current) => ({ ...current, open }))
+            }
+            onCommit={(request) => {
+              if (!importRef.current?.commitModularSprite)
+                throw new Error("Canvas import service is not ready");
+              return importRef.current.commitModularSprite(request);
+            }}
+          />
+        </Suspense>
+      )}
+
+      {modularSpriteGenerator.open && modularSpriteGenerator.intent && (
+        <Suspense fallback={null}>
+          <ModularSpriteGenerator
+            open={modularSpriteGenerator.open}
+            intent={modularSpriteGenerator.intent}
+            onOpenChange={(open) =>
+              setModularSpriteGenerator((current) => ({ ...current, open }))
             }
             onCommit={(request) => {
               if (!importRef.current?.commitModularSprite)
@@ -234,8 +262,16 @@ EditorModals.propTypes = {
   importRef: refShape.isRequired,
   modularSpriteEditor: PropTypes.shape({
     open: PropTypes.bool.isRequired,
-    existingId: PropTypes.string,
     highlightFirstExample: PropTypes.bool.isRequired,
   }).isRequired,
   setModularSpriteEditor: PropTypes.func.isRequired,
+  modularSpriteGenerator: PropTypes.shape({
+    open: PropTypes.bool.isRequired,
+    intent: PropTypes.shape({
+      existingId: PropTypes.string.isRequired,
+      includeAssetId: PropTypes.string,
+      removeAssetId: PropTypes.string,
+    }),
+  }).isRequired,
+  setModularSpriteGenerator: PropTypes.func.isRequired,
 };

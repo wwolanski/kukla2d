@@ -40,7 +40,10 @@ interface LayerPanelControllerOptions {
   onImportModularSprite?: (options?: {
     highlightFirstExample?: boolean;
   }) => void;
-  onEditModularSprite?: (id: string) => void;
+  onRegenerateModularSprite?: (
+    id: string,
+    options?: { includeAssetId?: string; removeAssetId?: string },
+  ) => void;
   getDragImage?: () => HTMLCanvasElement | null;
 }
 
@@ -52,10 +55,10 @@ function useLayerPanelControllerImpl(
 ) {
   const {
     getDragImage,
-    onEditModularSprite,
     onImportClick,
     onImportFiles,
     onImportModularSprite,
+    onRegenerateModularSprite,
   } = options;
   const {
     nodes,
@@ -411,6 +414,20 @@ function useLayerPanelControllerImpl(
           (f) => f.id === folderId,
         );
         if (folder) folder.name = newName;
+        const packageDocument = projectDraft.modularSprites.find((sprite) =>
+          projectDraft.assetPlacements.some(
+            (placement) =>
+              placement.assetId === sprite.sourceAssetId &&
+              placement.folderId === folderId,
+          ),
+        );
+        if (packageDocument) {
+          packageDocument.name = newName;
+          const sourceTexture = projectDraft.textures.find(
+            (texture) => texture.id === packageDocument.sourceAssetId,
+          );
+          if (sourceTexture) sourceTexture.name = `${newName} Source`;
+        }
       });
     },
     [updateProject],
@@ -461,12 +478,21 @@ function useLayerPanelControllerImpl(
 
   const onRemoveLibraryAsset = useCallback(
     (assetId: string) => {
+      const packagePart = modularSprites.find((sprite) =>
+        sprite.parts.some((part) => part.assetId === assetId),
+      );
+      if (packagePart) {
+        onRegenerateModularSprite?.(packagePart.id, {
+          removeAssetId: assetId,
+        });
+        return;
+      }
       updateProject((projectDraft) => {
         removeLibraryAssets(projectDraft, new Set([assetId]));
       });
       setSelection([]);
     },
-    [setSelection, updateProject],
+    [modularSprites, onRegenerateModularSprite, setSelection, updateProject],
   );
 
   const onRemoveLibraryFolder = useCallback(
@@ -550,6 +576,44 @@ function useLayerPanelControllerImpl(
       clearLibraryDragSession();
       if (!source || source.id === targetId) return;
 
+      const sourcePackage = modularSprites.find(
+        (sprite) =>
+          sprite.sourceAssetId === source.id ||
+          sprite.parts.some((part) => part.assetId === source.id),
+      );
+      const targetPackage =
+        targetKind === "folder"
+          ? modularSprites.find((sprite) => {
+              const sourcePlacement = assetPlacements.find(
+                (placement) => placement.assetId === sprite.sourceAssetId,
+              );
+              return sourcePlacement?.folderId === targetId;
+            })
+          : undefined;
+      if (sourcePackage) {
+        onRegenerateModularSprite?.(sourcePackage.id);
+        return;
+      }
+      if (source.kind === "folder") {
+        const lockedPackage = modularSprites.find((sprite) => {
+          const sourcePlacement = assetPlacements.find(
+            (placement) => placement.assetId === sprite.sourceAssetId,
+          );
+          return sourcePlacement?.folderId === source.id;
+        });
+        if (lockedPackage) {
+          onRegenerateModularSprite?.(lockedPackage.id);
+          return;
+        }
+      }
+      if (targetPackage) {
+        onRegenerateModularSprite?.(
+          targetPackage.id,
+          source.kind === "asset" ? { includeAssetId: source.id } : undefined,
+        );
+        return;
+      }
+
       if (source.kind === "asset" && targetKind === "folder") {
         updateProject((projectDraft) => {
           if (!projectDraft.assetPlacements) projectDraft.assetPlacements = [];
@@ -596,7 +660,13 @@ function useLayerPanelControllerImpl(
         });
       }
     },
-    [clearLibraryDragSession, updateProject],
+    [
+      assetPlacements,
+      clearLibraryDragSession,
+      modularSprites,
+      onRegenerateModularSprite,
+      updateProject,
+    ],
   );
 
   return {
@@ -634,7 +704,7 @@ function useLayerPanelControllerImpl(
       onSelect: handleSelect,
       onImportClick,
       onImportModularSprite,
-      onEditModularSprite,
+      onRegenerateModularSprite,
       imageCount: depthNodes.length,
       boneCount: bones.length,
     },
