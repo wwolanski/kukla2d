@@ -1,12 +1,7 @@
 import type {
-  ModularSpriteDocument,
-  ModularSpriteId,
-} from "@kukla2d/contracts";
-import type {
   MatchProgressEvent,
   ModularSpriteSchema,
   SemanticCatalog,
-  SemanticDefinition,
   SchemaMatchRequest,
   SchemaMatchResponse,
 } from "@kukla2d/modular-sprite-schema";
@@ -46,28 +41,18 @@ interface ModularSpriteSchemaControllerPort extends ModularSpriteSchemaPort {
   semantics?: SemanticCatalog;
 }
 
-interface ModularSpriteExistingSource {
-  file: File;
-  document: ModularSpriteDocument;
-}
-
 interface ModularSpriteWizardControllerPorts {
   image: ModularSpriteImageControllerPort;
   processing: ModularSpriteProcessingControllerPort;
   schema: ModularSpriteSchemaControllerPort;
-  resolveExisting?: (
-    id: ModularSpriteId,
-  ) => Promise<ModularSpriteExistingSource>;
 }
 
 export interface ModularSpriteWizardProps {
   open: boolean;
-  existingId?: ModularSpriteId | null;
   highlightFirstExample?: boolean;
   onOpenChange: (open: boolean) => void;
   onCommit: (request: ModularSpriteCommitRequest) => Promise<unknown>;
   ports: ModularSpriteWizardControllerPorts;
   semanticCatalog: SemanticCatalog;
-  onSaveSemantic: (definition: SemanticDefinition) => Promise<void>;
   confirmDiscard?: () => boolean;
 }

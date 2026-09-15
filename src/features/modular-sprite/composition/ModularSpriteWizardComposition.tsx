@@ -1,13 +1,6 @@
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 
-import type { ModularSpriteId, ProjectDocument } from "@kukla2d/contracts";
-
-import { useProjectStore } from "@/store/projectStore";
-
-import {
-  createModularSpriteSchema,
-  portableModularSpriteSchema,
-} from "@/features/modular-sprite/application/schemaBinding.js";
+import { portableModularSpriteSchema } from "@/features/modular-sprite/application/schemaBinding.js";
 import { ModularSpriteWizard as WizardView } from "@/features/modular-sprite/components/wizard/ModularSpriteWizard.js";
 import type { ModularSpriteWizardProps as WizardViewProps } from "@/features/modular-sprite/components/wizard/ModularSpriteWizard.types.js";
 import {
@@ -20,7 +13,6 @@ import { localSchemaApi } from "@/features/modular-sprite-schema";
 
 interface ModularSpriteWizardCompositionProps {
   open: boolean;
-  existingId?: ModularSpriteId | null;
   highlightFirstExample?: boolean;
   onOpenChange: (open: boolean) => void;
   onCommit: WizardViewProps["onCommit"];
@@ -29,15 +21,11 @@ interface ModularSpriteWizardCompositionProps {
 
 export function ModularSpriteWizardComposition({
   open,
-  existingId,
   highlightFirstExample = false,
   onOpenChange,
   onCommit,
   confirmDiscard,
 }: ModularSpriteWizardCompositionProps): React.ReactElement {
-  const project = useProjectStore((state) => state.project);
-  const projectRef = useRef<ProjectDocument>(project);
-  projectRef.current = project;
   const processingGateway = useMemo(() => createModularSpriteGateway(), []);
   const ports = useMemo(
     () => ({
@@ -54,37 +42,8 @@ export function ModularSpriteWizardComposition({
           request: Parameters<typeof localSchemaApi.match>[0],
           options?: Parameters<typeof localSchemaApi.match>[1],
         ) => localSchemaApi.match(request, options),
-        createSchema: createModularSpriteSchema,
-        saveAsset: (asset: Parameters<typeof localSchemaApi.saveAsset>[0]) =>
-          localSchemaApi.saveAsset(asset),
-        save: (schema: Parameters<typeof localSchemaApi.save>[0]) =>
-          localSchemaApi.save(schema),
         portableSnapshot: portableModularSpriteSchema,
         semantics: localSchemaApi.semantics,
-      },
-      resolveExisting: async (id: ModularSpriteId) => {
-        const currentProject = projectRef.current;
-        const document = currentProject.modularSprites.find(
-          (candidate) => candidate.id === id,
-        );
-        if (!document)
-          throw new Error(
-            "The modular sprite no longer exists in this project",
-          );
-        const texture = currentProject.textures.find(
-          (candidate) => candidate.id === document.sourceAssetId,
-        );
-        if (!texture)
-          throw new Error("The modular sprite source texture is missing");
-        const response = await fetch(texture.source);
-        if (!response.ok) throw new Error("Could not open the source image");
-        const blob = await response.blob();
-        return {
-          document,
-          file: new File([blob], texture.fileName || `${document.name}.png`, {
-            type: blob.type || "image/png",
-          }),
-        };
       },
     }),
     [processingGateway],
@@ -93,13 +52,11 @@ export function ModularSpriteWizardComposition({
   return (
     <WizardView
       open={open}
-      {...(existingId !== undefined ? { existingId } : {})}
       highlightFirstExample={highlightFirstExample}
       onOpenChange={onOpenChange}
       onCommit={onCommit}
       ports={ports}
       semanticCatalog={localSchemaApi.semantics}
-      onSaveSemantic={(definition) => localSchemaApi.saveSemantic(definition)}
       {...(confirmDiscard ? { confirmDiscard } : {})}
     />
   );

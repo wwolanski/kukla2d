@@ -16,7 +16,7 @@ export function LayerPanelView({
   onImportClick,
   onImportFiles,
   onImportModularSprite,
-  onEditModularSprite,
+  onRegenerateModularSprite,
   onLoadExampleProject,
 }) {
   const { shared, tabs, library, depth, bones } = useLayerPanelController({
@@ -24,7 +24,7 @@ export function LayerPanelView({
     onImportClick,
     onImportFiles,
     onImportModularSprite,
-    onEditModularSprite,
+    onRegenerateModularSprite,
   });
   const [replaceTexturesOpen, setReplaceTexturesOpen] = useState(false);
 
@@ -75,7 +75,7 @@ export function LayerPanelView({
             onSelect={library.onSelect}
             onImportClick={library.onImportClick}
             onImportModularSprite={library.onImportModularSprite}
-            onEditModularSprite={library.onEditModularSprite}
+            onRegenerateModularSprite={library.onRegenerateModularSprite}
             onLoadExampleProject={onLoadExampleProject}
           />
         </Suspense>

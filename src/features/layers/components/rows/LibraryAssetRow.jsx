@@ -1,4 +1,4 @@
-import { Check, FileImage, Pencil, Trash2 } from "lucide-react";
+import { Boxes, Check, FileImage, Lock, Pencil, Trash2 } from "lucide-react";
 import { useRef } from "react";
 
 import { useInlineRename } from "@/features/layers/application/useInlineRename.js";
@@ -22,7 +22,7 @@ export function LibraryAssetRow({
   onSelect,
   onRename,
   onRemove,
-  onEditModularSprite,
+  onRegenerateModularSprite,
   onDragStart,
   onDragOver,
   onDrop,
@@ -69,8 +69,8 @@ export function LibraryAssetRow({
           onDoubleClick={(e) => {
             e.stopPropagation();
             if (asset.modularKind === "source")
-              onEditModularSprite?.(asset.modularSpriteId);
-            else startEdit();
+              onRegenerateModularSprite?.(asset.modularSpriteId);
+            else if (asset.modularKind !== "part") startEdit();
           }}
           onDragStart={(e) => {
             if (asset.modularKind === "source") {
@@ -120,8 +120,15 @@ export function LibraryAssetRow({
               />
             )}
             {asset.modularKind === "source" && (
-              <span className="rounded bg-primary/15 px-1 py-0.5 text-[8px] font-semibold uppercase text-primary">
+              <span className="inline-flex items-center gap-0.5 rounded bg-primary/15 px-1 py-0.5 text-[8px] font-semibold uppercase text-primary">
+                <Lock className="h-2.5 w-2.5" />
                 Modular Source
+              </span>
+            )}
+            {asset.modularKind === "part" && (
+              <span className="inline-flex items-center gap-0.5 rounded bg-primary/10 px-1 py-0.5 text-[8px] font-semibold uppercase text-primary/80">
+                <Boxes className="h-2.5 w-2.5" />
+                Package Part
               </span>
             )}
             {formatFileSize(asset.size)}
@@ -129,28 +136,47 @@ export function LibraryAssetRow({
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-56">
-        {asset.modularKind === "source" && (
+        {asset.modularKind === "source" && onRegenerateModularSprite && (
           <ContextMenuItem
-            onSelect={() => onEditModularSprite?.(asset.modularSpriteId)}
+            onSelect={() => onRegenerateModularSprite(asset.modularSpriteId)}
           >
-            <Pencil className="mr-2 h-4 w-4 opacity-70" />
-            Edit modular sprite
+            <Boxes className="mr-2 h-4 w-4 opacity-70" />
+            Open generator
           </ContextMenuItem>
         )}
-        <ContextMenuItem onSelect={() => requestAnimationFrame(startEdit)}>
-          <Pencil className="mr-2 h-4 w-4 opacity-70" />
-          {asset.modularKind === "source" ? "Rename set" : "Rename"}
-        </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuItem
-          className="text-destructive focus:text-destructive"
-          onSelect={() => onRemove?.(asset.id)}
-        >
-          <Trash2 className="mr-2 h-4 w-4 opacity-70" />
-          {asset.modularKind === "source"
-            ? "Delete modular sprite"
-            : "Remove from library"}
-        </ContextMenuItem>
+        {asset.modularKind !== "part" && (
+          <ContextMenuItem onSelect={() => requestAnimationFrame(startEdit)}>
+            <Pencil className="mr-2 h-4 w-4 opacity-70" />
+            {asset.modularKind === "source" ? "Rename set" : "Rename"}
+          </ContextMenuItem>
+        )}
+        {asset.modularKind === "part" ? (
+          onRegenerateModularSprite && (
+            <ContextMenuItem
+              onSelect={() =>
+                onRegenerateModularSprite(asset.modularSpriteId, {
+                  removeAssetId: asset.id,
+                })
+              }
+            >
+              <Boxes className="mr-2 h-4 w-4 opacity-70" />
+              Regenerate package…
+            </ContextMenuItem>
+          )
+        ) : (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              className="text-destructive focus:text-destructive"
+              onSelect={() => onRemove?.(asset.id)}
+            >
+              <Trash2 className="mr-2 h-4 w-4 opacity-70" />
+              {asset.modularKind === "source"
+                ? "Delete modular sprite"
+                : "Remove from library"}
+            </ContextMenuItem>
+          </>
+        )}
       </ContextMenuContent>
     </ContextMenu>
   );

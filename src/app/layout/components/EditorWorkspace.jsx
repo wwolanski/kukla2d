@@ -44,7 +44,7 @@ export function EditorWorkspace({
   onDeleteMesh,
   onLoadExampleProject,
   onImportModularSprite,
-  onEditModularSprite,
+  onRegenerateModularSprite,
 }) {
   const handleImportClick = useCallback(() => {
     importRef.current?.openFilePicker?.();
@@ -76,7 +76,7 @@ export function EditorWorkspace({
                     onImportFiles={handleImportFiles}
                     onLoadExampleProject={onLoadExampleProject}
                     onImportModularSprite={onImportModularSprite}
-                    onEditModularSprite={onEditModularSprite}
+                    onRegenerateModularSprite={onRegenerateModularSprite}
                   />
                 </div>
               </div>
@@ -254,5 +254,5 @@ EditorWorkspace.propTypes = {
   onDeleteMesh: PropTypes.func.isRequired,
   onLoadExampleProject: PropTypes.func.isRequired,
   onImportModularSprite: PropTypes.func.isRequired,
-  onEditModularSprite: PropTypes.func.isRequired,
+  onRegenerateModularSprite: PropTypes.func.isRequired,
 };

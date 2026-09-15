@@ -22,6 +22,8 @@ interface LibraryFolderRow {
   name: string;
   sourceFileName: string | null;
   origin: LibraryFolder["origin"] | null;
+  modularSpriteId: string | null;
+  isModularSpritePackage: boolean;
   children: LibraryTreeRow[];
 }
 
@@ -59,12 +61,20 @@ export function buildLibraryTree({
     string,
     { id: string; kind: "source" | "part"; partKey: string | null }
   >();
+  const modularPackageByFolderId = new Map<string, string>();
   for (const modularSprite of modularSprites ?? []) {
     modularByAssetId.set(modularSprite.sourceAssetId, {
       id: modularSprite.id,
       kind: "source",
       partKey: null,
     });
+    const sourcePlacement = placements.find(
+      (placement) => placement.assetId === modularSprite.sourceAssetId,
+    );
+    const packageFolderId = sourcePlacement?.folderId ?? null;
+    if (packageFolderId) {
+      modularPackageByFolderId.set(packageFolderId, modularSprite.id);
+    }
     for (const part of modularSprite.parts) {
       modularByAssetId.set(part.assetId, {
         id: modularSprite.id,
@@ -102,6 +112,8 @@ export function buildLibraryTree({
         name: folder.name,
         sourceFileName: folder.sourceFileName ?? null,
         origin: folder.origin ?? null,
+        modularSpriteId: modularPackageByFolderId.get(folder.id) ?? null,
+        isModularSpritePackage: modularPackageByFolderId.has(folder.id),
         children: buildChildren(folder.id),
       });
     }

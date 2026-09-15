@@ -16,6 +16,8 @@ import { useProjectStore } from "@/store/projectStore";
 import { analyzeProjectReadiness } from "@/domain/projectReadiness.js";
 import type { ProjectReadinessIssue } from "@/domain/projectReadiness.types.js";
 
+import { analyzeProjectSchemaEligibility } from "@/features/projects/application/projectSchemaPublication.js";
+
 import type { StoredProjectRecord } from "@/io/projectDb.types.js";
 
 type SaveMode = "library" | "download";
@@ -30,6 +32,9 @@ interface UseSaveProjectProps {
   onSavedToDb: (id: string, name: string) => void;
   onSaveSuccess?: () => void;
   onOpenChange: (open: boolean) => void;
+  publishSchemas?: (
+    project: ProjectDocument,
+  ) => Promise<{ project: ProjectDocument; publishedCount: number }>;
 }
 
 interface UseSaveProjectResult {
@@ -37,6 +42,8 @@ interface UseSaveProjectResult {
   author: string;
   saveMode: SaveMode;
   isSaving: boolean;
+  saveToSchemaDatabase: boolean;
+  schemaEligibility: ReturnType<typeof analyzeProjectSchemaEligibility>;
   overwriteProject: StoredProjectRecord | null;
   libraryProjects: StoredProjectRecord[];
   preflightErrors: ProjectReadinessIssue[] | null;
@@ -45,6 +52,7 @@ interface UseSaveProjectResult {
   setName: (name: string) => void;
   setAuthor: (author: string) => void;
   setSaveMode: (mode: SaveMode) => void;
+  setSaveToSchemaDatabase: (value: boolean) => void;
   handleSaveNew: () => void;
   handleOverwrite: (project: StoredProjectRecord) => void;
   confirmOverwrite: () => void;
@@ -65,11 +73,14 @@ export function useSaveProject({
   onSavedToDb,
   onSaveSuccess,
   onOpenChange,
+  publishSchemas,
 }: UseSaveProjectProps): UseSaveProjectResult {
   const [name, setName] = useState("");
   const [author, setAuthor] = useState("");
   const [saveMode, setSaveMode] = useState<SaveMode>("library");
   const [isSaving, setIsSaving] = useState(false);
+  const [saveToSchemaDatabase, setSaveToSchemaDatabase] = useState(false);
+  const schemaEligibility = analyzeProjectSchemaEligibility(project);
   const [overwriteProject, setOverwriteProject] =
     useState<StoredProjectRecord | null>(null);
   const [libraryProjects, setLibraryProjects] = useState<StoredProjectRecord[]>(
@@ -90,6 +101,7 @@ export function useSaveProject({
       setAuthor(project.author ?? "");
       setSaveMode(currentDbProjectId ? "library" : "library");
       setIsSaving(false);
+      setSaveToSchemaDatabase(false);
       setPreflightErrors(null);
       setPreflightWarnings(null);
       setPendingSave(null);
@@ -123,7 +135,7 @@ export function useSaveProject({
         const authorToUse = author.trim();
         const activeAnimationId =
           useAnimationStore.getState().activeAnimationId;
-        const projectToSave: ProjectDocument = {
+        let projectToSave: ProjectDocument = {
           ...project,
           author: authorToUse,
           lastActiveAnimationId: project.animations.some(
@@ -132,6 +144,14 @@ export function useSaveProject({
             ? activeAnimationId
             : null,
         };
+        if (saveToSchemaDatabase) {
+          if (!schemaEligibility.enabled)
+            throw new Error(schemaEligibility.reason);
+          if (!publishSchemas)
+            throw new Error("Schema database connection is unavailable");
+          const publication = await publishSchemas(projectToSave);
+          projectToSave = publication.project;
+        }
         const blob = await saveProject(projectToSave);
 
         if (mode === "download") {
@@ -167,6 +187,7 @@ export function useSaveProject({
           (draft) => {
             draft.author = projectToSave.author;
             draft.lastActiveAnimationId = projectToSave.lastActiveAnimationId;
+            draft.modularSprites = structuredClone(projectToSave.modularSprites);
           },
           { skipHistory: true },
         );
@@ -177,7 +198,18 @@ export function useSaveProject({
         setIsSaving(false);
       }
     },
-    [project, author, captureRef, onSavedToDb, onSaveSuccess, onOpenChange],
+    [
+      project,
+      author,
+      captureRef,
+      onSavedToDb,
+      onSaveSuccess,
+      onOpenChange,
+      saveToSchemaDatabase,
+      schemaEligibility.enabled,
+      schemaEligibility.reason,
+      publishSchemas,
+    ],
   );
 
   const handleSaveNew = useCallback(() => {
@@ -238,6 +270,8 @@ export function useSaveProject({
     author,
     saveMode,
     isSaving,
+    saveToSchemaDatabase,
+    schemaEligibility,
     overwriteProject,
     libraryProjects,
     preflightErrors,
@@ -246,6 +280,7 @@ export function useSaveProject({
     setName,
     setAuthor,
     setSaveMode,
+    setSaveToSchemaDatabase,
     handleSaveNew,
     handleOverwrite,
     confirmOverwrite,

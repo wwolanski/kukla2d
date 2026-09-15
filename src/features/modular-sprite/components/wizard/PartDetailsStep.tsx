@@ -8,10 +8,6 @@ import type {
   ProcessedModularSprite,
 } from "@/features/modular-sprite/domain/contracts.types.js";
 import type { RegionGrouping } from "@/features/modular-sprite/domain/partGrouping.types.js";
-import {
-  SchemaEditor,
-  type NewSchemaMetadata,
-} from "@/features/modular-sprite-schema";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,28 +177,15 @@ export function PartDetailsStep({
   grouping,
   resultRef,
   resultVersion,
-  schema,
   onUpdatePart,
-  onSchemaEditorChange,
 }: {
   grouping: RegionGrouping;
   resultRef: React.RefObject<ProcessedModularSprite | null>;
   resultVersion: number;
-  schema: {
-    addSchema: boolean;
-    saveMode: "new" | "revision";
-    metadata: NewSchemaMetadata;
-    applied: boolean;
-  };
   onUpdatePart: (
     index: number,
     change: Partial<ModularSpriteDraftPart>,
   ) => void;
-  onSchemaEditorChange: (value: {
-    addSchema?: boolean;
-    saveMode?: "new" | "revision";
-    metadata?: NewSchemaMetadata;
-  }) => void;
 }): React.ReactElement {
   return (
     <ScrollArea className="h-full min-h-0 min-w-0">
@@ -285,18 +268,6 @@ export function PartDetailsStep({
             </div>
           </div>
         ))}
-        <SchemaEditor
-          enabled={schema.addSchema}
-          onEnabledChange={(value) =>
-            onSchemaEditorChange({ addSchema: value })
-          }
-          value={schema.metadata}
-          onChange={(metadata) => onSchemaEditorChange({ metadata })}
-          existingApplied={schema.applied}
-          canRevise={schema.applied}
-          saveMode={schema.saveMode}
-          onSaveModeChange={(saveMode) => onSchemaEditorChange({ saveMode })}
-        />
       </div>
     </ScrollArea>
   );

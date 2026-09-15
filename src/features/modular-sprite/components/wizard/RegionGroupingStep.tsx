@@ -1,10 +1,7 @@
 import { Check, GripVertical, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import type {
-  SemanticCatalog,
-  SemanticDefinition,
-} from "@kukla2d/modular-sprite-schema";
+import type { SemanticCatalog } from "@kukla2d/modular-sprite-schema";
 
 import { PartThumbnail } from "@/features/modular-sprite/components/preview/PartThumbnail.js";
 import type {
@@ -183,7 +180,6 @@ export function RegionGroupingStep({
   onSelectRegion,
   onUpdatePart,
   semanticCatalog,
-  onSaveSemantic,
   onPendingNameSuggestionsChange,
 }: {
   result: ProcessedModularSprite;
@@ -203,7 +199,6 @@ export function RegionGroupingStep({
     change: Partial<ModularSpriteDraftPart>,
   ) => void;
   semanticCatalog: SemanticCatalog;
-  onSaveSemantic: (definition: SemanticDefinition) => Promise<void>;
   onPendingNameSuggestionsChange: (pending: boolean) => void;
 }): React.ReactElement {
   const [dropTarget, setDropTarget] = useState<string | null>(null);
@@ -418,7 +413,7 @@ export function RegionGroupingStep({
                         ? { semanticRoleId: part.semanticRoleId }
                         : {})}
                       semantics={semanticCatalog}
-                      onSaveSemantic={onSaveSemantic}
+                      onSaveSemantic={() => Promise.resolve()}
                       onChange={(value) => {
                         onUpdatePart(partIndex, value);
                         setPendingNames((previous) => {

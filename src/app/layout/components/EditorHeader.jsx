@@ -1,4 +1,4 @@
-import { FilePlus, FolderOpen, Download, Save, Settings2, Undo2, Redo2 } from 'lucide-react';
+import { ChevronDown, Database, Download, FilePlus, FolderOpen, Globe2, HardDrive, Redo2, Save, Settings2, Undo2 } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 import { useWorkflowActor, useWorkflowSelector } from '@/features/canvas';
@@ -7,6 +7,7 @@ import { ExportAreaPopover } from '@/features/export';
 import { cn } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const ANIMATION_UNSAFE_TOOLS = new Set([
@@ -176,6 +177,45 @@ export function EditorHeader({
       </TooltipProvider>
 
       <div className="flex-1" />
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-2 border border-border/50 px-2.5 text-xs font-normal"
+            aria-label="Schema database connection"
+          >
+            <Database className="h-3.5 w-3.5 text-emerald-500" />
+            <span className="text-muted-foreground">Connected to:</span>
+            <span className="font-medium">local (indexedDB)</span>
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" sideOffset={6} className="w-72 p-1.5">
+          <div className="flex items-start gap-2 rounded-md bg-muted/50 px-2.5 py-2">
+            <HardDrive className="mt-0.5 h-4 w-4 text-emerald-500" />
+            <div>
+              <p className="text-xs font-medium">local (indexedDB)</p>
+              <p className="text-[10px] text-muted-foreground">
+                Schemas stay in this browser.
+              </p>
+            </div>
+          </div>
+          <div
+            className="mt-1 flex cursor-not-allowed items-start gap-2 rounded-md px-2.5 py-2 opacity-45"
+            aria-disabled="true"
+            title="Global schema database is not available yet"
+          >
+            <Globe2 className="mt-0.5 h-4 w-4" />
+            <div>
+              <p className="text-xs font-medium">global (KuklaDB)</p>
+              <p className="text-[10px] text-muted-foreground">
+                Coming later
+              </p>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
     </header>
   );
 }

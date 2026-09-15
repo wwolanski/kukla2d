@@ -46,6 +46,7 @@ export function LibraryTab({
   onRenameAsset,
   onRemoveFolder,
   onRemoveAsset,
+  onRegenerateModularSprite,
   onDragStartAsset,
   onDragStartFolder,
   onDragOverRow,
@@ -57,7 +58,6 @@ export function LibraryTab({
   onSelect,
   onImportClick,
   onImportModularSprite,
-  onEditModularSprite,
   onLoadExampleProject,
 }) {
   const isEmpty = tree.length === 0;
@@ -116,6 +116,7 @@ export function LibraryTab({
                   }),
                 )
               }
+              onRegenerateModularSprite={onRegenerateModularSprite}
               onDragStart={onDragStartFolder}
               onDragOver={onDragOverRow}
               onDrop={onDropRow}
@@ -145,7 +146,7 @@ export function LibraryTab({
               }),
             )
           }
-          onEditModularSprite={onEditModularSprite}
+          onRegenerateModularSprite={onRegenerateModularSprite}
           onDragStart={onDragStartAsset}
           onDragOver={onDragOverRow}
           onDrop={onDropRow}

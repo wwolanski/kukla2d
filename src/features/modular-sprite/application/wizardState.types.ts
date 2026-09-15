@@ -1,8 +1,4 @@
-import type {
-  ModularSpriteDocument,
-  ModularSpriteId,
-  ModularSpriteProcessingRecipe,
-} from "@kukla2d/contracts";
+import type { ModularSpriteProcessingRecipe } from "@kukla2d/contracts";
 import type {
   ModularSpriteSchema,
   SchemaComparisonResult,
@@ -36,15 +32,6 @@ interface WizardSchemaState {
   matching: boolean;
   progress: { completed: number; total: number };
   autoMatch: boolean;
-  addSchema: boolean;
-  saveMode: "new" | "revision";
-  metadata: {
-    name: string;
-    description: string;
-    characterTypeIds: string[];
-    characterClassIds: string[];
-    tags: string[];
-  };
 }
 
 export interface WizardState {
@@ -54,7 +41,6 @@ export interface WizardState {
     file: File;
     image: RgbaImageData;
     preview: RgbaImageData;
-    existingDocument?: ModularSpriteDocument;
   } | null;
   recipe: ModularSpriteProcessingRecipe;
   processingResult: ProcessedModularSprite | null;
@@ -76,6 +62,5 @@ export interface WizardState {
   name: string;
   addToCanvas: boolean;
   processingRevision: number;
-  existingId: ModularSpriteId | null;
   lastHistory: { at: number; kind: "recipe" | "discrete" | "parts" } | null;
 }
