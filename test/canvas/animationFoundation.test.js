@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTimelineCommandApi } from '@/features/timeline/application/createTimelineCommandApi.js';
+import { createTimelineCommandApi } from '@/features/timeline';
 import { useProjectStore } from '@/store/projectStore';
 import { useAnimationStore } from '@/store/animationStore';
 import {

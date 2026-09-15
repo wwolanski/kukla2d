@@ -8,7 +8,7 @@ import {
 } from '../src/io/projectFormat';
 import { CURRENT_PROJECT_VERSION, validateProject } from '../src/schema/projectSchema';
 import { createPortableProjectSnapshot, assertJsonSafe } from '../src/schema/projectSnapshot';
-import { applyWeightBrush } from '../src/features/canvas/domain/meshWeighting.js';
+import { applyWeightBrush } from '@/features/canvas';
 import { createGoldenProject } from './fixtures/goldenProject';
 
 function makePart(id, name, extra = {}) {

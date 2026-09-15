@@ -42,16 +42,23 @@ typescript:
     - test/domain/animationTargets.test.ts
     - test/domain/editorModeFeedback.test.ts
     - test/layers/buildLibraryTree.test.ts
-    - test/modularSpriteProcessor.test.ts
-    - test/modularSpriteGrouping.test.ts
-    - test/modularSpriteWizardState.test.ts
-    - test/modularSpriteFinalize.test.ts
-    - test/modularSpriteProjectSchema.test.ts
-    - test/modularSpriteSchema.test.ts
+    - test/modular-sprite/modularSpriteProcessor.test.ts
+    - test/modular-sprite/modularSpriteGrouping.test.ts
+    - test/modular-sprite/modularSpriteWizardState.test.ts
+    - test/modular-sprite/modularSpriteFinalize.test.ts
+    - test/modular-sprite/modularSpriteProjectSchema.test.ts
+    - test/modular-sprite-schema/modularSpriteSchema.test.ts
     - test/runtime/pathConstraint.test.ts
     - test/runtime/physicsRig.test.ts
     - test/runtime/skin.test.ts
     - test/timeline/timelineTime.test.ts
+
+# Tests under test/<feature> mirror src/features/<feature>. Root-level and
+# integration/contract tests remain external consumers of public feature APIs.
+testing:
+  roots:
+    - path: test
+      ownership: mirrored
 
 typeLocality:
   ignoredPrefixes:
@@ -77,11 +84,6 @@ tools:
 # Every registered rule is enabled by default. Controls may disable one rule
 # globally or except matching repository-relative paths for that rule only.
 rules:
-  # White-box tests mirror feature ownership (for example test/timeline/**
-  # belongs to src/features/timeline) without gaining access to other features.
-  ARCH-007:
-    options:
-      allowMirroredTestInternals: true
   # Preserve Kukla2D's existing Knip policy: export analysis is intentionally
   # disabled while other project-level checks remain active.
   DEAD-002: false

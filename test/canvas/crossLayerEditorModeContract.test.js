@@ -25,8 +25,8 @@ import {
   clearHistory,
   undoCount,
 } from '@/store/undoHistory';
-import { createTimelineCommandApi } from '@/features/timeline/application/createTimelineCommandApi.js';
-import { createAnimationAuthoringApi } from '@/features/animation/application/createAnimationAuthoringApi.js';
+import { createTimelineCommandApi } from '@/features/timeline';
+import { createAnimationAuthoringApi } from '@/features/animation';
 import { evaluateEditorFramePose } from '@/features/canvas/application/evaluateEditorFramePose.js';
 import {
   buildEffectiveNodes,

@@ -1,3 +1,11 @@
+import { lazy } from "react";
+
+export const PreferencesModal = lazy(() =>
+  import("@/features/preferences/components/PreferencesModal.jsx").then(
+    ({ PreferencesModal: Component }) => ({ default: Component }),
+  ),
+);
+
 export { AVAILABLE_FONTS } from "@/features/preferences/domain/availableFonts.js";
 export type { AvailableFont } from "@/features/preferences/domain/availableFonts.types.js";
 export {

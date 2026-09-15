@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useAnimationStore } from '@/store/animationStore';
 import { clearHistory, undo, applyPatches } from '@/store/undoHistory';
 import { useProjectStore } from '@/store/projectStore';
-import { createTimelineCommandApi } from '@/features/timeline/application/createTimelineCommandApi';
+import { createTimelineCommandApi } from '@/features/timeline';
 
 function resetStores() {
   clearHistory();

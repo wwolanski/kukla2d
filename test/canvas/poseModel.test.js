@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildFramePose } from '@/features/canvas/domain/framePose.js';
 import { bakeDefaultPoseIntoSetup } from '@/features/canvas/domain/poseBake.js';
-import { translateLinkedBoneSelection } from '@/features/rigging/domain/linkedTransform.js';
+import { translateLinkedBoneSelection } from '@/features/rigging';
 import { makeLocalMatrix, mat3Inverse, mat3Mul } from '@/domain/transforms.js';
 import {
   clearDefaultPoseTarget,

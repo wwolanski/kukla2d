@@ -2,7 +2,6 @@ import {
   DEFAULT_MODULAR_SPRITE_RECIPE,
   type AssetId,
   type ModularSpriteDocument,
-  type ModularSpriteId,
   type PartNode,
   type ProjectDocument,
 } from "@kukla2d/contracts";
@@ -13,20 +12,10 @@ import type {
   RgbaImageData,
 } from "@/features/modular-sprite/index.js";
 import { normalizedPixelFrame, slugPartKey } from "@/features/modular-sprite/index.js";
-
-interface GeneratorAsset {
-  assetId: AssetId;
-  image: RgbaImageData;
-  blob: Blob;
-}
-
-export interface GenerateModularSpriteInput {
-  project: ProjectDocument;
-  name: string;
-  assets: readonly GeneratorAsset[];
-  existingId?: ModularSpriteId;
-  padding?: number;
-}
+import type {
+  GenerateModularSpriteInput,
+  GeneratorAsset,
+} from "@/features/modular-sprite-generator/application/generateModularSprite.types.js";
 
 interface PackedAsset extends GeneratorAsset {
   x: number;

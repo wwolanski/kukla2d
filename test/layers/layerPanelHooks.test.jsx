@@ -3,7 +3,7 @@
 import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 import { createEmptyProject } from '@/core/createEmptyProject';
-import { EditorWorkflowContext } from '@/features/canvas/application/EditorWorkflowContext.js';
+import { EditorWorkflowContext } from '@/features/canvas';
 import { useLayerPanelBoneTreeDnD } from '@/features/layers/application/useLayerPanelBoneTreeDnD';
 import { useLayerPanelDepthDnD } from '@/features/layers/application/useLayerPanelDepthDnD';
 import { useLayerPanelSelection } from '@/features/layers/application/useLayerPanelSelection';

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createEmptyProject } from "@/core/createEmptyProject";
 import { useModularSpriteImport } from "@/features/canvas/application/useModularSpriteImport.js";
-import { renderHook } from "./renderHook.jsx";
+import { renderHook } from "../renderHook.jsx";
 
 const image = {
   width: 1,

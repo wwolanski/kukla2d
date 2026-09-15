@@ -31,7 +31,7 @@ describe('Stage 05: Marker dialog', () => {
   });
 
   it('uses app Dialog component', () => {
-    expect(markerDialogSrc).toContain("from '@/components/ui/dialog'");
+    expect(markerDialogSrc).toMatch(/from ['"]@\/components\/ui\/dialog(?:\.jsx)?['"]/);
     expect(markerDialogSrc).toContain('<Dialog');
     expect(markerDialogSrc).toContain('<DialogContent');
   });

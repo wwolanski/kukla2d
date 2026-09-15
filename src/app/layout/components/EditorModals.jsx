@@ -21,13 +21,13 @@ function loadExportModal() {
 }
 
 function loadPreferencesModal() {
-  return import("@/features/preferences/components/PreferencesModal.jsx").then(
+  return import("@/features/preferences/index.js").then(
     (m) => ({ default: m.PreferencesModal }),
   );
 }
 
 function loadSaveModal() {
-  return import("@/features/projects/components/SaveModal.jsx").then((m) => ({
+  return import("@/features/projects/index.js").then((m) => ({
     default: m.SaveModal,
   }));
 }

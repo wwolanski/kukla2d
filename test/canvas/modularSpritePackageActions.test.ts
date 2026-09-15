@@ -10,7 +10,7 @@ import type { ModularSpriteCommitRequest } from "@/features/modular-sprite";
 import { useProjectStore } from "@/store/projectStore";
 import { clearHistory } from "@/store/undoHistory";
 
-import { act, renderHook } from "./renderHook.jsx";
+import { act, renderHook } from "../renderHook.jsx";
 
 const image = (width = 1, height = 1) => ({
   width,
