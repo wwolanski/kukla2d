@@ -59,6 +59,7 @@ export default function EditorLayout() {
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [schemaLibraryOpen, setSchemaLibraryOpen] = useState(false);
   const [modularSpriteEditor, setModularSpriteEditor] = useState({
     open: false,
     highlightFirstExample: false,
@@ -203,6 +204,7 @@ export default function EditorLayout() {
           onRedo={handleRedo}
           onOpenExportModal={() => setExportModalOpen(true)}
           onOpenPreferences={() => setPreferencesOpen(true)}
+          onOpenSchemaLibrary={() => setSchemaLibraryOpen(true)}
         />
 
         <EditorWorkspace
@@ -238,6 +240,8 @@ export default function EditorLayout() {
           setExportModalOpen={setExportModalOpen}
           preferencesOpen={preferencesOpen}
           setPreferencesOpen={setPreferencesOpen}
+          schemaLibraryOpen={schemaLibraryOpen}
+          setSchemaLibraryOpen={setSchemaLibraryOpen}
           projectSession={projectSession}
           project={project}
           exportCaptureRef={exportCaptureRef}

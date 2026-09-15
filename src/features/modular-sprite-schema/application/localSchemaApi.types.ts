@@ -21,6 +21,7 @@ export interface LocalSchemaRepository {
     updatedAt: string;
   }): Promise<void>;
   putAsset(asset: StoredSchemaAsset): Promise<void>;
+  getAsset(assetId: string): Promise<StoredSchemaAsset | undefined>;
 }
 
 export interface SchemaCatalogCapability {

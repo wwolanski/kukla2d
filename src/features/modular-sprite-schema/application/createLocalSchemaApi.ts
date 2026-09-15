@@ -27,6 +27,7 @@ interface LocalSchemaApi {
   ): Promise<SchemaMatchResponse>;
   save(schema: ModularSpriteSchema): Promise<void>;
   saveAsset(asset: StoredSchemaAsset): Promise<void>;
+  getAsset(assetId: string): Promise<StoredSchemaAsset | undefined>;
   saveSemantic(definition: SemanticDefinition): Promise<void>;
 }
 
@@ -62,6 +63,10 @@ export function createLocalSchemaApi(dependencies: {
     },
     saveAsset(asset: StoredSchemaAsset) {
       return repository.putAsset(asset);
+    },
+    async getAsset(assetId: string) {
+      await initialize();
+      return repository.getAsset(assetId);
     },
     saveSemantic(definition: SemanticDefinition) {
       catalog.semantics.upsert(definition);

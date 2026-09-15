@@ -1,6 +1,8 @@
 import PropTypes from "prop-types";
 import { lazy, Suspense } from "react";
 
+import { localSchemaLibrarySource } from "@/app/layout/schemaLibrarySources.js";
+
 import { publishProjectSchemasToLocalDatabase } from "@/features/projects";
 
 import {
@@ -46,18 +48,27 @@ function loadModularSpriteGenerator() {
   }));
 }
 
+function loadSchemaLibraryModal() {
+  return import("@/features/schema-library").then((m) => ({
+    default: m.SchemaLibraryModal,
+  }));
+}
+
 const ExportModal = lazy(loadExportModal);
 const PreferencesModal = lazy(loadPreferencesModal);
 const SaveModal = lazy(loadSaveModal);
 const LoadModal = lazy(loadLoadModal);
 const ModularSpriteWizard = lazy(loadModularSpriteWizard);
 const ModularSpriteGenerator = lazy(loadModularSpriteGenerator);
+const SchemaLibraryModal = lazy(loadSchemaLibraryModal);
 
 export function EditorModals({
   exportModalOpen,
   setExportModalOpen,
   preferencesOpen,
   setPreferencesOpen,
+  schemaLibraryOpen,
+  setSchemaLibraryOpen,
   projectSession,
   project,
   exportCaptureRef,
@@ -87,6 +98,16 @@ export function EditorModals({
           <PreferencesModal
             open={preferencesOpen}
             onOpenChange={setPreferencesOpen}
+          />
+        </Suspense>
+      )}
+
+      {schemaLibraryOpen && (
+        <Suspense fallback={null}>
+          <SchemaLibraryModal
+            open={schemaLibraryOpen}
+            onOpenChange={setSchemaLibraryOpen}
+            source={localSchemaLibrarySource}
           />
         </Suspense>
       )}
@@ -226,6 +247,8 @@ EditorModals.propTypes = {
   setExportModalOpen: PropTypes.func.isRequired,
   preferencesOpen: PropTypes.bool.isRequired,
   setPreferencesOpen: PropTypes.func.isRequired,
+  schemaLibraryOpen: PropTypes.bool.isRequired,
+  setSchemaLibraryOpen: PropTypes.func.isRequired,
   projectSession: PropTypes.shape({
     saveModalOpen: PropTypes.bool.isRequired,
     openSaveModal: PropTypes.func.isRequired,
