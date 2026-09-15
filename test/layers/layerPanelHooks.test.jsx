@@ -56,11 +56,13 @@ function createModularPackageProject() {
     { id: 'source-asset', source: 'blob:source', name: 'Source Package Source' },
     { id: 'source-part', source: 'blob:part', name: 'Head' },
     { id: 'target-asset', source: 'blob:target', name: 'Target Package Source' },
+    { id: 'loose-asset', source: 'blob:loose', name: 'Cape' },
   ];
   project.assetPlacements = [
     { assetId: 'source-asset', folderId: 'source-folder' },
     { assetId: 'source-part', folderId: 'source-folder' },
     { assetId: 'target-asset', folderId: 'target-folder' },
+    { assetId: 'loose-asset', folderId: null },
   ];
   project.modularSprites = [
     {
@@ -266,6 +268,32 @@ describe('LayerPanel application hooks', () => {
       expect(onRegenerateModularSprite).toHaveBeenCalledOnce();
       expect(onRegenerateModularSprite).toHaveBeenCalledWith('target-package', {
         includeAssetId: 'source-part',
+        force: true,
+      });
+    } finally {
+      rendered.unmount();
+      useProjectStore.setState(originalState);
+    }
+  });
+
+  it('treats every target package asset as the package drop surface', () => {
+    const originalState = useProjectStore.getState();
+    useProjectStore.setState({
+      project: createModularPackageProject(),
+      versionControl: { geometryVersion: 0, transformVersion: 0, textureVersion: 0 },
+      hasUnsavedChanges: false,
+    });
+    const onRegenerateModularSprite = vi.fn();
+    const rendered = renderLayerPanelController({ onRegenerateModularSprite });
+
+    try {
+      act(() => {
+        startLibraryAssetDrag(rendered.result.current.library, 'loose-asset');
+        rendered.result.current.library.onDropRow('asset', 'target-asset');
+      });
+
+      expect(onRegenerateModularSprite).toHaveBeenCalledWith('target-package', {
+        includeAssetId: 'loose-asset',
         force: true,
       });
     } finally {

@@ -640,15 +640,19 @@ function useLayerPanelControllerImpl(
           sprite.sourceAssetId === source.id ||
           sprite.parts.some((part) => part.assetId === source.id),
       );
-      const targetPackage =
-        targetKind === "folder"
-          ? modularSprites.find((sprite) => {
-              const sourcePlacement = assetPlacements.find(
-                (placement) => placement.assetId === sprite.sourceAssetId,
-              );
-              return sourcePlacement?.folderId === targetId;
-            })
-          : undefined;
+      const targetPackage = modularSprites.find((sprite) => {
+        if (targetKind === "asset") {
+          return (
+            sprite.sourceAssetId === targetId ||
+            sprite.parts.some((part) => part.assetId === targetId)
+          );
+        }
+        if (targetKind !== "folder") return false;
+        const sourcePlacement = assetPlacements.find(
+          (placement) => placement.assetId === sprite.sourceAssetId,
+        );
+        return sourcePlacement?.folderId === targetId;
+      });
       const sourceIsPackageSource =
         source.kind === "asset" && sourcePackage?.sourceAssetId === source.id;
       const sourceIsPackagePart = Boolean(
@@ -676,7 +680,7 @@ function useLayerPanelControllerImpl(
       if (targetPackage && source.kind === "asset") {
         onRegenerateModularSprite?.(
           targetPackage.id,
-          { includeAssetId: source.id },
+          { includeAssetId: source.id, force: true },
         );
         return;
       }

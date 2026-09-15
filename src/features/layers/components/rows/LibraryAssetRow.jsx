@@ -143,7 +143,9 @@ export function LibraryAssetRow({
         {asset.modularKind === "part" ? (
           <>
             <ContextMenuItem
-              onSelect={() => onRemoveFromPackage?.(asset.id)}
+              onSelect={() =>
+                requestAnimationFrame(() => onRemoveFromPackage?.(asset.id))
+              }
             >
               <Boxes className="mr-2 h-4 w-4 opacity-70" />
               Remove from package
@@ -161,7 +163,11 @@ export function LibraryAssetRow({
           <>
             {asset.modularKind === "source" && onRegenerateModularSprite && (
               <ContextMenuItem
-                onSelect={() => onRegenerateModularSprite(asset.modularSpriteId)}
+                onSelect={() =>
+                  requestAnimationFrame(() =>
+                    onRegenerateModularSprite(asset.modularSpriteId),
+                  )
+                }
               >
                 <Boxes className="mr-2 h-4 w-4 opacity-70" />
                 Regenerate package…

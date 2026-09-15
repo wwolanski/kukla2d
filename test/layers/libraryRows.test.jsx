@@ -107,7 +107,7 @@ describe("library sidebar rows", () => {
     view.unmount();
   });
 
-  it("shows both removal actions for a package part", () => {
+  it("shows both removal actions for a package part", async () => {
     const onRemoveFromPackage = vi.fn();
     const onRemove = vi.fn();
     const view = mount(
@@ -127,13 +127,16 @@ describe("library sidebar rows", () => {
     ]);
 
     act(() => menuItems[0].click());
+    await act(async () => {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
     expect(onRemoveFromPackage).toHaveBeenCalledWith("head-asset");
     expect(onRemove).not.toHaveBeenCalled();
 
     view.unmount();
   });
 
-  it("keeps package regeneration in the package folder context menu", () => {
+  it("keeps package regeneration in the package folder context menu", async () => {
     const onRegenerateModularSprite = vi.fn();
     const view = mount(
       <LibraryFolderRow
@@ -165,11 +168,14 @@ describe("library sidebar rows", () => {
     expect(regenerateItem).not.toBeUndefined();
 
     act(() => regenerateItem.click());
+    await act(async () => {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
     expect(onRegenerateModularSprite).toHaveBeenCalledWith("sprite-1");
     view.unmount();
   });
 
-  it("keeps package regeneration available from the modular source context menu", () => {
+  it("keeps package regeneration available from the modular source context menu", async () => {
     const onRegenerateModularSprite = vi.fn();
     const view = mount(
       <LibraryAssetRow
@@ -193,11 +199,58 @@ describe("library sidebar rows", () => {
     expect(document.body.textContent).not.toContain("Remove from package");
 
     act(() => generatorItem.click());
+    await act(async () => {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
     expect(onRegenerateModularSprite).toHaveBeenCalledWith("sprite-1");
     view.unmount();
   });
 
-  it("passes package removal through LibraryTab without opening confirmation", () => {
+  it("routes drops anywhere inside a package to the package container", () => {
+    const onDragOver = vi.fn();
+    const onDrop = vi.fn();
+    const view = mount(
+      <LibraryTab
+        tree={[
+          {
+            kind: "folder",
+            id: "package-folder",
+            name: "Hero",
+            sourceFileName: null,
+            isModularSpritePackage: true,
+            modularSpriteId: "sprite-1",
+            children: [{ ...baseAsset, kind: "asset" }],
+          },
+        ]}
+        expandedFolderIds={new Set(["package-folder"])}
+        dragSession={{
+          sourceKind: "libraryAsset",
+          sourceId: "loose-asset",
+          targetKind: "folder",
+          targetId: "package-folder",
+          dropPosition: "inside",
+        }}
+        selection={[]}
+        dragActive
+        onDragOverRow={onDragOver}
+        onDropRow={onDrop}
+      />,
+    );
+
+    const packageContainer = view.container.querySelector(
+      '[data-library-package-drop-target="package-folder"]',
+    );
+    const assetRow = view.container.querySelector('[draggable="true"]');
+    expect(packageContainer?.getAttribute("data-drop-active")).toBe("true");
+    dispatchDragEvent(assetRow, "dragover");
+    dispatchDragEvent(assetRow, "drop");
+    expect(onDragOver).toHaveBeenCalledWith("folder", "package-folder", "inside");
+    expect(onDrop).toHaveBeenCalledWith("folder", "package-folder");
+
+    view.unmount();
+  });
+
+  it("passes package removal through LibraryTab without opening confirmation", async () => {
     const onRemoveFromPackage = vi.fn();
     const view = mount(
       <LibraryTab
@@ -216,6 +269,9 @@ describe("library sidebar rows", () => {
     );
     expect(removeItem).not.toBeUndefined();
     act(() => removeItem.click());
+    await act(async () => {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
     expect(onRemoveFromPackage).toHaveBeenCalledWith("head-asset");
     expect(document.body.textContent).not.toContain("Remove from library?");
 

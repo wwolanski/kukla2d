@@ -99,8 +99,43 @@ export function LibraryTab({
     return rows.map((row) => {
       if (row.kind === "folder") {
         const isExpanded = expandedFolderIds.has(row.id);
+        const isPackageDropActive =
+          row.isModularSpritePackage &&
+          dragSession?.targetKind === "folder" &&
+          dragSession?.targetId === row.id &&
+          dragSession?.sourceId !== row.id;
         return (
-          <div key={row.id}>
+          <div
+            key={row.id}
+            data-library-package-drop-target={
+              row.isModularSpritePackage ? row.id : undefined
+            }
+            data-drop-active={isPackageDropActive ? "true" : undefined}
+            className={
+              isPackageDropActive
+                ? "rounded bg-primary/5 ring-1 ring-inset ring-primary/50"
+                : undefined
+            }
+            onDragOverCapture={
+              row.isModularSpritePackage
+                ? (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.dataTransfer.dropEffect = "copy";
+                    onDragOverRow?.("folder", row.id, "inside");
+                  }
+                : undefined
+            }
+            onDropCapture={
+              row.isModularSpritePackage
+                ? (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onDropRow?.("folder", row.id);
+                  }
+                : undefined
+            }
+          >
             <LibraryFolderRow
               folder={row}
               isExpanded={isExpanded}

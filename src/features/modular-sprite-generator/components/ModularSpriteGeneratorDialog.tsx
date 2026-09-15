@@ -78,6 +78,20 @@ interface ModularSpriteGeneratorImagePort {
   encode: (image: RgbaImageData) => Promise<Blob>;
 }
 
+const SUPPORTED_IMAGE_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+]);
+
+function libraryAssetImageType(blob: Blob, fileName?: string): string {
+  if (SUPPORTED_IMAGE_TYPES.has(blob.type)) return blob.type;
+  const extension = fileName?.split(".").pop()?.toLowerCase();
+  if (extension === "jpg" || extension === "jpeg") return "image/jpeg";
+  if (extension === "webp") return "image/webp";
+  return "image/png";
+}
+
 interface ModularSpriteGeneratorDialogProps {
   open: boolean;
   intent: ModularSpriteGeneratorIntent | null;
@@ -99,7 +113,10 @@ async function loadAsset(
   if (!response.ok) throw new Error(`Could not read ${texture.name || assetId}`);
   const blob = await response.blob();
   const file = new File([blob], texture.fileName || `${texture.name}.png`, {
-    type: blob.type || "image/png",
+    // Blob URLs restored from an archive and some dev servers return a generic
+    // response MIME. Library textures are already decoded raster assets, so use
+    // their filename (or the package PNG default) instead of rejecting them.
+    type: libraryAssetImageType(blob, texture.fileName),
   });
   return {
     assetId: assetId as AssetId,
