@@ -10,12 +10,12 @@ import type {
   ProcessedModularSprite,
 } from "@/features/modular-sprite/domain/contracts.types.js";
 import type { RegionGrouping } from "@/features/modular-sprite/domain/partGrouping.types.js";
-import { SemanticRolePicker } from "@/features/modular-sprite-schema";
+import { SemanticRolePicker } from "@/features/modular-sprite-schema/index.js";
 
-import { BorderBeam } from "@/components/ui/border-beam";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { BorderBeam } from "@/components/ui/border-beam.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
 
 const UiButton = Button as React.ComponentType<
   React.ButtonHTMLAttributes<HTMLButtonElement> & {

@@ -1,7 +1,7 @@
 import type { AnimationTargetId, Keyframe } from "@kukla2d/contracts";
 
-import { evaluateCubicBezier } from "@/domain/animationEngine";
-import { getAnimationPropertySpec } from "@/domain/animationProperties";
+import { evaluateCubicBezier } from "@/domain/animationEngine.js";
+import { getAnimationPropertySpec } from "@/domain/animationProperties.js";
 
 type CubicBezierTuple = [number, number, number, number];
 type TimelineEasing = Keyframe["easing"] | null;

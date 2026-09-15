@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
 
 import { useCanvasViewportController } from "@/features/canvas/application/useCanvasViewportController.js";
 import CanvasDialogs from "@/features/canvas/components/CanvasDialogs.jsx";
@@ -9,7 +9,7 @@ import CanvasFailureFallback from "@/features/canvas/components/CanvasFailureFal
 import CanvasSurface from "@/features/canvas/components/CanvasSurface.jsx";
 import OverlayLayer from "@/features/canvas/components/OverlayLayer.jsx";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.jsx";
 
 export function CanvasViewportView({
   runtime,

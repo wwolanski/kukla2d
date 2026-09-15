@@ -1,8 +1,8 @@
 import { useShapeKeysController } from "@/features/inspector/application/useNodeInspectorController.js";
 import { SectionTitle } from "@/features/inspector/components/fields/InspectorRow.jsx";
 
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button.jsx";
+import { Slider } from "@/components/ui/slider.jsx";
 
 export function ShapeKeysPanel({ node }) {
   const {

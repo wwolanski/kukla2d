@@ -19,7 +19,7 @@ import type {
   AnimationEasing,
   AnimationKeyframeInput,
 } from "@/domain/animationCommandTypes.types.js";
-import { isTimelineVisibleKeyframe } from "@/domain/keyframeProvenance";
+import { isTimelineVisibleKeyframe } from "@/domain/keyframeProvenance.js";
 
 import {
   collectTrackKeyframeAddresses,

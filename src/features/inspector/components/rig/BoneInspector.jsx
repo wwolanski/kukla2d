@@ -3,7 +3,7 @@ import { Link2, Plus, Trash2 } from "lucide-react";
 import {
   isAuthorableProperty,
   isPropertyAllowedForTargetKind,
-} from "@/domain/animationProperties";
+} from "@/domain/animationProperties.js";
 
 import { useBoneInspectorController } from "@/features/inspector/application/useBoneInspectorController.js";
 import {
@@ -12,8 +12,8 @@ import {
 } from "@/features/inspector/components/fields/InspectorRow.jsx";
 import { NumericInput } from "@/features/inspector/components/fields/NumericInput.jsx";
 
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button.jsx";
+import { Label } from "@/components/ui/label.jsx";
 
 export function BoneInspector({
   bone,

@@ -17,8 +17,8 @@ import {
 } from "@/runtime/skeleton.js";
 import { linearBlendSkinning } from "@/runtime/skin.js";
 
-import { isRecord } from "@/lib/guards";
-import { clamp01, finiteNumberOr, isFiniteNumber } from "@/lib/math";
+import { isRecord } from "@/lib/guards.js";
+import { clamp01, finiteNumberOr, isFiniteNumber } from "@/lib/math.js";
 
 interface DeformDrawItem {
   nodeId: NodeId;

@@ -1,5 +1,5 @@
-import { Slider } from '@/components/ui/slider';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Slider } from '@/components/ui/slider.jsx';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip.jsx';
 
 function LabelWithTip({ label, tip }) {
   return (

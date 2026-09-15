@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { Animation, ProjectDocument } from "@kukla2d/contracts";
 
-import { resolveAnimations } from "@/io/resolveAnimations";
+import { resolveAnimations } from "@/io/resolveAnimations.js";
 
 import type { ExportProgress } from "@/features/export/application/exportApplicationTypes.types.js";
-import { PHASER_ATLAS_DEFAULTS } from "@/features/export/domain/phaserAtlasContract";
+import { PHASER_ATLAS_DEFAULTS } from "@/features/export/domain/phaserAtlasContract.js";
 
 import type { ExportableAnimation } from "@/io/resolveAnimations.types.js";
 

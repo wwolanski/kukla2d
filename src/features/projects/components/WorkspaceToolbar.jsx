@@ -1,21 +1,21 @@
 import { Bone, Grid2x2, MousePointer2, Move, Paintbrush, PenTool, PersonStanding, Plus, Target, Trash2 } from 'lucide-react';
 
-import { useEditorStore } from '@/store/editorStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useEditorStore } from '@/store/editorStore.js';
+import { useProjectStore } from '@/store/projectStore.js';
 
-import { getFeedback } from '@/domain/editorModeFeedback';
-import { editorModePolicy, ACTION_IDS } from '@/domain/editorModePolicy';
+import { getFeedback } from '@/domain/editorModeFeedback.js';
+import { editorModePolicy, ACTION_IDS } from '@/domain/editorModePolicy.js';
 
-import { useWorkflowActor, useWorkflowSelector } from '@/features/canvas';
+import { useWorkflowActor, useWorkflowSelector } from '@/features/canvas/index.js';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils.js';
 
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@/components/ui/tooltip.jsx';
 
 const TOOL_ACTION_MAP = {
   meshDeform: ACTION_IDS.NODE_MESH_DEFORM,

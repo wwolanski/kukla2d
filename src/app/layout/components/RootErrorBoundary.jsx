@@ -2,9 +2,9 @@ import { AlertTriangle, RotateCcw, Download } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { Component } from 'react';
 
-import { readRecovery } from '@/io/projectDb';
+import { readRecovery } from '@/io/projectDb.js';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button.jsx';
 
 export class RootErrorBoundary extends Component {
   constructor(props) {

@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils.js';
 
-import { FeatureDisabledTooltip } from '@/components/ui/feature-disabled-tooltip';
+import { FeatureDisabledTooltip } from '@/components/ui/feature-disabled-tooltip.jsx';
 
 export function TransportButton({ onClick, active, title, children, className = '', disabled, featureDisabled = false }) {
   const buttonElement = (

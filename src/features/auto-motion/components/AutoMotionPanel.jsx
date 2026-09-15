@@ -1,16 +1,16 @@
 import { Plus, Wand2 } from "lucide-react";
 import { useState } from "react";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import { AddMotionWizard } from "@/features/auto-motion/components/AddMotionWizard.jsx";
 import { MotionModifierCard } from "@/features/auto-motion/components/MotionModifierCard.jsx";
 
-import { Button } from "@/components/ui/button";
-import { HelpIcon } from "@/components/ui/help-icon";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button.jsx";
+import { HelpIcon } from "@/components/ui/help-icon.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
 
 export function AutoMotionPanel() {
   const [wizardOpen, setWizardOpen] = useState(false);

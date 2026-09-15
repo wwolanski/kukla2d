@@ -1,5 +1,5 @@
-import { localSchemaApi } from "@/features/modular-sprite-schema";
-import type { SchemaLibrarySource } from "@/features/schema-library";
+import { localSchemaApi } from "@/features/modular-sprite-schema/index.js";
+import type { SchemaLibrarySource } from "@/features/schema-library/index.js";
 
 export const localSchemaLibrarySource: SchemaLibrarySource = {
   descriptor: {

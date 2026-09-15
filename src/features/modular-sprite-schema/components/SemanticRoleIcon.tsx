@@ -1,6 +1,6 @@
 import { semanticRoleIcon } from "@/features/modular-sprite-schema/components/semanticRoleIcons.js";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 interface SemanticRoleIconProps {
   role?: string;

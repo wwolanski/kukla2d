@@ -6,9 +6,9 @@ import {
 
 import { loadAnimationSettings } from "@/platform/animationSettingsRepository.js";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useProjectStore } from "@/store/projectStore";
-import { beginBatch, endBatch } from "@/store/undoHistory";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
+import { beginBatch, endBatch } from "@/store/undoHistory.js";
 
 import { canNavigate } from "@/domain/animationAuthoring.js";
 import type {

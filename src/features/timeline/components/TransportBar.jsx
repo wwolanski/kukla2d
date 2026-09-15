@@ -11,8 +11,8 @@ import { NumField } from "@/features/timeline/components/NumField.jsx";
 import { TransportButton } from "@/features/timeline/components/TransportButton.jsx";
 import { buildFpsTimingChange } from "@/features/timeline/domain/timelineTime.js";
 
-import { FeatureDisabledTooltip } from "@/components/ui/feature-disabled-tooltip";
-import { toast } from '@/components/ui/use-toast';
+import { FeatureDisabledTooltip } from "@/components/ui/feature-disabled-tooltip.jsx";
+import { toast } from '@/components/ui/use-toast.js';
 
 export function TransportBar({
   animation,

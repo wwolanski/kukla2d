@@ -1,19 +1,19 @@
 import { useCallback, useState } from "react";
 
-import { saveToDb } from "@/io/projectDb";
-import { formatProjectError } from "@/io/projectErrorMessages";
+import { saveToDb } from "@/io/projectDb.js";
+import { formatProjectError } from "@/io/projectErrorMessages.js";
 import {
   PROJECT_ARCHIVE_FORMAT_ID,
   PROJECT_ARCHIVE_VERSION,
   PROJECT_FILE_EXTENSION,
   buildProjectFileName,
   stripProjectExtension,
-} from "@/io/projectFormat";
+} from "@/io/projectFormat.js";
 
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast.js";
 
 import type { StoredProjectRecord } from "@/io/projectDb.types.js";
 

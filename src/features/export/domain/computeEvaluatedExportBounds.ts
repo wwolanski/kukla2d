@@ -13,10 +13,10 @@
 
 import type { ProjectDocument, Vertex } from "@kukla2d/contracts";
 
-import { computeWorldMatrices } from "@/domain/transforms";
+import { computeWorldMatrices } from "@/domain/transforms.js";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
-import { buildFramePose } from "@/features/canvas";
+import { buildFramePose } from "@/features/canvas/index.js";
 import type { ExportBoundsFrameSpec } from "@/features/export/domain/exportAreaFitFrameSpecs.types.js";
 
 const DEFAULT_PADDING = 20;

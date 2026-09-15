@@ -9,20 +9,20 @@ import type {
 import { useSchemaLibraryController } from "@/features/schema-library/application/useSchemaLibraryController.js";
 import { SchemaReferencePreview } from "@/features/schema-library/components/SchemaReferencePreview.js";
 
-import { Badge as RawBadge } from "@/components/ui/badge";
-import { Button as RawButton } from "@/components/ui/button";
-import { Card as RawCard, CardContent as RawCardContent } from "@/components/ui/card";
+import { Badge as RawBadge } from "@/components/ui/badge.jsx";
+import { Button as RawButton } from "@/components/ui/button.jsx";
+import { Card as RawCard, CardContent as RawCardContent } from "@/components/ui/card.jsx";
 import {
   Dialog as RawDialog,
   DialogContent as RawDialogContent,
   DialogDescription as RawDialogDescription,
   DialogHeader as RawDialogHeader,
   DialogTitle as RawDialogTitle,
-} from "@/components/ui/dialog";
-import { Input as RawInput } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select as RawSelect, SelectContent as RawSelectContent, SelectItem as RawSelectItem, SelectTrigger as RawSelectTrigger, SelectValue as RawSelectValue } from "@/components/ui/select";
-import { Tabs as RawTabs, TabsContent as RawTabsContent, TabsList as RawTabsList, TabsTrigger as RawTabsTrigger } from "@/components/ui/tabs";
+} from "@/components/ui/dialog.jsx";
+import { Input as RawInput } from "@/components/ui/input.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
+import { Select as RawSelect, SelectContent as RawSelectContent, SelectItem as RawSelectItem, SelectTrigger as RawSelectTrigger, SelectValue as RawSelectValue } from "@/components/ui/select.jsx";
+import { Tabs as RawTabs, TabsContent as RawTabsContent, TabsList as RawTabsList, TabsTrigger as RawTabsTrigger } from "@/components/ui/tabs.jsx";
 
 import type { ChangeEvent, ComponentType, PropsWithChildren } from "react";
 

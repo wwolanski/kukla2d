@@ -15,7 +15,7 @@ import {
   makeLocalMatrix,
   mat3Inverse,
   mat3Mul,
-} from "@/domain/transforms";
+} from "@/domain/transforms.js";
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
 const TRANSFORM_KEYS = [

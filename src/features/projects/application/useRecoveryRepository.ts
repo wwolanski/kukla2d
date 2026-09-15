@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 
-import { readRecovery, writeRecovery, clearRecovery } from "@/io/projectDb";
+import { readRecovery, writeRecovery, clearRecovery } from "@/io/projectDb.js";
 
 import type { RecoveryRecord } from "@/io/projectDb.types.js";
 

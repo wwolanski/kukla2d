@@ -2,10 +2,10 @@ import { Grid2x2 } from "lucide-react";
 
 import { useWarpDeformerController } from "@/features/inspector/application/useWarpDeformerController.js";
 
-import { Button } from "@/components/ui/button";
-import { HelpIcon } from "@/components/ui/help-icon";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button.jsx";
+import { HelpIcon } from "@/components/ui/help-icon.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label.jsx";
 
 /**
  * Inspector panel for warpDeformer nodes.

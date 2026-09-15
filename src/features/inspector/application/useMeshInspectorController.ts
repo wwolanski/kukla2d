@@ -3,24 +3,24 @@ import { useCallback, useMemo } from "react";
 import type { PartNode } from "@kukla2d/contracts";
 import type { Bone, BoneId, VertexInfluence } from "@kukla2d/contracts";
 
-import { useEditorStore } from "@/store/editorStore";
+import { useEditorStore } from "@/store/editorStore.js";
 import type { EditorStore } from "@/store/editorStoreTypes.types.js";
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
-import { computeWorldMatrices } from "@/domain/transforms";
+import { computeWorldMatrices } from "@/domain/transforms.js";
 
-import { analyzeMeshTopologyImpact } from "@/features/canvas";
-import { getBoneSegment } from "@/features/canvas";
+import { analyzeMeshTopologyImpact } from "@/features/canvas/index.js";
+import { getBoneSegment } from "@/features/canvas/index.js";
 import {
   bindUnweightedVerticesToBone,
   unbindMeshFromBone,
   applyAutoMeshWeights,
   computeMeshWeightStats,
-} from "@/features/canvas";
+} from "@/features/canvas/index.js";
 import {
   getNodeMeshInfluenceBoneIds,
   setNodeMeshInfluenceBone,
-} from "@/features/rigging";
+} from "@/features/rigging/index.js";
 
 type MeshOptions = EditorStore["meshDefaults"];
 type MeshOptionKey = keyof MeshOptions;

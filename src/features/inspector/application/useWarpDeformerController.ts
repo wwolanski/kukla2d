@@ -2,11 +2,11 @@ import { useCallback, useMemo } from "react";
 
 import type { Node, PartNode, WarpDeformerNode } from "@kukla2d/contracts";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
-import { createAnimationAuthoringApi } from "@/features/animation";
+import { createAnimationAuthoringApi } from "@/features/animation/index.js";
 
 type WarpPatch = Partial<
   Pick<WarpDeformerNode, "col" | "row" | "gridX" | "gridY" | "gridW" | "gridH">

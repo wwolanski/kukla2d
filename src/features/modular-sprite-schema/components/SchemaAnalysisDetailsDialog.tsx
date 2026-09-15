@@ -11,8 +11,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@/components/ui/dialog.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
 
 const UiDialog = Dialog as React.ComponentType<{
   open: boolean;

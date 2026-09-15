@@ -1,15 +1,15 @@
 import { useCallback, useMemo, useState } from "react";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import { requestEditorMode } from "@/domain/editorModeTransition.js";
 
 import {
   createAnimationAuthoringApi,
   type AnimationAuthoringApi,
-} from "@/features/animation";
+} from "@/features/animation/index.js";
 
 interface ModeTransitionState {
   nextMode: "staging" | "animation";

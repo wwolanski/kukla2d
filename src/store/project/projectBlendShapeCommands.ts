@@ -6,7 +6,7 @@ import type {
   ProjectStoreSet,
 } from "@/store/project/projectStoreTypes.types.js";
 
-import { uid } from "@/lib/uid";
+import { uid } from "@/lib/uid.js";
 
 type ProjectBlendShapeCommands = Pick<
   ProjectActions,

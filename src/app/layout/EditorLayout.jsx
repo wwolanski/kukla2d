@@ -14,22 +14,22 @@ import { useBeforeUnloadWarning } from "@/app/layout/hooks/useBeforeUnloadWarnin
 import { useEditorModeController } from "@/app/layout/hooks/useEditorModeController.js";
 import { useTheme } from "@/app/providers/theme/useTheme.js";
 
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 import {
   undo,
   redo,
   undoCount,
   redoCount,
   applyPatches,
-} from "@/store/undoHistory";
+} from "@/store/undoHistory.js";
 
-import { EditorWorkflowContext } from "@/features/canvas";
+import { EditorWorkflowContext } from "@/features/canvas/index.js";
 import {
   useProjectSession,
   useRecoveryScheduler,
   RecoveryPrompt,
-} from "@/features/projects";
+} from "@/features/projects/index.js";
 
 const ModeTransitionDialog = lazy(() =>
   import("@/app/layout/components/ModeTransitionDialog.jsx").then((m) => ({

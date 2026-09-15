@@ -8,7 +8,7 @@ import type { DraftPoseValue } from "@/store/animationStoreTypes.types.js";
 import type {
   AnimationAuthoringApi,
   AnimationCommitResult,
-} from "@/features/animation";
+} from "@/features/animation/index.js";
 
 type CanvasAuthoringResult =
   | { valid: true }

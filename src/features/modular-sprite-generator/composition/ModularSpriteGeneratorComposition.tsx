@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 
-import { createModularSpriteProcessingApi } from "@/features/modular-sprite";
+import { createModularSpriteProcessingApi } from "@/features/modular-sprite/index.js";
 import { ModularSpriteGeneratorDialog } from "@/features/modular-sprite-generator/components/ModularSpriteGeneratorDialog.js";
 
 type GeneratorProps = Omit<

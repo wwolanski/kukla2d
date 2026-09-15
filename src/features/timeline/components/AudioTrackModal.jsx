@@ -8,10 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+} from '@/components/ui/dialog.jsx';
+import { Input } from '@/components/ui/input.jsx';
+import { Label } from '@/components/ui/label.jsx';
+import { Slider } from '@/components/ui/slider.jsx';
 
 export function buildAudioTrackPatch({ name, startOffset, audioStartMs, duration }) {
   return {

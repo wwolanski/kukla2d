@@ -9,7 +9,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
   ContextMenuSeparator,
-} from "@/components/ui/context-menu";
+} from "@/components/ui/context-menu.jsx";
 
 export function KeyframeContextMenu({
   clipboard,

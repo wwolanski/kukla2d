@@ -14,7 +14,7 @@ import {
   type AnimationStore,
   type DraftPoseValue,
 } from "@/store/animationStoreTypes.types.js";
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import { onProjectChanged } from "@/domain/animationLifecycle.js";
 import {

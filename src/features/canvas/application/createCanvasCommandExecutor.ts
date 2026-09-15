@@ -1,6 +1,6 @@
-import { useEditorStore } from "@/store/editorStore";
+import { useEditorStore } from "@/store/editorStore.js";
 import type { EditorStore } from "@/store/editorStoreTypes.types.js";
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import { executeCommand } from "@/features/canvas/application/workflowCommandRuntime.js";
 import type { EditorCommand } from "@/features/canvas/domain/workflowContracts.types.js";

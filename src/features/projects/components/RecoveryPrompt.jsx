@@ -9,7 +9,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/components/ui/alert-dialog.jsx';
 
 export function RecoveryPrompt({ record, error, onRestore, onDiscard }) {
   const [open, setOpen] = useState(false);

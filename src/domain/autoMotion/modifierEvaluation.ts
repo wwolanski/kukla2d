@@ -11,7 +11,7 @@ import type {
 
 import type { BoundingBox } from "@/domain/autoMotion/autoMotionTypes.types.js";
 
-import { clampFiniteNumber } from "@/lib/math";
+import { clampFiniteNumber } from "@/lib/math.js";
 
 type ModifierPoseOverrides = Map<string, Record<string, unknown>>;
 

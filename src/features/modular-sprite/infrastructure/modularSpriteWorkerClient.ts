@@ -8,7 +8,7 @@ import type {
   RgbaImageData,
 } from "@/features/modular-sprite/domain/contracts.types.js";
 import type { ModularSpriteWorkerClient } from "@/features/modular-sprite/infrastructure/modularSpriteWorkerClient.types.js";
-import modularSpriteWorkerUrl from "@/features/modular-sprite/infrastructure/worker.ts?worker&url";
+import modularSpriteWorkerUrl from "@/features/modular-sprite/infrastructure/worker.js?worker&url";
 import type {
   ModularSpriteWorkerRequest,
   ModularSpriteWorkerResponse,

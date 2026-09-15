@@ -3,7 +3,7 @@ import { useCallback, useRef } from "react";
 import type { EditorStore } from "@/store/editorStoreTypes.types.js";
 import type { ProjectActions } from "@/store/project/projectStoreTypes.types.js";
 
-import { trySetBoneParent } from "@/features/canvas";
+import { trySetBoneParent } from "@/features/canvas/index.js";
 import { useDragSession } from "@/features/layers/application/useDragSession.js";
 import { isBoneDescendant } from "@/features/layers/domain/buildBoneTreeRows.js";
 import type {
@@ -15,9 +15,9 @@ import {
   assignProjectNodeToBone,
   clearProjectNodeBoneAssignment,
   setBoneLinkLocked,
-} from "@/features/rigging";
+} from "@/features/rigging/index.js";
 
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast.js";
 
 type BoneTreeDragSource = {
   kind: Extract<DragSourceKind, "node" | "bone">;

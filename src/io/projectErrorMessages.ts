@@ -1,4 +1,4 @@
-import { isRecord } from '@/lib/guards';
+import { isRecord } from '@/lib/guards.js';
 
 export function formatProjectError(error: unknown): string {
   if (!error) return 'Unknown project error.';

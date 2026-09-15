@@ -7,8 +7,8 @@ import type {
   Vector2,
 } from "@/runtime/physics/physicsRig.types.js";
 
-import { isRecord } from "@/lib/guards";
-import { isFiniteNumber } from "@/lib/math";
+import { isRecord } from "@/lib/guards.js";
+import { isFiniteNumber } from "@/lib/math.js";
 
 interface PhysicsParticle {
   id: string;

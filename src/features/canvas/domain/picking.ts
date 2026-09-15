@@ -14,7 +14,7 @@ import type {
   Vertex,
 } from "@kukla2d/contracts";
 
-import { mat3Inverse } from "@/domain/transforms";
+import { mat3Inverse } from "@/domain/transforms.js";
 
 import { worldToLocal } from "@/features/canvas/domain/coordinates.js";
 import type { ScreenRect } from "@/features/canvas/domain/workflowContracts.types.js";

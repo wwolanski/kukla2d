@@ -13,7 +13,7 @@ import {
 import { checkBoomerangEligibility } from "@/domain/animationBoomerang.js";
 import type { AnimationKeyframeInput } from "@/domain/animationCommandTypes.types.js";
 
-import { isFiniteNumber } from "@/lib/math";
+import { isFiniteNumber } from "@/lib/math.js";
 
 interface CommandErrorDetails {
   [key: string]: unknown;

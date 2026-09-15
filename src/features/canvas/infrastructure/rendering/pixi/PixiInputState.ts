@@ -5,7 +5,7 @@ import type {
   WarpDeformerNode,
 } from "@kukla2d/contracts";
 
-import { computePoseOverrides } from "@/domain/animationEngine";
+import { computePoseOverrides } from "@/domain/animationEngine.js";
 import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 
 import type { CanvasAnimationRuntimePort } from "@/features/canvas/application/canvasRenderer.types.js";

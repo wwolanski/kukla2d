@@ -1,6 +1,6 @@
 import type { Node } from "@kukla2d/contracts";
 
-import { computeWorldMatrices, mat3Inverse } from "@/domain/transforms";
+import { computeWorldMatrices, mat3Inverse } from "@/domain/transforms.js";
 
 import { worldToLocal } from "@/features/canvas/domain/coordinates.js";
 import { findAlphaHit } from "@/features/canvas/domain/picking.js";

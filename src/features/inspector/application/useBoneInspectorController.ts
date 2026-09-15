@@ -11,30 +11,30 @@ import type {
 } from "@kukla2d/contracts";
 import { toAnimationTargetId } from "@kukla2d/contracts";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
-import { getFeedback } from "@/domain/editorModeFeedback";
-import { REASON_CODES } from "@/domain/editorModePolicy";
+import { getFeedback } from "@/domain/editorModeFeedback.js";
+import { REASON_CODES } from "@/domain/editorModePolicy.js";
 
 import {
   inspectorClearPoseTarget,
   inspectorCommit,
   inspectorPosePreview,
   inspectorPreview,
-} from "@/features/animation";
+} from "@/features/animation/index.js";
 import {
   trySetBoneParent,
   useWorkflowActor,
   useWorkflowSelector,
-} from "@/features/canvas";
-import { assignProjectNodeToBone } from "@/features/rigging";
+} from "@/features/canvas/index.js";
+import { assignProjectNodeToBone } from "@/features/rigging/index.js";
 
-import { finiteNumberOrUndefined } from "@/lib/math";
+import { finiteNumberOrUndefined } from "@/lib/math.js";
 import { uid } from "@/lib/uid.js";
 
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast.js";
 
 type EditableBoneSetupProperty =
   "x" | "y" | "rotation" | "scaleX" | "scaleY" | "length";

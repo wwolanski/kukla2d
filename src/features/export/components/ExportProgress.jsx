@@ -1,6 +1,6 @@
-import { Button } from '@/components/ui/button';
-import { DialogFooter } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button.jsx';
+import { DialogFooter } from '@/components/ui/dialog.jsx';
+import { Progress } from '@/components/ui/progress.jsx';
 
 export function ExportProgress({ progress, exportError, isExporting, onClose, onCancel, onExport }) {
   return (

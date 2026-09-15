@@ -10,7 +10,7 @@ import type { BoneTreeRow } from "@/features/layers/domain/buildBoneTreeRows.typ
 import {
   doesBoneInfluenceNode,
   isNodeDirectlyAssignedToBone,
-} from "@/features/rigging";
+} from "@/features/rigging/index.js";
 
 interface BoneTreeInput {
   bones?: readonly Bone[];

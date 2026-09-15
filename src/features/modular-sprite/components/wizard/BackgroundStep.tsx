@@ -9,10 +9,10 @@ import {
 
 import type { EditorTool } from "@/features/modular-sprite/components/preview/ModularSpritePreviewCanvas.types.js";
 
-import { Button } from "@/components/ui/button";
-import { HelpIcon } from "@/components/ui/help-icon";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button.jsx";
+import { HelpIcon } from "@/components/ui/help-icon.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
+import { Slider } from "@/components/ui/slider.jsx";
 
 const UiButton = Button as React.ComponentType<
   React.ButtonHTMLAttributes<HTMLButtonElement> & {

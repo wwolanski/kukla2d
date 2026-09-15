@@ -2,12 +2,12 @@ import { useCallback, useMemo } from "react";
 
 import type { PhysicsRule } from "@kukla2d/contracts";
 
-import { PHYSICS_RULES } from "@/io/live2d/cmo3/physics";
+import { PHYSICS_RULES } from "@/io/live2d/cmo3/physics.js";
 
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
-import { isRecord } from "@/lib/guards";
-import { finiteNumberOr } from "@/lib/math";
+import { isRecord } from "@/lib/guards.js";
+import { finiteNumberOr } from "@/lib/math.js";
 
 interface PhysicsVertex {
   y: number;

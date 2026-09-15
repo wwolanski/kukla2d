@@ -8,7 +8,7 @@
  */
 import type { EditorStore } from "@/store/editorStoreTypes.types.js";
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
-import { beginBatch, endBatch } from "@/store/undoHistory";
+import { beginBatch, endBatch } from "@/store/undoHistory.js";
 
 import type { EditorCommand } from "@/features/canvas/domain/workflowContracts.types.js";
 

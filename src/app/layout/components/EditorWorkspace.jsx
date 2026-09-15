@@ -6,25 +6,25 @@ import {
   loadTimelinePanel,
 } from "@/app/layout/components/editorWorkspaceLazyLoaders.js";
 
-import { AutoMotionPanel } from "@/features/auto-motion";
-import { CanvasViewport } from "@/features/canvas";
-import { Inspector } from "@/features/inspector";
-import { LayerPanel } from "@/features/layers";
+import { AutoMotionPanel } from "@/features/auto-motion/index.js";
+import { CanvasViewport } from "@/features/canvas/index.js";
+import { Inspector } from "@/features/inspector/index.js";
+import { LayerPanel } from "@/features/layers/index.js";
 import {
   WorkspaceToolbar,
   PoseToolButton,
   ToolSettingsBar,
   WorkspaceStatus,
-} from "@/features/projects";
+} from "@/features/projects/index.js";
 
-import { HelpIcon } from "@/components/ui/help-icon";
+import { HelpIcon } from "@/components/ui/help-icon.jsx";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TooltipProvider } from "@/components/ui/tooltip";
+} from "@/components/ui/resizable.jsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
+import { TooltipProvider } from "@/components/ui/tooltip.jsx";
 
 const TimelinePanel = lazy(loadTimelinePanel);
 const AnimationListPanel = lazy(loadAnimationListPanel);

@@ -1,18 +1,18 @@
 import {
   listExportFormats,
   listExportTypes,
-} from '@/features/export/domain/exportVariantRegistry';
+} from '@/features/export/domain/exportVariantRegistry.js';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils.js';
 
-import { Label } from '@/components/ui/label';
+import { Label } from '@/components/ui/label.jsx';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/components/ui/select.jsx';
 
 export function ExportTypeOptions({
   type,

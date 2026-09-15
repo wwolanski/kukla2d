@@ -6,7 +6,7 @@ import {
 } from "@/features/canvas/domain/meshEditing.js";
 import type { MeshWeightStats } from "@/features/canvas/domain/meshWeighting.types.js";
 
-import { finiteNumberOr } from "@/lib/math";
+import { finiteNumberOr } from "@/lib/math.js";
 
 export const WEIGHT_PAINT_MODES = [
   "add",

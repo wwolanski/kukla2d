@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { createEmptyProject } from "@/core/createEmptyProject";
+import { createEmptyProject } from "@/core/createEmptyProject.js";
 
 import { createProjectAnimationCommands } from "@/store/project/projectAnimationCommands.js";
 import { createProjectBaseCommands } from "@/store/project/projectBaseCommands.js";

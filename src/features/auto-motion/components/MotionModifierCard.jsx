@@ -1,25 +1,25 @@
 import { Trash2, Flame } from "lucide-react";
 import { useState } from "react";
 
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import { HeadCheekJiggleControls } from "@/features/auto-motion/components/HeadCheekJiggleControls.jsx";
 import { IdleBreathingControls } from "@/features/auto-motion/components/IdleBreathingControls.jsx";
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button.jsx";
+import { Checkbox } from "@/components/ui/checkbox.jsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select.jsx";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/ui/tooltip.jsx";
 
 export function MotionModifierCard({ modifier, activeAnimationId }) {
   const updateAnimationModifier = useProjectStore(

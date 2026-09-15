@@ -1,14 +1,14 @@
 import { Check, X } from 'lucide-react';
 
-import { useEditorStore } from '@/store/editorStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useEditorStore } from '@/store/editorStore.js';
+import { useProjectStore } from '@/store/projectStore.js';
 
-import { computeWorldMatrices, mat3Identity } from '@/domain/transforms';
+import { computeWorldMatrices, mat3Identity } from '@/domain/transforms.js';
 
 import { getBoneSegment } from '@/features/canvas/domain/picking.js';
 import {
   assignOrAddProjectNodeBoneInfluence,
-} from '@/features/rigging';
+} from '@/features/rigging/index.js';
 
 export function BoneAssignPrompt({ view }) {
   const interaction = useEditorStore(s => s.interaction);

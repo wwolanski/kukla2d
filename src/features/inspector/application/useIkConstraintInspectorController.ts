@@ -2,19 +2,19 @@ import { useCallback, useMemo } from "react";
 
 import type { Bone, Constraint } from "@kukla2d/contracts";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import {
   inspectorClearPoseTarget,
   inspectorCommit,
   inspectorPosePreview,
   inspectorPreview,
-} from "@/features/animation";
-import { useWorkflowSelector } from "@/features/canvas";
+} from "@/features/animation/index.js";
+import { useWorkflowSelector } from "@/features/canvas/index.js";
 
-import { isFiniteNumber } from "@/lib/math";
+import { isFiniteNumber } from "@/lib/math.js";
 
 type NumericConstraintProperty =
   "targetX" | "targetY" | "mix" | "fkIk" | "order";

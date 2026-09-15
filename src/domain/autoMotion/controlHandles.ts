@@ -1,6 +1,6 @@
 import type { ControlHandle, PartNode, ProjectDocument } from '@kukla2d/contracts';
 
-import { uid } from '@/lib/uid';
+import { uid } from '@/lib/uid.js';
 
 type CreateControlHandleInput = Omit<ControlHandle, 'id' | 'locked' | 'source' | 'name' | 'space' | 'target' | 'position'> & {
   name?: string;

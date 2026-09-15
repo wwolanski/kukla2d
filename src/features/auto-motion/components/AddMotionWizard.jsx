@@ -1,7 +1,7 @@
 import { ArrowLeft, CheckCircle2, X, ChevronDown } from "lucide-react";
 
-import { useEditorStore } from "@/store/editorStore";
-import { useProjectStore } from "@/store/projectStore";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import {
   useAddMotionWizard,
@@ -11,14 +11,14 @@ import {
 } from "@/features/auto-motion/application/useAddMotionWizard.js";
 import { MotionBindingRows } from "@/features/auto-motion/components/MotionBindingRows.jsx";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.jsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select.jsx";
 
 export function AddMotionWizard({ open, onClose }) {
   const {

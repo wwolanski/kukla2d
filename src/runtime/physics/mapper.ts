@@ -3,7 +3,7 @@ import type { Bone, BoneId, PhysicsRule } from "@kukla2d/contracts";
 import { createPendulumChain } from "@/runtime/physics/physicsRig.js";
 import type { PhysicsRig } from "@/runtime/physics/physicsRig.types.js";
 
-import { isFiniteNumber } from "@/lib/math";
+import { isFiniteNumber } from "@/lib/math.js";
 
 interface PhysicsMappingResult {
   rig: PhysicsRig;

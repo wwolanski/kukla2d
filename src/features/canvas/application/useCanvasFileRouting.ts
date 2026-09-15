@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { hasProjectFileExtension } from "@/io/projectFormat";
+import { hasProjectFileExtension } from "@/io/projectFormat.js";
 
 import { handleCanvasDrop } from "@/features/canvas/application/handleCanvasDrop.js";
 import type { CanvasDropEvent } from "@/features/canvas/application/handleCanvasDrop.types.js";

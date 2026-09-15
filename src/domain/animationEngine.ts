@@ -25,7 +25,7 @@ import {
 } from "@/domain/animationProperties.js";
 import { sampleTimeAtFps } from "@/domain/animationTransport.js";
 
-import { lerp } from "@/lib/math";
+import { lerp } from "@/lib/math.js";
 
 interface Point2D {
   x: number;

@@ -2,7 +2,7 @@ import { useCallback } from "react";
 
 import type { BoneId, PartNode, ProjectDocument } from "@kukla2d/contracts";
 
-import { useEditorStore } from "@/store/editorStore";
+import { useEditorStore } from "@/store/editorStore.js";
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
 
 import type { CanvasSceneGateway } from "@/features/canvas/application/canvasApplication.types.js";

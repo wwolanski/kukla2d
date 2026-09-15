@@ -9,7 +9,7 @@ import {
   encodeRgbaPng,
 } from "@/features/modular-sprite/infrastructure/imageCodec.js";
 import { createModularSpriteGateway } from "@/features/modular-sprite/infrastructure/modularSpriteGateway.js";
-import { localSchemaApi } from "@/features/modular-sprite-schema";
+import { localSchemaApi } from "@/features/modular-sprite-schema/index.js";
 
 interface ModularSpriteWizardCompositionProps {
   open: boolean;

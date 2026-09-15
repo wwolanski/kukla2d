@@ -7,7 +7,7 @@
 
 import type { ExportAreaContract, RasterFrameSpec } from "@kukla2d/contracts";
 
-import { createFrameCaptureRequest } from "@/features/canvas";
+import { createFrameCaptureRequest } from "@/features/canvas/index.js";
 
 interface FrameCaptureRequest {
   animationId: string | null;

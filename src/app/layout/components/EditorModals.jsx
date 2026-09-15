@@ -3,7 +3,7 @@ import { lazy, Suspense } from "react";
 
 import { localSchemaLibrarySource } from "@/app/layout/schemaLibrarySources.js";
 
-import { publishProjectSchemasToLocalDatabase } from "@/features/projects";
+import { publishProjectSchemasToLocalDatabase } from "@/features/projects/index.js";
 
 import {
   AlertDialog,
@@ -14,42 +14,42 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog.jsx";
 
 function loadExportModal() {
-  return import("@/features/export").then((m) => ({ default: m.ExportModal }));
+  return import("@/features/export/index.js").then((m) => ({ default: m.ExportModal }));
 }
 
 function loadPreferencesModal() {
-  return import("@/features/preferences/components/PreferencesModal").then(
+  return import("@/features/preferences/components/PreferencesModal.jsx").then(
     (m) => ({ default: m.PreferencesModal }),
   );
 }
 
 function loadSaveModal() {
-  return import("@/features/projects/components/SaveModal").then((m) => ({
+  return import("@/features/projects/components/SaveModal.jsx").then((m) => ({
     default: m.SaveModal,
   }));
 }
 
 function loadLoadModal() {
-  return import("@/features/projects").then((m) => ({ default: m.LoadModal }));
+  return import("@/features/projects/index.js").then((m) => ({ default: m.LoadModal }));
 }
 
 function loadModularSpriteWizard() {
-  return import("@/features/modular-sprite").then((m) => ({
+  return import("@/features/modular-sprite/index.js").then((m) => ({
     default: m.ModularSpriteWizardComposition,
   }));
 }
 
 function loadModularSpriteGenerator() {
-  return import("@/features/modular-sprite-generator").then((m) => ({
+  return import("@/features/modular-sprite-generator/index.js").then((m) => ({
     default: m.ModularSpriteGeneratorComposition,
   }));
 }
 
 function loadSchemaLibraryModal() {
-  return import("@/features/schema-library").then((m) => ({
+  return import("@/features/schema-library/index.js").then((m) => ({
     default: m.SchemaLibraryModal,
   }));
 }

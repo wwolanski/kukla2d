@@ -27,7 +27,7 @@ import type { EffectiveMeshFrame } from "@/features/canvas/domain/meshDeformatio
 import { normalizeVertexInfluences } from "@/features/canvas/domain/meshEditing.js";
 import { buildRestGrid } from "@/features/canvas/domain/warpKeyframes.js";
 
-import { clamp, isFiniteNumber, lerp } from "@/lib/math";
+import { clamp, isFiniteNumber, lerp } from "@/lib/math.js";
 
 const WARP_DEFAULTS = Object.freeze({
   col: 2,

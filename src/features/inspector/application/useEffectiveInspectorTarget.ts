@@ -8,16 +8,16 @@ import type {
   Transform,
 } from "@kukla2d/contracts";
 
-import { useAnimationStore } from "@/store/animationStore";
+import { useAnimationStore } from "@/store/animationStore.js";
 import type { DraftPose } from "@/store/animationStoreTypes.types.js";
-import { useEditorStore } from "@/store/editorStore";
+import { useEditorStore } from "@/store/editorStore.js";
 import type { EditorStore } from "@/store/editorStoreTypes.types.js";
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
-import { computePoseOverrides } from "@/domain/animationEngine";
-import { sampleTimeAtFps } from "@/domain/animationTransport";
+import { computePoseOverrides } from "@/domain/animationEngine.js";
+import { sampleTimeAtFps } from "@/domain/animationTransport.js";
 
-import { finiteNumberOrUndefined } from "@/lib/math";
+import { finiteNumberOrUndefined } from "@/lib/math.js";
 
 interface AnimationResolutionContext {
   editorMode: EditorStore["editorMode"];

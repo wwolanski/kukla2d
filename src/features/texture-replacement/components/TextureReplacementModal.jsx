@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { useProjectStore } from "@/store/projectStore";
+import { useProjectStore } from "@/store/projectStore.js";
 
 import {
   applyTextureReplacements,
@@ -22,7 +22,7 @@ import {
   collectTextureReplacementSources,
 } from "@/features/texture-replacement/domain/textureReplacement.js";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.jsx";
 import {
   Dialog,
   DialogContent,
@@ -30,10 +30,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
+} from "@/components/ui/dialog.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
+import { Switch } from "@/components/ui/switch.jsx";
+import { useToast } from "@/components/ui/use-toast.js";
 
 const DRAG_TYPE = "application/x-kukla-texture-replacement";
 

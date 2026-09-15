@@ -1,7 +1,7 @@
 import type { Mesh, Node, ProjectDocument } from "@kukla2d/contracts";
 
-import { validateProject } from "@/schema/projectSchema";
-import { createPortableProjectSnapshot } from "@/schema/projectSnapshot";
+import { validateProject } from "@/schema/projectSchema.js";
+import { createPortableProjectSnapshot } from "@/schema/projectSnapshot.js";
 
 import type {
   ProjectReadinessIssue,

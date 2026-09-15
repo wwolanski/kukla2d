@@ -1,8 +1,8 @@
 import { toAnimationTargetId } from "@kukla2d/contracts";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useProjectStore } from "@/store/projectStore";
-import { transaction } from "@/store/undoHistory";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
+import { transaction } from "@/store/undoHistory.js";
 
 import {
   buildCommitBatch,
@@ -19,7 +19,7 @@ import type {
   AnimationCommitResult,
 } from "@/features/animation/application/createAnimationAuthoringApi.types.js";
 
-import { uid } from "@/lib/uid";
+import { uid } from "@/lib/uid.js";
 
 let _gestureId: string | null = null;
 

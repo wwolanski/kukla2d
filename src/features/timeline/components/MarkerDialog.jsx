@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from '@/components/ui/dialog';
+} from '@/components/ui/dialog.jsx';
 
 export function MarkerDialog({ open, onOpenChange, currentFrame, onConfirm }) {
   const [label, setLabel] = useState('');

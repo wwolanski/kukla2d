@@ -1,5 +1,5 @@
-import { HelpIcon } from '@/components/ui/help-icon';
-import { Label } from '@/components/ui/label';
+import { HelpIcon } from '@/components/ui/help-icon.jsx';
+import { Label } from '@/components/ui/label.jsx';
 
 export function SectionTitle({ children, help }) {
   return (

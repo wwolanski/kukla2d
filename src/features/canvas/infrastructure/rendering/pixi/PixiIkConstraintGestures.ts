@@ -1,7 +1,7 @@
 import type { Bone, Constraint, ConstraintId } from "@kukla2d/contracts";
 
 import { computePoseOverrides } from "@/domain/animationEngine.js";
-import { editorModePolicy, ACTION_IDS } from "@/domain/editorModePolicy";
+import { editorModePolicy, ACTION_IDS } from "@/domain/editorModePolicy.js";
 
 import {
   assignConstraintToBone,

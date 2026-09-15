@@ -16,7 +16,7 @@ import type { Bone, Node, ProjectDocument, Vertex } from "@kukla2d/contracts";
 import {
   computePoseOverrides,
   applyBlendShapeDeltas,
-} from "@/domain/animationEngine";
+} from "@/domain/animationEngine.js";
 import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 
 import { applyBoneConstraintOverrides } from "@/features/canvas/domain/constraintPose.js";

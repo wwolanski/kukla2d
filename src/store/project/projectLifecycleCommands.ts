@@ -1,6 +1,6 @@
 import { produce } from "immer";
 
-import { createEmptyProject } from "@/core/createEmptyProject";
+import { createEmptyProject } from "@/core/createEmptyProject.js";
 
 import { prepareLoadedProjectState } from "@/store/project/projectStoreShared.js";
 import type {
@@ -9,7 +9,7 @@ import type {
   ProjectStoreGet,
   ProjectStoreSet,
 } from "@/store/project/projectStoreTypes.types.js";
-import { clearHistory } from "@/store/undoHistory";
+import { clearHistory } from "@/store/undoHistory.js";
 
 import { notifyProjectChanged } from "@/domain/animationLifecycle.js";
 

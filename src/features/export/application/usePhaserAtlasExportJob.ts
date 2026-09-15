@@ -20,9 +20,9 @@ import type {
 } from "@/features/export/application/exportApplicationTypes.types.js";
 import { runPhaserAtlasExport } from "@/features/export/application/runPhaserAtlasExport.js";
 import type { CaptureFrame } from "@/features/export/domain/frameCaptureTypes.types.js";
-import { buildPhaserAtlasFrameIdentity } from "@/features/export/domain/phaserAtlasContract";
-import { createPhaserAtlasExportPlan } from "@/features/export/domain/phaserAtlasExportPlan";
-import { resolveProjectExportArea } from "@/features/export/domain/projectExportArea";
+import { buildPhaserAtlasFrameIdentity } from "@/features/export/domain/phaserAtlasContract.js";
+import { createPhaserAtlasExportPlan } from "@/features/export/domain/phaserAtlasExportPlan.js";
+import { resolveProjectExportArea } from "@/features/export/domain/projectExportArea.js";
 
 import type { Dispatch, RefObject, SetStateAction } from "react";
 

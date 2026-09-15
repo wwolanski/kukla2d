@@ -6,7 +6,7 @@ import type { AnimationStore } from "@/store/animationStoreTypes.types.js";
 import type { EditorActions } from "@/store/editorStoreTypes.types.js";
 import type { ProjectActions } from "@/store/project/projectStoreTypes.types.js";
 
-import { getPreviewModifierDraft } from "@/features/auto-motion";
+import { getPreviewModifierDraft } from "@/features/auto-motion/index.js";
 import type {
   CanvasEditorSnapshot,
   CanvasFrameRenderOptions,

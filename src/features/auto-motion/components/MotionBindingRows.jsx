@@ -1,6 +1,6 @@
 import { CheckCircle2, Circle, SkipForward } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button.jsx';
 
 export function MotionBindingRows({
   presetRoles,

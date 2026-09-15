@@ -9,16 +9,16 @@ import type {
 import {
   checkBoomerangEligibility,
   getBoomerangCutoff,
-} from "@/domain/animationBoomerang";
+} from "@/domain/animationBoomerang.js";
 import {
   getTrackValueCategory,
   getAllAnimationPropertySpecs,
-} from "@/domain/animationProperties";
+} from "@/domain/animationProperties.js";
 import type {
   AnimationPropertySpec,
   TrackValueCategory,
 } from "@/domain/animationProperties.types.js";
-import { isTimelineVisibleKeyframe } from "@/domain/keyframeProvenance";
+import { isTimelineVisibleKeyframe } from "@/domain/keyframeProvenance.js";
 
 const EASING_DEFAULT = "ease-both" as const;
 

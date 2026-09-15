@@ -1,14 +1,14 @@
 import { ChevronDown, Database, Download, FilePlus, FolderOpen, Globe2, HardDrive, Redo2, Save, Settings2, Undo2 } from 'lucide-react';
 import PropTypes from 'prop-types';
 
-import { useWorkflowActor, useWorkflowSelector } from '@/features/canvas';
-import { ExportAreaPopover } from '@/features/export';
+import { useWorkflowActor, useWorkflowSelector } from '@/features/canvas/index.js';
+import { ExportAreaPopover } from '@/features/export/index.js';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils.js';
 
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button.jsx';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.jsx';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip.jsx';
 
 const ANIMATION_UNSAFE_TOOLS = new Set([
   'meshAdjust',

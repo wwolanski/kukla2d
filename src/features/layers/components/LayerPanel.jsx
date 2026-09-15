@@ -3,7 +3,7 @@ import { lazy, Suspense, useState } from "react";
 import { useLayerPanelController } from "@/features/layers/application/useLayerPanelController.js";
 import { BoneTreeTab } from "@/features/layers/components/BoneTreeTab.jsx";
 import { DepthTab } from "@/features/layers/components/DepthTab.jsx";
-import { TextureReplacementModal } from "@/features/texture-replacement";
+import { TextureReplacementModal } from "@/features/texture-replacement/index.js";
 
 const LibraryTab = lazy(() =>
   import("@/features/layers/components/LibraryTab.jsx").then((m) => ({

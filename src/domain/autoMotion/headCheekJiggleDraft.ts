@@ -19,8 +19,8 @@ import {
   getPresetDefaultParams,
 } from "@/domain/autoMotion/presetRegistry.js";
 
-import { clampFiniteNumber } from "@/lib/math";
-import { uid } from "@/lib/uid";
+import { clampFiniteNumber } from "@/lib/math.js";
+import { uid } from "@/lib/uid.js";
 
 export function createHeadCheekJiggleDraft({
   project,

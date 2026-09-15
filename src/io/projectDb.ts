@@ -1,11 +1,11 @@
-import { openAppDb, PROJECT_STORE, RECOVERY_STORE } from "@/io/appDb";
+import { openAppDb, PROJECT_STORE, RECOVERY_STORE } from "@/io/appDb.js";
 import {
   PROJECT_ARCHIVE_FORMAT_ID,
   PROJECT_ARCHIVE_VERSION,
   PROJECT_FILE_EXTENSION,
-} from "@/io/projectFormat";
+} from "@/io/projectFormat.js";
 
-import { isRecord } from "@/lib/guards";
+import { isRecord } from "@/lib/guards.js";
 
 import type {
   RecoveryRecord,
@@ -225,7 +225,7 @@ export async function updateProjectAuthor(
   const record = await loadFromDb(id);
   if (!record) throw new Error("Project not found");
 
-  const { loadProject, saveProject } = await import("@/io/projectFile");
+  const { loadProject, saveProject } = await import("@/io/projectFile.js");
   const loaded = await loadProject(record.blob);
   let blob: Blob;
   try {

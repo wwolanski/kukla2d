@@ -17,8 +17,8 @@ import {
   updateProjectName, 
   updateProjectAuthor,
   duplicateProject 
-} from '@/io/projectDb';
-import { buildProjectFileName } from '@/io/projectFormat';
+} from '@/io/projectDb.js';
+import { buildProjectFileName } from '@/io/projectFormat.js';
 
 import {
   AlertDialog,
@@ -29,9 +29,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/alert-dialog.jsx";
+import { Button } from '@/components/ui/button.jsx';
+import { Input } from '@/components/ui/input.jsx';
 
 
 export function ProjectGallery({ onSelect, onProjectsLoaded, header, className = "" }) {

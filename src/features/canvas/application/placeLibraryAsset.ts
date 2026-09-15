@@ -6,7 +6,7 @@ import type {
   Texture,
 } from "@kukla2d/contracts";
 
-import { useEditorStore } from "@/store/editorStore";
+import { useEditorStore } from "@/store/editorStore.js";
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
 
 import {

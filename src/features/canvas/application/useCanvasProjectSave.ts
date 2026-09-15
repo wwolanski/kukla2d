@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import type { ProjectDocument } from '@kukla2d/contracts';
 
-import { buildProjectFileName } from '@/io/projectFormat';
+import { buildProjectFileName } from '@/io/projectFormat.js';
 
 import type { RefObject } from 'react';
 
@@ -12,7 +12,7 @@ export function useCanvasProjectSave(
 ): () => Promise<void> {
   return useCallback(async () => {
     try {
-      const { saveProject } = await import('@/io/projectFile');
+      const { saveProject } = await import('@/io/projectFile.js');
       const blob = await saveProject(projectRef.current);
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');

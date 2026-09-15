@@ -1,7 +1,7 @@
 import type { AnimationTargetId } from "@kukla2d/contracts";
 
-import { useAnimationStore } from "@/store/animationStore";
-import { useEditorStore } from "@/store/editorStore";
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
 
 import { createAnimationAuthoringApi } from "@/features/animation/application/createAnimationAuthoringApi.js";
 import type {

@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 
 import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
-import { useProjectStore } from "@/store/projectStore";
-import { undo, redo, applyPatches } from "@/store/undoHistory";
+import { useProjectStore } from "@/store/projectStore.js";
+import { undo, redo, applyPatches } from "@/store/undoHistory.js";
 
 export function useUndoRedo(): void {
   const projectRef = useRef<ProjectStore | null>(null);

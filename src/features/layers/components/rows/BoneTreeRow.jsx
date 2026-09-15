@@ -19,7 +19,7 @@ import {
   ChevronIcon,
   PartIcon,
 } from "@/features/layers/components/shared/LayerPanelPrimitives.jsx";
-import { isBoneLinkLocked } from "@/features/rigging";
+import { isBoneLinkLocked } from "@/features/rigging/index.js";
 
 import {
   ContextMenu,
@@ -28,7 +28,7 @@ import {
   ContextMenuLabel,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+} from "@/components/ui/context-menu.jsx";
 
 function RowContextMenu({
   children,

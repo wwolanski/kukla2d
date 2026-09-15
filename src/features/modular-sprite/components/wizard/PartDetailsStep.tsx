@@ -9,9 +9,9 @@ import type {
 } from "@/features/modular-sprite/domain/contracts.types.js";
 import type { RegionGrouping } from "@/features/modular-sprite/domain/partGrouping.types.js";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
 
 const UiButton = Button as React.ComponentType<
   React.ButtonHTMLAttributes<HTMLButtonElement> & {

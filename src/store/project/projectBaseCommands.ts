@@ -5,7 +5,7 @@ import type {
   ProjectActions,
   ProjectStoreSet,
 } from "@/store/project/projectStoreTypes.types.js";
-import { pushPatches } from "@/store/undoHistory";
+import { pushPatches } from "@/store/undoHistory.js";
 
 type ProjectBaseCommands = Pick<
   ProjectActions,

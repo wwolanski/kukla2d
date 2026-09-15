@@ -1,4 +1,4 @@
-import { saveProject } from "@/io/projectFile";
+import { saveProject } from "@/io/projectFile.js";
 
 import type { ExternalProjectImporter } from "@/features/projects/infrastructure/externalImport/externalImport.types.js";
 import { scmlImporter } from "@/features/projects/infrastructure/externalImport/scml/scmlImporter.js";
