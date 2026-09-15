@@ -29,6 +29,7 @@ export function EditorHeader({
   onRedo,
   onOpenExportModal,
   onOpenPreferences,
+  onOpenSchemaLibrary,
 }) {
   const isAnimationMode = mode === 'animation';
   const { send } = useWorkflowActor();
@@ -214,6 +215,14 @@ export function EditorHeader({
               </p>
             </div>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2 w-full justify-start"
+            onClick={onOpenSchemaLibrary}
+          >
+            Browse schema library…
+          </Button>
         </PopoverContent>
       </Popover>
     </header>
@@ -234,4 +243,5 @@ EditorHeader.propTypes = {
   onRedo: PropTypes.func.isRequired,
   onOpenExportModal: PropTypes.func.isRequired,
   onOpenPreferences: PropTypes.func.isRequired,
+  onOpenSchemaLibrary: PropTypes.func.isRequired,
 };
