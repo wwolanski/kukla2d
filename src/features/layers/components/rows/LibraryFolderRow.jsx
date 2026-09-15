@@ -29,7 +29,9 @@ export function LibraryFolderRow({
 }) {
   const rowRef = useRef(null);
   const isDragOver =
-    dragSession?.targetId === folder.id && dragSession?.sourceId !== folder.id;
+    !folder.isModularSpritePackage &&
+    dragSession?.targetId === folder.id &&
+    dragSession?.sourceId !== folder.id;
   const dropPosition = isDragOver ? dragSession.dropPosition : null;
 
   const { isEditing, draft, setDraft, startEdit, handleKeyDown, handleBlur } =
@@ -149,7 +151,9 @@ export function LibraryFolderRow({
             {onRegenerateModularSprite && (
               <ContextMenuItem
                 onSelect={() =>
-                  onRegenerateModularSprite(folder.modularSpriteId)
+                  requestAnimationFrame(() =>
+                    onRegenerateModularSprite(folder.modularSpriteId),
+                  )
                 }
               >
                 <Boxes className="mr-2 h-4 w-4 opacity-70" />

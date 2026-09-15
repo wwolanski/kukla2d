@@ -9,6 +9,10 @@ export {
   processModularSpriteAsync,
 } from "@/features/modular-sprite/domain/processing/pipeline.js";
 export { matchRegionsToTemplate } from "@/features/modular-sprite/domain/matching.js";
+export {
+  normalizedPixelFrame,
+  pixelRect,
+} from "@/features/modular-sprite/domain/imageMath.js";
 export { slugPartKey } from "@/features/modular-sprite/application/partDraftFactory.js";
 export {
   createModularSpriteSchema,

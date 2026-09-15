@@ -12,7 +12,7 @@ import type {
   ModularSpriteDraftPart,
   RgbaImageData,
 } from "@/features/modular-sprite";
-import { slugPartKey } from "@/features/modular-sprite";
+import { normalizedPixelFrame, slugPartKey } from "@/features/modular-sprite";
 
 interface GeneratorAsset {
   assetId: AssetId;
@@ -282,12 +282,16 @@ export async function generateModularSprite(
       side: previous?.side ?? "none",
       required: previous?.required ?? true,
       order: node?.draw_order ?? previous?.order ?? index,
-      extractionFrame: {
-        x: asset.x / packed.width,
-        y: asset.y / packed.height,
-        width: asset.image.width / packed.width,
-        height: asset.image.height / packed.height,
-      },
+      extractionFrame: normalizedPixelFrame(
+        {
+          x: asset.x,
+          y: asset.y,
+          width: asset.image.width,
+          height: asset.image.height,
+        },
+        packed.width,
+        packed.height,
+      ),
       contentBounds: {
         x: (asset.x + bounds.minX) / packed.width,
         y: (asset.y + bounds.minY) / packed.height,

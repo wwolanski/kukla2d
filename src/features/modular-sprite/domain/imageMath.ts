@@ -7,6 +7,12 @@ interface PixelRect {
   height: number;
 }
 
+// Keep normalized frames strictly inside their intended half-open pixel
+// interval. This gives floor/ceil based consumers a little room around the
+// integer boundaries after arithmetic and JSON serialization.
+const NORMALIZED_PIXEL_FRAME_INSET = 1e-4;
+const PIXEL_EDGE_EPSILON = 1e-6;
+
 export function clamp(value: number, minimum: number, maximum: number): number {
   return Math.max(minimum, Math.min(maximum, value));
 }
@@ -62,16 +68,45 @@ export function normalizedRect(
   };
 }
 
+export function normalizedPixelFrame(
+  rect: PixelRect,
+  width: number,
+  height: number,
+): NormalizedRect {
+  const left = rect.x + NORMALIZED_PIXEL_FRAME_INSET;
+  const top = rect.y + NORMALIZED_PIXEL_FRAME_INSET;
+  const right = rect.x + rect.width - NORMALIZED_PIXEL_FRAME_INSET;
+  const bottom = rect.y + rect.height - NORMALIZED_PIXEL_FRAME_INSET;
+  return {
+    x: left / width,
+    y: top / height,
+    width: (right - left) / width,
+    height: (bottom - top) / height,
+  };
+}
+
 export function pixelRect(
   rect: NormalizedRect,
   width: number,
   height: number,
 ): PixelRect {
-  const x = clamp(Math.floor(rect.x * width), 0, Math.max(0, width - 1));
-  const y = clamp(Math.floor(rect.y * height), 0, Math.max(0, height - 1));
-  const right = clamp(Math.ceil((rect.x + rect.width) * width), x + 1, width);
+  const x = clamp(
+    Math.floor(rect.x * width + PIXEL_EDGE_EPSILON),
+    0,
+    Math.max(0, width - 1),
+  );
+  const y = clamp(
+    Math.floor(rect.y * height + PIXEL_EDGE_EPSILON),
+    0,
+    Math.max(0, height - 1),
+  );
+  const right = clamp(
+    Math.ceil((rect.x + rect.width) * width - PIXEL_EDGE_EPSILON),
+    x + 1,
+    width,
+  );
   const bottom = clamp(
-    Math.ceil((rect.y + rect.height) * height),
+    Math.ceil((rect.y + rect.height) * height - PIXEL_EDGE_EPSILON),
     y + 1,
     height,
   );

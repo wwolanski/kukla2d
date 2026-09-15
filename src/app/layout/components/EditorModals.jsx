@@ -156,7 +156,7 @@ export function EditorModals({
         </Suspense>
       )}
 
-      {modularSpriteGenerator.open && modularSpriteGenerator.intent && (
+      {modularSpriteGenerator.intent && (
         <Suspense fallback={null}>
           <ModularSpriteGenerator
             open={modularSpriteGenerator.open}

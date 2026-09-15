@@ -214,9 +214,13 @@ export function useCanvasAssetImport({
         const folderId = fileName ? uid() : null;
         if (folderId) {
           if (!projectDraft.libraryFolders) projectDraft.libraryFolders = [];
+          const folderName = createUniqueName(
+            fileName.replace(/\.[^.]+$/, ""),
+            projectDraft.libraryFolders.map((folder) => folder.name),
+          );
           projectDraft.libraryFolders.push({
             id: folderId,
-            name: fileName.replace(/\.[^.]+$/, ""),
+            name: folderName,
             parentId: null,
             sourceFileName: fileName,
             origin: "import",

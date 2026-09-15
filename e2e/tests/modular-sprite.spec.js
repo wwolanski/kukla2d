@@ -78,9 +78,40 @@ test("imports a synthetic modular sprite and opens its generator", async ({
   if (!(await sourceName.isVisible()))
     await page.locator('#layers-panel span[title="synthetic-sheet"]').click();
   await expect(page.getByText("Modular Source")).toBeVisible();
-  await sourceName.click({ button: "right" });
-  await page.getByRole("menuitem", { name: "Open generator" }).click();
+  const generatorHeading = page.getByRole("heading", {
+    name: "Regenerate modular sprite",
+  });
+  const openGenerator = async () => {
+    await sourceName.click({ button: "right" });
+    await page
+      .getByRole("menuitem", { name: /Regenerate package/ })
+      .click();
+    await expect(generatorHeading).toBeVisible();
+  };
+  const closeGenerator = async () => {
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(generatorHeading).toBeHidden();
+    await expect
+      .poll(() => page.evaluate(() => document.body.style.pointerEvents))
+      .not.toBe("none");
+  };
+
+  await openGenerator();
+  await closeGenerator();
+  await openGenerator();
+  await closeGenerator();
+
+  const headAsset = page.locator('#layers-panel span[title="Head"]');
+  await expect(headAsset).toBeVisible();
+  await headAsset.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Remove from package" }).click();
+  await expect(generatorHeading).toBeVisible();
+  await page.getByRole("button", { name: "Regenerate package" }).click();
+  await expect(generatorHeading).toBeHidden();
   await expect(
-    page.getByRole("heading", { name: "Regenerate modular sprite" }),
-  ).toBeVisible();
+    page
+      .locator('[data-library-package-drop-target]')
+      .getByTitle("Head"),
+  ).toHaveCount(0);
+  await expect(headAsset).toBeVisible();
 });
