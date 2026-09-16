@@ -49,7 +49,9 @@ export function SaveModal({
     saveMode,
     isSaving,
     saveToSchemaDatabase,
+    updateSchemasOnOverwrite,
     schemaEligibility,
+    schemaUpdateEligibility,
     overwriteProject,
     preflightErrors,
     preflightWarnings,
@@ -58,6 +60,7 @@ export function SaveModal({
     setAuthor,
     setSaveMode,
     setSaveToSchemaDatabase,
+    setUpdateSchemasOnOverwrite,
     handleSaveNew,
     handleOverwrite,
     confirmOverwrite,
@@ -157,7 +160,7 @@ export function SaveModal({
                     checked={saveToSchemaDatabase}
                     disabled={!schemaEligibility.enabled || isSaving}
                     onCheckedChange={setSaveToSchemaDatabase}
-                    aria-label="Save to schema database"
+                    aria-label="Publish new package schemas"
                     className="mt-0.5"
                   />
                   <label
@@ -165,11 +168,11 @@ export function SaveModal({
                     className={schemaEligibility.enabled ? "cursor-pointer" : "cursor-not-allowed opacity-60"}
                   >
                     <span className="block text-xs font-medium">
-                      Save to schema database
+                      Publish new package schemas
                     </span>
                     <span className="mt-0.5 block text-[10px] leading-relaxed text-muted-foreground">
                       {schemaEligibility.enabled
-                        ? `${schemaEligibility.reason} Destination: local (indexedDB).`
+                        ? `${schemaEligibility.reason} Existing schema references are forked, never overwritten. Destination: local (indexedDB).`
                         : schemaEligibility.reason}
                     </span>
                   </label>
@@ -204,6 +207,29 @@ export function SaveModal({
               replace the project data and thumbnail in your library.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="flex items-start gap-3 rounded-md border bg-muted/20 p-3">
+            <Switch
+              id="update-schemas-on-overwrite"
+              checked={updateSchemasOnOverwrite}
+              disabled={!schemaUpdateEligibility.enabled || isSaving}
+              onCheckedChange={setUpdateSchemasOnOverwrite}
+              aria-label="Update linked schemas"
+              className="mt-0.5"
+            />
+            <label
+              htmlFor="update-schemas-on-overwrite"
+              className={schemaUpdateEligibility.enabled ? "cursor-pointer" : "cursor-not-allowed opacity-60"}
+            >
+              <span className="block text-xs font-medium">
+                Update linked schemas
+              </span>
+              <span className="mt-0.5 block text-[10px] leading-relaxed text-muted-foreground">
+                {schemaUpdateEligibility.enabled
+                  ? `${schemaUpdateEligibility.updateCount} managed schema update${schemaUpdateEligibility.updateCount === 1 ? "" : "s"} will be saved to local IndexedDB.`
+                  : schemaUpdateEligibility.reason}
+              </span>
+            </label>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction

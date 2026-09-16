@@ -7,9 +7,11 @@ import {
 } from "@/features/modular-sprite/index.js";
 import { localSchemaApi } from "@/features/modular-sprite-schema/index.js";
 import { publishProjectSchemas } from "@/features/projects/application/projectSchemaPublication.js";
+import type { ProjectSchemaPublicationOptions } from "@/features/projects/application/projectSchemaPublication.js";
 
 export async function publishProjectSchemasToLocalDatabase(
   project: ProjectDocument,
+  options?: ProjectSchemaPublicationOptions,
 ): ReturnType<typeof publishProjectSchemas> {
   const processing = createModularSpriteProcessingApi();
   try {
@@ -30,7 +32,7 @@ export async function publishProjectSchemasToLocalDatabase(
         saveAsset: (asset) => localSchemaApi.saveAsset(asset),
         portableSnapshot: portableModularSpriteSchema,
       },
-    });
+    }, options);
   } finally {
     processing.dispose();
   }

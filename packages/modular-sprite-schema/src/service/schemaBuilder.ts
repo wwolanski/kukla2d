@@ -6,6 +6,7 @@ import type {
   PortableSchemaSnapshot,
   SchemaAssetRef,
   SchemaSlot,
+  SizeRatioRule,
 } from "../contracts/schema.types.js";
 
 const rotateRight = (value: number, count: number) =>
@@ -101,6 +102,60 @@ export function compositionId(slots: readonly SchemaSlot[]): string {
     .sort((a, b) => a.slotKey.localeCompare(b.slotKey));
   return sha256(JSON.stringify(canonical));
 }
+
+const foregroundArea = (slot: SchemaSlot): number =>
+  slot.components.reduce(
+    (sum, component) => sum + component.foregroundAreaRatio,
+    0,
+  );
+
+/** Build a bounded relational profile around the largest required slot. */
+export function sizeRatioRulesFromSlots(
+  slots: readonly SchemaSlot[],
+): SizeRatioRule[] {
+  const candidates = slots
+    .map((slot) => ({ slot, area: foregroundArea(slot) }))
+    .filter((candidate) => candidate.area > 0);
+  const required = candidates.filter((candidate) => candidate.slot.required);
+  const anchor = [...(required.length ? required : candidates)].sort(
+    (left, right) =>
+      right.area - left.area ||
+      left.slot.slotKey.localeCompare(right.slot.slotKey),
+  )[0];
+  if (!anchor) return [];
+  const rules: SizeRatioRule[] = [];
+  const addRule = (
+    left: (typeof candidates)[number],
+    right: (typeof candidates)[number],
+  ): void => {
+    const pair = [left.slot.slotKey, right.slot.slotKey].sort().join("--");
+    if (rules.some((rule) => rule.ruleId.startsWith(`${pair}--`))) return;
+    rules.push({
+      ruleId: `${pair}--foreground-area`,
+      leftSlotKey: left.slot.slotKey,
+      rightSlotKey: right.slot.slotKey,
+      metric: "foreground-area",
+      expectedRatio: left.area / right.area,
+      tolerance: DEFAULT_MATCHER_PROFILE.sizeTolerance,
+      weightBp: 10000,
+    });
+  };
+  for (const candidate of candidates) {
+    if (candidate !== anchor) addRule(anchor, candidate);
+  }
+  for (const left of candidates) {
+    const side = left.slot.qualifiers.side;
+    if (side !== "left" && side !== "right") continue;
+    const opposite = candidates.find(
+      (right) =>
+        right.slot.semanticRoleId === left.slot.semanticRoleId &&
+        right.slot.qualifiers.side === (side === "left" ? "right" : "left"),
+    );
+    if (opposite) addRule(left, opposite);
+  }
+  return rules;
+}
+
 export function buildSchema(input: {
   schemaId: string;
   name: string;
@@ -133,9 +188,12 @@ export function buildSchema(input: {
       slots,
       expectedIslandCount: input.observation.components.length,
     },
-    matcherProfile: structuredClone(DEFAULT_MATCHER_PROFILE),
+    matcherProfile: {
+      ...structuredClone(DEFAULT_MATCHER_PROFILE),
+      sizeRatioRules: sizeRatioRulesFromSlots(slots),
+    },
     referenceAsset: input.referenceAsset,
-    origin: input.origin ?? { kind: "user" },
+    origin: input.origin ?? { kind: "local" },
     createdAt: now,
     updatedAt: now,
   };

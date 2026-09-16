@@ -38,8 +38,18 @@ export class IndexedDbSchemaRepository implements LocalSchemaRepository {
       db
         .transaction(SCHEMA_STORE, "readwrite")
         .objectStore(SCHEMA_STORE)
-        .put(structuredClone(schema)),
+        .put(schema),
       "Failed to save schema",
+    );
+  }
+  async delete(schemaId: string, revision: number): Promise<void> {
+    const db = await openAppDb();
+    await requestResult(
+      db
+        .transaction(SCHEMA_STORE, "readwrite")
+        .objectStore(SCHEMA_STORE)
+        .delete([schemaId, revision]),
+      "Failed to delete schema",
     );
   }
   async putAsset(asset: StoredSchemaAsset): Promise<void> {

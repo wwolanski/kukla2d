@@ -3,6 +3,8 @@ import { lazy, Suspense } from "react";
 
 import { localSchemaLibrarySource } from "@/app/layout/schemaLibrarySources.js";
 
+import { useProjectStore } from "@/store/projectStore.js";
+
 import {
   publishProjectSchemasToLocalDatabase,
   SaveModal,
@@ -75,6 +77,35 @@ export function EditorModals({
   modularSpriteGenerator,
   setModularSpriteGenerator,
 }) {
+  const updateManagedSchema = async (modularSpriteId) => {
+    const store = useProjectStore.getState();
+    const publication = await publishProjectSchemasToLocalDatabase(
+      store.project,
+      {
+        spriteIds: [modularSpriteId],
+        publishUnmanaged: false,
+        updateManaged: true,
+      },
+    );
+    if (publication.updatedCount !== 1)
+      throw new Error("The linked schema did not require an update");
+    const updated = publication.project.modularSprites.find(
+      (sprite) => sprite.id === modularSpriteId,
+    );
+    if (!updated?.schemaBinding)
+      throw new Error("The updated schema binding is missing");
+    store.updateProject(
+      (draft) => {
+        const sprite = draft.modularSprites.find(
+          (candidate) => candidate.id === modularSpriteId,
+        );
+        if (sprite)
+          sprite.schemaBinding = structuredClone(updated.schemaBinding);
+      },
+      { skipHistory: true },
+    );
+  };
+
   return (
     <>
       {exportModalOpen && (
@@ -165,6 +196,7 @@ export function EditorModals({
                 throw new Error("Canvas import service is not ready");
               return importRef.current.commitModularSprite(request);
             }}
+            onUpdateSchema={updateManagedSchema}
           />
         </Suspense>
       )}

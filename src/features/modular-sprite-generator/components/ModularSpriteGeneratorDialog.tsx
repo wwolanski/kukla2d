@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { ScrollArea } from "@/components/ui/scroll-area.js";
+import { Switch } from "@/components/ui/switch.jsx";
 
 const UiDialog = Dialog as React.ComponentType<{
   open: boolean;
@@ -62,6 +63,14 @@ const UiCheckbox = Checkbox as React.ComponentType<{
   checked?: boolean;
   onCheckedChange?(value: boolean | "indeterminate"): void;
 }>;
+const UiSwitch = Switch as React.ComponentType<{
+  id?: string;
+  checked?: boolean;
+  disabled?: boolean;
+  className?: string;
+  "aria-label"?: string;
+  onCheckedChange?(value: boolean): void;
+}>;
 const UiButton = Button as React.ComponentType<
   React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string }
 >;
@@ -93,6 +102,7 @@ interface ModularSpriteGeneratorDialogProps {
   onCommit: (
     request: ModularSpriteCommitRequest,
   ) => Promise<ModularSpriteCommitResult>;
+  onUpdateSchema?: (modularSpriteId: string) => Promise<void>;
 }
 
 async function loadAsset(
@@ -124,6 +134,7 @@ export function ModularSpriteGeneratorDialog({
   image,
   onOpenChange,
   onCommit,
+  onUpdateSchema,
 }: ModularSpriteGeneratorDialogProps): React.ReactElement {
   const project = useProjectStore((state) => state.project);
   const updateProject = useProjectStore((state) => state.updateProject);
@@ -141,6 +152,7 @@ export function ModularSpriteGeneratorDialog({
     new Set(),
   );
   const [busy, setBusy] = useState(false);
+  const [updateSchema, setUpdateSchema] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initializedSessionRef = useRef<string | null>(null);
 
@@ -168,6 +180,10 @@ export function ModularSpriteGeneratorDialog({
       new Set(intent?.removeAssetId ? [intent.removeAssetId] : []),
     );
     setBusy(false);
+    setUpdateSchema(
+      target.schemaBinding?.relationship === "managed" &&
+        Boolean(onUpdateSchema),
+    );
     setError(null);
   }, [
     intent?.force,
@@ -175,6 +191,7 @@ export function ModularSpriteGeneratorDialog({
     intent?.removeAssetId,
     intent?.removeFromLibrary,
     open,
+    onUpdateSchema,
     target,
   ]);
 
@@ -211,6 +228,7 @@ export function ModularSpriteGeneratorDialog({
     if (!target) return;
     setBusy(true);
     setError(null);
+    let packageCommitted = false;
     try {
       const selectedOtherPackages = otherPackages.filter((sprite) =>
         selectedPackages.has(sprite.id),
@@ -276,7 +294,7 @@ export function ModularSpriteGeneratorDialog({
           .map((placement) => placement.folderId)
           .filter((folderId): folderId is string => Boolean(folderId)),
       );
-      await commitGeneratedPackage(request, onCommit, updateProject, (draft) => {
+      const committed = await commitGeneratedPackage(request, onCommit, updateProject, (draft) => {
         draft.modularSprites = draft.modularSprites.filter(
           (sprite) => !mergedIds.has(sprite.id),
         );
@@ -299,12 +317,21 @@ export function ModularSpriteGeneratorDialog({
           }
         }
       });
+      packageCommitted = true;
+      if (
+        updateSchema &&
+        target.schemaBinding?.relationship === "managed" &&
+        onUpdateSchema
+      )
+        await onUpdateSchema(committed.modularSpriteId);
       onOpenChange(false);
     } catch (reason) {
       setError(
-        reason instanceof Error
-          ? reason.message
-          : "Could not generate the modular sprite",
+        `${packageCommitted ? "The package was regenerated, but its schema could not be updated: " : ""}${
+          reason instanceof Error
+            ? reason.message
+            : "Could not generate the modular sprite"
+        }`,
       );
     } finally {
       setBusy(false);
@@ -333,6 +360,34 @@ export function ModularSpriteGeneratorDialog({
             onChange={(event) => setName(event.target.value)}
           />
         </div>
+
+        {target?.schemaBinding && (
+          <div className="flex items-start gap-3 rounded-md border bg-muted/20 p-3">
+            {target.schemaBinding.relationship === "managed" ? (
+              <>
+                <UiSwitch
+                  id="update-regenerated-schema"
+                  checked={updateSchema}
+                  disabled={busy || !onUpdateSchema}
+                  onCheckedChange={setUpdateSchema}
+                  aria-label="Update linked schema"
+                  className="mt-0.5"
+                />
+                <label htmlFor="update-regenerated-schema" className="cursor-pointer">
+                  <span className="block text-xs font-medium">Update linked schema</span>
+                  <span className="mt-0.5 block text-[10px] leading-relaxed text-muted-foreground">
+                    Save a new local revision after regenerating this package.
+                  </span>
+                </label>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                The applied schema is a reference. Regeneration keeps the link
+                but never modifies the original schema.
+              </p>
+            )}
+          </div>
+        )}
 
         <ScrollArea className="min-h-0 flex-1 rounded-md border">
           <div className="space-y-5 p-4">

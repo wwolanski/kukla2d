@@ -178,6 +178,8 @@ describe("finalizeModularSpriteImport", () => {
       schemaId: "existing-schema",
       schemaRevision: 2,
       compositionId: undefined,
+      relationship: "reference",
+      syncState: "current",
       slotToPartKey: { body: "body" },
       snapshot: {
         formatVersion: 1,

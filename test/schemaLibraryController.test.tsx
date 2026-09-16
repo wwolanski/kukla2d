@@ -50,9 +50,9 @@ describe("schema library controller", () => {
   it("filters by origin and searchable schema metadata", () => {
     const local = schema();
     const user = schema({
-      schemaId: "user.rogue",
+      schemaId: "local.rogue",
       name: "Rogue Layout",
-      origin: { kind: "user", sourceId: "local" },
+      origin: { kind: "local", sourceId: "local" },
     });
     const remote = schema({
       schemaId: "remote.knight",
@@ -63,10 +63,8 @@ describe("schema library controller", () => {
     });
 
     expect(filterSchemaLibrary([local, remote], "wizard", "all")).toEqual([local]);
-    expect(filterSchemaLibrary([local, user, remote], "", "local")).toEqual([
-      local,
-      user,
-    ]);
+    expect(filterSchemaLibrary([local, user, remote], "", "builtin")).toEqual([local]);
+    expect(filterSchemaLibrary([local, user, remote], "", "local")).toEqual([user]);
     expect(filterSchemaLibrary([local, user, remote], "", "remote")).toEqual([
       remote,
     ]);

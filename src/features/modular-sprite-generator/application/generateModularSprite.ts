@@ -228,6 +228,11 @@ export async function generateModularSprite(
 ): Promise<ModularSpriteCommitRequest> {
   if (input.assets.length === 0)
     throw new Error("Select at least one asset for the modular sprite");
+  const existing = input.existingId
+    ? input.project.modularSprites.find(
+        (sprite) => sprite.id === input.existingId,
+      )
+    : undefined;
   const ids = new Set<string>();
   for (const asset of input.assets) {
     if (ids.has(asset.assetId))
@@ -311,5 +316,13 @@ export async function generateModularSprite(
     recipe: structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE),
     parts,
     addToCanvas: !input.existingId,
+    ...(existing?.schemaBinding
+      ? {
+          schemaBinding: {
+            ...structuredClone(existing.schemaBinding),
+            syncState: "dirty" as const,
+          },
+        }
+      : {}),
   };
 }

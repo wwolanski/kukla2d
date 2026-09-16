@@ -67,7 +67,7 @@ export interface ModularSpriteSchema {
   matcherProfile: MatcherProfile;
   referenceAsset: SchemaAssetRef;
   thumbnailAsset?: SchemaAssetRef;
-  origin: { kind: "builtin" | "user" | "remote"; sourceId?: string };
+  origin: { kind: "builtin" | "local" | "remote"; sourceId?: string };
   createdAt: string;
   updatedAt: string;
 }

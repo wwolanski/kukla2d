@@ -18,6 +18,7 @@ describe("local schema application capability", () => {
     const repository = {
       list: vi.fn(),
       put: vi.fn(),
+      delete: vi.fn(),
       putSemantic: vi.fn(async () => undefined),
       listSemantics: vi.fn(),
       setSyncState: vi.fn(),

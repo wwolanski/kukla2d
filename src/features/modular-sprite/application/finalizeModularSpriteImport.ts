@@ -194,6 +194,8 @@ export async function finalizeModularSpriteImport(
       schemaId: boundSchema.schemaId,
       schemaRevision: boundSchema.revision,
       compositionId: boundSchema.compositionId,
+      relationship: "reference",
+      syncState: "current",
       slotToPartKey: binding.slotToPartKey,
       snapshot: ports.schema.portableSnapshot(boundSchema),
     };

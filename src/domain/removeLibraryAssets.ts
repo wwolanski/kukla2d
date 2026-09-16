@@ -11,9 +11,32 @@ export function removeLibraryAssets(projectDraft: ProjectDocument, assetIds: Rea
       for (const part of modularSprite.parts) expandedAssetIds.add(part.assetId);
       return [];
     }
+    const parts = modularSprite.parts.filter(part => !expandedAssetIds.has(part.assetId));
+    if (parts.length === modularSprite.parts.length) return [modularSprite];
+    if (!modularSprite.schemaBinding) return [{ ...modularSprite, parts }];
+
+    const remainingPartKeys = new Set(parts.map(part => part.partKey));
+    const slotToPartKey = Object.fromEntries(
+      Object.entries(modularSprite.schemaBinding.slotToPartKey)
+        .filter(([, partKey]) => remainingPartKeys.has(partKey)),
+    );
+    const remainingSlotKeys = new Set(Object.keys(slotToPartKey));
     return [{
       ...modularSprite,
-      parts: modularSprite.parts.filter(part => !expandedAssetIds.has(part.assetId)),
+      parts,
+      schemaBinding: {
+        ...modularSprite.schemaBinding,
+        syncState: 'dirty',
+        slotToPartKey,
+        snapshot: {
+          ...modularSprite.schemaBinding.snapshot,
+          slots: modularSprite.schemaBinding.snapshot.slots.filter(slot => {
+            if (typeof slot !== 'object' || slot === null) return false;
+            const slotKey = (slot as { slotKey?: unknown }).slotKey;
+            return typeof slotKey === 'string' && remainingSlotKeys.has(slotKey);
+          }),
+        },
+      },
     }];
   });
 

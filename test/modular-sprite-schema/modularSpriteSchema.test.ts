@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { PNG } from 'pngjs3';
+import { DEFAULT_MODULAR_SPRITE_RECIPE } from '@kukla2d/contracts';
 import {
   DEFAULT_MATCHER_PROFILE,
   InMemorySchemaMatchGateway,
@@ -15,6 +18,7 @@ import {
 } from '@kukla2d/modular-sprite-schema';
 
 import { BUNDLED_SCHEMAS } from '@/features/modular-sprite-schema/infrastructure/bundled/bundledSchemaSource';
+import { analyzeModularSpriteBackground, processModularSprite } from '@/features/modular-sprite';
 
 const shape = () => ({ width: 2, height: 2, data: new Uint8Array([1, 1, 1, 1]) });
 const slots: SchemaSlot[] = [
@@ -31,6 +35,26 @@ function schema(id = 'schema-a'): ModularSpriteSchema {
   const built = buildSchema({ schemaId: id, name: id, observation: observation(), slots, referenceAsset: { assetId: `${id}-asset`, mimeType: 'image/png', width: 100, height: 100 } });
   built.matcherProfile.sizeRatioRules = [{ ruleId: 'head-torso', leftSlotKey: 'head', rightSlotKey: 'torso', metric: 'foreground-area', expectedRatio: 1/3, tolerance: .2, weightBp: 10000 }];
   return built;
+}
+
+async function processExample(fileName: string): Promise<SpriteObservation> {
+  const png = await new Promise<PNG>((resolve, reject) => {
+    const decoder = new PNG({});
+    decoder.parse(
+      readFileSync(new URL(`../../src/features/modular-sprite/assets/examples/${fileName}`, import.meta.url)),
+      (error, parsed) => error ? reject(error) : resolve(parsed),
+    );
+  });
+  const image = {
+    width: png.width,
+    height: png.height,
+    data: new Uint8ClampedArray(png.data),
+  };
+  const recipe = structuredClone(DEFAULT_MODULAR_SPRITE_RECIPE);
+  const background = analyzeModularSpriteBackground(image);
+  recipe.background.mode = background.mode;
+  recipe.background.color = background.color;
+  return processModularSprite({ image, recipe }).observation;
 }
 
 describe('portable modular sprite schema engine', () => {
@@ -85,21 +109,42 @@ describe('portable modular sprite schema engine', () => {
     })).rejects.toMatchObject({ name: 'AbortError' });
   });
 
-  it('matches the real V2 reference fingerprint ahead of the wizard layout', () => {
-    const v2Schema = BUNDLED_SCHEMAS.find(item => item.schemaId === 'builtin.v2-example')!;
-    expect(v2Schema.fingerprint.canvasAspectRatio).toBeCloseTo(1145 / 1374, 10);
-    expect(v2Schema.fingerprint.expectedIslandCount).toBe(7);
-    const v2Observation: SpriteObservation = {
+  it('matches the Armored Panda reference fingerprint ahead of Arcane Wizard', () => {
+    const pandaSchema = BUNDLED_SCHEMAS.find(item => item.schemaId === 'builtin.armored-panda')!;
+    expect(pandaSchema.fingerprint.canvasAspectRatio).toBe(1);
+    expect(pandaSchema.fingerprint.expectedIslandCount).toBe(7);
+    const pandaObservation: SpriteObservation = {
       observationVersion: 1,
       processorVersion: 1,
-      canvas: { width: 1145, height: 1374, aspectRatio: 1145 / 1374 },
-      foregroundBounds: structuredClone(v2Schema.fingerprint.foregroundBounds),
-      components: v2Schema.slots.flatMap(slot => slot.components).map((component, index) => ({ ...structuredClone(component), componentId: index + 1 })),
+      canvas: { width: 1254, height: 1254, aspectRatio: 1 },
+      foregroundBounds: structuredClone(pandaSchema.fingerprint.foregroundBounds),
+      components: pandaSchema.slots.flatMap(slot => slot.components).map((component, index) => ({ ...structuredClone(component), componentId: index + 1 })),
       segmentationQualityBp: 10000,
     };
-    const response = new SchemaComparisonService(BUNDLED_SCHEMAS, 'bundled-v2').match({ requestId: 'v2-reference', observation: v2Observation, matcherProfileId: 'default-v1' });
-    expect(response.matches[0]?.schemaId).toBe('builtin.v2-example');
+    const response = new SchemaComparisonService(BUNDLED_SCHEMAS, 'bundled-examples').match({ requestId: 'panda-reference', observation: pandaObservation, matcherProfileId: 'default-v1' });
+    expect(response.matches[0]?.schemaId).toBe('builtin.armored-panda');
     expect(response.matches[0]?.similarityBp).toBeGreaterThanOrEqual(9900);
     expect(response.matches[1]?.similarityBp).toBeLessThan(response.matches[0]!.similarityBp);
+  });
+
+  it.each([
+    ['armored-panda.png', 'builtin.armored-panda'],
+    ['arcane-wizard.png', 'builtin.arcane-wizard'],
+  ])('matches the real %s example to its built-in schema', async (fileName, schemaId) => {
+    const response = new SchemaComparisonService(BUNDLED_SCHEMAS, 'bundled-examples').match({
+      requestId: fileName,
+      observation: await processExample(fileName),
+      matcherProfileId: 'default-v1',
+    });
+    expect(response.matches[0]?.schemaId).toBe(schemaId);
+    expect(response.matches[0]?.verdict).toBe('match');
+    expect(response.matches[0]?.analyzers.find(item => item.analyzerId === 'relations.size-ratio')?.status).toBe('scored');
+  });
+
+  it('generates size-ratio rules for saved schemas and scores them on reuse', () => {
+    const generated = buildSchema({ schemaId: 'generated', name: 'Generated', observation: observation(), slots, referenceAsset: { assetId: 'generated-asset', mimeType: 'image/png', width: 100, height: 100 } });
+    expect(generated.matcherProfile.sizeRatioRules).toHaveLength(1);
+    const relation = compareSchema(observation(), generated).analyzers.find(item => item.analyzerId === 'relations.size-ratio');
+    expect(relation).toMatchObject({ status: 'scored', scoreBp: 10000, passed: true });
   });
 });

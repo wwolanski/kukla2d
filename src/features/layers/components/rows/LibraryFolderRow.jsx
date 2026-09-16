@@ -140,6 +140,25 @@ export function LibraryFolderRow({
             </span>
           )}
 
+          {folder.schemaLink && (
+            <span
+              className={`shrink-0 rounded px-1 py-0.5 text-[8px] font-semibold uppercase ${
+                folder.schemaLink.status === "dirty"
+                  ? "bg-amber-500/15 text-amber-400"
+                  : folder.schemaLink.status === "managed"
+                    ? "bg-emerald-500/15 text-emerald-400"
+                    : "bg-sky-500/15 text-sky-400"
+              }`}
+              title={`${folder.schemaLink.name} · ${folder.schemaLink.status === "dirty" ? "schema update pending" : folder.schemaLink.status === "managed" ? "managed local schema" : "schema reference"}`}
+            >
+              {folder.schemaLink.status === "dirty"
+                ? "Schema changed"
+                : folder.schemaLink.status === "managed"
+                  ? "Schema synced"
+                  : "Schema linked"}
+            </span>
+          )}
+
           {isDragOver && dropPosition === "inside" && (
             <span className="absolute inset-0 rounded border-2 border-primary/40 pointer-events-none" />
           )}

@@ -22,6 +22,10 @@ import type { StoredProjectRecord } from "@/io/projectDb.types.js";
 
 type SaveMode = "library" | "download";
 type SaveAction = () => void;
+interface SchemaSavePolicy {
+  publishUnmanaged: boolean;
+  updateManaged: boolean;
+}
 
 interface UseSaveProjectProps {
   open: boolean;
@@ -34,6 +38,7 @@ interface UseSaveProjectProps {
   onOpenChange: (open: boolean) => void;
   publishSchemas?: (
     project: ProjectDocument,
+    options: SchemaSavePolicy,
   ) => Promise<{ project: ProjectDocument; publishedCount: number }>;
 }
 
@@ -43,7 +48,9 @@ interface UseSaveProjectResult {
   saveMode: SaveMode;
   isSaving: boolean;
   saveToSchemaDatabase: boolean;
+  updateSchemasOnOverwrite: boolean;
   schemaEligibility: ReturnType<typeof analyzeProjectSchemaEligibility>;
+  schemaUpdateEligibility: ReturnType<typeof analyzeProjectSchemaEligibility>;
   overwriteProject: StoredProjectRecord | null;
   libraryProjects: StoredProjectRecord[];
   preflightErrors: ProjectReadinessIssue[] | null;
@@ -53,6 +60,7 @@ interface UseSaveProjectResult {
   setAuthor: (author: string) => void;
   setSaveMode: (mode: SaveMode) => void;
   setSaveToSchemaDatabase: (value: boolean) => void;
+  setUpdateSchemasOnOverwrite: (value: boolean) => void;
   handleSaveNew: () => void;
   handleOverwrite: (project: StoredProjectRecord) => void;
   confirmOverwrite: () => void;
@@ -80,7 +88,16 @@ export function useSaveProject({
   const [saveMode, setSaveMode] = useState<SaveMode>("library");
   const [isSaving, setIsSaving] = useState(false);
   const [saveToSchemaDatabase, setSaveToSchemaDatabase] = useState(false);
-  const schemaEligibility = analyzeProjectSchemaEligibility(project);
+  const [updateSchemasOnOverwrite, setUpdateSchemasOnOverwrite] =
+    useState(true);
+  const schemaEligibility = analyzeProjectSchemaEligibility(project, {
+    publishUnmanaged: true,
+    updateManaged: false,
+  });
+  const schemaUpdateEligibility = analyzeProjectSchemaEligibility(project, {
+    publishUnmanaged: false,
+    updateManaged: true,
+  });
   const [overwriteProject, setOverwriteProject] =
     useState<StoredProjectRecord | null>(null);
   const [libraryProjects, setLibraryProjects] = useState<StoredProjectRecord[]>(
@@ -102,6 +119,7 @@ export function useSaveProject({
       setSaveMode(currentDbProjectId ? "library" : "library");
       setIsSaving(false);
       setSaveToSchemaDatabase(false);
+      setUpdateSchemasOnOverwrite(true);
       setPreflightErrors(null);
       setPreflightWarnings(null);
       setPendingSave(null);
@@ -127,7 +145,12 @@ export function useSaveProject({
   );
 
   const executeSave = useCallback(
-    async (idToUse: string | null, nameToUse: string, mode: SaveMode) => {
+    async (
+      idToUse: string | null,
+      nameToUse: string,
+      mode: SaveMode,
+      schemaPolicy: SchemaSavePolicy,
+    ) => {
       setIsSaving(true);
       setSaveError(null);
       try {
@@ -144,13 +167,21 @@ export function useSaveProject({
             ? activeAnimationId
             : null,
         };
-        if (saveToSchemaDatabase) {
-          if (!schemaEligibility.enabled)
-            throw new Error(schemaEligibility.reason);
-          if (!publishSchemas)
-            throw new Error("Schema database connection is unavailable");
-          const publication = await publishSchemas(projectToSave);
-          projectToSave = publication.project;
+        if (schemaPolicy.publishUnmanaged || schemaPolicy.updateManaged) {
+          const eligibility = analyzeProjectSchemaEligibility(
+            projectToSave,
+            schemaPolicy,
+          );
+          if (eligibility.createCount + eligibility.updateCount > 0) {
+            if (!eligibility.enabled) throw new Error(eligibility.reason);
+            if (!publishSchemas)
+              throw new Error("Schema database connection is unavailable");
+            const publication = await publishSchemas(
+              projectToSave,
+              schemaPolicy,
+            );
+            projectToSave = publication.project;
+          }
         }
         const blob = await saveProject(projectToSave);
 
@@ -205,9 +236,6 @@ export function useSaveProject({
       onSavedToDb,
       onSaveSuccess,
       onOpenChange,
-      saveToSchemaDatabase,
-      schemaEligibility.enabled,
-      schemaEligibility.reason,
       publishSchemas,
     ],
   );
@@ -221,6 +249,7 @@ export function useSaveProject({
           (p) => p.name.toLowerCase() === name.trim().toLowerCase(),
         );
         if (existing) {
+          setUpdateSchemasOnOverwrite(true);
           setOverwriteProject(existing);
           return;
         }
@@ -229,6 +258,10 @@ export function useSaveProject({
         saveMode === "library" ? currentDbProjectId : null,
         name,
         saveMode,
+        {
+          publishUnmanaged: saveToSchemaDatabase,
+          updateManaged: false,
+        },
       );
     };
 
@@ -241,21 +274,32 @@ export function useSaveProject({
     libraryProjects,
     executeSave,
     runPreflight,
+    saveToSchemaDatabase,
   ]);
 
   const handleOverwrite = useCallback((p: StoredProjectRecord) => {
+    setUpdateSchemasOnOverwrite(true);
     setOverwriteProject(p);
   }, []);
 
   const confirmOverwrite = useCallback(() => {
     if (!overwriteProject) return;
     const doOverwrite = () => {
-      void executeSave(overwriteProject.id, overwriteProject.name, "library");
+      void executeSave(overwriteProject.id, overwriteProject.name, "library", {
+        publishUnmanaged: saveToSchemaDatabase,
+        updateManaged: updateSchemasOnOverwrite,
+      });
       setOverwriteProject(null);
     };
     if (!runPreflight(doOverwrite)) return;
     doOverwrite();
-  }, [overwriteProject, executeSave, runPreflight]);
+  }, [
+    overwriteProject,
+    executeSave,
+    runPreflight,
+    saveToSchemaDatabase,
+    updateSchemasOnOverwrite,
+  ]);
 
   const continueAfterWarnings = useCallback(() => {
     setPreflightWarnings(null);
@@ -271,7 +315,9 @@ export function useSaveProject({
     saveMode,
     isSaving,
     saveToSchemaDatabase,
+    updateSchemasOnOverwrite,
     schemaEligibility,
+    schemaUpdateEligibility,
     overwriteProject,
     libraryProjects,
     preflightErrors,
@@ -281,6 +327,7 @@ export function useSaveProject({
     setAuthor,
     setSaveMode,
     setSaveToSchemaDatabase,
+    setUpdateSchemasOnOverwrite,
     handleSaveNew,
     handleOverwrite,
     confirmOverwrite,

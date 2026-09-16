@@ -35,8 +35,9 @@ export function createLocalSchemaApi(dependencies: {
   catalog: SchemaCatalogCapability;
   repository: LocalSchemaRepository;
   matchGateway: CatalogAwareSchemaMatchGateway;
+  getFallbackAsset?: (assetId: string) => Promise<StoredSchemaAsset | undefined>;
 }): LocalSchemaApi {
-  const { catalog, repository, matchGateway } = dependencies;
+  const { catalog, repository, matchGateway, getFallbackAsset } = dependencies;
   let ready: Promise<void> | null = null;
 
   const synchronizeGateway = (): void => {
@@ -44,7 +45,10 @@ export function createLocalSchemaApi(dependencies: {
   };
 
   const initialize = (): Promise<void> => {
-    ready ??= catalog.initialize().then(synchronizeGateway);
+    ready ??= catalog.initialize().then(synchronizeGateway).catch((error) => {
+      ready = null;
+      throw error;
+    });
     return ready;
   };
 
@@ -66,7 +70,10 @@ export function createLocalSchemaApi(dependencies: {
     },
     async getAsset(assetId: string) {
       await initialize();
-      return repository.getAsset(assetId);
+      return (
+        (await repository.getAsset(assetId)) ??
+        (await getFallbackAsset?.(assetId))
+      );
     },
     saveSemantic(definition: SemanticDefinition) {
       catalog.semantics.upsert(definition);

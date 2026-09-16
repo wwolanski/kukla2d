@@ -107,6 +107,22 @@ describe("modular sprite generator regeneration", () => {
           componentSeeds: [{ x: 0.5, y: 0.5 }],
         },
       ],
+      schemaBinding: {
+        schemaId: "managed-schema",
+        schemaRevision: 2,
+        compositionId: "managed-composition",
+        relationship: "managed",
+        syncState: "current",
+        slotToPartKey: { head: "head" },
+        snapshot: {
+          formatVersion: 1,
+          schemaId: "managed-schema",
+          revision: 2,
+          compositionId: "managed-composition",
+          name: "Hero schema",
+          slots: [],
+        },
+      },
     });
 
     const encode = async () => new Blob(["sheet"], { type: "image/png" });
@@ -122,6 +138,11 @@ describe("modular sprite generator regeneration", () => {
       },
       { encode },
     );
+    expect(firstRequest.schemaBinding).toMatchObject({
+      schemaId: "managed-schema",
+      relationship: "managed",
+      syncState: "dirty",
+    });
     applyGeneratedPackage(project, firstRequest);
 
     const secondRequest = await generateModularSprite(

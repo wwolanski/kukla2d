@@ -13,6 +13,7 @@ export interface StoredSchemaAsset extends SchemaAssetRef {
 export interface LocalSchemaRepository {
   list(): Promise<ModularSpriteSchema[]>;
   put(schema: ModularSpriteSchema): Promise<void>;
+  delete(schemaId: string, revision: number): Promise<void>;
   putSemantic(definition: SemanticDefinition): Promise<void>;
   listSemantics(): Promise<SemanticDefinition[]>;
   setSyncState(state: {

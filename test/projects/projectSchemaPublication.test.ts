@@ -223,6 +223,8 @@ describe("project schema publication", () => {
       schemaId: "user-schema",
       schemaRevision: 3,
       compositionId: "old-composition",
+      relationship: "managed",
+      syncState: "dirty",
       slotToPartKey: { head: "head" },
       snapshot: {
         formatVersion: 1,
@@ -248,7 +250,7 @@ describe("project schema publication", () => {
       fingerprint: processed.observation as never,
       matcherProfile: {} as never,
       referenceAsset: { assetId: "old-asset", mimeType: "image/png", width: 16, height: 16 },
-      origin: { kind: "user" },
+      origin: { kind: "local" },
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
     };
@@ -258,7 +260,77 @@ describe("project schema publication", () => {
 
     expect(ports.saved[0]!.schemaId).toBe("user-schema");
     expect(ports.saved[0]!.revision).toBe(4);
+    expect(ports.saved[0]!.name).toBe("Old");
     expect(result.project.modularSprites[0]!.schemaBinding?.schemaRevision).toBe(4);
+  });
+
+  it("does not create redundant revisions for a current managed binding", async () => {
+    const project = projectWithSprite();
+    const initial = await publishProjectSchemas(project, portsFor());
+    const ports = portsFor();
+
+    const result = await publishProjectSchemas(initial.project, ports, {
+      publishUnmanaged: false,
+      updateManaged: true,
+    });
+
+    expect(result.publishedCount).toBe(0);
+    expect(ports.saved).toHaveLength(0);
+    expect(ports.savedAssets).toHaveLength(0);
+  });
+
+  it("forks a referenced schema instead of revising the original", async () => {
+    const project = projectWithSprite();
+    project.modularSprites[0]!.schemaBinding = {
+      schemaId: "borrowed-schema",
+      schemaRevision: 7,
+      compositionId: "borrowed-composition",
+      relationship: "reference",
+      syncState: "current",
+      slotToPartKey: { head: "head" },
+      snapshot: {
+        formatVersion: 1,
+        schemaId: "borrowed-schema",
+        revision: 7,
+        compositionId: "borrowed-composition",
+        name: "Borrowed",
+        slots: [],
+      },
+    };
+    const borrowed = createModularSpriteSchema({
+      metadata: {
+        name: "Borrowed",
+        description: "External reference",
+        characterTypeIds: [],
+        characterClassIds: [],
+        tags: ["borrowed"],
+      },
+      parts: [
+        {
+          ...project.modularSprites[0]!.parts[0]!,
+          regionIds: [1],
+        },
+      ],
+      observation: processed.observation,
+      referenceAsset: {
+        assetId: "borrowed-asset",
+        mimeType: "image/png",
+        width: 16,
+        height: 16,
+      },
+      schemaId: "borrowed-schema",
+      revision: 7,
+    });
+    const ports = portsFor([borrowed]);
+
+    const result = await publishProjectSchemas(project, ports);
+
+    expect(ports.saved[0]!.schemaId).not.toBe("borrowed-schema");
+    expect(ports.saved[0]!.revision).toBe(1);
+    expect(result.project.modularSprites[0]!.schemaBinding).toMatchObject({
+      relationship: "managed",
+      syncState: "current",
+    });
   });
 
   it("does not save a schema or asset when region mapping fails", async () => {

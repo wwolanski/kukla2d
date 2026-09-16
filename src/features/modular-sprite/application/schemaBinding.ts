@@ -83,7 +83,7 @@ export function createModularSpriteSchema(input: {
     observation: input.observation,
     slots: slotsFromModularSpriteParts(input.parts, input.observation),
     referenceAsset: input.referenceAsset,
-    origin: { kind: "user" },
+    origin: { kind: "local" },
   });
 }
 

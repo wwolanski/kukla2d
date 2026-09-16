@@ -156,6 +156,17 @@ function createRuntime(
 }
 
 describe("modular sprite processor", () => {
+  it("normalizes component centroids by component area", () => {
+    const source = image(10, 10);
+    paint(source, 2, 3, 2, 2, [255, 255, 255, 255]);
+
+    const result = processModularSprite({ image: source, recipe: alphaRecipe() });
+
+    expect(result.regions).toHaveLength(1);
+    expect(result.regions[0]!.centroid).toEqual({ x: 0.3, y: 0.4 });
+    expect(result.observation.components[0]!.centroid).toEqual({ x: 0.3, y: 0.4 });
+  });
+
   it("blends the protection overlay only into marked pixels", () => {
     const pixels = new Uint8ClampedArray([10, 20, 30, 255, 40, 50, 60, 128]);
 

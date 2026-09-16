@@ -24,6 +24,10 @@ interface LibraryFolderRow {
   origin: LibraryFolder["origin"] | null;
   modularSpriteId: string | null;
   isModularSpritePackage: boolean;
+  schemaLink: {
+    name: string;
+    status: "reference" | "managed" | "dirty";
+  } | null;
   children: LibraryTreeRow[];
 }
 
@@ -61,7 +65,10 @@ export function buildLibraryTree({
     string,
     { id: string; kind: "source" | "part"; partKey: string | null }
   >();
-  const modularPackageByFolderId = new Map<string, string>();
+  const modularPackageByFolderId = new Map<
+    string,
+    { id: string; schemaLink: LibraryFolderRow["schemaLink"] }
+  >();
   for (const modularSprite of modularSprites ?? []) {
     modularByAssetId.set(modularSprite.sourceAssetId, {
       id: modularSprite.id,
@@ -73,7 +80,21 @@ export function buildLibraryTree({
     );
     const packageFolderId = sourcePlacement?.folderId ?? null;
     if (packageFolderId) {
-      modularPackageByFolderId.set(packageFolderId, modularSprite.id);
+      const binding = modularSprite.schemaBinding;
+      modularPackageByFolderId.set(packageFolderId, {
+        id: modularSprite.id,
+        schemaLink: binding
+          ? {
+              name: binding.snapshot.name,
+              status:
+                binding.syncState === "dirty"
+                  ? "dirty"
+                  : binding.relationship === "managed"
+                    ? "managed"
+                    : "reference",
+            }
+          : null,
+      });
     }
     for (const part of modularSprite.parts) {
       modularByAssetId.set(part.assetId, {
@@ -112,8 +133,11 @@ export function buildLibraryTree({
         name: folder.name,
         sourceFileName: folder.sourceFileName ?? null,
         origin: folder.origin ?? null,
-        modularSpriteId: modularPackageByFolderId.get(folder.id) ?? null,
+        modularSpriteId:
+          modularPackageByFolderId.get(folder.id)?.id ?? null,
         isModularSpritePackage: modularPackageByFolderId.has(folder.id),
+        schemaLink:
+          modularPackageByFolderId.get(folder.id)?.schemaLink ?? null,
         children: buildChildren(folder.id),
       });
     }

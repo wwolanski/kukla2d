@@ -46,11 +46,9 @@ export function filterSchemaLibrary(
 ): readonly ModularSpriteSchema[] {
   const query = search.trim().toLocaleLowerCase();
   return schemas.filter((schema) => {
-    const isLocal =
-      schema.origin.kind === "builtin" || schema.origin.kind === "user";
     if (
       originFilter !== "all" &&
-      (originFilter === "local" ? !isLocal : schema.origin.kind !== originFilter)
+      schema.origin.kind !== originFilter
     ) {
       return false;
     }

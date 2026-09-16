@@ -67,6 +67,38 @@ describe("modular sprite project schema", () => {
     expect(validateProject(projectWithModularSprite()).success).toBe(true);
   });
 
+  it("rejects a schema binding whose identity or part mapping is inconsistent", () => {
+    const project = projectWithModularSprite();
+    const compositionId = "a".repeat(64);
+    project.modularSprites[0]!.schemaBinding = {
+      schemaId: "schema-a",
+      schemaRevision: 2,
+      compositionId,
+      relationship: "managed",
+      syncState: "current",
+      slotToPartKey: { head: "missing-part" },
+      snapshot: {
+        formatVersion: 1,
+        schemaId: "schema-b",
+        revision: 2,
+        compositionId,
+        name: "Broken",
+        slots: [{ slotKey: "head" }],
+      },
+    };
+
+    const validation = validateProject(project);
+
+    expect(validation.success).toBe(false);
+    if (!validation.success) {
+      const messages = validation.error.issues
+        .map((issue) => issue.message)
+        .join(" ");
+      expect(messages).toContain("ID does not match");
+      expect(messages).toContain("missing part");
+    }
+  });
+
   it("accepts enclosed chroma mode and normalized seeds", () => {
     const project = projectWithModularSprite();
     project.modularSprites[0]!.recipe.background.enclosedChromaMode =
@@ -182,9 +214,31 @@ describe("modular sprite project schema", () => {
 
   it("detaches a removed part without deleting the protected source profile", () => {
     const project = projectWithModularSprite();
+    const sprite = project.modularSprites[0]!;
+    sprite.schemaBinding = {
+      schemaId: "local.test",
+      schemaRevision: 1,
+      compositionId: "composition",
+      relationship: "managed",
+      syncState: "current",
+      slotToPartKey: { part: "part" },
+      snapshot: {
+        formatVersion: 1,
+        schemaId: "local.test",
+        revision: 1,
+        compositionId: "composition",
+        name: "Test",
+        slots: [{ slotKey: "part" }],
+      },
+    };
     removeLibraryAssets(project, new Set(["part"]));
     expect(project.modularSprites).toHaveLength(1);
     expect(project.modularSprites[0]!.parts).toEqual([]);
+    expect(project.modularSprites[0]!.schemaBinding).toMatchObject({
+      syncState: "dirty",
+      slotToPartKey: {},
+      snapshot: { slots: [] },
+    });
     expect(project.textures.map((texture) => texture.id)).toEqual(["source"]);
   });
 });

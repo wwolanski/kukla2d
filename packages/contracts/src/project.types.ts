@@ -339,6 +339,10 @@ export interface ModularSpriteDocument {
     schemaId: string;
     schemaRevision: number;
     compositionId: string;
+    /** A reference is never revised in place; a managed schema belongs to this package. */
+    relationship?: "reference" | "managed";
+    /** Dirty means package pixels or structure changed after the recorded revision. */
+    syncState?: "current" | "dirty";
     slotToPartKey: Record<string, string>;
     snapshot: {
       formatVersion: 1;

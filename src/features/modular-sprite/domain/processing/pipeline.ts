@@ -70,8 +70,14 @@ function buildRegions(
       height: bounds.height / height,
     };
     const centroid = {
-      x: Math.min(1, Math.max(0, (component.sumX + 0.5) / width)),
-      y: Math.min(1, Math.max(0, (component.sumY + 0.5) / height)),
+      x: Math.min(
+        1,
+        Math.max(0, (component.sumX / component.area + 0.5) / width),
+      ),
+      y: Math.min(
+        1,
+        Math.max(0, (component.sumY / component.area + 0.5) / height),
+      ),
     };
     return {
       id: component.id,

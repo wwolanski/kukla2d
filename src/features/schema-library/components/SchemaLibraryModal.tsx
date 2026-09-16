@@ -47,8 +47,28 @@ const TabsTrigger = RawTabsTrigger as ComponentType<LooseProps>;
 const Card = RawCard as ComponentType<LooseProps>;
 const CardContent = RawCardContent as ComponentType<LooseProps>;
 
-function originLabel(schema: ModularSpriteSchema): string {
-  return schema.origin.kind === "remote" ? "remote" : "local";
+const ORIGIN_BADGES = {
+  builtin: {
+    label: "Built-in",
+    className: "border-violet-500/40 bg-violet-500/15 text-violet-300",
+  },
+  local: {
+    label: "Local",
+    className: "border-emerald-500/40 bg-emerald-500/15 text-emerald-300",
+  },
+  remote: {
+    label: "Remote",
+    className: "border-sky-500/40 bg-sky-500/15 text-sky-300",
+  },
+} as const;
+
+function OriginBadge({ schema }: { schema: ModularSpriteSchema }): React.ReactElement {
+  const badge = ORIGIN_BADGES[schema.origin.kind];
+  return (
+    <Badge variant="outline" className={`px-1.5 py-0 text-[9px] ${badge.className}`}>
+      {badge.label}
+    </Badge>
+  );
 }
 
 function assetUrl(
@@ -180,7 +200,7 @@ export function SchemaLibraryModal({
               <div className="relative"><Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={controller.search} onChange={(event: ChangeEvent<HTMLInputElement>) => controller.setSearch(event.target.value)} placeholder="Search schemas, tags, IDs…" className="pl-8 pr-8" aria-label="Search schemas" />{controller.search && <Button variant="ghost" size="icon" className="absolute right-1 top-1 h-7 w-7" onClick={() => controller.setSearch("")} aria-label="Clear search"><X className="h-3.5 w-3.5" /></Button>}</div>
               <Select value={controller.originFilter} onValueChange={setOrigin}>
                 <SelectTrigger aria-label="Filter schema origin"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="all">All origins</SelectItem><SelectItem value="local">Local</SelectItem><SelectItem value="remote">Remote</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="all">All origins</SelectItem><SelectItem value="builtin">Built-in</SelectItem><SelectItem value="local">Local</SelectItem><SelectItem value="remote">Remote</SelectItem></SelectContent>
               </Select>
             </div>
             <ScrollArea className="min-h-0 flex-1">
@@ -202,5 +222,5 @@ export function SchemaLibraryModal({
 }
 
 function SchemaCard({ schema, selected, src, onSelect }: { schema: ModularSpriteSchema; selected: boolean; src?: string | undefined; onSelect: () => void }): React.ReactElement {
-  return <Card className={selected ? "border-primary ring-1 ring-primary" : ""}><button type="button" className="block w-full text-left" aria-pressed={selected} onClick={onSelect}><CardContent className="flex gap-3 p-3"><div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded border bg-muted"><SchemaReferencePreview schema={schema} src={src} /></div><div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{schema.name}</div><div className="mt-1 flex flex-wrap gap-x-2 text-[10px] text-muted-foreground"><span>{originLabel(schema)}</span><span>rev {schema.revision}</span><span>{schema.slots.length} slots</span></div><Tags values={schema.tags} /></div></CardContent></button></Card>;
+  return <Card className={selected ? "border-primary ring-1 ring-primary" : ""}><button type="button" className="block w-full text-left" aria-pressed={selected} onClick={onSelect}><CardContent className="flex gap-3 p-3"><div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded border bg-muted"><SchemaReferencePreview schema={schema} src={src} /></div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><div className="min-w-0 flex-1 truncate text-sm font-semibold">{schema.name}</div><OriginBadge schema={schema} /></div><div className="mt-1 flex flex-wrap gap-x-2 text-[10px] text-muted-foreground"><span>rev {schema.revision}</span><span>{schema.slots.length} slots</span></div><Tags values={schema.tags} /></div></CardContent></button></Card>;
 }

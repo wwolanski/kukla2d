@@ -238,6 +238,7 @@ export function useModularSpriteImport({
                 (part) => part.assetId !== request.includeAssetId,
               );
               if (!hadIncludedPart || !modularSprite.schemaBinding) continue;
+              modularSprite.schemaBinding.syncState = "dirty";
               const remainingPartKeys = new Set(
                 modularSprite.parts.map((part) => part.partKey),
               );

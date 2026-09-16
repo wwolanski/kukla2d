@@ -1,6 +1,6 @@
 import type { ModularSpriteSchema } from "@kukla2d/modular-sprite-schema";
 
-export type SchemaLibraryOriginFilter = "all" | "local" | "remote";
+export type SchemaLibraryOriginFilter = "all" | "builtin" | "local" | "remote";
 export type SchemaLibraryStatus = "idle" | "loading" | "ready" | "error";
 
 export interface SchemaLibrarySourceDescriptor {

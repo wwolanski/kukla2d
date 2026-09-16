@@ -9,6 +9,7 @@ import type {
   PortableSchemaSnapshot,
   SchemaAssetRef,
 } from "@kukla2d/modular-sprite-schema";
+import { semanticRoleIdForLegacyRole } from "@kukla2d/modular-sprite-schema";
 
 import {
   createModularSpriteSchema,
@@ -21,9 +22,17 @@ import {
 
 const REGION_DISTANCE_THRESHOLD = 0.2;
 
-interface ProjectSchemaEligibility {
+export interface ProjectSchemaEligibility {
   enabled: boolean;
   reason: string;
+  createCount: number;
+  updateCount: number;
+}
+
+export interface ProjectSchemaPublicationOptions {
+  spriteIds?: readonly ModularSpriteDocument["id"][];
+  publishUnmanaged?: boolean;
+  updateManaged?: boolean;
 }
 
 interface ProjectSchemaPublicationPorts {
@@ -48,6 +57,8 @@ interface ProjectSchemaPublicationPorts {
 interface ProjectSchemaPublicationResult {
   project: ProjectDocument;
   publishedCount: number;
+  createdCount: number;
+  updatedCount: number;
 }
 
 interface PendingPublication {
@@ -61,17 +72,119 @@ function spriteLabel(sprite: ModularSpriteDocument, index: number): string {
   return sprite.name.trim() || `#${index + 1}`;
 }
 
+function isManaged(
+  sprite: ModularSpriteDocument,
+): sprite is ModularSpriteDocument & {
+  schemaBinding: NonNullable<ModularSpriteDocument["schemaBinding"]>;
+} {
+  return sprite.schemaBinding?.relationship === "managed";
+}
+
+function snapshotSlot(value: unknown): {
+  slotKey?: string;
+  label?: string;
+  semanticRoleId?: string;
+  qualifiers?: Record<string, string>;
+  required?: boolean;
+  drawOrder?: number;
+  components?: unknown[];
+} | null {
+  return typeof value === "object" && value !== null ? value : null;
+}
+
+export function isProjectSchemaBindingDirty(
+  sprite: ModularSpriteDocument,
+): boolean {
+  const binding = sprite.schemaBinding;
+  if (!binding) return false;
+  if (binding.syncState === "dirty") return true;
+  const mappedPartKeys = new Set(Object.values(binding.slotToPartKey));
+  if (mappedPartKeys.size !== sprite.parts.length) return true;
+  for (const part of sprite.parts) {
+    if (!mappedPartKeys.has(part.partKey)) return true;
+    const slotEntry = binding.snapshot.slots.find((candidate) => {
+      const slot = snapshotSlot(candidate);
+      return (
+        slot?.slotKey !== undefined &&
+        binding.slotToPartKey[slot.slotKey] === part.partKey
+      );
+    });
+    const slot = snapshotSlot(slotEntry);
+    const semanticRoleId =
+      part.semanticRoleId ?? semanticRoleIdForLegacyRole(part.role);
+    const qualifiers = {
+      ...(part.qualifiers ?? {}),
+      ...(part.side === "none" ? {} : { side: part.side }),
+    };
+    if (
+      !slot ||
+      slot.label !== part.name ||
+      slot.semanticRoleId !== semanticRoleId ||
+      JSON.stringify(slot.qualifiers ?? {}) !==
+        JSON.stringify(qualifiers) ||
+      slot.required !== part.required ||
+      slot.drawOrder !== part.order ||
+      slot.components?.length !== part.componentSeeds.length
+    )
+      return true;
+  }
+  return false;
+}
+
+function selectedSprites(
+  project: ProjectDocument,
+  options: ProjectSchemaPublicationOptions,
+): ModularSpriteDocument[] {
+  const selectedIds = options.spriteIds
+    ? new Set(options.spriteIds)
+    : null;
+  return project.modularSprites.filter(
+    (sprite) => !selectedIds || selectedIds.has(sprite.id),
+  );
+}
+
+function shouldPublish(
+  sprite: ModularSpriteDocument,
+  options: ProjectSchemaPublicationOptions,
+): boolean {
+  if (isManaged(sprite))
+    return (options.updateManaged ?? true) &&
+      isProjectSchemaBindingDirty(sprite);
+  return options.publishUnmanaged ?? true;
+}
+
 export function analyzeProjectSchemaEligibility(
   project: ProjectDocument,
+  options: ProjectSchemaPublicationOptions = {},
 ): ProjectSchemaEligibility {
-  if (!Array.isArray(project.modularSprites) || project.modularSprites.length === 0) {
+  const sprites = selectedSprites(project, options).filter((sprite) =>
+    shouldPublish(sprite, options),
+  );
+  const createCount = sprites.filter((sprite) => !isManaged(sprite)).length;
+  const updateCount = sprites.length - createCount;
+  const managedOwners = new Map<string, string>();
+  for (const sprite of sprites) {
+    if (!isManaged(sprite)) continue;
+    const owner = managedOwners.get(sprite.schemaBinding.schemaId);
+    if (owner && owner !== sprite.id)
+      return {
+        enabled: false,
+        reason: `Managed schema "${sprite.schemaBinding.schemaId}" is linked to more than one modular sprite. Publish one package as a new schema first.`,
+        createCount,
+        updateCount,
+      };
+    managedOwners.set(sprite.schemaBinding.schemaId, sprite.id);
+  }
+  if (sprites.length === 0) {
     return {
       enabled: false,
-      reason: "Project has no modular sprites.",
+      reason: "No modular sprite schemas need to be published or updated.",
+      createCount,
+      updateCount,
     };
   }
 
-  for (const [index, sprite] of project.modularSprites.entries()) {
+  for (const [index, sprite] of sprites.entries()) {
     const label = spriteLabel(sprite, index);
     const sourceTexture = project.textures.find(
       (texture) => texture.id === sprite.sourceAssetId,
@@ -80,12 +193,16 @@ export function analyzeProjectSchemaEligibility(
       return {
         enabled: false,
         reason: `Modular sprite "${label}" is incomplete: its source texture is missing.`,
+        createCount,
+        updateCount,
       };
     }
     if (!Array.isArray(sprite.parts) || sprite.parts.length === 0) {
       return {
         enabled: false,
         reason: `Modular sprite "${label}" is incomplete: it has no parts.`,
+        createCount,
+        updateCount,
       };
     }
 
@@ -98,12 +215,16 @@ export function analyzeProjectSchemaEligibility(
         return {
           enabled: false,
           reason: `Modular sprite "${label}" is incomplete: the texture for part "${part.partKey}" is missing.`,
+          createCount,
+          updateCount,
         };
       }
       if (typeof part.partKey !== "string" || part.partKey.trim() === "") {
         return {
           enabled: false,
           reason: `Modular sprite "${label}" is incomplete: a part has no partKey.`,
+          createCount,
+          updateCount,
         };
       }
       const normalizedPartKey = part.partKey.trim().toLowerCase();
@@ -111,6 +232,8 @@ export function analyzeProjectSchemaEligibility(
         return {
           enabled: false,
           reason: `Modular sprite "${label}" is incomplete: partKey "${part.partKey}" is duplicated.`,
+          createCount,
+          updateCount,
         };
       }
       partKeys.add(normalizedPartKey);
@@ -119,7 +242,9 @@ export function analyzeProjectSchemaEligibility(
 
   return {
     enabled: true,
-    reason: `Project is eligible to publish ${project.modularSprites.length} modular sprite schema${project.modularSprites.length === 1 ? "" : "s"}.`,
+    reason: `${createCount ? `${createCount} new` : "No new"} schema${createCount === 1 ? "" : "s"}; ${updateCount ? `${updateCount} update${updateCount === 1 ? "" : "s"}` : "no updates"}.`,
+    createCount,
+    updateCount,
   };
 }
 
@@ -214,6 +339,8 @@ function schemaBindingFor(
     schemaId: schema.schemaId,
     schemaRevision: schema.revision,
     compositionId: schema.compositionId,
+    relationship: "managed",
+    syncState: "current",
     slotToPartKey,
     snapshot,
   };
@@ -224,36 +351,45 @@ function schemaInputFor(
   parts: readonly ModularSpriteDraftPart[],
   result: ProcessedModularSprite,
   referenceAsset: SchemaAssetRef,
-  previous?: ModularSpriteSchema,
+  metadataSource?: ModularSpriteSchema,
+  identity?: { schemaId: string; revision: number },
 ) {
   return {
     metadata: {
-      name: `${sprite.name} schema`,
-      description: "Generated from saved project",
-      characterTypeIds: [],
-      characterClassIds: [],
-      tags: [],
+      name: identity && metadataSource?.name
+        ? metadataSource.name
+        : `${sprite.name} schema`,
+      description:
+        metadataSource?.description || "Generated from saved project",
+      characterTypeIds: structuredClone(
+        metadataSource?.characterTypeIds ?? [],
+      ),
+      characterClassIds: structuredClone(
+        metadataSource?.characterClassIds ?? [],
+      ),
+      tags: structuredClone(metadataSource?.tags ?? []),
     },
     parts,
     observation: result.observation,
     referenceAsset,
-    ...(previous?.origin.kind === "user"
-      ? {
-          schemaId: previous.schemaId,
-          revision: previous.revision + 1,
-        }
-      : {}),
+    ...(identity ?? {}),
   };
 }
 
 export async function publishProjectSchemas(
   project: ProjectDocument,
   ports: ProjectSchemaPublicationPorts,
+  options: ProjectSchemaPublicationOptions = {},
 ): Promise<ProjectSchemaPublicationResult> {
   const clonedProject = structuredClone(project);
-  const eligibility = analyzeProjectSchemaEligibility(project);
+  const eligibility = analyzeProjectSchemaEligibility(project, options);
   if (!eligibility.enabled) {
-    return { project: clonedProject, publishedCount: 0 };
+    return {
+      project: clonedProject,
+      publishedCount: 0,
+      createdCount: 0,
+      updatedCount: 0,
+    };
   }
 
   await ports.schema.initialize();
@@ -264,7 +400,12 @@ export async function publishProjectSchemas(
     binding: NonNullable<ModularSpriteDocument["schemaBinding"]>;
   }> = [];
 
-  for (const [index, sprite] of project.modularSprites.entries()) {
+  const sprites = selectedSprites(project, options).filter((sprite) =>
+    shouldPublish(sprite, options),
+  );
+  let createdCount = 0;
+  let updatedCount = 0;
+  for (const [index, sprite] of sprites.entries()) {
     const texture = project.textures.find(
       (candidate) => candidate.id === sprite.sourceAssetId,
     );
@@ -280,10 +421,24 @@ export async function publishProjectSchemas(
       recipe: structuredClone(sprite.recipe),
     });
     const parts = mapPartsToRegions(sprite, result);
-    const previous = sprite.schemaBinding
+    const referencedSchema = sprite.schemaBinding
       ? existingSchemas.find(
           (schema) => schema.schemaId === sprite.schemaBinding?.schemaId,
         )
+      : undefined;
+    const managed = isManaged(sprite);
+    if (managed && referencedSchema && referencedSchema.origin.kind !== "local") {
+      throw new Error(
+        `Managed schema "${sprite.schemaBinding.schemaId}" collides with a non-local schema.`,
+      );
+    }
+    const identity = managed
+      ? {
+          schemaId: sprite.schemaBinding.schemaId,
+          revision:
+            (referencedSchema?.revision ?? sprite.schemaBinding.schemaRevision) +
+            1,
+        }
       : undefined;
     const referenceAsset: SchemaAssetRef = {
       assetId: crypto.randomUUID(),
@@ -293,16 +448,36 @@ export async function publishProjectSchemas(
     };
     const create = ports.schema.create ?? createModularSpriteSchema;
     const createdSchema = create(
-      schemaInputFor(sprite, parts, result, referenceAsset, previous),
+      schemaInputFor(
+        sprite,
+        parts,
+        result,
+        referenceAsset,
+        referencedSchema,
+        identity,
+      ),
     );
     const schema: ModularSpriteSchema = {
       ...createdSchema,
+      ...(managed && referencedSchema
+        ? {
+            createdAt: referencedSchema.createdAt,
+            matcherProfile: {
+              ...structuredClone(referencedSchema.matcherProfile),
+              sizeRatioRules: structuredClone(
+                createdSchema.matcherProfile.sizeRatioRules,
+              ),
+            },
+          }
+        : {}),
       thumbnailAsset: structuredClone(referenceAsset),
     };
     const portableSnapshot =
       ports.schema.portableSnapshot ?? portableModularSpriteSchema;
     const snapshot: PortableSchemaSnapshot = portableSnapshot(schema);
     pending.push({ schema, sourceBlob });
+    if (managed) updatedCount += 1;
+    else createdCount += 1;
     pendingBindings.push({
       spriteId: sprite.id,
       binding: schemaBindingFor(schema, parts, snapshot),
@@ -325,5 +500,7 @@ export async function publishProjectSchemas(
   return {
     project: clonedProject,
     publishedCount: pending.length,
+    createdCount,
+    updatedCount,
   };
 }

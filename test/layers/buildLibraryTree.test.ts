@@ -140,6 +140,22 @@ describe("buildLibraryTree", () => {
           id: "set-1",
           sourceAssetId: "source",
           parts: [],
+          schemaBinding: {
+            schemaId: "schema-1",
+            schemaRevision: 2,
+            compositionId: "composition",
+            relationship: "managed",
+            syncState: "dirty",
+            slotToPartKey: {},
+            snapshot: {
+              formatVersion: 1,
+              schemaId: "schema-1",
+              revision: 2,
+              compositionId: "composition",
+              name: "Hero schema",
+              slots: [],
+            },
+          },
         } as never,
       ],
     });
@@ -148,6 +164,10 @@ describe("buildLibraryTree", () => {
       kind: "folder",
       modularSpriteId: "set-1",
       isModularSpritePackage: true,
+      schemaLink: {
+        name: "Hero schema",
+        status: "dirty",
+      },
     });
   });
 

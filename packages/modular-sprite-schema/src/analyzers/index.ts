@@ -342,46 +342,61 @@ export const analyzers: readonly ComparisonAnalyzer[] = [
     id: "relations.size-ratio",
     version: 1,
     phase: "relational",
-    analyze: (c) =>
-      result(
+    analyze: (c: ComparisonContext): AnalyzerResult => {
+      const checks = c.schema.matcherProfile.sizeRatioRules.flatMap((rule) => {
+        const left = metric(actualsFor(c, rule.leftSlotKey), rule.metric);
+        const right = metric(actualsFor(c, rule.rightSlotKey), rule.metric);
+        if (!left || !right) return [];
+        const actual = left / right;
+        const expectedLeft = expectedMetric(
+          c.schema.slots.find((slot) => slot.slotKey === rule.leftSlotKey),
+          rule.metric,
+        );
+        const expectedRight = expectedMetric(
+          c.schema.slots.find((slot) => slot.slotKey === rule.rightSlotKey),
+          rule.metric,
+        );
+        const scoreBp = ratioScore(
+          actual,
+          rule.expectedRatio,
+          rule.tolerance,
+        );
+        return [
+          {
+            id: rule.ruleId,
+            label: `${rule.leftSlotKey} / ${rule.rightSlotKey}`,
+            expected: {
+              metric: rule.metric,
+              left: expectedLeft,
+              right: expectedRight,
+              ratio: rule.expectedRatio,
+            },
+            actual: { metric: rule.metric, left, right, ratio: actual },
+            tolerance: rule.tolerance,
+            scoreBp,
+            passed: scoreBp >= c.schema.matcherProfile.passThresholdBp,
+          },
+        ];
+      });
+      return result(
         "relations.size-ratio",
         c,
-        c.schema.matcherProfile.sizeRatioRules.flatMap((rule) => {
-          const left = metric(actualsFor(c, rule.leftSlotKey), rule.metric);
-          const right = metric(actualsFor(c, rule.rightSlotKey), rule.metric);
-          if (!left || !right) return [];
-          const actual = left / right;
-          const expectedLeft = expectedMetric(
-            c.schema.slots.find((slot) => slot.slotKey === rule.leftSlotKey),
-            rule.metric,
-          );
-          const expectedRight = expectedMetric(
-            c.schema.slots.find((slot) => slot.slotKey === rule.rightSlotKey),
-            rule.metric,
-          );
-          const scoreBp = ratioScore(
-            actual,
-            rule.expectedRatio,
-            rule.tolerance,
-          );
-          return [
-            {
-              id: rule.ruleId,
-              label: `${rule.leftSlotKey} / ${rule.rightSlotKey}`,
-              expected: {
-                metric: rule.metric,
-                left: expectedLeft,
-                right: expectedRight,
-                ratio: rule.expectedRatio,
+        checks,
+        checks.length === 0
+          ? [
+              {
+                code: c.schema.matcherProfile.sizeRatioRules.length
+                  ? "size-ratio-slots-unassigned"
+                  : "size-ratio-rules-missing",
+                severity: "info",
+                message: c.schema.matcherProfile.sizeRatioRules.length
+                  ? "No configured size-ratio rule had both slots assigned."
+                  : "This schema does not define size-ratio rules.",
               },
-              actual: { metric: rule.metric, left, right, ratio: actual },
-              tolerance: rule.tolerance,
-              scoreBp,
-              passed: scoreBp >= c.schema.matcherProfile.passThresholdBp,
-            },
-          ];
-        }),
-      ),
+            ]
+          : [],
+      );
+    },
   },
   {
     id: "assignment.coverage",

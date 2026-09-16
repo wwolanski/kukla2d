@@ -461,6 +461,8 @@ const ModularSpriteDocumentSchema = z.object({
       schemaId: z.string().min(1),
       schemaRevision: z.number().int().positive(),
       compositionId: z.string().length(64),
+      relationship: z.enum(["reference", "managed"]).optional(),
+      syncState: z.enum(["current", "dirty"]).optional(),
       slotToPartKey: z.record(z.string(), z.string()),
       snapshot: z.object({
         formatVersion: z.literal(1),
@@ -472,6 +474,61 @@ const ModularSpriteDocumentSchema = z.object({
       }),
     })
     .optional(),
+}).superRefine((sprite, context) => {
+  const binding = sprite.schemaBinding;
+  if (!binding) return;
+  const bindingPath = ["schemaBinding"] as const;
+  const addIssue = (message: string, path: (string | number)[] = []) =>
+    context.addIssue({
+      code: "custom",
+      message,
+      path: [...bindingPath, ...path],
+    });
+  if (binding.schemaId !== binding.snapshot.schemaId)
+    addIssue("Schema binding ID does not match its snapshot", ["schemaId"]);
+  if (binding.schemaRevision !== binding.snapshot.revision)
+    addIssue("Schema binding revision does not match its snapshot", [
+      "schemaRevision",
+    ]);
+  if (binding.compositionId !== binding.snapshot.compositionId)
+    addIssue("Schema binding composition does not match its snapshot", [
+      "compositionId",
+    ]);
+
+  const partKeys = new Set(sprite.parts.map((part) => part.partKey));
+  const snapshotSlotKeys = new Set(
+    binding.snapshot.slots.flatMap((slot) => {
+      if (typeof slot !== "object" || slot === null) return [];
+      const slotKey = (slot as { slotKey?: unknown }).slotKey;
+      return typeof slotKey === "string" ? [slotKey] : [];
+    }),
+  );
+  const mappedPartKeys = new Set<string>();
+  for (const [slotKey, partKey] of Object.entries(binding.slotToPartKey)) {
+    if (!snapshotSlotKeys.has(slotKey))
+      addIssue(`Schema binding references unknown slot "${slotKey}"`, [
+        "slotToPartKey",
+        slotKey,
+      ]);
+    if (!partKeys.has(partKey))
+      addIssue(`Schema binding references missing part "${partKey}"`, [
+        "slotToPartKey",
+        slotKey,
+      ]);
+    if (mappedPartKeys.has(partKey))
+      addIssue(`Schema binding maps part "${partKey}" more than once`, [
+        "slotToPartKey",
+        slotKey,
+      ]);
+    mappedPartKeys.add(partKey);
+  }
+  if (
+    binding.relationship === "managed" &&
+    snapshotSlotKeys.size !== Object.keys(binding.slotToPartKey).length
+  )
+    addIssue("A managed schema binding must map every snapshot slot", [
+      "slotToPartKey",
+    ]);
 });
 
 const PhysicsGroupSchema = z.unknown();

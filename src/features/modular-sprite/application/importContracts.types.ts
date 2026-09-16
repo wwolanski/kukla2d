@@ -1,9 +1,9 @@
 import type {
+  ModularSpriteDocument,
   ModularSpriteId,
   ModularSpriteProcessingRecipe,
   NormalizedPoint,
 } from "@kukla2d/contracts";
-import type { PortableSchemaSnapshot } from "@kukla2d/modular-sprite-schema";
 
 import type {
   ModularSpriteDraftPart,
@@ -28,13 +28,7 @@ export interface ModularSpriteCommitRequest {
     componentSeeds: NormalizedPoint[];
   }[];
   addToCanvas: boolean;
-  schemaBinding?: {
-    schemaId: string;
-    schemaRevision: number;
-    compositionId: string;
-    slotToPartKey: Record<string, string>;
-    snapshot: PortableSchemaSnapshot;
-  };
+  schemaBinding?: NonNullable<ModularSpriteDocument["schemaBinding"]>;
 }
 
 export interface ModularSpriteCommitResult {
