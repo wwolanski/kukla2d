@@ -3,7 +3,10 @@ import { lazy, Suspense } from "react";
 
 import { localSchemaLibrarySource } from "@/app/layout/schemaLibrarySources.js";
 
-import { publishProjectSchemasToLocalDatabase } from "@/features/projects/index.js";
+import {
+  publishProjectSchemasToLocalDatabase,
+  SaveModal,
+} from "@/features/projects/index.js";
 
 import {
   AlertDialog,
@@ -24,12 +27,6 @@ function loadPreferencesModal() {
   return import("@/features/preferences/index.js").then(
     (m) => ({ default: m.PreferencesModal }),
   );
-}
-
-function loadSaveModal() {
-  return import("@/features/projects/index.js").then((m) => ({
-    default: m.SaveModal,
-  }));
 }
 
 function loadLoadModal() {
@@ -56,7 +53,6 @@ function loadSchemaLibraryModal() {
 
 const ExportModal = lazy(loadExportModal);
 const PreferencesModal = lazy(loadPreferencesModal);
-const SaveModal = lazy(loadSaveModal);
 const LoadModal = lazy(loadLoadModal);
 const ModularSpriteWizard = lazy(loadModularSpriteWizard);
 const ModularSpriteGenerator = lazy(loadModularSpriteGenerator);
