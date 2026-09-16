@@ -1,6 +1,8 @@
 import { ChevronDown, ChevronRight, Trash2, RotateCcw } from "lucide-react";
 import React from "react";
 
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
+
 import { usePhysicsPanelController } from "@/features/physics/application/usePhysicsPanelController.js";
 
 import { Button } from "@/components/ui/button.jsx";
@@ -129,6 +131,7 @@ export function PhysicsPanel() {
                         <Input
                           className="h-6 text-xs"
                           value={rule.name}
+                          maxLength={MAX_NAME_LENGTH}
                           onChange={(event) =>
                             updateField(rule.id, "name", event.target.value)
                           }

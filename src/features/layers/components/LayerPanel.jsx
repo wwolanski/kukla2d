@@ -29,12 +29,12 @@ export function LayerPanelView({
   const [replaceTexturesOpen, setReplaceTexturesOpen] = useState(false);
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center border-b shrink-0">
+    <div className="layer-panel-root flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+      <div className="flex min-w-0 shrink-0 items-center border-b">
         {["library", "depth", "groups"].map((tab) => (
           <button
             key={tab}
-            className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
+            className={`min-w-0 flex-1 truncate py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
               tabs.active === tab
                 ? "text-foreground border-b-2 border-primary"
                 : "text-muted-foreground hover:text-foreground"

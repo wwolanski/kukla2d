@@ -4,6 +4,8 @@
  * Builds a project-change plan without DOM, Worker, or store dependencies.
  */
 
+import { limitFileName, limitName } from "@/domain/nameConstraints.js";
+
 /**
  * Plan a single PNG import without mutating project state.
  */
@@ -93,7 +95,7 @@ export function planPngImport({
   imageBounds,
   partId,
 }: PngImportInput): ImportPlan {
-  const baseName = fileName.replace(/\.[^.]+$/, "");
+  const baseName = limitName(fileName.replace(/\.[^.]+$/, ""));
   return {
     canvasPatch: { width: imageWidth, height: imageHeight },
     groupsToCreate: [],
@@ -113,7 +115,9 @@ export function planPngImport({
         draw_order: 0,
       },
     ],
-    texturesToCreate: [{ id: partId, name: `${baseName}.png`, source: "" }],
+    texturesToCreate: [
+      { id: partId, name: limitFileName(`${baseName}.png`), source: "" },
+    ],
     imageDataRequests: [
       { partId, kind: "full-canvas", width: imageWidth, height: imageHeight },
     ],
@@ -140,7 +144,7 @@ export function planPsdFinalize({
     canvasPatch: { width: psdW, height: psdH },
     groupsToCreate: groupDefs.map((g) => ({
       id: g.id,
-      name: g.name,
+      name: limitName(g.name),
       type: "group",
       boneRole: g.role ?? null,
       parent: g.parent ?? null,
@@ -149,7 +153,7 @@ export function planPsdFinalize({
       const assignment = assignments[i] ?? {};
       return {
         id: partIds[i]!,
-        name: layer.name,
+        name: limitName(layer.name),
         type: "part",
         imageWidth: layer.width,
         imageHeight: layer.height,
@@ -176,7 +180,7 @@ export function planPsdFinalize({
     }),
     texturesToCreate: layers.map((layer, i) => ({
       id: partIds[i]!,
-      name: layer.source ?? `${layer.name}.png`,
+      name: limitFileName(layer.source ?? `${limitName(layer.name)}.png`),
       source: "",
     })),
     imageDataRequests: layers.map((layer, i) => ({

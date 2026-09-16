@@ -2,6 +2,8 @@
 import { Music } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+import { MAX_NAME_LENGTH } from '@/domain/nameConstraints.js';
+
 import {
   Dialog,
   DialogContent,
@@ -71,6 +73,7 @@ export function AudioTrackModal({
             <Label className="text-sm font-semibold tracking-tight">Track Name</Label>
             <Input
               value={name}
+              maxLength={MAX_NAME_LENGTH}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Background Music"
               className="h-9 font-medium"

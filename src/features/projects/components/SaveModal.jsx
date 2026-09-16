@@ -2,6 +2,8 @@ import { Loader2, Download, Library, AlertTriangle } from "lucide-react";
 
 import { formatProjectError } from "@/io/projectErrorMessages.js";
 
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
+
 import { useSaveProject } from "@/features/projects/application/useSaveProject.js";
 import { ProjectGallery } from "@/features/projects/components/ProjectGallery.jsx";
 
@@ -104,6 +106,7 @@ export function SaveModal({
                     <Input
                       id="name"
                       value={name}
+                      maxLength={MAX_NAME_LENGTH}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Enter project name..."
                       className="h-10"

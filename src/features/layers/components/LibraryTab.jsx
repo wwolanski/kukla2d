@@ -159,7 +159,7 @@ export function LibraryTab({
               onSelect={onSelect}
             />
             {isExpanded && row.children && row.children.length > 0 && (
-              <div>{renderRows(row.children, depth + 1)}</div>
+              <div className="min-w-0">{renderRows(row.children, depth + 1)}</div>
             )}
           </div>
         );
@@ -198,16 +198,16 @@ export function LibraryTab({
 
   return (
     <>
-      <div className="flex h-8 items-center gap-1 border-b px-2 shrink-0">
+      <div className="flex h-8 min-w-0 shrink-0 items-center gap-1 border-b px-2">
         <Popover>
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="layer-panel-toolbar-button inline-flex min-w-0 items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               title="Import"
             >
               <Upload className="h-3 w-3" />
-              Import
+              <span className="layer-panel-toolbar-label truncate">Import</span>
               <ChevronDown className="h-3 w-3" />
             </button>
           </PopoverTrigger>
@@ -231,11 +231,11 @@ export function LibraryTab({
         <button
           type="button"
           onClick={onCreateFolder}
-          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="layer-panel-toolbar-button inline-flex min-w-0 items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           title="Add New Folder"
         >
           <FolderPlus className="h-3 w-3" />
-          New Folder
+          <span className="layer-panel-toolbar-label truncate">New Folder</span>
         </button>
         <Popover>
           <PopoverTrigger asChild>
@@ -282,13 +282,13 @@ export function LibraryTab({
       </div>
 
       <ScrollArea
-        className={`flex-1 transition-colors ${dragActive ? "bg-primary/5" : ""}`}
+        className={`min-h-0 min-w-0 flex-1 transition-colors ${dragActive ? "bg-primary/5" : ""}`}
         onDragEnter={onDragEnter}
         onDragOver={onDragOverBackground}
         onDragLeave={onDragLeave}
         onDrop={onDropBackground}
       >
-        <div className="p-1 space-y-0.5">
+        <div className="min-w-0 w-full space-y-0.5 p-1">
           {isEmpty ? (
             <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
               <div className="flex h-10 w-10 items-center justify-center rounded border border-border bg-background text-muted-foreground">

@@ -1,3 +1,5 @@
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
+
 import type { ModularSpriteDraftPart } from "@/features/modular-sprite/domain/contracts.types.js";
 
 import { ScrollArea } from "@/components/ui/scroll-area.js";
@@ -46,6 +48,7 @@ export function ReviewStep({
           <input
             className="h-10 rounded-md border bg-background px-3 text-sm"
             value={name}
+            maxLength={MAX_NAME_LENGTH}
             onChange={(event) => onNameChange(event.target.value)}
           />
         </label>

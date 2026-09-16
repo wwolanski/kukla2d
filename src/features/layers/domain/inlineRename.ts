@@ -1,3 +1,5 @@
+import { limitName } from "@/domain/nameConstraints.js";
+
 type RenameValidationResult =
   | { valid: true; value: string }
   | { valid: false; reason: "not_string" | "empty" };
@@ -6,7 +8,7 @@ export function validateRename(value: unknown): RenameValidationResult {
   if (typeof value !== "string") return { valid: false, reason: "not_string" };
   const trimmed = value.trim();
   if (trimmed.length === 0) return { valid: false, reason: "empty" };
-  return { valid: true, value: trimmed };
+  return { valid: true, value: limitName(trimmed) };
 }
 
 export function validateRenameValue(value: unknown): string | null {

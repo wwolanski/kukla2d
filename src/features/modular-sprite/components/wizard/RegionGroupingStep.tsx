@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 
 import type { SemanticCatalog } from "@kukla2d/modular-sprite-schema";
 
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
+
 import { PartThumbnail } from "@/features/modular-sprite/components/preview/PartThumbnail.js";
 import type {
   DetectedRegion,
@@ -361,6 +363,7 @@ export function RegionGroupingStep({
                       ].join(" ")}
                       aria-label={"Name of part " + (partIndex + 1)}
                       value={pendingName?.suggestedName ?? part.name}
+                      maxLength={MAX_NAME_LENGTH}
                       readOnly={Boolean(pendingName)}
                       onChange={(event) =>
                         onUpdatePart(partIndex, { name: event.target.value })

@@ -1,6 +1,8 @@
 import { Boxes, Check, FileImage, Lock, Pencil, Trash2 } from "lucide-react";
 import { useRef } from "react";
 
+import { truncateDisplayName } from "@/domain/nameConstraints.js";
+
 import { useInlineRename } from "@/features/layers/application/useInlineRename.js";
 import { formatFileSize } from "@/features/layers/components/shared/formatFileSize.js";
 import { InlineRenameInput } from "@/features/layers/components/shared/InlineRenameInput.jsx";
@@ -56,7 +58,7 @@ export function LibraryAssetRow({
         <div
           ref={rowRef}
           draggable={asset.modularKind !== "source"}
-          className={`flex items-center gap-2 px-2 py-1.5 text-xs rounded cursor-pointer transition-colors select-none
+          className={`layer-panel-row flex min-w-0 w-full items-center gap-2 overflow-hidden rounded px-2 py-1.5 text-xs cursor-pointer transition-colors select-none
         ${
           isSelected
             ? "bg-primary/20 text-primary border border-primary/40"
@@ -99,21 +101,21 @@ export function LibraryAssetRow({
                 onKeyDown={handleKeyDown}
               />
             ) : (
-              <span className="truncate font-mono text-xs" title={asset.name}>
-                {asset.name}
+              <span className="block min-w-0 truncate font-mono text-xs" title={asset.name}>
+                {truncateDisplayName(asset.name)}
               </span>
             )}
             {asset.sourceFileName && asset.sourceFileName !== asset.name && (
               <span
-                className="truncate text-[9px] text-muted-foreground/50"
+                className="layer-panel-source-name block min-w-0 truncate text-[9px] text-muted-foreground/50"
                 title={asset.sourceFileName}
               >
-                {asset.sourceFileName}
+                {truncateDisplayName(asset.sourceFileName)}
               </span>
             )}
           </div>
 
-          <span className="flex shrink-0 items-center gap-1 tabular-nums text-muted-foreground">
+          <span className="layer-panel-row-meta flex shrink-0 items-center gap-1 tabular-nums text-muted-foreground">
             {asset.isInUse && (
               <Check
                 className="h-3.5 w-3.5 text-emerald-500"
@@ -121,9 +123,13 @@ export function LibraryAssetRow({
               />
             )}
             {asset.modularKind === "source" && (
-              <span className="inline-flex items-center gap-0.5 rounded bg-primary/15 px-1 py-0.5 text-[8px] font-semibold uppercase text-primary">
-                <Lock className="h-2.5 w-2.5" />
-                Modular Source
+              <span
+                className="inline-flex shrink-0 items-center gap-0.5 rounded bg-primary/15 px-1 py-0.5 text-[8px] font-semibold uppercase text-primary"
+                title="Modular source"
+                aria-label="Modular source"
+              >
+                <Lock className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+                <span className="layer-panel-meta-label">Modular Source</span>
               </span>
             )}
             {asset.modularKind === "part" && (
@@ -135,7 +141,9 @@ export function LibraryAssetRow({
                 <Boxes className="h-2.5 w-2.5" aria-hidden="true" />
               </span>
             )}
-            {formatFileSize(asset.size)}
+            <span className="layer-panel-file-size whitespace-nowrap">
+              {formatFileSize(asset.size)}
+            </span>
           </span>
         </div>
       </ContextMenuTrigger>

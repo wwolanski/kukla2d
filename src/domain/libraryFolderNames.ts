@@ -1,7 +1,9 @@
 import type { LibraryFolder } from "@kukla2d/contracts";
 
+import { limitName } from "@/domain/nameConstraints.js";
+
 function normalizedFolderName(name: string): string {
-  return name.trim().toLowerCase();
+  return limitName(name).trim().toLowerCase();
 }
 
 export function validateUniqueLibraryFolderName(
@@ -9,7 +11,7 @@ export function validateUniqueLibraryFolderName(
   requestedName: string,
   excludedFolderId?: string,
 ): string {
-  const name = requestedName.trim();
+  const name = limitName(requestedName.trim());
   if (!name) throw new Error("Library folder name cannot be empty");
 
   const normalizedName = normalizedFolderName(name);

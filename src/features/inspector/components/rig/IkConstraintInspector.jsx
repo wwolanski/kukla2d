@@ -1,5 +1,7 @@
 import { Trash2 } from "lucide-react";
 
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
+
 import { useIkConstraintInspectorController } from "@/features/inspector/application/useIkConstraintInspectorController.js";
 import {
   SectionTitle,
@@ -60,6 +62,7 @@ export function IkConstraintInspector({ constraint, bones }) {
         <input
           className="h-7 w-full max-w-[170px] rounded border border-border bg-input px-2 text-xs"
           value={constraint.name}
+          maxLength={MAX_NAME_LENGTH}
           disabled={isAnim}
           onChange={(event) => rename(event.target.value)}
         />

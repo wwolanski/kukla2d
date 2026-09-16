@@ -21,6 +21,8 @@ import type {
   SemanticCatalog,
 } from "@kukla2d/modular-sprite-schema";
 
+import { limitName } from "@/domain/nameConstraints.js";
+
 import { finalizeModularSpriteImport } from "@/features/modular-sprite/application/finalizeModularSpriteImport.js";
 import type {
   ModularSpriteProcessingPort,
@@ -510,7 +512,7 @@ export function useModularSpriteWizardController({
       if (!grouping || !current) return;
       const next =
         change.name !== undefined
-          ? renamePart(grouping, current.partKey, change.name).grouping
+          ? renamePart(grouping, current.partKey, limitName(change.name)).grouping
           : structuredClone(grouping);
       const target = next.parts[index];
       if (!target) return;
@@ -518,12 +520,12 @@ export function useModularSpriteWizardController({
       delete otherChanges.name;
       delete otherChanges.partKey;
       Object.assign(target, structuredClone(otherChanges));
-      if (change.name !== undefined)
-        target.partKey = partKeyForName(
-          change.name,
-          grouping.parts,
-          current.partKey,
-        );
+        if (change.name !== undefined)
+          target.partKey = partKeyForName(
+            limitName(change.name),
+            grouping.parts,
+            current.partKey,
+          );
       dispatch({
         type: "GROUPING_CHANGED",
         grouping: next,
@@ -695,7 +697,7 @@ export function useModularSpriteWizardController({
     [],
   );
   const setName = useCallback(
-    (name: string) => dispatch({ type: "SET_NAME", name }),
+    (name: string) => dispatch({ type: "SET_NAME", name: limitName(name) }),
     [],
   );
   const setAddToCanvas = useCallback(

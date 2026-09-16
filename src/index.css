@@ -125,6 +125,32 @@
   }
 }
 
+.layer-panel-root {
+  container: layer-panel / inline-size;
+}
+
+@container layer-panel (max-width: 360px) {
+  .layer-panel-source-name,
+  .layer-panel-file-size,
+  .layer-panel-meta-label,
+  .layer-panel-optional-label,
+  .layer-panel-bone-constraint-label {
+    display: none !important;
+  }
+}
+
+@container layer-panel (max-width: 300px) {
+  .layer-panel-toolbar-label,
+  .layer-panel-optional-label,
+  .layer-panel-bone-constraint-label {
+    display: none !important;
+  }
+
+  .layer-panel-toolbar-button {
+    justify-content: center;
+  }
+}
+
 @keyframes blink-red {
   0%,
   100% {

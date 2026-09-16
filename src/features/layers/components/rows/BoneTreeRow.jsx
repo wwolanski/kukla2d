@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useRef } from "react";
 
+import { truncateDisplayName } from "@/domain/nameConstraints.js";
+
 import { useInlineRename } from "@/features/layers/application/useInlineRename.js";
 import { InlineRenameInput } from "@/features/layers/components/shared/InlineRenameInput.jsx";
 import {
@@ -151,7 +153,7 @@ export function BoneTreeRow({
       <div
         ref={rowRef}
         className={[
-          "relative flex items-center gap-1 rounded border border-dashed px-2 py-1.5 text-[10px] uppercase tracking-wider transition-colors",
+          "layer-panel-row relative flex min-w-0 w-full items-center gap-1 overflow-hidden rounded border border-dashed px-2 py-1.5 text-[10px] uppercase tracking-wider transition-colors",
           isDragOver && acceptsDrop && !isStructureBlocked
             ? "border-destructive/60 bg-destructive/10 text-destructive"
             : "border-border/60 bg-muted/10 text-muted-foreground hover:bg-muted/30",
@@ -179,7 +181,9 @@ export function BoneTreeRow({
         ) : (
           <FileImage className="h-3 w-3" />
         )}
-        <span>{isRoot ? "Root bones" : "Unassigned images"}</span>
+        <span className="min-w-0 truncate">
+          {isRoot ? "Root bones" : "Unassigned images"}
+        </span>
         {isDragOver && acceptsDrop && (
           <span className="ml-auto rounded bg-destructive/15 px-1 py-0.5 text-[9px] normal-case tracking-normal text-destructive">
             {isRoot ? "Detach" : "Unassign"}
@@ -203,7 +207,7 @@ export function BoneTreeRow({
           ref={rowRef}
           draggable={!isStructureBlocked}
           className={[
-            "relative flex items-center gap-1 px-2 py-1.5 text-sm rounded cursor-pointer transition-colors select-none border",
+            "layer-panel-row relative flex min-w-0 w-full items-center gap-1 overflow-hidden rounded px-2 py-1.5 text-sm cursor-pointer transition-colors select-none border",
             isSelected
               ? "bg-primary/20 text-primary border-primary/40"
               : dragAction === "assign"
@@ -264,10 +268,10 @@ export function BoneTreeRow({
             />
           ) : (
             <span
-              className="flex-1 truncate font-mono text-xs"
+              className="min-w-0 flex-1 truncate font-mono text-xs"
               title={bone.name}
             >
-              {bone.name}
+              {truncateDisplayName(bone.name)}
             </span>
           )}
 
@@ -276,7 +280,7 @@ export function BoneTreeRow({
               type="button"
               key={constraint.id}
               className={[
-                "inline-flex shrink-0 items-center gap-0.5 rounded border px-1 py-0.5 text-[9px] font-semibold transition-all",
+                "layer-panel-bone-constraint inline-flex min-w-0 shrink-0 items-center gap-0.5 rounded border px-1 py-0.5 text-[9px] font-semibold transition-all",
                 hoveredConstraintId === constraint.id
                   ? "border-current ring-1 ring-current/60 brightness-125"
                   : "border-transparent",
@@ -300,10 +304,12 @@ export function BoneTreeRow({
               }}
             >
               <Crosshair size={9} />
-              {constraint.name}
+              <span className="layer-panel-bone-constraint-label max-w-24 truncate">
+                {truncateDisplayName(constraint.name)}
+              </span>
             </button>
           ))}
-          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground tabular-nums">
+          <span className="layer-panel-bone-count shrink-0 rounded bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground tabular-nums">
             {row.assignedCount}
           </span>
 
@@ -335,7 +341,7 @@ export function BoneTreeRow({
           role="button"
           tabIndex={0}
           className={[
-            "relative flex w-full items-center gap-1.5 rounded border border-transparent py-0.5 pr-2 text-[10px] text-muted-foreground transition-colors",
+            "layer-panel-row relative flex min-w-0 w-full items-center gap-1.5 overflow-hidden rounded border border-transparent py-0.5 pr-2 text-[10px] text-muted-foreground transition-colors",
             isSelected
               ? "bg-primary/15 text-primary"
               : isHovered
@@ -357,8 +363,8 @@ export function BoneTreeRow({
           title={`${row.boneId} influences mesh ${node.name || node.id} through vertex weights`}
         >
           <Network className="h-3 w-3 shrink-0 text-violet-400" />
-          <span className="shrink-0">Influences mesh</span>
-          <span aria-hidden="true">→</span>
+          <span className="layer-panel-optional-label shrink-0">Influences mesh</span>
+          <span className="layer-panel-optional-label shrink-0" aria-hidden="true">→</span>
           <AssetAvatar
             src={previewTexture?.source}
             label={node.name || node.id}
@@ -372,7 +378,9 @@ export function BoneTreeRow({
               onKeyDown={nodeRename.handleKeyDown}
             />
           ) : (
-            <span className="truncate font-mono">{node.name || node.id}</span>
+            <span className="min-w-0 truncate font-mono">
+              {truncateDisplayName(node.name || node.id)}
+            </span>
           )}
         </div>
       </RowContextMenu>
@@ -394,7 +402,7 @@ export function BoneTreeRow({
         ref={rowRef}
         draggable={!isStructureBlocked}
         className={[
-          "relative flex items-center gap-1 px-2 py-1.5 text-sm rounded cursor-pointer transition-colors select-none border",
+          "layer-panel-row relative flex min-w-0 w-full items-center gap-1 overflow-hidden rounded px-2 py-1.5 text-sm cursor-pointer transition-colors select-none border",
           isSelected
             ? "bg-primary/20 text-primary border-primary/40"
             : isHovered
@@ -434,10 +442,10 @@ export function BoneTreeRow({
           />
         ) : (
           <span
-            className="flex-1 truncate font-mono text-xs"
+            className="min-w-0 flex-1 truncate font-mono text-xs"
             title={node.name || node.id}
           >
-            {node.name || node.id}
+            {truncateDisplayName(node.name || node.id)}
           </span>
         )}
 

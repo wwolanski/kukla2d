@@ -7,6 +7,7 @@ import type {
 } from "@kukla2d/contracts";
 
 import { buildUniqueTextureNameMap } from "@/domain/libraryAssetNames.js";
+import { limitFileName, limitName } from "@/domain/nameConstraints.js";
 
 interface LibraryTreeInput {
   libraryFolders?: readonly LibraryFolder[];
@@ -130,8 +131,10 @@ export function buildLibraryTree({
       result.push({
         kind: "folder",
         id: folder.id,
-        name: folder.name,
-        sourceFileName: folder.sourceFileName ?? null,
+               name: limitName(folder.name),
+               sourceFileName: folder.sourceFileName
+                 ? limitFileName(folder.sourceFileName)
+                 : null,
         origin: folder.origin ?? null,
         modularSpriteId:
           modularPackageByFolderId.get(folder.id)?.id ?? null,
@@ -152,8 +155,8 @@ export function buildLibraryTree({
       result.push({
         kind: "asset",
         id: assetId,
-        name: localName,
-        sourceFileName: sourceName,
+               name: limitName(localName),
+               sourceFileName: sourceName ? limitFileName(sourceName) : null,
         texture: tex,
         node,
         isInUse: nodes.some(
@@ -183,8 +186,8 @@ export function buildLibraryTree({
     looseAssets.push({
       kind: "asset",
       id: tex.id,
-      name: localName,
-      sourceFileName: sourceName,
+      name: limitName(localName),
+      sourceFileName: sourceName ? limitFileName(sourceName) : null,
       texture: tex,
       node,
       isInUse: nodes.some(

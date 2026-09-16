@@ -3,6 +3,7 @@ import type { ProjectDocument, Canvas } from "@kukla2d/contracts";
 import { createEmptyProject } from "@/core/createEmptyProject.js";
 
 import { normalizeAnimations } from "@/domain/animationDocument.js";
+import { normalizeProjectNames } from "@/domain/nameConstraints.js";
 
 import type { ValidatedProjectDocument } from "@/schema/projectSchema.types.js";
 
@@ -196,6 +197,8 @@ export function prepareLoadedProjectDocument(
     if (mod.params === undefined) mod.params = {};
   }
   project.animationModifiers = modifiers;
+
+  normalizeProjectNames(project);
 
   return project;
 }

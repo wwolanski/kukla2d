@@ -14,6 +14,8 @@ import {
 
 import { createEmptyProject } from "@/core/createEmptyProject.js";
 
+import { normalizeProjectNames } from "@/domain/nameConstraints.js";
+
 import type {
   ScmlAnimation,
   ScmlDocument,
@@ -810,5 +812,6 @@ export function convertScmlToProject(
       document.entities.length > 1,
     ),
   );
+  normalizeProjectNames(project);
   return project;
 }

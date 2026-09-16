@@ -4,6 +4,7 @@ import {
   isAuthorableProperty,
   isPropertyAllowedForTargetKind,
 } from "@/domain/animationProperties.js";
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
 
 import { useBoneInspectorController } from "@/features/inspector/application/useBoneInspectorController.js";
 import {
@@ -83,6 +84,7 @@ export function BoneInspector({
             <input
               className="h-7 w-full max-w-[170px] rounded border border-border bg-input px-2 text-xs text-foreground"
               value={activeBone.name}
+              maxLength={MAX_NAME_LENGTH}
               onChange={(e) => renameBone(activeBone.id, e.target.value)}
             />
           </InspectorRow>

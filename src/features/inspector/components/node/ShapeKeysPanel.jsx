@@ -1,3 +1,5 @@
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
+
 import { useShapeKeysController } from "@/features/inspector/application/useNodeInspectorController.js";
 import { SectionTitle } from "@/features/inspector/components/fields/InspectorRow.jsx";
 
@@ -78,6 +80,7 @@ export function ShapeKeysPanel({ node }) {
             <input
               className="flex-1 text-xs bg-transparent min-w-0 border-0 outline-none px-1"
               value={shape.name}
+              maxLength={MAX_NAME_LENGTH}
               onChange={(e) => handleRenameShape(shape.id, e.target.value)}
               style={{ color: "inherit" }}
             />

@@ -7,6 +7,8 @@ import type {
 } from "@/store/project/projectStoreTypes.types.js";
 import { pushPatches } from "@/store/undoHistory.js";
 
+import { normalizeProjectNames } from "@/domain/nameConstraints.js";
+
 type ProjectBaseCommands = Pick<
   ProjectActions,
   "updateProject" | "setHasUnsavedChanges"
@@ -28,6 +30,7 @@ export function createProjectBaseCommands(
             draft.hasUnsavedChanges = hasUnsavedChanges;
             ensureRigCollections(draft.project);
             recipe(draft.project, draft.versionControl);
+            normalizeProjectNames(draft.project);
             ensureRigCollections(draft.project);
           },
         );

@@ -1,6 +1,8 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
+
 import { PartThumbnail } from "@/features/modular-sprite/components/preview/PartThumbnail.js";
 import { FieldLabel } from "@/features/modular-sprite/components/wizard/FieldLabel.js";
 import type {
@@ -208,6 +210,7 @@ export function PartDetailsStep({
                     Name
                     <UiInput
                       value={part.name}
+                      maxLength={MAX_NAME_LENGTH}
                       onChange={(event) =>
                         onUpdatePart(index, { name: event.target.value })
                       }

@@ -33,20 +33,20 @@ export function DepthTab({
   const isStructureBlocked = editorMode === "animation";
   return (
     <>
-      <div className="flex h-8 items-center border-b px-2 shrink-0">
+      <div className="flex h-8 min-w-0 shrink-0 items-center border-b px-2">
         <FeatureDisabledTooltip>
           <button
             type="button"
-            className="inline-flex h-6 items-center gap-1 rounded px-1.5 text-[10px] font-medium text-muted-foreground opacity-50 cursor-not-allowed transition-colors"
+            className="layer-panel-toolbar-button inline-flex h-6 min-w-0 items-center gap-1 rounded px-1.5 text-[10px] font-medium text-muted-foreground opacity-50 transition-colors cursor-not-allowed"
           >
             <Sparkles className="h-3 w-3" />
-            Smart auto-order
+            <span className="layer-panel-toolbar-label truncate">Smart auto-order</span>
           </button>
         </FeatureDisabledTooltip>
       </div>
 
-      <ScrollArea className="flex-1" onMouseLeave={onClearHover}>
-        <div className="p-1 space-y-0.5">
+      <ScrollArea className="min-h-0 min-w-0 flex-1" onMouseLeave={onClearHover}>
+        <div className="min-w-0 w-full space-y-0.5 p-1">
           {nodes.length === 0 ? (
             <p className="text-xs text-muted-foreground p-3 text-center">
               No layers yet.

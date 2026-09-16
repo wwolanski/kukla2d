@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
+import { limitName } from "@/domain/nameConstraints.js";
+
 import { validateRenameValue } from "@/features/layers/domain/inlineRename.js";
 
 import type {
@@ -35,7 +37,7 @@ export function useInlineRename({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const startEdit = useCallback(() => {
-    setDraft(currentName ?? "");
+    setDraft(limitName(currentName ?? ""));
     setIsEditing(true);
   }, [currentName]);
 

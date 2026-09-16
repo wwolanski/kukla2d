@@ -7,6 +7,11 @@ import type {
   SchemaComparisonResult,
 } from "@kukla2d/modular-sprite-schema";
 
+import {
+  limitFileName,
+  limitName,
+} from "@/domain/nameConstraints.js";
+
 import type {
   ModularSpriteProcessingPort,
   ModularSpriteSchemaPort,
@@ -202,8 +207,8 @@ export async function finalizeModularSpriteImport(
   }
   return {
     request: {
-      name: input.name.trim() || "Modular Sprite",
-      sourceFileName: input.source.file.name,
+      name: limitName(input.name.trim() || "Modular Sprite"),
+      sourceFileName: limitFileName(input.source.file.name),
       sourceImage: input.source.image,
       sourceBlob,
       recipe: structuredClone(input.recipe),

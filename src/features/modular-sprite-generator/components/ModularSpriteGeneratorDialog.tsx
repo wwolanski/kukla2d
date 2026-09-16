@@ -5,6 +5,8 @@ import type { AssetId } from "@kukla2d/contracts";
 
 import { useProjectStore } from "@/store/projectStore.js";
 
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
+
 import type {
   ModularSpriteCommitRequest,
   ModularSpriteCommitResult,
@@ -357,6 +359,7 @@ export function ModularSpriteGeneratorDialog({
           <UiInput
             id="generator-name"
             value={name}
+            maxLength={MAX_NAME_LENGTH}
             onChange={(event) => setName(event.target.value)}
           />
         </div>

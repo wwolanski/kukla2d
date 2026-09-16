@@ -1,5 +1,15 @@
-import { Boxes, FolderX, Lock, Pencil } from "lucide-react";
+import {
+  Boxes,
+  FilePenLine,
+  FolderX,
+  Link2,
+  Lock,
+  Pencil,
+  RefreshCw,
+} from "lucide-react";
 import { useRef } from "react";
+
+import { truncateDisplayName } from "@/domain/nameConstraints.js";
 
 import { useInlineRename } from "@/features/layers/application/useInlineRename.js";
 import { InlineRenameInput } from "@/features/layers/components/shared/InlineRenameInput.jsx";
@@ -63,7 +73,7 @@ export function LibraryFolderRow({
         <div
           ref={rowRef}
           draggable={!folder.isModularSpritePackage}
-          className={`flex items-center gap-1 px-2 py-1.5 text-xs rounded cursor-pointer transition-colors select-none
+          className={`layer-panel-row relative flex min-w-0 w-full items-center gap-1 overflow-hidden rounded px-2 py-1.5 text-xs cursor-pointer transition-colors select-none
         ${
           isDragOver
             ? "bg-accent border border-accent-foreground/30"
@@ -118,31 +128,36 @@ export function LibraryFolderRow({
             />
           ) : (
             <span
-              className="flex-1 truncate font-mono text-xs"
+              className="min-w-0 flex-1 truncate font-mono text-xs"
               title={folder.name}
             >
-              {folder.name}
+              {truncateDisplayName(folder.name)}
             </span>
           )}
 
           {folder.sourceFileName && (
             <span
-              className="shrink-0 text-[9px] text-muted-foreground/50 truncate max-w-[80px]"
+              className="layer-panel-source-name max-w-[80px] shrink-0 truncate text-[9px] text-muted-foreground/50"
               title={folder.sourceFileName}
             >
-              {folder.sourceFileName}
+              {truncateDisplayName(folder.sourceFileName)}
             </span>
           )}
 
           {folder.isModularSpritePackage && (
-            <span className="shrink-0 rounded bg-primary/15 px-1 py-0.5 text-[8px] font-semibold uppercase text-primary">
-              Modular package
+            <span
+              className="layer-panel-optional-meta inline-flex shrink-0 items-center gap-0.5 rounded bg-primary/15 px-1 py-0.5 text-[8px] font-semibold uppercase text-primary"
+              title="Modular package"
+              aria-label="Modular package"
+            >
+              <Boxes className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+              <span className="layer-panel-meta-label">Modular package</span>
             </span>
           )}
 
           {folder.schemaLink && (
             <span
-              className={`shrink-0 rounded px-1 py-0.5 text-[8px] font-semibold uppercase ${
+              className={`layer-panel-optional-meta inline-flex shrink-0 items-center gap-0.5 rounded px-1 py-0.5 text-[8px] font-semibold uppercase ${
                 folder.schemaLink.status === "dirty"
                   ? "bg-amber-500/15 text-amber-400"
                   : folder.schemaLink.status === "managed"
@@ -151,11 +166,20 @@ export function LibraryFolderRow({
               }`}
               title={`${folder.schemaLink.name} · ${folder.schemaLink.status === "dirty" ? "schema update pending" : folder.schemaLink.status === "managed" ? "managed local schema" : "schema reference"}`}
             >
-              {folder.schemaLink.status === "dirty"
-                ? "Schema changed"
-                : folder.schemaLink.status === "managed"
-                  ? "Schema synced"
-                  : "Schema linked"}
+              {folder.schemaLink.status === "dirty" ? (
+                <FilePenLine className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+              ) : folder.schemaLink.status === "managed" ? (
+                <RefreshCw className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+              ) : (
+                <Link2 className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+              )}
+              <span className="layer-panel-meta-label">
+                {folder.schemaLink.status === "dirty"
+                  ? "Schema changed"
+                  : folder.schemaLink.status === "managed"
+                    ? "Schema synced"
+                    : "Schema linked"}
+              </span>
             </span>
           )}
 

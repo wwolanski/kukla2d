@@ -1,5 +1,7 @@
 import { SemanticCatalog } from "@kukla2d/modular-sprite-schema";
 
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
+
 const catalog = new SemanticCatalog();
 
 interface NewSchemaMetadata {
@@ -68,6 +70,7 @@ export function SchemaEditor({
             Schema name
             <input
               className="h-9 rounded-md border bg-background px-2"
+              maxLength={MAX_NAME_LENGTH}
               value={value.name}
               onChange={(event) =>
                 onChange({ ...value, name: event.target.value })

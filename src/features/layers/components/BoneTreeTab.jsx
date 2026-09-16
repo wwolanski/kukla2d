@@ -169,11 +169,11 @@ export function BoneTreeTab({
   );
   return (
     <>
-      <div className="flex h-8 items-center border-b px-2 shrink-0">
+      <div className="flex h-8 min-w-0 shrink-0 items-center border-b px-2">
         <button
           type="button"
           aria-pressed={allExpanded}
-          className={`inline-flex h-6 flex-1 items-center justify-center gap-1 rounded px-1.5 text-[10px] font-medium transition-colors hover:bg-muted ${
+          className={`layer-panel-toolbar-button inline-flex h-6 min-w-0 flex-1 items-center justify-center gap-1 rounded px-1.5 text-[10px] font-medium transition-colors hover:bg-muted ${
             allExpanded
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:text-foreground"
@@ -182,12 +182,14 @@ export function BoneTreeTab({
           title={allExpanded ? "Collapse all bone rows" : "Show all bone rows"}
         >
           <Rows3 className="h-3 w-3 shrink-0" />
-          {allExpanded ? "Collapse all" : "Show all"}
+          <span className="layer-panel-toolbar-label truncate">
+            {allExpanded ? "Collapse all" : "Show all"}
+          </span>
         </button>
         <button
           type="button"
           aria-pressed={showImages}
-          className={`ml-1 inline-flex h-6 flex-1 items-center justify-center gap-1 rounded px-1.5 text-[10px] font-medium transition-colors hover:bg-muted ${
+          className={`layer-panel-toolbar-button ml-1 inline-flex h-6 min-w-0 flex-1 items-center justify-center gap-1 rounded px-1.5 text-[10px] font-medium transition-colors hover:bg-muted ${
             showImages
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:text-foreground"
@@ -204,11 +206,13 @@ export function BoneTreeTab({
           ) : (
             <Images className="h-3 w-3 shrink-0" />
           )}
-          {showImages ? "Hide images" : "Show images"}
+          <span className="layer-panel-toolbar-label truncate">
+            {showImages ? "Hide images" : "Show images"}
+          </span>
         </button>
         <button
           type="button"
-          className="ml-1 inline-flex h-6 flex-1 items-center justify-center gap-1 rounded px-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+          className="layer-panel-toolbar-button ml-1 inline-flex h-6 min-w-0 flex-1 items-center justify-center gap-1 rounded px-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
           onClick={onReplaceTextures}
           disabled={editorMode === "animation"}
           title={
@@ -218,12 +222,12 @@ export function BoneTreeTab({
           }
         >
           <ArrowLeftRight className="h-3 w-3 shrink-0" />
-          Replace
+          <span className="layer-panel-toolbar-label truncate">Replace</span>
         </button>
       </div>
 
-      <ScrollArea className="flex-1" onMouseLeave={clearPanelHover}>
-        <div className="p-1 space-y-0.5">
+      <ScrollArea className="min-h-0 min-w-0 flex-1" onMouseLeave={clearPanelHover}>
+        <div className="min-w-0 w-full space-y-0.5 p-1">
           {rowGroups.map((group) => {
             if (!group.familyId) return renderRow(group.rows[0]);
             const showsFamilyLine = group.rows.length > 1;

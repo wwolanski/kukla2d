@@ -1,5 +1,7 @@
 import type { NormalizedRect } from "@kukla2d/contracts";
 
+import { limitName } from "@/domain/nameConstraints.js";
+
 import type {
   DetectedRegion,
   ModularSpriteDraftPart,
@@ -315,7 +317,7 @@ export function renamePart(
   const next = cloneGrouping(grouping);
   const part = next.parts.find((candidate) => candidate.partKey === partKey);
   if (!part) return { grouping: next, affectedPartKeys: [] };
-  part.name = name;
+  part.name = limitName(name);
   return { grouping: next, affectedPartKeys: [partKey] };
 }
 

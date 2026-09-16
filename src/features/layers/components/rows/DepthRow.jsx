@@ -1,6 +1,8 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useRef } from "react";
 
+import { truncateDisplayName } from "@/domain/nameConstraints.js";
+
 import { useInlineRename } from "@/features/layers/application/useInlineRename.js";
 import { InlineRenameInput } from "@/features/layers/components/shared/InlineRenameInput.jsx";
 import {
@@ -50,7 +52,7 @@ export function DepthRow({
       ref={rowRef}
       draggable
       className={`
-        relative flex items-center gap-1 px-2 py-1.5 text-sm rounded cursor-pointer transition-colors select-none
+        layer-panel-row relative flex min-w-0 w-full items-center gap-1 overflow-hidden rounded px-2 py-1.5 text-sm cursor-pointer transition-colors select-none
         ${
           isSelected
             ? "bg-primary/20 text-primary border border-primary/40"
@@ -95,10 +97,10 @@ export function DepthRow({
         />
       ) : (
         <span
-          className="flex-1 truncate font-mono text-xs"
+          className="min-w-0 flex-1 truncate font-mono text-xs"
           title={node.name || node.id}
         >
-          {node.name || node.id}
+          {truncateDisplayName(node.name || node.id)}
         </span>
       )}
 
