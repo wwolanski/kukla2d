@@ -1,9 +1,5 @@
 import type { BoneId, Mesh, VertexInfluence } from "@kukla2d/contracts";
 
-import {
-  normalizeVertexInfluences,
-  brushWeight,
-} from "@/features/canvas/domain/meshEditing.js";
 import type { MeshWeightStats } from "@/features/canvas/domain/meshWeighting.types.js";
 
 import { finiteNumberOr } from "@/lib/math.js";
@@ -15,6 +11,43 @@ export const WEIGHT_PAINT_MODES = [
   "smooth",
 ] as const;
 type WeightPaintMode = (typeof WEIGHT_PAINT_MODES)[number];
+
+/**
+ * Brush falloff weight. t = dist/radius (0=center, 1=edge).
+ * hardness=1 → uniform weight=1; hardness=0 → smooth cosine falloff.
+ */
+export function brushWeight(
+  dist: number,
+  radius: number,
+  hardness: number,
+): number {
+  const t = dist / radius;
+  if (t >= 1) return 0;
+  const soft = 0.5 * (1 + Math.cos(Math.PI * t));
+  return hardness + (1 - hardness) * soft;
+}
+
+/**
+ * Normalize vertex influences: filter near-zero, keep top-4 by weight,
+ * then renormalize the kept set so their weights sum to ~1.
+ */
+export function normalizeVertexInfluences(
+  influences: readonly VertexInfluence[] | null | undefined,
+): VertexInfluence[] {
+  const byBone = new Map<BoneId, number>();
+  for (const inf of influences ?? []) {
+    if (!inf?.boneId || !Number.isFinite(inf.weight) || inf.weight <= 0.0001)
+      continue;
+    byBone.set(inf.boneId, (byBone.get(inf.boneId) ?? 0) + inf.weight);
+  }
+  const top = Array.from(byBone, ([boneId, weight]) => ({ boneId, weight }))
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 4);
+  const sum = top.reduce((acc, inf) => acc + inf.weight, 0);
+  if (sum <= 0) return [];
+  return top.map((inf) => ({ boneId: inf.boneId, weight: inf.weight / sum }));
+}
+
 interface Point {
   x: number;
   y: number;

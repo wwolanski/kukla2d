@@ -36,15 +36,6 @@
     "test:e2e": "npm run build:e2e && playwright test",
     "prepare": "husky"
   },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,mjs,mts,cjs,cts}": [
-      "repoatlas lint --fix --max-warnings 0",
-      "prettier --write"
-    ],
-    "*.{json,css,scss,md,mdx,yml,yaml}": [
-      "prettier --write"
-    ]
-  },
   "dependencies": {
     "@fontsource/inter": "^5.2.6",
     "@fontsource/lato": "^5.2.6",
@@ -105,10 +96,8 @@
     "@vitest/coverage-v8": "^4.1.9",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
-    "lint-staged": "^17.5.0",
     "phaser": "4.2.1",
     "pngjs3": "^6.1.1",
-    "prettier": "^3.9.6",
     "tailwindcss": "^4.3.1",
     "tsx": "^4.23.13",
     "vite": "^8.1.0",

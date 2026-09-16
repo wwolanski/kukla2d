@@ -16,6 +16,7 @@ import {
   createUniqueName,
 } from "@/domain/libraryAssetNames.js";
 import { validateUniqueLibraryFolderName } from "@/domain/libraryFolderNames.js";
+import { removeLibraryAssets } from "@/domain/removeLibraryAssets.js";
 
 import { useWorkflowActor } from "@/features/canvas/index.js";
 import { useDragSession } from "@/features/layers/application/useDragSession.js";
@@ -31,7 +32,6 @@ import type {
   DragTargetKind,
   DropPosition,
 } from "@/features/layers/domain/dragSession.types.js";
-import { removeLibraryAssets } from "@/features/layers/domain/removeLibraryAssets.js";
 
 import { uid } from "@/lib/uid.js";
 

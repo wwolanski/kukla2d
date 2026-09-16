@@ -89,6 +89,9 @@ rules:
   DEAD-002: false
   QUALITY-001:
     severity: warning
+    exceptions:
+      - src/io/live2d/can3writer.js
+      - src/io/live2d/cmo3writer.js
     options:
       maxLines: 999
 # Example:

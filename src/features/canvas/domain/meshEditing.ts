@@ -2,16 +2,10 @@
  * Pure mesh helpers - editing, weights, options.
  *
  * `meshOptions` contains bounds-only math.
- * `meshWeights` exposes pure brush and influence normalization helpers.
+ * Weight painting delegates to the focused `meshWeighting` module.
  * Mesh generation delegates to the pure `mesh-generation/generate` module.
  */
-import type {
-  BoneId,
-  Mesh,
-  NodeId,
-  Vertex,
-  VertexInfluence,
-} from "@kukla2d/contracts";
+import type { BoneId, Mesh, NodeId, Vertex } from "@kukla2d/contracts";
 
 import { retriangulate } from "@/features/canvas/domain/mesh-generation/generate.js";
 import type { MeshGenerationOptions } from "@/features/canvas/domain/mesh-generation/generate.types.js";
@@ -87,42 +81,6 @@ export function computeSmartMeshOpts(
 }
 
 /* ── meshWeights ─────────────────────────────────────────────────────────── */
-
-/**
- * Brush falloff weight. t = dist/radius (0=center, 1=edge).
- * hardness=1 → uniform weight=1; hardness=0 → smooth cosine falloff.
- */
-export function brushWeight(
-  dist: number,
-  radius: number,
-  hardness: number,
-): number {
-  const t = dist / radius;
-  if (t >= 1) return 0;
-  const soft = 0.5 * (1 + Math.cos(Math.PI * t));
-  return hardness + (1 - hardness) * soft;
-}
-
-/**
- * Normalize vertex influences: filter near-zero, keep top-4 by weight,
- * then renormalize the kept set so their weights sum to ~1.
- */
-export function normalizeVertexInfluences(
-  influences: readonly VertexInfluence[] | null | undefined,
-): VertexInfluence[] {
-  const byBone = new Map<BoneId, number>();
-  for (const inf of influences ?? []) {
-    if (!inf?.boneId || !Number.isFinite(inf.weight) || inf.weight <= 0.0001)
-      continue;
-    byBone.set(inf.boneId, (byBone.get(inf.boneId) ?? 0) + inf.weight);
-  }
-  const top = Array.from(byBone, ([boneId, weight]) => ({ boneId, weight }))
-    .sort((a, b) => b.weight - a.weight)
-    .slice(0, 4);
-  const sum = top.reduce((acc, inf) => acc + inf.weight, 0);
-  if (sum <= 0) return [];
-  return top.map((inf) => ({ boneId: inf.boneId, weight: inf.weight / sum }));
-}
 
 /**
  * Paint mesh weights for `partId` in `project` (mutates `project`).

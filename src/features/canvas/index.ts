@@ -1,5 +1,5 @@
 // Public domain constants load before CanvasViewport, which reads editorStore.
-export { CANVAS_DEFAULTS } from "@/features/canvas/domain/canvasDefaults.js";
+export { CANVAS_DEFAULTS } from "@/domain/canvasDefaults.js";
 
 // Canvas feature - WebGL viewport, gizmos, picking
 export { CanvasViewport } from "@/features/canvas/composition/CanvasViewport.jsx";

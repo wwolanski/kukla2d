@@ -24,7 +24,7 @@ import {
 import type { Matrix3 } from "@/domain/transforms.types.js";
 
 import type { EffectiveMeshFrame } from "@/features/canvas/domain/meshDeformation.types.js";
-import { normalizeVertexInfluences } from "@/features/canvas/domain/meshEditing.js";
+import { normalizeVertexInfluences } from "@/features/canvas/domain/meshWeighting.js";
 import { buildRestGrid } from "@/features/canvas/domain/warpKeyframes.js";
 
 import { clamp, isFiniteNumber, lerp } from "@/lib/math.js";

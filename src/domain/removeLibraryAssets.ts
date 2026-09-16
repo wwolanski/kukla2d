@@ -42,4 +42,3 @@ export function removeLibraryAssets(projectDraft: ProjectDocument, assetIds: Rea
     if (slot.setupAttachmentId && attachmentIds.has(slot.setupAttachmentId)) slot.setupAttachmentId = null;
   }
 }
-

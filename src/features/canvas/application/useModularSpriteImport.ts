@@ -10,6 +10,7 @@ import type { ProjectStore } from "@/store/project/projectStoreTypes.types.js";
 import { useProjectStore } from "@/store/projectStore.js";
 
 import { validateUniqueLibraryFolderName } from "@/domain/libraryFolderNames.js";
+import { removeLibraryAssets } from "@/domain/removeLibraryAssets.js";
 
 import type {
   CanvasSceneGateway,
@@ -20,7 +21,6 @@ import {
   computeAlphaContours,
   computeImageBounds,
 } from "@/features/canvas/application/imageUtils.js";
-import { removeLibraryAssets } from "@/features/layers/index.js";
 import { pixelRect } from "@/features/modular-sprite/index.js";
 import type {
   ModularSpriteCommitRequest,
@@ -118,7 +118,9 @@ export function useModularSpriteImport({
         ]),
       );
       if (new Set(partAssetIds.values()).size !== partAssetIds.size)
-        throw new Error("A Library asset cannot fill more than one package part");
+        throw new Error(
+          "A Library asset cannot fill more than one package part",
+        );
       if ([...partAssetIds.values()].includes(sourceAssetId))
         throw new Error("The package source cannot also be used as a part");
 
@@ -240,15 +242,18 @@ export function useModularSpriteImport({
                 modularSprite.parts.map((part) => part.partKey),
               );
               modularSprite.schemaBinding.slotToPartKey = Object.fromEntries(
-                Object.entries(modularSprite.schemaBinding.slotToPartKey).filter(
-                  ([, partKey]) => remainingPartKeys.has(partKey),
-                ),
+                Object.entries(
+                  modularSprite.schemaBinding.slotToPartKey,
+                ).filter(([, partKey]) => remainingPartKeys.has(partKey)),
               );
               modularSprite.schemaBinding.snapshot.slots =
                 modularSprite.schemaBinding.snapshot.slots.filter((slot) => {
                   if (typeof slot !== "object" || slot === null) return true;
                   const slotKey = (slot as { slotKey?: unknown }).slotKey;
-                  return typeof slotKey !== "string" || remainingPartKeys.has(slotKey);
+                  return (
+                    typeof slotKey !== "string" ||
+                    remainingPartKeys.has(slotKey)
+                  );
                 });
             }
           }
@@ -429,7 +434,11 @@ export function useModularSpriteImport({
                   (candidate) => candidate.assetId === assetId,
                 );
                 if (placement) placement.folderId = null;
-                else projectDraft.assetPlacements.push({ assetId, folderId: null });
+                else
+                  projectDraft.assetPlacements.push({
+                    assetId,
+                    folderId: null,
+                  });
               }
             } else {
               const sourceAssetIds = new Set(

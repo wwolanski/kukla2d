@@ -6,7 +6,8 @@ import type {
   EditorStore,
 } from "@/store/editorStoreTypes.types.js";
 
-import { CANVAS_DEFAULTS } from "@/features/canvas/index.js";
+import { CANVAS_DEFAULTS } from "@/domain/canvasDefaults.js";
+
 import { BONE_TOOL_DEFAULTS } from "@/features/rigging/index.js";
 
 type DrawBoneAutoAssignMode = "smart" | "classic";
