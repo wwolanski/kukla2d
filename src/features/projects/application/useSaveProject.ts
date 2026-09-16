@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 import type { ProjectDocument } from "@kukla2d/contracts";
 
@@ -111,6 +111,7 @@ export function useSaveProject({
   >(null);
   const [pendingSave, setPendingSave] = useState<SaveAction | null>(null);
   const [saveError, setSaveError] = useState<Error | null>(null);
+  const saveInFlightRef = useRef(false);
 
   useEffect(() => {
     if (open) {
@@ -151,6 +152,8 @@ export function useSaveProject({
       mode: SaveMode,
       schemaPolicy: SchemaSavePolicy,
     ) => {
+      if (saveInFlightRef.current) return;
+      saveInFlightRef.current = true;
       setIsSaving(true);
       setSaveError(null);
       try {
@@ -226,6 +229,7 @@ export function useSaveProject({
         console.error("Failed to save project:", err);
         setSaveError(err instanceof Error ? err : new Error(String(err)));
       } finally {
+        saveInFlightRef.current = false;
         setIsSaving(false);
       }
     },
