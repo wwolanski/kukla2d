@@ -1,9 +1,9 @@
 // Web Audio API playback sync. Watches only isPlaying / activeAnimationId / loopCount; currentTime is read via ref.
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from "react";
 
-import type { Animation } from '@kukla2d/contracts';
+import type { Animation } from "@kukla2d/contracts";
 
-export interface AudioPlaybackSession {
+interface AudioPlaybackSession {
   currentTimeMs: number;
   playing: boolean;
   activeAnimationId: string | null;
@@ -21,30 +21,37 @@ export function useAudioSync(
   const currentTimeRef = useRef(session.currentTimeMs);
 
   // Update refs every render so effects always read the latest values
-  animationRef.current   = animation;
+  animationRef.current = animation;
   currentTimeRef.current = session.currentTimeMs;
 
   // ── 1. Decode buffers when new tracks with audio appear ───────────────
   //    Stable dep: track IDs + sourceUrls joined — avoids object identity churn
   const trackSourceKey = (animation?.audioTracks ?? [])
-    .map(t => `${t.id}:${t.sourceUrl ?? ''}`)
-    .join('|');
+    .map((t) => `${t.id}:${t.sourceUrl ?? ""}`)
+    .join("|");
 
   useEffect(() => {
     const tracks = animationRef.current?.audioTracks ?? [];
     if (!tracks.length) return;
 
     let ctx = audioCtxRef.current;
-    if (!ctx) { ctx = new AudioContext(); audioCtxRef.current = ctx; }
+    if (!ctx) {
+      ctx = new AudioContext();
+      audioCtxRef.current = ctx;
+    }
 
     const abortController = new AbortController();
     let cancelled = false;
 
-    const loadTrack = async (track: NonNullable<Animation['audioTracks']>[number]): Promise<void> => {
+    const loadTrack = async (
+      track: NonNullable<Animation["audioTracks"]>[number],
+    ): Promise<void> => {
       if (!track.sourceUrl || buffersRef.current.has(track.id)) return;
 
       try {
-        const response = await fetch(track.sourceUrl, { signal: abortController.signal });
+        const response = await fetch(track.sourceUrl, {
+          signal: abortController.signal,
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const audioData = await response.arrayBuffer();
         const buffer = await ctx.decodeAudioData(audioData);
@@ -68,7 +75,13 @@ export function useAudioSync(
 
   // ── 2. Stop helper ─────────────────────────────────────────────────────
   const stopAll = useCallback(() => {
-    sourcesRef.current.forEach(src => { try { src.stop(); } catch { /* source already stopped */ } });
+    sourcesRef.current.forEach((src) => {
+      try {
+        src.stop();
+      } catch {
+        /* source already stopped */
+      }
+    });
     sourcesRef.current.clear();
   }, []);
 
@@ -85,12 +98,15 @@ export function useAudioSync(
     if (!tracks.length) return;
 
     let ctx = audioCtxRef.current;
-    if (!ctx) { ctx = new AudioContext(); audioCtxRef.current = ctx; }
+    if (!ctx) {
+      ctx = new AudioContext();
+      audioCtxRef.current = ctx;
+    }
 
     let cancelled = false;
 
     const startAll = async (): Promise<void> => {
-      if (ctx.state === 'suspended') await ctx.resume();
+      if (ctx.state === "suspended") await ctx.resume();
       if (cancelled) return;
       stopAll();
 
@@ -101,24 +117,31 @@ export function useAudioSync(
         const buffer = buffersRef.current.get(track.id);
         if (!buffer) continue;
 
-        const audioStartMs    = track.audioStartMs   ?? 0;
-        const audioEndMs      = track.audioEndMs      ?? buffer.duration * 1000;
+        const audioStartMs = track.audioStartMs ?? 0;
+        const audioEndMs = track.audioEndMs ?? buffer.duration * 1000;
         const timelineStartMs = track.timelineStartMs ?? 0;
-        const timelineEndMs   = timelineStartMs + (audioEndMs - audioStartMs);
+        const timelineEndMs = timelineStartMs + (audioEndMs - audioStartMs);
 
         if (nowMs >= timelineEndMs) continue;
 
-        const offsetInAudioMs = Math.max(0, audioStartMs + Math.max(0, nowMs - timelineStartMs));
+        const offsetInAudioMs = Math.max(
+          0,
+          audioStartMs + Math.max(0, nowMs - timelineStartMs),
+        );
         if (offsetInAudioMs >= audioEndMs) continue;
 
         const playDurationSec = (audioEndMs - offsetInAudioMs) / 1000;
-        const delaySec        = Math.max(0, (timelineStartMs - nowMs) / 1000);
+        const delaySec = Math.max(0, (timelineStartMs - nowMs) / 1000);
 
         try {
           const source = ctx.createBufferSource();
           source.buffer = buffer;
           source.connect(ctx.destination);
-          source.start(ctx.currentTime + delaySec, offsetInAudioMs / 1000, playDurationSec);
+          source.start(
+            ctx.currentTime + delaySec,
+            offsetInAudioMs / 1000,
+            playDurationSec,
+          );
           if (cancelled) {
             source.stop();
             continue;
@@ -131,12 +154,12 @@ export function useAudioSync(
     };
 
     void startAll().catch((error) => {
-      if (!cancelled) console.error('Audio playback start error:', error);
+      if (!cancelled) console.error("Audio playback start error:", error);
     });
     return () => {
       cancelled = true;
       stopAll();
     };
-  // loopCount increments in animationStore.tick on each loop — causes audio restart from top
+    // loopCount increments in animationStore.tick on each loop — causes audio restart from top
   }, [session.playing, session.activeAnimationId, session.loopSignal, stopAll]); // NOT animation, NOT currentTime
 }

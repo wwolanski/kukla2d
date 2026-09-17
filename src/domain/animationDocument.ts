@@ -1,18 +1,23 @@
-import type { Animation, Keyframe } from '@kukla2d/contracts';
+import type { Animation, Keyframe } from "@kukla2d/contracts";
 
-import { ANIMATION_DEFAULTS, durationMsFromFrameCount } from './animationDefaults.js';
+import {
+  ANIMATION_DEFAULTS,
+  durationMsFromFrameCount,
+} from "@/domain/animationDefaults.js";
 
 /**
  * Repairs legacy/imported animation data at the document boundary.
  * Evaluation may then rely on finite times and sorted, unique keyframes.
  */
 export function normalizeAnimationClip(animation: Animation): Animation {
-  const fps = Number.isFinite(animation?.fps) && animation.fps > 0
-    ? Math.round(animation.fps)
-    : ANIMATION_DEFAULTS.fps;
-  const duration = Number.isFinite(animation?.duration) && animation.duration >= 0
-    ? animation.duration
-    : durationMsFromFrameCount(ANIMATION_DEFAULTS.frameCount, fps);
+  const fps =
+    Number.isFinite(animation?.fps) && animation.fps > 0
+      ? Math.round(animation.fps)
+      : ANIMATION_DEFAULTS.fps;
+  const duration =
+    Number.isFinite(animation?.duration) && animation.duration >= 0
+      ? animation.duration
+      : durationMsFromFrameCount(ANIMATION_DEFAULTS.frameCount, fps);
 
   return {
     ...animation,
@@ -40,6 +45,9 @@ export function normalizeAnimationClip(animation: Animation): Animation {
 export function normalizeAnimations(animations: unknown): Animation[] {
   if (!Array.isArray(animations)) return [];
   return animations
-    .filter((animation): animation is Animation => animation !== null && typeof animation === 'object')
+    .filter(
+      (animation): animation is Animation =>
+        animation !== null && typeof animation === "object",
+    )
     .map(normalizeAnimationClip);
 }

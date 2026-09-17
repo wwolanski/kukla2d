@@ -1,31 +1,31 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 
-import { readRecovery } from '@/io/projectDb';
+import { readRecovery } from "@/io/projectDb.js";
 
-import { useAnimationStore } from '@/store/animationStore';
-import { useEditorStore } from '@/store/editorStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
-import type { DeleteSelectionIntent } from '@/domain/deleteCommands';
-import { ACTION_IDS, editorModePolicy } from '@/domain/editorModePolicy';
+import type { DeleteSelectionIntent } from "@/domain/deleteCommands.types.js";
+import { ACTION_IDS, editorModePolicy } from "@/domain/editorModePolicy.js";
 
-import { toast } from '@/components/ui/use-toast';
+import type { CanvasRuntimeDependencies } from "@/features/canvas/application/canvasApplication.types.js";
+import { useCanvasController } from "@/features/canvas/application/useCanvasController.js";
+import { useExportAreaMoveSession } from "@/features/canvas/application/useExportAreaMoveSession.js";
+import { bakeDefaultPoseIntoSetup } from "@/features/canvas/domain/poseBake.js";
 
-import { useCanvasController } from './useCanvasController.js';
-import { useExportAreaMoveSession } from './useExportAreaMoveSession.js';
-import { bakeDefaultPoseIntoSetup } from '../domain/poseBake.js';
+import { toast } from "@/components/ui/use-toast.js";
 
-
-
-
-
-import type { Dispatch, RefObject, SetStateAction } from 'react';
+import type { Dispatch, RefObject, SetStateAction } from "react";
 
 type ImperativeRef = RefObject<unknown> | undefined;
 
 interface CanvasImportHandle {
   openFilePicker(): void;
-  importFiles: ReturnType<typeof useCanvasController>['import']['importFiles'];
+  importFiles: ReturnType<typeof useCanvasController>["import"]["importFiles"];
+  commitModularSprite: ReturnType<
+    typeof useCanvasController
+  >["import"]["commitModularSprite"];
 }
 
 interface CanvasViewportControllerOptions {
@@ -43,8 +43,10 @@ interface CanvasViewportControllerOptions {
   setPendingFile: Dispatch<SetStateAction<File | null>>;
   confirmDeleteOpen: boolean;
   setConfirmDeleteOpen: Dispatch<SetStateAction<boolean>>;
+  runtime: CanvasRuntimeDependencies;
 }
-export interface CanvasViewportController {
+
+interface CanvasViewportController {
   canvas: ReturnType<typeof useCanvasController>;
   deleteIntent: DeleteSelectionIntent | null;
   confirmDelete: () => void;
@@ -69,8 +71,10 @@ export function useCanvasViewportController({
   setPendingFile,
   confirmDeleteOpen,
   setConfirmDeleteOpen,
+  runtime,
 }: CanvasViewportControllerOptions): CanvasViewportController {
-  const [deleteIntent, setDeleteIntent] = useState<DeleteSelectionIntent | null>(null);
+  const [deleteIntent, setDeleteIntent] =
+    useState<DeleteSelectionIntent | null>(null);
   const [recoveryArchive, setRecoveryArchive] = useState<Blob | null>(null);
 
   const requestDelete = useCallback(() => {
@@ -78,13 +82,27 @@ export function useCanvasViewportController({
     const projectStore = useProjectStore.getState();
     const { project } = projectStore;
     const selection = editor.selection ?? [];
-    const nodeIds = selection.filter(id => project.nodes.some(node => node.id === id));
+    const nodeIds = selection.filter((id) =>
+      project.nodes.some((node) => node.id === id),
+    );
     const boneIds = editor.activeBoneId
-      ? [editor.activeBoneId, ...selection.filter(id => project.bones.some(bone => bone.id === id))]
-      : selection.filter(id => project.bones.some(bone => bone.id === id));
+      ? [
+          editor.activeBoneId,
+          ...selection.filter((id) =>
+            project.bones.some((bone) => bone.id === id),
+          ),
+        ]
+      : selection.filter((id) => project.bones.some((bone) => bone.id === id));
     const constraintIds = editor.activeConstraintId
-      ? [editor.activeConstraintId, ...selection.filter(id => project.constraints.some(constraint => constraint.id === id))]
-      : selection.filter(id => project.constraints.some(constraint => constraint.id === id));
+      ? [
+          editor.activeConstraintId,
+          ...selection.filter((id) =>
+            project.constraints.some((constraint) => constraint.id === id),
+          ),
+        ]
+      : selection.filter((id) =>
+          project.constraints.some((constraint) => constraint.id === id),
+        );
 
     const intent = projectStore.buildDeleteSelectionIntent({
       nodeIds: [...new Set(nodeIds)],
@@ -97,13 +115,14 @@ export function useCanvasViewportController({
       const decision = editorModePolicy({
         mode: editor.editorMode,
         actionId: ACTION_IDS.BONE_DELETE,
-        targetKind: 'bone',
+        targetKind: "bone",
       });
       if (!decision.allowed) {
         toast({
-          variant: 'destructive',
-          title: 'Delete unavailable in Animation mode',
-          description: 'Switch to Staging mode to delete bones or IK constraints.',
+          variant: "destructive",
+          title: "Delete unavailable in Animation mode",
+          description:
+            "Switch to Staging mode to delete bones or IK constraints.",
         });
         return;
       }
@@ -125,6 +144,7 @@ export function useCanvasViewportController({
     pendingFile,
     setPendingFile,
     onRequestDelete: requestDelete,
+    runtime,
   });
 
   const confirmDelete = useCallback(() => {
@@ -146,7 +166,7 @@ export function useCanvasViewportController({
     }
     let active = true;
     void readRecovery()
-      .then(record => {
+      .then((record) => {
         if (active) setRecoveryArchive(record?.archive ?? null);
       })
       .catch(() => {
@@ -162,16 +182,22 @@ export function useCanvasViewportController({
     importRef.current = {
       openFilePicker: canvas.input.handlers.onPanelClick,
       importFiles: canvas.import.importFiles,
+      commitModularSprite: canvas.import.commitModularSprite,
     };
     return () => {
       importRef.current = null;
     };
-  }, [canvas.import.importFiles, canvas.input.handlers.onPanelClick, importRef]);
+  }, [
+    canvas.import.commitModularSprite,
+    canvas.import.importFiles,
+    canvas.input.handlers.onPanelClick,
+    importRef,
+  ]);
 
   const resetPose = useCallback(() => {
     const projectStore = useProjectStore.getState();
     if (Object.keys(projectStore.project.defaultPose).length > 0) {
-      projectStore.updateProject(project => {
+      projectStore.updateProject((project) => {
         project.defaultPose = {};
       });
     }
@@ -200,9 +226,11 @@ export function useCanvasViewportController({
     editor.requestExportAreaPopover();
   }, []);
 
-  const exportAreaMoveMode = useEditorStore(state => state.exportAreaMoveMode);
+  const exportAreaMoveMode = useEditorStore(
+    (state) => state.exportAreaMoveMode,
+  );
   const activeTool = canvas.store.editorState.activeTool;
-  const editorMode = useEditorStore(state => state.editorMode);
+  const editorMode = useEditorStore((state) => state.editorMode);
   useExportAreaMoveSession({
     active: exportAreaMoveMode,
     activeTool,
@@ -214,7 +242,12 @@ export function useCanvasViewportController({
     if (exportAreaMoveMode && (confirmWipeOpen || confirmDeleteOpen)) {
       finishExportAreaMove();
     }
-  }, [confirmDeleteOpen, confirmWipeOpen, exportAreaMoveMode, finishExportAreaMove]);
+  }, [
+    confirmDeleteOpen,
+    confirmWipeOpen,
+    exportAreaMoveMode,
+    finishExportAreaMove,
+  ]);
 
   return {
     canvas,

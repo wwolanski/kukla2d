@@ -1,0 +1,83 @@
+import type {
+  MatchProgressEvent,
+  ModularSpriteSchema,
+  SchemaMatchRequest,
+  SchemaMatchResponse,
+  SemanticCatalog,
+  SemanticDefinition,
+} from "@kukla2d/modular-sprite-schema";
+
+import type {
+  CatalogAwareSchemaMatchGateway,
+  LocalSchemaRepository,
+  SchemaCatalogCapability,
+  StoredSchemaAsset,
+} from "@/features/modular-sprite-schema/application/localSchemaApi.types.js";
+
+interface LocalSchemaApi {
+  readonly semantics: SemanticCatalog;
+  initialize(): Promise<void>;
+  list(): ModularSpriteSchema[];
+  match(
+    request: SchemaMatchRequest,
+    options?: {
+      signal?: AbortSignal;
+      onProgress?: (event: MatchProgressEvent) => void;
+    },
+  ): Promise<SchemaMatchResponse>;
+  save(schema: ModularSpriteSchema): Promise<void>;
+  saveAsset(asset: StoredSchemaAsset): Promise<void>;
+  getAsset(assetId: string): Promise<StoredSchemaAsset | undefined>;
+  saveSemantic(definition: SemanticDefinition): Promise<void>;
+}
+
+export function createLocalSchemaApi(dependencies: {
+  catalog: SchemaCatalogCapability;
+  repository: LocalSchemaRepository;
+  matchGateway: CatalogAwareSchemaMatchGateway;
+  getFallbackAsset?: (assetId: string) => Promise<StoredSchemaAsset | undefined>;
+}): LocalSchemaApi {
+  const { catalog, repository, matchGateway, getFallbackAsset } = dependencies;
+  let ready: Promise<void> | null = null;
+
+  const synchronizeGateway = (): void => {
+    matchGateway.setCatalog(catalog.list(), catalog.revision);
+  };
+
+  const initialize = (): Promise<void> => {
+    ready ??= catalog.initialize().then(synchronizeGateway).catch((error) => {
+      ready = null;
+      throw error;
+    });
+    return ready;
+  };
+
+  return {
+    semantics: catalog.semantics,
+    initialize,
+    list: () => catalog.list(),
+    async match(request, options) {
+      await initialize();
+      return matchGateway.match(request, options);
+    },
+    async save(schema: ModularSpriteSchema) {
+      await initialize();
+      await catalog.save(schema);
+      synchronizeGateway();
+    },
+    saveAsset(asset: StoredSchemaAsset) {
+      return repository.putAsset(asset);
+    },
+    async getAsset(assetId: string) {
+      await initialize();
+      return (
+        (await repository.getAsset(assetId)) ??
+        (await getFallbackAsset?.(assetId))
+      );
+    },
+    saveSemantic(definition: SemanticDefinition) {
+      catalog.semantics.upsert(definition);
+      return repository.putSemantic(definition);
+    },
+  };
+}

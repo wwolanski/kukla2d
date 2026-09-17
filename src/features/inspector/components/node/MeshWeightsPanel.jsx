@@ -1,7 +1,10 @@
-import { Button } from '@/components/ui/button';
+import { useMeshWeightsController } from "@/features/inspector/application/useMeshInspectorController.js";
+import {
+  SectionTitle,
+  InspectorRow,
+} from "@/features/inspector/components/fields/InspectorRow.jsx";
 
-import { useMeshWeightsController } from '../../application/useMeshInspectorController.js';
-import { SectionTitle, InspectorRow } from '../fields/InspectorRow.jsx';
+import { Button } from "@/components/ui/button.jsx";
 
 export function MeshWeightsPanel({ node: inspectedNode }) {
   const {
@@ -21,13 +24,15 @@ export function MeshWeightsPanel({ node: inspectedNode }) {
 
   return (
     <div className="space-y-2 pt-1">
-      <SectionTitle help="Owner attaches the layer. Checked influence bones deform its mesh. Auto Weights uses only checked bones.">Weights</SectionTitle>
+      <SectionTitle help="Owner attaches the layer. Checked influence bones deform its mesh. Auto Weights uses only checked bones.">
+        Weights
+      </SectionTitle>
 
       {!hasWeightPaintTargets && (
         <p className="text-xs text-muted-foreground leading-relaxed">
           {bones.length === 0
-            ? 'Add bones to paint weights.'
-            : 'Select a bone to enable weight painting.'}
+            ? "Add bones to paint weights."
+            : "Select a bone to enable weight painting."}
         </p>
       )}
 
@@ -35,14 +40,15 @@ export function MeshWeightsPanel({ node: inspectedNode }) {
         <div className="space-y-1">
           <InspectorRow label="Paint Bone">
             <span className="text-xs text-muted-foreground truncate max-w-[120px]">
-              {boneMap.get(selectedBoneId)?.name ?? '—'}
+              {boneMap.get(selectedBoneId)?.name ?? "—"}
             </span>
           </InspectorRow>
           <p className="text-[10px] leading-relaxed text-muted-foreground">
-            Check bones for Auto Weights. Dot = bone currently has vertex weights.
+            Check bones for Auto Weights. Dot = bone currently has vertex
+            weights.
           </p>
           <div className="max-h-32 overflow-y-auto border border-border rounded p-1 space-y-0.5">
-            {bones.map(bone => {
+            {bones.map((bone) => {
               const bound = boundBoneIds.has(bone.id);
               const included = autoWeightBoneIds.has(bone.id);
               const selected = bone.id === selectedBoneId;
@@ -51,13 +57,15 @@ export function MeshWeightsPanel({ node: inspectedNode }) {
                   key={bone.id}
                   className={`
                     w-full flex items-center gap-1.5 px-1.5 py-1 rounded text-xs
-                    ${selected ? 'bg-primary text-primary-foreground' : 'hover:bg-accent text-foreground'}
+                    ${selected ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"}
                   `}
                 >
                   <input
                     type="checkbox"
                     checked={included}
-                    onChange={event => handleToggleAutoWeightBone(bone.id, event.target.checked)}
+                    onChange={(event) =>
+                      handleToggleAutoWeightBone(bone.id, event.target.checked)
+                    }
                     aria-label={`Use ${bone.name} in Auto Weights`}
                     title="Include this bone in Auto Weights"
                     className="h-3.5 w-3.5 shrink-0 accent-primary"
@@ -71,10 +79,14 @@ export function MeshWeightsPanel({ node: inspectedNode }) {
                   </button>
                   {bound && (
                     <span
-                      className={selected ? 'text-primary-foreground' : 'text-primary'}
+                      className={
+                        selected ? "text-primary-foreground" : "text-primary"
+                      }
                       aria-label={`${bone.name} has vertex weights`}
                       title="Has current vertex weights"
-                    >●</span>
+                    >
+                      ●
+                    </span>
                   )}
                 </div>
               );
@@ -112,15 +124,21 @@ export function MeshWeightsPanel({ node: inspectedNode }) {
         onClick={handleAutoWeights}
         disabled={autoWeightBoneIds.size === 0}
       >
-        Auto Weights ({autoWeightBoneIds.size} {autoWeightBoneIds.size === 1 ? 'bone' : 'bones'})
+        Auto Weights ({autoWeightBoneIds.size}{" "}
+        {autoWeightBoneIds.size === 1 ? "bone" : "bones"})
       </Button>
 
       {stats && selectedBoneId && (
         <div className="text-xs text-muted-foreground space-y-0.5">
-          <InspectorRow label="Bound Verts">{stats.boundVertexCount}</InspectorRow>
-          <InspectorRow label="Unbound Verts">{stats.unboundVertexCount}</InspectorRow>
+          <InspectorRow label="Bound Verts">
+            {stats.boundVertexCount}
+          </InspectorRow>
+          <InspectorRow label="Unbound Verts">
+            {stats.unboundVertexCount}
+          </InspectorRow>
           <InspectorRow label="Selected Bone">
-            {stats.selectedBoneVertexCount} verts &middot; avg {stats.averageWeight.toFixed(2)}
+            {stats.selectedBoneVertexCount} verts &middot; avg{" "}
+            {stats.averageWeight.toFixed(2)}
           </InspectorRow>
         </div>
       )}

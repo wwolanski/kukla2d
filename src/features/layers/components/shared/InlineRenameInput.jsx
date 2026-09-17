@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 
+import { MAX_NAME_LENGTH } from '@/domain/nameConstraints.js';
+
 export function InlineRenameInput({ value, onChange, onBlur, onKeyDown, className }) {
   const ref = useRef(null);
 
@@ -14,6 +16,7 @@ export function InlineRenameInput({ value, onChange, onBlur, onKeyDown, classNam
     <input
       ref={ref}
       type="text"
+      maxLength={MAX_NAME_LENGTH}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onBlur={onBlur}

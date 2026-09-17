@@ -1,28 +1,38 @@
-import { Trash2, Flame } from 'lucide-react';
-import { useState } from 'react';
+import { Trash2, Flame } from "lucide-react";
+import { useState } from "react";
 
-import { useProjectStore } from '@/store/projectStore';
+import { useProjectStore } from "@/store/projectStore.js";
 
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { HeadCheekJiggleControls } from "@/features/auto-motion/components/HeadCheekJiggleControls.jsx";
+import { IdleBreathingControls } from "@/features/auto-motion/components/IdleBreathingControls.jsx";
+
+import { Button } from "@/components/ui/button.jsx";
+import { Checkbox } from "@/components/ui/checkbox.jsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-
-import { HeadCheekJiggleControls } from './HeadCheekJiggleControls.jsx';
-import { IdleBreathingControls } from './IdleBreathingControls.jsx';
+} from "@/components/ui/select.jsx";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip.jsx";
 
 export function MotionModifierCard({ modifier, activeAnimationId }) {
-  const updateAnimationModifier = useProjectStore(s => s.updateAnimationModifier);
-  const deleteAnimationModifier = useProjectStore(s => s.deleteAnimationModifier);
-  const bakeAnimationModifierToKeyframes = useProjectStore(s => s.bakeAnimationModifierToKeyframes);
+  const updateAnimationModifier = useProjectStore(
+    (s) => s.updateAnimationModifier,
+  );
+  const deleteAnimationModifier = useProjectStore(
+    (s) => s.deleteAnimationModifier,
+  );
+  const bakeAnimationModifierToKeyframes = useProjectStore(
+    (s) => s.bakeAnimationModifierToKeyframes,
+  );
   const [bakeOpen, setBakeOpen] = useState(false);
-  const [bakeMode, setBakeMode] = useState('disable-after-bake');
+  const [bakeMode, setBakeMode] = useState("disable-after-bake");
   const [bakeStatus, setBakeStatus] = useState(null);
   const hasActiveClip = !!activeAnimationId;
 
@@ -34,10 +44,16 @@ export function MotionModifierCard({ modifier, activeAnimationId }) {
       mode: bakeMode,
     });
     if (result.error) {
-      setBakeStatus({ type: 'error', message: result.error });
+      setBakeStatus({ type: "error", message: result.error });
     } else {
-      setBakeStatus({ type: 'success', message: `${result.count} keyframes created` });
-      setTimeout(() => { setBakeOpen(false); setBakeStatus(null); }, 1500);
+      setBakeStatus({
+        type: "success",
+        message: `${result.count} keyframes created`,
+      });
+      setTimeout(() => {
+        setBakeOpen(false);
+        setBakeStatus(null);
+      }, 1500);
     }
   };
 
@@ -48,7 +64,7 @@ export function MotionModifierCard({ modifier, activeAnimationId }) {
   const handleScopeChange = (scope) => {
     updateAnimationModifier(modifier.id, {
       scope,
-      clipId: scope === 'clip' ? activeAnimationId : null,
+      clipId: scope === "clip" ? activeAnimationId : null,
     });
   };
 
@@ -68,10 +84,10 @@ export function MotionModifierCard({ modifier, activeAnimationId }) {
           {modifier.name}
         </span>
         <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {modifier.category === 'reaction' ? 'Reaction' : 'Loop'}
+          {modifier.category === "reaction" ? "Reaction" : "Loop"}
         </span>
         <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {modifier.scope === 'project' ? 'All clips' : 'This clip'}
+          {modifier.scope === "project" ? "All clips" : "This clip"}
         </span>
         <Button
           variant="ghost"
@@ -84,13 +100,13 @@ export function MotionModifierCard({ modifier, activeAnimationId }) {
         </Button>
       </div>
 
-      {modifier.presetId === 'builtin.idleBreathing' && (
+      {modifier.presetId === "builtin.idleBreathing" && (
         <IdleBreathingControls
           modifier={modifier}
           updateAnimationModifier={updateAnimationModifier}
         />
       )}
-      {modifier.presetId === 'builtin.headCheekJiggle' && (
+      {modifier.presetId === "builtin.headCheekJiggle" && (
         <HeadCheekJiggleControls
           modifier={modifier}
           updateAnimationModifier={updateAnimationModifier}
@@ -106,14 +122,14 @@ export function MotionModifierCard({ modifier, activeAnimationId }) {
                   variant="outline"
                   size="sm"
                   className="w-full h-6 text-[10px] gap-1"
-                  disabled={!hasActiveClip || modifier.category === 'reaction'}
+                  disabled={!hasActiveClip || modifier.category === "reaction"}
                   onClick={() => setBakeOpen(true)}
                   title={
                     !hasActiveClip
-                      ? 'Select an animation clip to bake'
-                      : modifier.category === 'reaction'
-                        ? 'Baking is not supported for reaction-driven modifiers'
-                        : 'Bake modifier to keyframes'
+                      ? "Select an animation clip to bake"
+                      : modifier.category === "reaction"
+                        ? "Baking is not supported for reaction-driven modifiers"
+                        : "Bake modifier to keyframes"
                   }
                 >
                   <Flame className="h-2.5 w-2.5" />
@@ -121,7 +137,7 @@ export function MotionModifierCard({ modifier, activeAnimationId }) {
                 </Button>
               </span>
             </TooltipTrigger>
-            {modifier.category === 'reaction' && (
+            {modifier.category === "reaction" && (
               <TooltipContent side="top" className="text-[11px] max-w-[200px]">
                 Reaction-driven modifiers cannot be baked to keyframes
               </TooltipContent>
@@ -134,8 +150,8 @@ export function MotionModifierCard({ modifier, activeAnimationId }) {
               <input
                 type="radio"
                 name="bakeMode"
-                checked={bakeMode === 'disable-after-bake'}
-                onChange={() => setBakeMode('disable-after-bake')}
+                checked={bakeMode === "disable-after-bake"}
+                onChange={() => setBakeMode("disable-after-bake")}
                 className="h-2.5 w-2.5"
               />
               <span>Disable live motion after bake</span>
@@ -144,14 +160,16 @@ export function MotionModifierCard({ modifier, activeAnimationId }) {
               <input
                 type="radio"
                 name="bakeMode"
-                checked={bakeMode === 'keep-live'}
-                onChange={() => setBakeMode('keep-live')}
+                checked={bakeMode === "keep-live"}
+                onChange={() => setBakeMode("keep-live")}
                 className="h-2.5 w-2.5"
               />
               <span>Keep live motion enabled</span>
             </label>
             {bakeStatus && (
-              <span className={`text-[9px] block ${bakeStatus.type === 'error' ? 'text-destructive' : 'text-green-500'}`}>
+              <span
+                className={`text-[9px] block ${bakeStatus.type === "error" ? "text-destructive" : "text-green-500"}`}
+              >
                 {bakeStatus.message}
               </span>
             )}
@@ -168,7 +186,10 @@ export function MotionModifierCard({ modifier, activeAnimationId }) {
                 variant="ghost"
                 size="sm"
                 className="h-5 text-[10px] px-2"
-                onClick={() => { setBakeOpen(false); setBakeStatus(null); }}
+                onClick={() => {
+                  setBakeOpen(false);
+                  setBakeStatus(null);
+                }}
               >
                 Cancel
               </Button>
@@ -188,16 +209,19 @@ export function MotionModifierCard({ modifier, activeAnimationId }) {
             Whether the modifier affects all clips or only the active one.
           </TooltipContent>
         </Tooltip>
-        <Select
-          value={modifier.scope}
-          onValueChange={handleScopeChange}
-        >
+        <Select value={modifier.scope} onValueChange={handleScopeChange}>
           <SelectTrigger className="h-6 text-xs flex-1">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="project" className="text-xs">All clips</SelectItem>
-            <SelectItem value="clip" className="text-xs" disabled={!activeAnimationId}>
+            <SelectItem value="project" className="text-xs">
+              All clips
+            </SelectItem>
+            <SelectItem
+              value="clip"
+              className="text-xs"
+              disabled={!activeAnimationId}
+            >
               This clip
             </SelectItem>
           </SelectContent>

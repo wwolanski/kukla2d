@@ -1,15 +1,33 @@
-import type { Bone, BoneId, Constraint, ConstraintId, ProjectDocument } from '@kukla2d/contracts';
+import type {
+  Bone,
+  BoneId,
+  Constraint,
+  ConstraintId,
+  ProjectDocument,
+} from "@kukla2d/contracts";
 
-import { getBoneSegment } from './picking.js';
+import { getBoneSegment } from "@/features/canvas/domain/picking.js";
 
 type IkConstraint = Constraint;
-interface BoneTip { boneId: BoneId; x: number; y: number; distance: number }
-interface IkConflict { boneId: BoneId; first: IkConstraint; second: IkConstraint }
+interface BoneTip {
+  boneId: BoneId;
+  x: number;
+  y: number;
+  distance: number;
+}
+interface IkConflict {
+  boneId: BoneId;
+  first: IkConstraint;
+  second: IkConstraint;
+}
 type IkTopologyResult =
   | { ok: true; conflict: null; scopes: Map<ConstraintId, BoneId[]> }
   | { ok: false; conflict: IkConflict; scopes: Map<ConstraintId, BoneId[]> };
 
-export function collectBoneDescendants(bones: readonly Bone[], rootBoneId: BoneId): BoneId[] {
+export function collectBoneDescendants(
+  bones: readonly Bone[],
+  rootBoneId: BoneId,
+): BoneId[] {
   const result: BoneId[] = [];
   const visit = (boneId: BoneId): void => {
     if (result.includes(boneId)) return;
@@ -18,13 +36,18 @@ export function collectBoneDescendants(bones: readonly Bone[], rootBoneId: BoneI
       if (bone.parentId === boneId) visit(bone.id);
     }
   };
-  if ((bones ?? []).some(bone => bone.id === rootBoneId)) visit(rootBoneId);
+  if ((bones ?? []).some((bone) => bone.id === rootBoneId)) visit(rootBoneId);
   return result;
 }
 
-export function findNearestBoneTip(bones: readonly Bone[], x: number, y: number, eligibleBoneIds: ReadonlySet<BoneId> | null = null): BoneTip | null {
-  const boneMap = new Map<BoneId, Bone>(bones.map(bone => [bone.id, bone]));
-  let nearest: Omit<BoneTip, 'distance'> | null = null;
+export function findNearestBoneTip(
+  bones: readonly Bone[],
+  x: number,
+  y: number,
+  eligibleBoneIds: ReadonlySet<BoneId> | null = null,
+): BoneTip | null {
+  const boneMap = new Map<BoneId, Bone>(bones.map((bone) => [bone.id, bone]));
+  let nearest: Omit<BoneTip, "distance"> | null = null;
   let distance = Infinity;
   for (const bone of bones ?? []) {
     if (eligibleBoneIds && !eligibleBoneIds.has(bone.id)) continue;
@@ -38,38 +61,77 @@ export function findNearestBoneTip(bones: readonly Bone[], x: number, y: number,
   return nearest ? { ...nearest, distance } : null;
 }
 
-export function findConstraintConflict(constraints: readonly IkConstraint[], bones: readonly Bone[], boneId: BoneId, ignoreConstraintId: ConstraintId | null = null): IkConstraint | null {
+export function findConstraintConflict(
+  constraints: readonly IkConstraint[],
+  bones: readonly Bone[],
+  boneId: BoneId,
+  ignoreConstraintId: ConstraintId | null = null,
+): IkConstraint | null {
   const candidateIds = new Set(collectBoneDescendants(bones, boneId));
-  return (constraints ?? []).find(constraint =>
-    constraint.type === 'ik'
-    && constraint.id !== ignoreConstraintId
-    && (constraint.affectedBoneIds ?? []).some(id => candidateIds.has(id))) ?? null;
+  return (
+    (constraints ?? []).find(
+      (constraint) =>
+        constraint.type === "ik" &&
+        constraint.id !== ignoreConstraintId &&
+        (constraint.affectedBoneIds ?? []).some((id) => candidateIds.has(id)),
+    ) ?? null
+  );
 }
 
-export function findNearestAvailableBoneTip(bones: readonly Bone[], constraints: readonly IkConstraint[], x: number, y: number, ignoreConstraintId: ConstraintId | null = null): BoneTip | null {
-  const availableIds = new Set((bones ?? [])
-    .filter(bone => !findConstraintConflict(constraints, bones, bone.id, ignoreConstraintId))
-    .map(bone => bone.id));
+export function findNearestAvailableBoneTip(
+  bones: readonly Bone[],
+  constraints: readonly IkConstraint[],
+  x: number,
+  y: number,
+  ignoreConstraintId: ConstraintId | null = null,
+): BoneTip | null {
+  const availableIds = new Set(
+    (bones ?? [])
+      .filter(
+        (bone) =>
+          !findConstraintConflict(
+            constraints,
+            bones,
+            bone.id,
+            ignoreConstraintId,
+          ),
+      )
+      .map((bone) => bone.id),
+  );
   return findNearestBoneTip(bones, x, y, availableIds);
 }
 
-export function assignConstraintToBone(constraint: IkConstraint | null | undefined, bones: readonly Bone[], boneId: BoneId): void {
+export function assignConstraintToBone(
+  constraint: IkConstraint | null | undefined,
+  bones: readonly Bone[],
+  boneId: BoneId,
+): void {
   if (!constraint) return;
   constraint.assignedBoneId = boneId;
   constraint.affectedBoneIds = collectBoneDescendants(bones, boneId);
 }
 
-export function computeIkTopology(bones: readonly Bone[], constraints: readonly IkConstraint[]): IkTopologyResult {
+export function computeIkTopology(
+  bones: readonly Bone[],
+  constraints: readonly IkConstraint[],
+): IkTopologyResult {
   const scopes = new Map<ConstraintId, BoneId[]>();
   const ownerByBoneId = new Map<BoneId, IkConstraint>();
   for (const constraint of constraints ?? []) {
-    if (constraint.type !== 'ik' || !constraint.assignedBoneId) continue;
-    const affectedBoneIds = collectBoneDescendants(bones, constraint.assignedBoneId);
+    if (constraint.type !== "ik" || !constraint.assignedBoneId) continue;
+    const affectedBoneIds = collectBoneDescendants(
+      bones,
+      constraint.assignedBoneId,
+    );
     if (affectedBoneIds.length === 0) continue;
     for (const boneId of affectedBoneIds) {
       const owner = ownerByBoneId.get(boneId);
       if (owner && owner.id !== constraint.id) {
-        return { ok: false, conflict: { boneId, first: owner, second: constraint }, scopes };
+        return {
+          ok: false,
+          conflict: { boneId, first: owner, second: constraint },
+          scopes,
+        };
       }
       ownerByBoneId.set(boneId, constraint);
     }
@@ -79,22 +141,37 @@ export function computeIkTopology(bones: readonly Bone[], constraints: readonly 
 }
 
 export function refreshIkTopology(project: ProjectDocument): IkTopologyResult {
-  const result = computeIkTopology(project.bones ?? [], project.constraints ?? []);
+  const result = computeIkTopology(
+    project.bones ?? [],
+    project.constraints ?? [],
+  );
   if (!result.ok) return result;
   for (const constraint of project.constraints ?? []) {
-    if (constraint.type !== 'ik' || !constraint.assignedBoneId) continue;
+    if (constraint.type !== "ik" || !constraint.assignedBoneId) continue;
     constraint.affectedBoneIds = result.scopes.get(constraint.id) ?? [];
   }
   return result;
 }
 
-export function trySetBoneParent(project: ProjectDocument, boneId: BoneId, parentId: BoneId | null): IkTopologyResult | { ok: false; reason: string; conflict?: IkConflict; scopes?: Map<ConstraintId, BoneId[]> } {
-  const bone = project.bones?.find(item => item.id === boneId);
-  if (!bone) return { ok: false, reason: 'Bone not found' };
-  const boneMap = new Map((project.bones ?? []).map(item => [item.id, item]));
+export function trySetBoneParent(
+  project: ProjectDocument,
+  boneId: BoneId,
+  parentId: BoneId | null,
+):
+  | IkTopologyResult
+  | {
+      ok: false;
+      reason: string;
+      conflict?: IkConflict;
+      scopes?: Map<ConstraintId, BoneId[]>;
+    } {
+  const bone = project.bones?.find((item) => item.id === boneId);
+  if (!bone) return { ok: false, reason: "Bone not found" };
+  const boneMap = new Map((project.bones ?? []).map((item) => [item.id, item]));
   let cursor = parentId ? boneMap.get(parentId) : null;
   while (cursor) {
-    if (cursor.id === boneId) return { ok: false, reason: 'Bone hierarchy cannot contain a cycle' };
+    if (cursor.id === boneId)
+      return { ok: false, reason: "Bone hierarchy cannot contain a cycle" };
     cursor = cursor.parentId ? boneMap.get(cursor.parentId) : null;
   }
   const previousParentId = bone.parentId ?? null;
@@ -109,12 +186,22 @@ export function trySetBoneParent(project: ProjectDocument, boneId: BoneId, paren
   };
 }
 
-export function createIkConstraint({ id, sequence, x, y, color }: {
-  id: ConstraintId; sequence: number; x: number; y: number; color: number;
+export function createIkConstraint({
+  id,
+  sequence,
+  x,
+  y,
+  color,
+}: {
+  id: ConstraintId;
+  sequence: number;
+  x: number;
+  y: number;
+  color: number;
 }): IkConstraint {
   return {
     id,
-    type: 'ik',
+    type: "ik",
     name: `IK ${sequence}`,
     order: sequence - 1,
     enabled: true,

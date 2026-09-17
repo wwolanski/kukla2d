@@ -1,4 +1,4 @@
-export { createBoneSetupFromNode } from './domain/createBoneSetupFromNode.js';
+export { createBoneSetupFromNode } from "@/features/rigging/domain/createBoneSetupFromNode.js";
 export {
   assignNodeToBone,
   clearNodeBoneAssignment,
@@ -15,7 +15,7 @@ export {
   getAssignedBoneForNode,
   getLinkedNodesForBone,
   isLinkedNodeAssignedToBone,
-} from './domain/boneAssignment.js';
+} from "@/features/rigging/domain/boneAssignment.js";
 export {
   translateLinkedBoneGroup,
   translateLinkedBoneSelection,
@@ -27,5 +27,5 @@ export {
   setBoneLength,
   scaleBoneSelectionLengths,
   applyLinkedTranslation,
-} from './domain/linkedTransform.js';
-export { BONE_TOOL_DEFAULTS } from './domain/boneToolDefaults.js';
+} from "@/features/rigging/domain/linkedTransform.js";
+export { BONE_TOOL_DEFAULTS } from "@/features/rigging/domain/boneToolDefaults.js";

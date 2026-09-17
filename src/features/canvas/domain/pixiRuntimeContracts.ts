@@ -8,7 +8,7 @@
  * C5: no new rendering/gesture libraries; uses existing pixi.js.
  */
 
-export interface PixiRuntimeStats {
+interface PixiRuntimeStats {
   pointerEventsHandled: number;
   renderCount: number;
   gpuUploadCount: number;
@@ -31,7 +31,9 @@ export function createDefaultPixiRuntimeStats(): PixiRuntimeStats {
  * @param {Partial<PixiRuntimeStats>} [overrides]
  * @returns {PixiRuntimeStats}
  */
-export function createPixiRuntimeStats(overrides: Partial<PixiRuntimeStats> = {}): PixiRuntimeStats {
+export function createPixiRuntimeStats(
+  overrides: Partial<PixiRuntimeStats> = {},
+): PixiRuntimeStats {
   return { ...createDefaultPixiRuntimeStats(), ...overrides };
 }
 
@@ -42,16 +44,25 @@ export function createPixiRuntimeStats(overrides: Partial<PixiRuntimeStats> = {}
  * @param {unknown} target
  * @returns {string[] | null}
  */
-export function validatePixiRuntimeCommandTarget(target: unknown): string[] | null {
-  if (!target || typeof target !== 'object' || Array.isArray(target)) return ['target must be an object'];
+export function validatePixiRuntimeCommandTarget(
+  target: unknown,
+): string[] | null {
+  if (!target || typeof target !== "object" || Array.isArray(target))
+    return ["target must be an object"];
   const errors: string[] = [];
   const t = Object.fromEntries(Object.entries(target));
-  if (typeof t.bind !== 'function') errors.push('bind must be a function');
-  if (typeof t.destroy !== 'function') errors.push('destroy must be a function');
-  if (typeof t.renderFrame !== 'function') errors.push('renderFrame must be a function');
-  if (typeof t.updateOverlayFrame !== 'function') errors.push('updateOverlayFrame must be a function');
-  if (typeof t.executeCommand !== 'function') errors.push('executeCommand must be a function');
-  if (typeof t.readPreviewPoseOverrides !== 'function') errors.push('readPreviewPoseOverrides must be a function');
-  if (typeof t.measureStats !== 'function') errors.push('measureStats must be a function');
+  if (typeof t.bind !== "function") errors.push("bind must be a function");
+  if (typeof t.destroy !== "function")
+    errors.push("destroy must be a function");
+  if (typeof t.renderFrame !== "function")
+    errors.push("renderFrame must be a function");
+  if (typeof t.updateOverlayFrame !== "function")
+    errors.push("updateOverlayFrame must be a function");
+  if (typeof t.executeCommand !== "function")
+    errors.push("executeCommand must be a function");
+  if (typeof t.readPreviewPoseOverrides !== "function")
+    errors.push("readPreviewPoseOverrides must be a function");
+  if (typeof t.measureStats !== "function")
+    errors.push("measureStats must be a function");
   return errors.length > 0 ? errors : null;
 }

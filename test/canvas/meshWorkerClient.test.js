@@ -52,7 +52,28 @@ describe('meshWorkerClient', () => {
     const result = await client.generate('p1', id, { gridSpacing: 30 });
     expect(result.vertices).toHaveLength(1);
     expect(FakeWorker.instances).toHaveLength(1);
+    expect(FakeWorker.instances[0].url).toBe('blob:fake');
+    expect(FakeWorker.instances[0].options).toEqual({ type: 'module' });
     expect(FakeWorker.instances[0].lastMessage.partId).toBe('p1');
+    client.dispose();
+  });
+
+  it('uses the Vite-bundled worker URL by default', async () => {
+    const client = createMeshWorkerClient();
+    FakeWorker.respondWith = () => ({
+      ok: true,
+      vertices: [{ x: 0, y: 0 }],
+      uvs: new Float32Array([0, 0]),
+      triangles: [0],
+      edgeIndices: [0],
+    });
+
+    await client.generate('p1', { width: 1, height: 1, data: new Uint8ClampedArray(4) });
+
+    expect(FakeWorker.instances).toHaveLength(1);
+    expect(String(FakeWorker.instances[0].url)).toContain('worker');
+    expect(String(FakeWorker.instances[0].url)).not.toContain('data:video/mp2t');
+    expect(FakeWorker.instances[0].options).toEqual({ type: 'module' });
     client.dispose();
   });
 

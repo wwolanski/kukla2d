@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createDragSession, updateDragTarget, computeDropPosition } from '@/features/layers/domain/dragSession.js';
 import { validateRenameValue as validateRename, resolveDisplayName as resolveName, isSourceNameReadonly as isReadonly } from '@/features/layers/domain/inlineRename.js';
+import { validateUniqueLibraryFolderName } from '@/domain/libraryFolderNames.js';
 
 describe('createDragSession', () => {
   it('creates a session with source fields and null target', () => {
@@ -99,5 +100,30 @@ describe('isSourceNameReadonly', () => {
 
   it('returns false when no source', () => {
     expect(isReadonly('local', null)).toBe(false);
+  });
+});
+
+describe('validateUniqueLibraryFolderName', () => {
+  const folders = [
+    { id: 'folder-hero', name: 'Hero' },
+    { id: 'folder-body', name: 'Body' },
+  ];
+
+  it('rejects an imported package name that differs only by case', () => {
+    expect(() => validateUniqueLibraryFolderName(folders, 'hero')).toThrow(
+      'already exists',
+    );
+  });
+
+  it('allows a rename to the current folder name, including a case change', () => {
+    expect(
+      validateUniqueLibraryFolderName(folders, 'hERO', 'folder-hero'),
+    ).toBe('hERO');
+  });
+
+  it('rejects a rename to another folder name, including a case change', () => {
+    expect(() =>
+      validateUniqueLibraryFolderName(folders, 'bOdY', 'folder-hero'),
+    ).toThrow('already exists');
   });
 });

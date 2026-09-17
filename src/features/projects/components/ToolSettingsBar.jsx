@@ -1,18 +1,18 @@
 import { SlidersHorizontal } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { useEditorStore } from '@/store/editorStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useEditorStore } from '@/store/editorStore.js';
+import { useProjectStore } from '@/store/projectStore.js';
 
-import { useWorkflowSelector, WEIGHT_PAINT_MODES } from '@/features/canvas';
+import { useWorkflowSelector, WEIGHT_PAINT_MODES } from '@/features/canvas/index.js';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils.js';
 
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button.jsx';
+import { Label } from '@/components/ui/label.jsx';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select.jsx';
+import { Slider } from '@/components/ui/slider.jsx';
+import { Switch } from '@/components/ui/switch.jsx';
 
 
 

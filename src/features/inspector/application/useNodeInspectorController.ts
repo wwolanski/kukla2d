@@ -2,16 +2,16 @@ import { useCallback } from 'react';
 
 import type { Node, PartNode, Transform } from '@kukla2d/contracts';
 
-import { useEditorStore } from '@/store/editorStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useEditorStore } from '@/store/editorStore.js';
+import { useProjectStore } from '@/store/projectStore.js';
 
-import { inspectorPreview, inspectorCommit } from '@/features/animation';
-import { useWorkflowActor } from '@/features/canvas';
+import { inspectorPreview, inspectorCommit } from '@/features/animation/index.js';
+import { useWorkflowActor } from '@/features/canvas/index.js';
 import {
   rotateLinkedNodeGroup,
   scaleLinkedNodeGroup,
   translateLinkedNodeGroup,
-} from '@/features/rigging';
+} from '@/features/rigging/index.js';
 
 type TransformField = keyof Transform;
 

@@ -1,6 +1,6 @@
 import { AlertTriangle, RotateCcw, Download } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button.jsx';
 
 export default function CanvasFailureFallback({ failure, onRetry, recoveryArchive }) {
   if (!failure) return null;

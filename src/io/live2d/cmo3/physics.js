@@ -28,7 +28,7 @@
  * @module io/live2d/cmo3/physics
  */
 
-import { uuid } from '../xmlbuilder.js';
+import { uuid } from "@/io/live2d/xmlbuilder.js";
 
 /**
  * Format a float so integers get a trailing `.0`, matching Hiyori's XML
@@ -110,7 +110,12 @@ function ruleOutputs(rule, groups) {
   const out = [];
   if (rule.outputs && rule.outputs.length > 0) {
     for (const o of rule.outputs) {
-      out.push({ paramId: o.paramId, vertexIndex: o.vertexIndex, scale: o.scale, isReverse: !!o.isReverse });
+      out.push({
+        paramId: o.paramId,
+        vertexIndex: o.vertexIndex,
+        scale: o.scale,
+        isReverse: !!o.isReverse,
+      });
     }
   } else if (rule.outputParamId) {
     // Legacy single-output: tap the pendulum tip at the configured outputScale.
@@ -121,7 +126,11 @@ function ruleOutputs(rule, groups) {
       isReverse: false,
     });
   }
-  if (rule.boneOutputs && rule.boneOutputs.length > 0 && Array.isArray(groups)) {
+  if (
+    rule.boneOutputs &&
+    rule.boneOutputs.length > 0 &&
+    Array.isArray(groups)
+  ) {
     const byRole = new Map();
     for (const g of groups) {
       if (g && g.boneRole) byRole.set(g.boneRole, g);
@@ -129,7 +138,7 @@ function ruleOutputs(rule, groups) {
     for (const b of rule.boneOutputs) {
       const g = byRole.get(b.boneRole);
       if (!g) continue; // bone absent on this character — silently skip
-      const sanitized = (g.name || g.id).replace(/[^a-zA-Z0-9_]/g, '_');
+      const sanitized = (g.name || g.id).replace(/[^a-zA-Z0-9_]/g, "_");
       out.push({
         paramId: `ParamRotation_${sanitized}`,
         vertexIndex: b.vertexIndex,
@@ -147,25 +156,29 @@ export const PHYSICS_RULES = [
   // Warp binding: cmo3writer TAG_PARAM_BINDINGS['front hair'] sways tips on
   // ±1. Pendulum length=3 (Hiyori default for front strands).
   {
-    id: 'PhysicsSetting1',
-    name: 'Hair Front',
-    outputParamId: 'ParamHairFront',
+    id: "PhysicsSetting1",
+    name: "Hair Front",
+    outputParamId: "ParamHairFront",
     outputScale: 1.522,
-    requireTag: 'front hair',
-    category: 'hair',
+    requireTag: "front hair",
+    category: "hair",
     inputs: [
-      { paramId: 'ParamAngleX',     type: 'SRC_TO_X',       weight: 60 },
-      { paramId: 'ParamAngleZ',     type: 'SRC_TO_G_ANGLE', weight: 60 },
-      { paramId: 'ParamBodyAngleX', type: 'SRC_TO_X',       weight: 40 },
-      { paramId: 'ParamBodyAngleZ', type: 'SRC_TO_G_ANGLE', weight: 40 },
+      { paramId: "ParamAngleX", type: "SRC_TO_X", weight: 60 },
+      { paramId: "ParamAngleZ", type: "SRC_TO_G_ANGLE", weight: 60 },
+      { paramId: "ParamBodyAngleX", type: "SRC_TO_X", weight: 40 },
+      { paramId: "ParamBodyAngleZ", type: "SRC_TO_G_ANGLE", weight: 40 },
     ],
     vertices: [
-      { x: 0, y: 0,  mobility: 1.0,  delay: 1.0, acceleration: 1.0, radius: 0 },
-      { x: 0, y: 3,  mobility: 0.95, delay: 0.9, acceleration: 1.5, radius: 3 },
+      { x: 0, y: 0, mobility: 1.0, delay: 1.0, acceleration: 1.0, radius: 0 },
+      { x: 0, y: 3, mobility: 0.95, delay: 0.9, acceleration: 1.5, radius: 3 },
     ],
     normalization: {
-      posMin: -10, posDef: 0, posMax: 10,
-      angleMin: -10, angleDef: 0, angleMax: 10,
+      posMin: -10,
+      posDef: 0,
+      posMax: 10,
+      angleMin: -10,
+      angleDef: 0,
+      angleMax: 10,
     },
   },
 
@@ -173,25 +186,36 @@ export const PHYSICS_RULES = [
   // Warp binding: TAG_PARAM_BINDINGS['back hair']. Pendulum length=15 — long
   // back hair has much longer lag than front strands.
   {
-    id: 'PhysicsSetting2',
-    name: 'Hair Back',
-    outputParamId: 'ParamHairBack',
+    id: "PhysicsSetting2",
+    name: "Hair Back",
+    outputParamId: "ParamHairBack",
     outputScale: 2.061,
-    requireTag: 'back hair',
-    category: 'hair',
+    requireTag: "back hair",
+    category: "hair",
     inputs: [
-      { paramId: 'ParamAngleX',     type: 'SRC_TO_X',       weight: 60 },
-      { paramId: 'ParamAngleZ',     type: 'SRC_TO_G_ANGLE', weight: 60 },
-      { paramId: 'ParamBodyAngleX', type: 'SRC_TO_X',       weight: 40 },
-      { paramId: 'ParamBodyAngleZ', type: 'SRC_TO_G_ANGLE', weight: 40 },
+      { paramId: "ParamAngleX", type: "SRC_TO_X", weight: 60 },
+      { paramId: "ParamAngleZ", type: "SRC_TO_G_ANGLE", weight: 60 },
+      { paramId: "ParamBodyAngleX", type: "SRC_TO_X", weight: 40 },
+      { paramId: "ParamBodyAngleZ", type: "SRC_TO_G_ANGLE", weight: 40 },
     ],
     vertices: [
-      { x: 0, y: 0,  mobility: 1.0,  delay: 1.0, acceleration: 1.0, radius: 0 },
-      { x: 0, y: 15, mobility: 0.95, delay: 0.8, acceleration: 1.5, radius: 15 },
+      { x: 0, y: 0, mobility: 1.0, delay: 1.0, acceleration: 1.0, radius: 0 },
+      {
+        x: 0,
+        y: 15,
+        mobility: 0.95,
+        delay: 0.8,
+        acceleration: 1.5,
+        radius: 15,
+      },
     ],
     normalization: {
-      posMin: -10, posDef: 0, posMax: 10,
-      angleMin: -30, angleDef: 0, angleMax: 30,
+      posMin: -10,
+      posDef: 0,
+      posMax: 10,
+      angleMin: -30,
+      angleDef: 0,
+      angleMax: 30,
     },
   },
 
@@ -200,23 +224,27 @@ export const PHYSICS_RULES = [
   // ±1 while waist row stays pinned. Body-only drivers (hair doesn't drive
   // skirt; skirt is attached to body, not head).
   {
-    id: 'PhysicsSetting3',
-    name: 'Skirt',
-    outputParamId: 'ParamSkirt',
+    id: "PhysicsSetting3",
+    name: "Skirt",
+    outputParamId: "ParamSkirt",
     outputScale: 1.434,
-    requireTag: 'bottomwear',
-    category: 'clothing',
+    requireTag: "bottomwear",
+    category: "clothing",
     inputs: [
-      { paramId: 'ParamBodyAngleX', type: 'SRC_TO_X',       weight: 100 },
-      { paramId: 'ParamBodyAngleZ', type: 'SRC_TO_G_ANGLE', weight: 100 },
+      { paramId: "ParamBodyAngleX", type: "SRC_TO_X", weight: 100 },
+      { paramId: "ParamBodyAngleZ", type: "SRC_TO_G_ANGLE", weight: 100 },
     ],
     vertices: [
-      { x: 0, y: 0,  mobility: 1.0, delay: 1.0, acceleration: 1.0, radius: 0 },
+      { x: 0, y: 0, mobility: 1.0, delay: 1.0, acceleration: 1.0, radius: 0 },
       { x: 0, y: 10, mobility: 0.9, delay: 0.6, acceleration: 1.5, radius: 10 },
     ],
     normalization: {
-      posMin: -10, posDef: 0, posMax: 10,
-      angleMin: -10, angleDef: 0, angleMax: 10,
+      posMin: -10,
+      posDef: 0,
+      posMax: 10,
+      angleMin: -10,
+      angleDef: 0,
+      angleMax: 10,
     },
   },
 
@@ -227,23 +255,27 @@ export const PHYSICS_RULES = [
   // mesh covering torso+sleeves (common; PSD split for proper sleeve physics
   // is a separate infra task).
   {
-    id: 'PhysicsSetting4',
-    name: 'Shirt',
-    outputParamId: 'ParamShirt',
+    id: "PhysicsSetting4",
+    name: "Shirt",
+    outputParamId: "ParamShirt",
     outputScale: 1.0,
-    requireTag: 'topwear',
-    category: 'clothing',
+    requireTag: "topwear",
+    category: "clothing",
     inputs: [
-      { paramId: 'ParamBodyAngleX', type: 'SRC_TO_X',       weight: 100 },
-      { paramId: 'ParamBodyAngleZ', type: 'SRC_TO_G_ANGLE', weight: 100 },
+      { paramId: "ParamBodyAngleX", type: "SRC_TO_X", weight: 100 },
+      { paramId: "ParamBodyAngleZ", type: "SRC_TO_G_ANGLE", weight: 100 },
     ],
     vertices: [
       { x: 0, y: 0, mobility: 1.0, delay: 1.0, acceleration: 1.0, radius: 0 },
       { x: 0, y: 6, mobility: 0.9, delay: 0.7, acceleration: 1.5, radius: 6 },
     ],
     normalization: {
-      posMin: -10, posDef: 0, posMax: 10,
-      angleMin: -10, angleDef: 0, angleMax: 10,
+      posMin: -10,
+      posDef: 0,
+      posMax: 10,
+      angleMin: -10,
+      angleDef: 0,
+      angleMax: 10,
     },
   },
 
@@ -253,23 +285,34 @@ export const PHYSICS_RULES = [
   // the max swing to match pants' real-world tight-at-ankle behavior; flared
   // / wide-leg designs can be bumped upward per-character if needed.
   {
-    id: 'PhysicsSetting5',
-    name: 'Pants',
-    outputParamId: 'ParamPants',
+    id: "PhysicsSetting5",
+    name: "Pants",
+    outputParamId: "ParamPants",
     outputScale: 0.8,
-    requireTag: 'legwear',
-    category: 'clothing',
+    requireTag: "legwear",
+    category: "clothing",
     inputs: [
-      { paramId: 'ParamBodyAngleX', type: 'SRC_TO_X',       weight: 100 },
-      { paramId: 'ParamBodyAngleZ', type: 'SRC_TO_G_ANGLE', weight: 100 },
+      { paramId: "ParamBodyAngleX", type: "SRC_TO_X", weight: 100 },
+      { paramId: "ParamBodyAngleZ", type: "SRC_TO_G_ANGLE", weight: 100 },
     ],
     vertices: [
-      { x: 0, y: 0,  mobility: 1.0,  delay: 1.0, acceleration: 1.0, radius: 0 },
-      { x: 0, y: 12, mobility: 0.85, delay: 0.5, acceleration: 1.5, radius: 12 },
+      { x: 0, y: 0, mobility: 1.0, delay: 1.0, acceleration: 1.0, radius: 0 },
+      {
+        x: 0,
+        y: 12,
+        mobility: 0.85,
+        delay: 0.5,
+        acceleration: 1.5,
+        radius: 12,
+      },
     ],
     normalization: {
-      posMin: -10, posDef: 0, posMax: 10,
-      angleMin: -10, angleDef: 0, angleMax: 10,
+      posMin: -10,
+      posDef: 0,
+      posMax: 10,
+      angleMin: -10,
+      angleDef: 0,
+      angleMax: 10,
     },
   },
 
@@ -280,24 +323,28 @@ export const PHYSICS_RULES = [
   // shifts the mid-row / center-column region so shoulders and hem stay
   // pinned — no layer-exposure risk.
   {
-    id: 'PhysicsSetting6',
-    name: 'Bust',
-    outputParamId: 'ParamBust',
+    id: "PhysicsSetting6",
+    name: "Bust",
+    outputParamId: "ParamBust",
     outputScale: 1.0,
-    requireTag: 'topwear',
-    category: 'bust',
+    requireTag: "topwear",
+    category: "bust",
     inputs: [
-      { paramId: 'ParamBodyAngleX', type: 'SRC_TO_X',       weight: 100 },
-      { paramId: 'ParamBodyAngleZ', type: 'SRC_TO_G_ANGLE', weight: 100 },
-      { paramId: 'ParamBodyAngleY', type: 'SRC_TO_X',       weight: 100 },
+      { paramId: "ParamBodyAngleX", type: "SRC_TO_X", weight: 100 },
+      { paramId: "ParamBodyAngleZ", type: "SRC_TO_G_ANGLE", weight: 100 },
+      { paramId: "ParamBodyAngleY", type: "SRC_TO_X", weight: 100 },
     ],
     vertices: [
-      { x: 0, y: 0, mobility: 1.0,  delay: 1.0, acceleration: 1.0, radius: 0 },
+      { x: 0, y: 0, mobility: 1.0, delay: 1.0, acceleration: 1.0, radius: 0 },
       { x: 0, y: 3, mobility: 0.95, delay: 0.4, acceleration: 2.0, radius: 3 },
     ],
     normalization: {
-      posMin: -10, posDef: 0, posMax: 10,
-      angleMin: -10, angleDef: 0, angleMax: 10,
+      posMin: -10,
+      posDef: 0,
+      posMax: 10,
+      angleMin: -10,
+      angleDef: 0,
+      angleMax: 10,
     },
   },
 
@@ -332,27 +379,31 @@ export const PHYSICS_RULES = [
   // seams is substantial rigger work; single-elbow sway was kept as the
   // robust baseline.
   {
-    id: 'PhysicsSetting_ArmSnake',
-    name: 'Arm Sway',
-    requireAnyTag: ['handwear', 'handwear-l', 'handwear-r'],
-    category: 'arms',
+    id: "PhysicsSetting_ArmSnake",
+    name: "Arm Sway",
+    requireAnyTag: ["handwear", "handwear-l", "handwear-r"],
+    category: "arms",
     inputs: [
-      { paramId: 'ParamBodyAngleX', type: 'SRC_TO_X',       weight: 50  },
-      { paramId: 'ParamBodyAngleY', type: 'SRC_TO_X',       weight: 50  },
-      { paramId: 'ParamBodyAngleZ', type: 'SRC_TO_G_ANGLE', weight: 100 },
+      { paramId: "ParamBodyAngleX", type: "SRC_TO_X", weight: 50 },
+      { paramId: "ParamBodyAngleY", type: "SRC_TO_X", weight: 50 },
+      { paramId: "ParamBodyAngleZ", type: "SRC_TO_G_ANGLE", weight: 100 },
     ],
     vertices: [
-      { x: 0, y: 0,  mobility: 1.00, delay: 1.0, acceleration: 1.0, radius: 0  },
-      { x: 0, y: 4,  mobility: 0.95, delay: 0.5, acceleration: 1.2, radius: 4  },
-      { x: 0, y: 10, mobility: 0.90, delay: 0.5, acceleration: 1.5, radius: 10 },
+      { x: 0, y: 0, mobility: 1.0, delay: 1.0, acceleration: 1.0, radius: 0 },
+      { x: 0, y: 4, mobility: 0.95, delay: 0.5, acceleration: 1.2, radius: 4 },
+      { x: 0, y: 10, mobility: 0.9, delay: 0.5, acceleration: 1.5, radius: 10 },
     ],
     boneOutputs: [
-      { boneRole: 'leftElbow',  vertexIndex: 2, scale: 4.0, isReverse: false },
-      { boneRole: 'rightElbow', vertexIndex: 2, scale: 4.0, isReverse: true  },
+      { boneRole: "leftElbow", vertexIndex: 2, scale: 4.0, isReverse: false },
+      { boneRole: "rightElbow", vertexIndex: 2, scale: 4.0, isReverse: true },
     ],
     normalization: {
-      posMin: -10, posDef: 0, posMax: 10,
-      angleMin: -10, angleDef: 0, angleMax: 10,
+      posMin: -10,
+      posDef: 0,
+      posMax: 10,
+      angleMin: -10,
+      angleDef: 0,
+      angleMax: 10,
     },
   },
 ];
@@ -369,10 +420,18 @@ export const PHYSICS_RULES = [
  * @param {Set<string>|null} [ctx.disabledCategories]   - Category names to skip (e.g. new Set(['hair']))
  * @returns {{emittedCount:number, skipped:Array<{id:string,reason:string}>}}
  */
-export function emitPhysicsSettings(x, {
-  parent, paramDefs, meshes, groups = [], rigDebugLog = null, disabledCategories = null,
-  rules = null,
-}) {
+export function emitPhysicsSettings(
+  x,
+  {
+    parent,
+    paramDefs,
+    meshes,
+    groups = [],
+    rigDebugLog = null,
+    disabledCategories = null,
+    rules = null,
+  },
+) {
   const pidByParamId = new Map();
   for (const p of paramDefs) pidByParamId.set(p.id, p.pid);
 
@@ -381,13 +440,20 @@ export function emitPhysicsSettings(x, {
     if (m && m.tag) tagsPresent.add(m.tag);
   }
 
-  const activeRules = (rules && rules.length > 0) ? rules : PHYSICS_RULES;
+  const activeRules = rules && rules.length > 0 ? rules : PHYSICS_RULES;
 
   const rulesToEmit = [];
   const skipped = [];
   for (const rule of activeRules) {
-    if (disabledCategories && rule.category && disabledCategories.has(rule.category)) {
-      skipped.push({ id: rule.id, reason: `category '${rule.category}' disabled in UI` });
+    if (
+      disabledCategories &&
+      rule.category &&
+      disabledCategories.has(rule.category)
+    ) {
+      skipped.push({
+        id: rule.id,
+        reason: `category '${rule.category}' disabled in UI`,
+      });
       continue;
     }
     // Tag gating first — cheaper than output resolution and gives clearer
@@ -395,38 +461,58 @@ export function emitPhysicsSettings(x, {
     // reported as "missing output param" just because we also happen not
     // to have its output params defined).
     if (rule.requireTag && !tagsPresent.has(rule.requireTag)) {
-      skipped.push({ id: rule.id, reason: `no mesh with tag '${rule.requireTag}'` });
-      continue;
-    }
-    if (rule.requireAnyTag && !rule.requireAnyTag.some(t => tagsPresent.has(t))) {
       skipped.push({
         id: rule.id,
-        reason: `no mesh with any of tags [${rule.requireAnyTag.join(', ')}]`,
+        reason: `no mesh with tag '${rule.requireTag}'`,
+      });
+      continue;
+    }
+    if (
+      rule.requireAnyTag &&
+      !rule.requireAnyTag.some((t) => tagsPresent.has(t))
+    ) {
+      skipped.push({
+        id: rule.id,
+        reason: `no mesh with any of tags [${rule.requireAnyTag.join(", ")}]`,
       });
       continue;
     }
     const outs = ruleOutputs(rule, groups);
     if (outs.length === 0) {
-      skipped.push({ id: rule.id, reason: 'no resolvable outputs (no matching boneRoles + no paramId)' });
+      skipped.push({
+        id: rule.id,
+        reason: "no resolvable outputs (no matching boneRoles + no paramId)",
+      });
       continue;
     }
-    const missingOut = outs.find(o => !pidByParamId.has(o.paramId));
+    const missingOut = outs.find((o) => !pidByParamId.has(o.paramId));
     if (missingOut) {
-      skipped.push({ id: rule.id, reason: `missing output param ${missingOut.paramId}` });
+      skipped.push({
+        id: rule.id,
+        reason: `missing output param ${missingOut.paramId}`,
+      });
       continue;
     }
     // All input parameters must exist — skip rules with dangling refs.
-    const missingInput = rule.inputs.find(inp => !pidByParamId.has(inp.paramId));
+    const missingInput = rule.inputs.find(
+      (inp) => !pidByParamId.has(inp.paramId),
+    );
     if (missingInput) {
-      skipped.push({ id: rule.id, reason: `missing input param ${missingInput.paramId}` });
+      skipped.push({
+        id: rule.id,
+        reason: `missing input param ${missingInput.paramId}`,
+      });
       continue;
     }
     rulesToEmit.push({ rule });
   }
 
-  const set = x.sub(parent, 'CPhysicsSettingsSourceSet', { 'xs.n': 'physicsSettingsSourceSet' });
-  const list = x.sub(set, 'carray_list', {
-    'xs.n': '_sourceCubismPhysics', count: String(rulesToEmit.length),
+  const set = x.sub(parent, "CPhysicsSettingsSourceSet", {
+    "xs.n": "physicsSettingsSourceSet",
+  });
+  const list = x.sub(set, "carray_list", {
+    "xs.n": "_sourceCubismPhysics",
+    count: String(rulesToEmit.length),
   });
 
   for (const { rule } of rulesToEmit) {
@@ -436,17 +522,17 @@ export function emitPhysicsSettings(x, {
   // `selectedCubismPhysics` is the Editor's "current selection" state; Hiyori
   // emits a fresh uuid that doesn't match any setting guid. Safe to mint a
   // random one — the field isn't referenced elsewhere in the model tree.
-  x.sub(set, 'CPhysicsSettingsGuid', {
-    'xs.n': 'selectedCubismPhysics',
+  x.sub(set, "CPhysicsSettingsGuid", {
+    "xs.n": "selectedCubismPhysics",
     uuid: uuid(),
-    note: 'physics-selection',
+    note: "physics-selection",
   });
-  x.sub(set, 'null', { 'xs.n': 'settingFPS' });
+  x.sub(set, "null", { "xs.n": "settingFPS" });
 
   if (rigDebugLog) {
     rigDebugLog.physics = {
       emittedCount: rulesToEmit.length,
-      emittedIds: rulesToEmit.map(r => r.rule.id),
+      emittedIds: rulesToEmit.map((r) => r.rule.id),
       skipped,
     };
   }
@@ -456,30 +542,39 @@ export function emitPhysicsSettings(x, {
 
 /** Emit a single CPhysicsSettingsSource node into `list`. */
 function emitOneSetting(x, list, rule, pidByParamId, groups) {
-  const src = x.sub(list, 'CPhysicsSettingsSource');
-  x.sub(src, 's', { 'xs.n': 'name' }).text = rule.name;
-  x.sub(src, 'CPhysicsSettingsGuid', {
-    'xs.n': 'guid', uuid: uuid(), note: rule.name,
+  const src = x.sub(list, "CPhysicsSettingsSource");
+  x.sub(src, "s", { "xs.n": "name" }).text = rule.name;
+  x.sub(src, "CPhysicsSettingsGuid", {
+    "xs.n": "guid",
+    uuid: uuid(),
+    note: rule.name,
   });
-  x.sub(src, 'CPhysicsSettingId', { 'xs.n': 'id', idstr: rule.id });
+  x.sub(src, "CPhysicsSettingId", { "xs.n": "id", idstr: rule.id });
 
   // ── Inputs ──
-  const inputsNode = x.sub(src, 'carray_list', {
-    'xs.n': 'inputs', count: String(rule.inputs.length),
+  const inputsNode = x.sub(src, "carray_list", {
+    "xs.n": "inputs",
+    count: String(rule.inputs.length),
   });
   for (const inp of rule.inputs) {
-    const inpNode = x.sub(inputsNode, 'CPhysicsInput');
-    x.sub(inpNode, 'CPhysicsDataGuid', {
-      'xs.n': 'guid', uuid: uuid(), note: `in_${rule.id}_${inp.paramId}`,
+    const inpNode = x.sub(inputsNode, "CPhysicsInput");
+    x.sub(inpNode, "CPhysicsDataGuid", {
+      "xs.n": "guid",
+      uuid: uuid(),
+      note: `in_${rule.id}_${inp.paramId}`,
     });
-    x.subRef(inpNode, 'CParameterGuid', pidByParamId.get(inp.paramId), { 'xs.n': 'source' });
-    x.sub(inpNode, 'f', { 'xs.n': 'angleScale' }).text = '0.0';
-    const ts = x.sub(inpNode, 'GVector2', { 'xs.n': 'translationScale' });
-    x.sub(ts, 'f', { 'xs.n': 'x' }).text = '0.0';
-    x.sub(ts, 'f', { 'xs.n': 'y' }).text = '0.0';
-    x.sub(inpNode, 'f', { 'xs.n': 'weight' }).text = f(inp.weight);
-    x.sub(inpNode, 'CPhysicsSourceType', { 'xs.n': 'type', v: inp.type });
-    x.sub(inpNode, 'b', { 'xs.n': 'isReverse' }).text = inp.isReverse ? 'true' : 'false';
+    x.subRef(inpNode, "CParameterGuid", pidByParamId.get(inp.paramId), {
+      "xs.n": "source",
+    });
+    x.sub(inpNode, "f", { "xs.n": "angleScale" }).text = "0.0";
+    const ts = x.sub(inpNode, "GVector2", { "xs.n": "translationScale" });
+    x.sub(ts, "f", { "xs.n": "x" }).text = "0.0";
+    x.sub(ts, "f", { "xs.n": "y" }).text = "0.0";
+    x.sub(inpNode, "f", { "xs.n": "weight" }).text = f(inp.weight);
+    x.sub(inpNode, "CPhysicsSourceType", { "xs.n": "type", v: inp.type });
+    x.sub(inpNode, "b", { "xs.n": "isReverse" }).text = inp.isReverse
+      ? "true"
+      : "false";
   }
 
   // ── Outputs ──
@@ -489,52 +584,67 @@ function emitOneSetting(x, list, rule, pidByParamId, groups) {
   // joint with a tiny scale, successive joints read later vertices with
   // progressively larger scales, producing a lag-and-grow whip.
   const outs = ruleOutputs(rule, groups);
-  const outputsNode = x.sub(src, 'carray_list', {
-    'xs.n': 'outputs', count: String(outs.length),
+  const outputsNode = x.sub(src, "carray_list", {
+    "xs.n": "outputs",
+    count: String(outs.length),
   });
   for (let oi = 0; oi < outs.length; oi++) {
     const o = outs[oi];
     const outPid = pidByParamId.get(o.paramId);
-    const outNode = x.sub(outputsNode, 'CPhysicsOutput');
-    x.sub(outNode, 'CPhysicsDataGuid', {
-      'xs.n': 'guid', uuid: uuid(), note: `out_${rule.id}_${o.paramId}`,
+    const outNode = x.sub(outputsNode, "CPhysicsOutput");
+    x.sub(outNode, "CPhysicsDataGuid", {
+      "xs.n": "guid",
+      uuid: uuid(),
+      note: `out_${rule.id}_${o.paramId}`,
     });
-    x.subRef(outNode, 'CParameterGuid', outPid, { 'xs.n': 'destination' });
-    x.sub(outNode, 'i', { 'xs.n': 'vertexIndex' }).text = String(o.vertexIndex);
-    const outTs = x.sub(outNode, 'GVector2', { 'xs.n': 'translationScale' });
-    x.sub(outTs, 'f', { 'xs.n': 'x' }).text = '0.0';
-    x.sub(outTs, 'f', { 'xs.n': 'y' }).text = '0.0';
-    x.sub(outNode, 'f', { 'xs.n': 'angleScale' }).text = f(o.scale);
-    x.sub(outNode, 'f', { 'xs.n': 'weight' }).text = '100.0';
-    x.sub(outNode, 'CPhysicsSourceType', { 'xs.n': 'type', v: 'SRC_TO_G_ANGLE' });
-    x.sub(outNode, 'b', { 'xs.n': 'isReverse' }).text = o.isReverse ? 'true' : 'false';
+    x.subRef(outNode, "CParameterGuid", outPid, { "xs.n": "destination" });
+    x.sub(outNode, "i", { "xs.n": "vertexIndex" }).text = String(o.vertexIndex);
+    const outTs = x.sub(outNode, "GVector2", { "xs.n": "translationScale" });
+    x.sub(outTs, "f", { "xs.n": "x" }).text = "0.0";
+    x.sub(outTs, "f", { "xs.n": "y" }).text = "0.0";
+    x.sub(outNode, "f", { "xs.n": "angleScale" }).text = f(o.scale);
+    x.sub(outNode, "f", { "xs.n": "weight" }).text = "100.0";
+    x.sub(outNode, "CPhysicsSourceType", {
+      "xs.n": "type",
+      v: "SRC_TO_G_ANGLE",
+    });
+    x.sub(outNode, "b", { "xs.n": "isReverse" }).text = o.isReverse
+      ? "true"
+      : "false";
   }
 
   // ── Vertices (pendulum chain) ──
-  const vxNode = x.sub(src, 'carray_list', {
-    'xs.n': 'vertices', count: String(rule.vertices.length),
+  const vxNode = x.sub(src, "carray_list", {
+    "xs.n": "vertices",
+    count: String(rule.vertices.length),
   });
   for (let i = 0; i < rule.vertices.length; i++) {
     const vs = rule.vertices[i];
-    const v = x.sub(vxNode, 'CPhysicsVertex');
-    x.sub(v, 'CPhysicsDataGuid', {
-      'xs.n': 'guid', uuid: uuid(), note: `v${i}_${rule.id}`,
+    const v = x.sub(vxNode, "CPhysicsVertex");
+    x.sub(v, "CPhysicsDataGuid", {
+      "xs.n": "guid",
+      uuid: uuid(),
+      note: `v${i}_${rule.id}`,
     });
-    const pos = x.sub(v, 'GVector2', { 'xs.n': 'position' });
-    x.sub(pos, 'f', { 'xs.n': 'x' }).text = f(vs.x);
-    x.sub(pos, 'f', { 'xs.n': 'y' }).text = f(vs.y);
-    x.sub(v, 'f', { 'xs.n': 'mobility' }).text = f(vs.mobility);
-    x.sub(v, 'f', { 'xs.n': 'delay' }).text = f(vs.delay);
-    x.sub(v, 'f', { 'xs.n': 'acceleration' }).text = f(vs.acceleration);
-    x.sub(v, 'f', { 'xs.n': 'radius' }).text = f(vs.radius);
+    const pos = x.sub(v, "GVector2", { "xs.n": "position" });
+    x.sub(pos, "f", { "xs.n": "x" }).text = f(vs.x);
+    x.sub(pos, "f", { "xs.n": "y" }).text = f(vs.y);
+    x.sub(v, "f", { "xs.n": "mobility" }).text = f(vs.mobility);
+    x.sub(v, "f", { "xs.n": "delay" }).text = f(vs.delay);
+    x.sub(v, "f", { "xs.n": "acceleration" }).text = f(vs.acceleration);
+    x.sub(v, "f", { "xs.n": "radius" }).text = f(vs.radius);
   }
 
   // ── Normalization (editor's per-setting scalar ranges) ──
   const n = rule.normalization;
-  x.sub(src, 'f', { 'xs.n': 'normalizedPositionValueMax' }).text = f(n.posMax);
-  x.sub(src, 'f', { 'xs.n': 'normalizedPositionValueMin' }).text = f(n.posMin);
-  x.sub(src, 'f', { 'xs.n': 'normalizedPositionDefaultValue' }).text = f(n.posDef);
-  x.sub(src, 'f', { 'xs.n': 'normalizedAngleValueMax' }).text = f(n.angleMax);
-  x.sub(src, 'f', { 'xs.n': 'normalizedAngleValueMin' }).text = f(n.angleMin);
-  x.sub(src, 'f', { 'xs.n': 'normalizedAngleDefaultValue' }).text = f(n.angleDef);
+  x.sub(src, "f", { "xs.n": "normalizedPositionValueMax" }).text = f(n.posMax);
+  x.sub(src, "f", { "xs.n": "normalizedPositionValueMin" }).text = f(n.posMin);
+  x.sub(src, "f", { "xs.n": "normalizedPositionDefaultValue" }).text = f(
+    n.posDef,
+  );
+  x.sub(src, "f", { "xs.n": "normalizedAngleValueMax" }).text = f(n.angleMax);
+  x.sub(src, "f", { "xs.n": "normalizedAngleValueMin" }).text = f(n.angleMin);
+  x.sub(src, "f", { "xs.n": "normalizedAngleDefaultValue" }).text = f(
+    n.angleDef,
+  );
 }

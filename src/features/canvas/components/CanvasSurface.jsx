@@ -3,9 +3,9 @@ import { useEffect, useCallback, useRef } from 'react';
 
 import { useTheme } from '@/app/providers/theme/useTheme.js';
 
-import { useEditorStore } from '@/store/editorStore';
+import { useEditorStore } from '@/store/editorStore.js';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils.js';
 
 const BG_OPTIONS = [
   { value: 'checker', label: 'Checker background' },

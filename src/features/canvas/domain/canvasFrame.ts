@@ -15,16 +15,19 @@
  * @param {object} [params.options]
  * @returns {object} CanvasFrame
  */
-import type { Node, ProjectDocument } from '@kukla2d/contracts';
+import type { Node, ProjectDocument } from "@kukla2d/contracts";
 
-import type { PoseOverrides } from '@/domain/animationEngine';
+import type { PoseOverrides } from "@/domain/animationEngine.types.js";
 
-export interface CanvasFrameEditor {
+interface CanvasFrameEditor {
   view: { zoom: number; panX: number; panY: number };
 }
 
-export interface CanvasFrameOptions { [key: string]: unknown }
-export interface CanvasFrame {
+interface CanvasFrameOptions {
+  [key: string]: unknown;
+}
+
+interface CanvasFrame {
   project: ProjectDocument;
   editor: CanvasFrameEditor;
   isDark: boolean;
@@ -32,11 +35,19 @@ export interface CanvasFrame {
   effectiveNodes: Node[];
   canvasSize: { width: number; height: number };
   options: CanvasFrameOptions | undefined;
-  view: CanvasFrameEditor['view'];
+  view: CanvasFrameEditor["view"];
   nodes: Node[];
 }
 
-export function buildCanvasFrame({ project, editor, isDark, poseOverrides, effectiveNodes, canvasSize, options }: {
+export function buildCanvasFrame({
+  project,
+  editor,
+  isDark,
+  poseOverrides,
+  effectiveNodes,
+  canvasSize,
+  options,
+}: {
   project: ProjectDocument;
   editor: CanvasFrameEditor;
   isDark: boolean;

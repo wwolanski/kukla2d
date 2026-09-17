@@ -1,41 +1,9 @@
-export interface PackInput {
-  identity: string;
-  cropX: number;
-  cropY: number;
-  cropW: number;
-  cropH: number;
-  sourceWidth: number;
-  sourceHeight: number;
-  empty: boolean;
-}
-
-export interface PackedRegion {
-  name: string;
-  frame: { x: number; y: number; w: number; h: number };
-  rotated: false;
-  trimmed: boolean;
-  spriteSourceSize: { x: number; y: number; w: number; h: number };
-  sourceSize: { w: number; h: number };
-  pageIndex: number;
-}
-
-export interface PackedPage {
-  width: number;
-  height: number;
-  regions: readonly PackedRegion[];
-}
-
-export interface PackResult {
-  pages: readonly PackedPage[];
-}
-
-export interface PackError {
-  code: string;
-  frameKey: string;
-  requiredSize: number;
-  selectedSize: number;
-  message: string;
-}
+import type {
+  PackError,
+  PackInput,
+  PackedRegion,
+  PackResult,
+} from "./phaserAtlasPacker.types.js";
 
 function compareFrames(a: PackInput, b: PackInput, padding: number): number {
   const aPaddedW = a.cropW + padding * 2;
@@ -206,14 +174,16 @@ export function packAtlasFrames(
     throw new Error(`padding must be integer 0..32, got ${padding}`);
   }
   if (!Number.isInteger(maxPageSize) || maxPageSize <= 0) {
-    throw new Error(`maxPageSize must be a positive integer, got ${maxPageSize}`);
+    throw new Error(
+      `maxPageSize must be a positive integer, got ${maxPageSize}`,
+    );
   }
 
   const seen = new Set<string>();
   for (const frame of frames) {
     if (seen.has(frame.identity)) {
       return {
-        code: 'PHASER_ATLAS_DUPLICATE_KEY',
+        code: "PHASER_ATLAS_DUPLICATE_KEY",
         frameKey: frame.identity,
         requiredSize: 0,
         selectedSize: 0,
@@ -228,7 +198,7 @@ export function packAtlasFrames(
     const paddedH = frame.cropH + padding * 2;
     if (paddedW > maxPageSize || paddedH > maxPageSize) {
       return {
-        code: 'PHASER_ATLAS_OVERSIZED_FRAME',
+        code: "PHASER_ATLAS_OVERSIZED_FRAME",
         frameKey: frame.identity,
         requiredSize: Math.max(paddedW, paddedH),
         selectedSize: maxPageSize,
@@ -252,7 +222,13 @@ export function packAtlasFrames(
       if (pos) {
         const region = buildRegion(frame, pos.x, pos.y, padding, pi);
         page.regions.push(region);
-        page.freeRects = splitFreeRects(page.freeRects, pos.x, pos.y, paddedW, paddedH);
+        page.freeRects = splitFreeRects(
+          page.freeRects,
+          pos.x,
+          pos.y,
+          paddedW,
+          paddedH,
+        );
         page.usedW = Math.max(page.usedW, pos.x + paddedW);
         page.usedH = Math.max(page.usedH, pos.y + paddedH);
         placed = true;
@@ -300,7 +276,12 @@ function buildRegion(
       h: frame.cropH,
     },
     rotated: false,
-    trimmed: frame.empty || frame.cropW !== frame.sourceWidth || frame.cropH !== frame.sourceHeight || frame.cropX !== 0 || frame.cropY !== 0,
+    trimmed:
+      frame.empty ||
+      frame.cropW !== frame.sourceWidth ||
+      frame.cropH !== frame.sourceHeight ||
+      frame.cropX !== 0 ||
+      frame.cropY !== 0,
     spriteSourceSize: {
       x: frame.cropX,
       y: frame.cropY,
@@ -323,7 +304,7 @@ export function validatePackLayout(
   const errors: string[] = [];
 
   if (result.pages.length === 0 && frames.length > 0) {
-    errors.push('Expected at least one page for non-empty frames');
+    errors.push("Expected at least one page for non-empty frames");
     return errors;
   }
 
@@ -345,17 +326,23 @@ export function validatePackLayout(
       const fh = region.frame.h;
 
       if (fw <= 0 || fh <= 0) {
-        errors.push(`Region ${region.name} has non-positive frame size: ${fw}×${fh}`);
+        errors.push(
+          `Region ${region.name} has non-positive frame size: ${fw}×${fh}`,
+        );
       }
       if (fx < 0 || fy < 0) {
-        errors.push(`Region ${region.name} has negative position: (${fx}, ${fy})`);
+        errors.push(
+          `Region ${region.name} has negative position: (${fx}, ${fy})`,
+        );
       }
       if (fx + fw + padding > page.width || fy + fh + padding > page.height) {
         errors.push(`Region ${region.name} padded bounds exceed page size`);
       }
 
       if (region.pageIndex !== pi) {
-        errors.push(`Region ${region.name} pageIndex ${region.pageIndex} does not match actual page ${pi}`);
+        errors.push(
+          `Region ${region.name} pageIndex ${region.pageIndex} does not match actual page ${pi}`,
+        );
       }
     }
 
@@ -372,7 +359,12 @@ export function validatePackLayout(
         const bRight = b.frame.x + b.frame.w + padding;
         const bBottom = b.frame.y + b.frame.h + padding;
 
-        if (aLeft < bRight && aRight > bLeft && aTop < bBottom && aBottom > bTop) {
+        if (
+          aLeft < bRight &&
+          aRight > bLeft &&
+          aTop < bBottom &&
+          aBottom > bTop
+        ) {
           errors.push(`Overlap between ${a.name} and ${b.name} on page ${pi}`);
         }
       }

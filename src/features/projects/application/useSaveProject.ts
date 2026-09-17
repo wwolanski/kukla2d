@@ -1,27 +1,33 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from "react";
 
-import type { ProjectDocument } from '@kukla2d/contracts';
+import type { ProjectDocument } from "@kukla2d/contracts";
 
-import { saveToDb } from '@/io/projectDb';
+import { saveToDb } from "@/io/projectDb.js";
 import {
   PROJECT_ARCHIVE_FORMAT_ID,
   PROJECT_ARCHIVE_VERSION,
   PROJECT_FILE_EXTENSION,
   buildProjectFileName,
-} from '@/io/projectFormat';
+} from "@/io/projectFormat.js";
 
-import { useAnimationStore } from '@/store/animationStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
-import { analyzeProjectReadiness } from '@/domain/projectReadiness.js';
-import type { ProjectReadinessIssue } from '@/domain/projectReadiness.js';
+import { analyzeProjectReadiness } from "@/domain/projectReadiness.js";
+import type { ProjectReadinessIssue } from "@/domain/projectReadiness.types.js";
 
-import type { StoredProjectRecord } from '@/io/projectDb';
+import { analyzeProjectSchemaEligibility } from "@/features/projects/application/projectSchemaPublication.js";
 
-type SaveMode = 'library' | 'download';
+import type { StoredProjectRecord } from "@/io/projectDb.types.js";
+
+type SaveMode = "library" | "download";
 type SaveAction = () => void;
+interface SchemaSavePolicy {
+  publishUnmanaged: boolean;
+  updateManaged: boolean;
+}
 
-export interface UseSaveProjectProps {
+interface UseSaveProjectProps {
   open: boolean;
   project: ProjectDocument;
   captureRef: React.MutableRefObject<(() => string) | null>;
@@ -30,13 +36,21 @@ export interface UseSaveProjectProps {
   onSavedToDb: (id: string, name: string) => void;
   onSaveSuccess?: () => void;
   onOpenChange: (open: boolean) => void;
+  publishSchemas?: (
+    project: ProjectDocument,
+    options: SchemaSavePolicy,
+  ) => Promise<{ project: ProjectDocument; publishedCount: number }>;
 }
 
-export interface UseSaveProjectResult {
+interface UseSaveProjectResult {
   name: string;
   author: string;
   saveMode: SaveMode;
   isSaving: boolean;
+  saveToSchemaDatabase: boolean;
+  updateSchemasOnOverwrite: boolean;
+  schemaEligibility: ReturnType<typeof analyzeProjectSchemaEligibility>;
+  schemaUpdateEligibility: ReturnType<typeof analyzeProjectSchemaEligibility>;
   overwriteProject: StoredProjectRecord | null;
   libraryProjects: StoredProjectRecord[];
   preflightErrors: ProjectReadinessIssue[] | null;
@@ -45,6 +59,8 @@ export interface UseSaveProjectResult {
   setName: (name: string) => void;
   setAuthor: (author: string) => void;
   setSaveMode: (mode: SaveMode) => void;
+  setSaveToSchemaDatabase: (value: boolean) => void;
+  setUpdateSchemasOnOverwrite: (value: boolean) => void;
   handleSaveNew: () => void;
   handleOverwrite: (project: StoredProjectRecord) => void;
   confirmOverwrite: () => void;
@@ -65,24 +81,46 @@ export function useSaveProject({
   onSavedToDb,
   onSaveSuccess,
   onOpenChange,
+  publishSchemas,
 }: UseSaveProjectProps): UseSaveProjectResult {
-  const [name, setName] = useState('');
-  const [author, setAuthor] = useState('');
-  const [saveMode, setSaveMode] = useState<SaveMode>('library');
+  const [name, setName] = useState("");
+  const [author, setAuthor] = useState("");
+  const [saveMode, setSaveMode] = useState<SaveMode>("library");
   const [isSaving, setIsSaving] = useState(false);
-  const [overwriteProject, setOverwriteProject] = useState<StoredProjectRecord | null>(null);
-  const [libraryProjects, setLibraryProjects] = useState<StoredProjectRecord[]>([]);
-  const [preflightErrors, setPreflightErrors] = useState<ProjectReadinessIssue[] | null>(null);
-  const [preflightWarnings, setPreflightWarnings] = useState<ProjectReadinessIssue[] | null>(null);
+  const [saveToSchemaDatabase, setSaveToSchemaDatabase] = useState(false);
+  const [updateSchemasOnOverwrite, setUpdateSchemasOnOverwrite] =
+    useState(true);
+  const schemaEligibility = analyzeProjectSchemaEligibility(project, {
+    publishUnmanaged: true,
+    updateManaged: false,
+  });
+  const schemaUpdateEligibility = analyzeProjectSchemaEligibility(project, {
+    publishUnmanaged: false,
+    updateManaged: true,
+  });
+  const [overwriteProject, setOverwriteProject] =
+    useState<StoredProjectRecord | null>(null);
+  const [libraryProjects, setLibraryProjects] = useState<StoredProjectRecord[]>(
+    [],
+  );
+  const [preflightErrors, setPreflightErrors] = useState<
+    ProjectReadinessIssue[] | null
+  >(null);
+  const [preflightWarnings, setPreflightWarnings] = useState<
+    ProjectReadinessIssue[] | null
+  >(null);
   const [pendingSave, setPendingSave] = useState<SaveAction | null>(null);
   const [saveError, setSaveError] = useState<Error | null>(null);
+  const saveInFlightRef = useRef(false);
 
   useEffect(() => {
     if (open) {
-      setName(currentDbProjectName || 'Untitled Project');
-      setAuthor(project.author ?? '');
-      setSaveMode(currentDbProjectId ? 'library' : 'library');
+      setName(currentDbProjectName || "Untitled Project");
+      setAuthor(project.author ?? "");
+      setSaveMode(currentDbProjectId ? "library" : "library");
       setIsSaving(false);
+      setSaveToSchemaDatabase(false);
+      setUpdateSchemasOnOverwrite(true);
       setPreflightErrors(null);
       setPreflightWarnings(null);
       setPendingSave(null);
@@ -92,7 +130,7 @@ export function useSaveProject({
 
   const runPreflight = useCallback(
     (saveAction: SaveAction): boolean => {
-      const report = analyzeProjectReadiness(project, 'stretch');
+      const report = analyzeProjectReadiness(project, "stretch");
       if (report.errors.length > 0) {
         setPreflightErrors(report.errors);
         return false;
@@ -108,25 +146,51 @@ export function useSaveProject({
   );
 
   const executeSave = useCallback(
-    async (idToUse: string | null, nameToUse: string, mode: SaveMode) => {
+    async (
+      idToUse: string | null,
+      nameToUse: string,
+      mode: SaveMode,
+      schemaPolicy: SchemaSavePolicy,
+    ) => {
+      if (saveInFlightRef.current) return;
+      saveInFlightRef.current = true;
       setIsSaving(true);
       setSaveError(null);
       try {
-        const { saveProject } = await import('@/io/projectFile');
+        const { saveProject } = await import("@/io/projectFile.js");
         const authorToUse = author.trim();
-        const activeAnimationId = useAnimationStore.getState().activeAnimationId;
-        const projectToSave: ProjectDocument = {
+        const activeAnimationId =
+          useAnimationStore.getState().activeAnimationId;
+        let projectToSave: ProjectDocument = {
           ...project,
           author: authorToUse,
-          lastActiveAnimationId: project.animations.some(animation => animation.id === activeAnimationId)
+          lastActiveAnimationId: project.animations.some(
+            (animation) => animation.id === activeAnimationId,
+          )
             ? activeAnimationId
             : null,
         };
+        if (schemaPolicy.publishUnmanaged || schemaPolicy.updateManaged) {
+          const eligibility = analyzeProjectSchemaEligibility(
+            projectToSave,
+            schemaPolicy,
+          );
+          if (eligibility.createCount + eligibility.updateCount > 0) {
+            if (!eligibility.enabled) throw new Error(eligibility.reason);
+            if (!publishSchemas)
+              throw new Error("Schema database connection is unavailable");
+            const publication = await publishSchemas(
+              projectToSave,
+              schemaPolicy,
+            );
+            projectToSave = publication.project;
+          }
+        }
         const blob = await saveProject(projectToSave);
 
-        if (mode === 'download') {
+        if (mode === "download") {
           const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
+          const a = document.createElement("a");
           a.href = url;
           a.download = buildProjectFileName(nameToUse.trim());
           a.click();
@@ -135,68 +199,111 @@ export function useSaveProject({
           onSaveSuccess?.();
           onOpenChange(false);
         } else {
-          const thumbnail = captureRef.current?.() || '';
-          const savedId = await saveToDb(idToUse, nameToUse.trim(), blob, thumbnail, {
-            formatId: PROJECT_ARCHIVE_FORMAT_ID,
-            formatVersion: PROJECT_ARCHIVE_VERSION,
-            extension: PROJECT_FILE_EXTENSION,
-            author: authorToUse,
-          });
+          const thumbnail = captureRef.current?.() || "";
+          const savedId = await saveToDb(
+            idToUse,
+            nameToUse.trim(),
+            blob,
+            thumbnail,
+            {
+              formatId: PROJECT_ARCHIVE_FORMAT_ID,
+              formatVersion: PROJECT_ARCHIVE_VERSION,
+              extension: PROJECT_FILE_EXTENSION,
+              author: authorToUse,
+            },
+          );
           onSavedToDb(savedId, nameToUse.trim());
           onSaveSuccess?.();
           useProjectStore.getState().setHasUnsavedChanges(false);
           onOpenChange(false);
         }
-        useProjectStore.getState().updateProject((draft) => {
-          draft.author = projectToSave.author;
-          draft.lastActiveAnimationId = projectToSave.lastActiveAnimationId;
-        }, { skipHistory: true });
+        useProjectStore.getState().updateProject(
+          (draft) => {
+            draft.author = projectToSave.author;
+            draft.lastActiveAnimationId = projectToSave.lastActiveAnimationId;
+            draft.modularSprites = structuredClone(projectToSave.modularSprites);
+          },
+          { skipHistory: true },
+        );
       } catch (err) {
-        console.error('Failed to save project:', err);
+        console.error("Failed to save project:", err);
         setSaveError(err instanceof Error ? err : new Error(String(err)));
       } finally {
+        saveInFlightRef.current = false;
         setIsSaving(false);
       }
     },
-    [project, author, captureRef, onSavedToDb, onSaveSuccess, onOpenChange],
+    [
+      project,
+      author,
+      captureRef,
+      onSavedToDb,
+      onSaveSuccess,
+      onOpenChange,
+      publishSchemas,
+    ],
   );
 
   const handleSaveNew = useCallback(() => {
     if (!name.trim()) return;
 
     const doSave = () => {
-      if (saveMode === 'library') {
+      if (saveMode === "library") {
         const existing = libraryProjects.find(
           (p) => p.name.toLowerCase() === name.trim().toLowerCase(),
         );
         if (existing) {
+          setUpdateSchemasOnOverwrite(true);
           setOverwriteProject(existing);
           return;
         }
       }
-      void executeSave(saveMode === 'library' ? currentDbProjectId : null, name, saveMode);
+      void executeSave(
+        saveMode === "library" ? currentDbProjectId : null,
+        name,
+        saveMode,
+        {
+          publishUnmanaged: saveToSchemaDatabase,
+          updateManaged: false,
+        },
+      );
     };
 
     if (!runPreflight(doSave)) return;
     doSave();
-  }, [name, saveMode, currentDbProjectId, libraryProjects, executeSave, runPreflight]);
+  }, [
+    name,
+    saveMode,
+    currentDbProjectId,
+    libraryProjects,
+    executeSave,
+    runPreflight,
+    saveToSchemaDatabase,
+  ]);
 
-  const handleOverwrite = useCallback(
-    (p: StoredProjectRecord) => {
-      setOverwriteProject(p);
-    },
-    [],
-  );
+  const handleOverwrite = useCallback((p: StoredProjectRecord) => {
+    setUpdateSchemasOnOverwrite(true);
+    setOverwriteProject(p);
+  }, []);
 
   const confirmOverwrite = useCallback(() => {
     if (!overwriteProject) return;
     const doOverwrite = () => {
-      void executeSave(overwriteProject.id, overwriteProject.name, 'library');
+      void executeSave(overwriteProject.id, overwriteProject.name, "library", {
+        publishUnmanaged: saveToSchemaDatabase,
+        updateManaged: updateSchemasOnOverwrite,
+      });
       setOverwriteProject(null);
     };
     if (!runPreflight(doOverwrite)) return;
     doOverwrite();
-  }, [overwriteProject, executeSave, runPreflight]);
+  }, [
+    overwriteProject,
+    executeSave,
+    runPreflight,
+    saveToSchemaDatabase,
+    updateSchemasOnOverwrite,
+  ]);
 
   const continueAfterWarnings = useCallback(() => {
     setPreflightWarnings(null);
@@ -211,6 +318,10 @@ export function useSaveProject({
     author,
     saveMode,
     isSaving,
+    saveToSchemaDatabase,
+    updateSchemasOnOverwrite,
+    schemaEligibility,
+    schemaUpdateEligibility,
     overwriteProject,
     libraryProjects,
     preflightErrors,
@@ -219,6 +330,8 @@ export function useSaveProject({
     setName,
     setAuthor,
     setSaveMode,
+    setSaveToSchemaDatabase,
+    setUpdateSchemasOnOverwrite,
     handleSaveNew,
     handleOverwrite,
     confirmOverwrite,

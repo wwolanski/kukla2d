@@ -1,8 +1,7 @@
-import { Application } from 'pixi.js';
+import { Application } from "pixi.js";
 
-import { PIXI_RENDERER_OPTIONS } from './pixiConstants.js';
-
-import type { EditorView } from '../rendererTypes.js';
+import type { EditorView } from "@/features/canvas/application/canvasRenderer.types.js";
+import { PIXI_RENDERER_OPTIONS } from "@/features/canvas/infrastructure/rendering/pixi/pixiConstants.js";
 
 interface PixiAppLifecycleOptions {
   canvas: HTMLCanvasElement;

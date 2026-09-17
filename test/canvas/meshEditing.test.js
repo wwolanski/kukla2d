@@ -3,13 +3,15 @@ import {
   computeSmartMeshOpts,
   SMART_MESH_DEFAULTS,
   SMART_MESH_LIMITS,
-  brushWeight,
-  normalizeVertexInfluences,
   paintMeshWeights,
   buildAddVertexMesh,
   buildRemoveVertexMesh,
   buildBrushVertices,
 } from '@/features/canvas/domain/meshEditing.js';
+import {
+  brushWeight,
+  normalizeVertexInfluences,
+} from '@/features/canvas/domain/meshWeighting.js';
 
 describe('computeSmartMeshOpts', () => {
   it('returns defaults when imageBounds is null', () => {

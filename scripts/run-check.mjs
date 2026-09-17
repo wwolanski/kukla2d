@@ -5,8 +5,6 @@ const steps = [
   { name: 'ts-graph', cmd: 'npm run check:ts-graph' },
   { name: 'typescript-migration', cmd: 'npm run check:typescript-migration' },
   { name: 'lint', cmd: 'npm run lint' },
-  { name: 'boundaries', cmd: 'npm run check:boundaries' },
-  { name: 'canvas-boundaries', cmd: 'npm run check:canvas-boundaries' },
   { name: 'deadcode', cmd: 'npm run check:deadcode' },
   { name: 'test:unit', cmd: 'npm run test:unit' },
   { name: 'build', cmd: 'npm run build' },

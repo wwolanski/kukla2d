@@ -1,12 +1,17 @@
-import { Trash2 } from 'lucide-react';
+import { Trash2 } from "lucide-react";
 
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
 
-import { useIkConstraintInspectorController } from '../../application/useIkConstraintInspectorController.js';
-import { SectionTitle, InspectorRow } from '../fields/InspectorRow.jsx';
-import { NumericInput } from '../fields/NumericInput.jsx';
-import { SliderRow } from '../fields/SliderRow.jsx';
+import { useIkConstraintInspectorController } from "@/features/inspector/application/useIkConstraintInspectorController.js";
+import {
+  SectionTitle,
+  InspectorRow,
+} from "@/features/inspector/components/fields/InspectorRow.jsx";
+import { NumericInput } from "@/features/inspector/components/fields/NumericInput.jsx";
+import { SliderRow } from "@/features/inspector/components/fields/SliderRow.jsx";
+
+import { Button } from "@/components/ui/button.jsx";
+import { Switch } from "@/components/ui/switch.jsx";
 
 export function IkConstraintInspector({ constraint, bones }) {
   const {
@@ -30,12 +35,14 @@ export function IkConstraintInspector({ constraint, bones }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <SectionTitle help="IK chain constraint. Assigns a target bone to follow a pole vector. Structural edits are staging-only.">IK Constraint</SectionTitle>
+        <SectionTitle help="IK chain constraint. Assigns a target bone to follow a pole vector. Structural edits are staging-only.">
+          IK Constraint
+        </SectionTitle>
         <span
           className="rounded px-2 py-0.5 text-[10px] font-semibold"
           style={{
-            color: `#${(constraint.color ?? 0x22d3ee).toString(16).padStart(6, '0')}`,
-            backgroundColor: `#${(constraint.color ?? 0x22d3ee).toString(16).padStart(6, '0')}22`,
+            color: `#${(constraint.color ?? 0x22d3ee).toString(16).padStart(6, "0")}`,
+            backgroundColor: `#${(constraint.color ?? 0x22d3ee).toString(16).padStart(6, "0")}22`,
           }}
         >
           {constraint.name}
@@ -43,16 +50,21 @@ export function IkConstraintInspector({ constraint, bones }) {
       </div>
       <div className="border-l-2 border-primary pl-2">
         <p className="text-[10px] text-muted-foreground">
-          Editing {isAnim ? 'animation pose' : editsPose ? 'pose preview' : 'setup'}
-          {' — '}{editsPose ? 'setup unchanged' : 'drag replaces pose; selection does not'}
+          Editing{" "}
+          {isAnim ? "animation pose" : editsPose ? "pose preview" : "setup"}
+          {" — "}
+          {editsPose
+            ? "setup unchanged"
+            : "drag replaces pose; selection does not"}
         </p>
       </div>
       <InspectorRow label="Name">
         <input
           className="h-7 w-full max-w-[170px] rounded border border-border bg-input px-2 text-xs"
           value={constraint.name}
+          maxLength={MAX_NAME_LENGTH}
           disabled={isAnim}
-          onChange={event => rename(event.target.value)}
+          onChange={(event) => rename(event.target.value)}
         />
       </InspectorRow>
       <InspectorRow label="Enabled">
@@ -64,44 +76,53 @@ export function IkConstraintInspector({ constraint, bones }) {
         />
       </InspectorRow>
       <InspectorRow label="Assigned root">
-        <span className="text-xs text-muted-foreground">{assignedBone?.name ?? 'Unassigned'}</span>
+        <span className="text-xs text-muted-foreground">
+          {assignedBone?.name ?? "Unassigned"}
+        </span>
       </InspectorRow>
       <InspectorRow label="Affected bones">
-        <span className="text-xs tabular-nums">{constraint.affectedBoneIds?.length ?? 0}</span>
+        <span className="text-xs tabular-nums">
+          {constraint.affectedBoneIds?.length ?? 0}
+        </span>
       </InspectorRow>
       <div className="grid grid-cols-2 gap-2">
         <InspectorRow label="X">
           <NumericInput
-            value={effectiveValue('targetX', 0)}
+            value={effectiveValue("targetX", 0)}
             disabled={!editsPose && hasPoseOverride}
-            onChange={v => authorValue('targetX', v)}
+            onChange={(v) => authorValue("targetX", v)}
             onBlur={isAnim ? commitConstraint : undefined}
           />
         </InspectorRow>
         <InspectorRow label="Y">
           <NumericInput
-            value={effectiveValue('targetY', 0)}
+            value={effectiveValue("targetY", 0)}
             disabled={!editsPose && hasPoseOverride}
-            onChange={v => authorValue('targetY', v)}
+            onChange={(v) => authorValue("targetY", v)}
             onBlur={isAnim ? commitConstraint : undefined}
           />
         </InspectorRow>
       </div>
       <SliderRow
         label="Mix"
-        value={Math.round(effectiveValue('mix', 1) * 100)}
+        value={Math.round(effectiveValue("mix", 1) * 100)}
         min={0}
         max={100}
         disabled={!editsPose && hasPoseOverride}
-        onChange={v => authorValue('mix', v / 100)}
-        onDragStart={isAnim ? () => previewConstraint('mix', constraint.mix ?? 1) : undefined}
+        onChange={(v) => authorValue("mix", v / 100)}
+        onDragStart={
+          isAnim
+            ? () => previewConstraint("mix", constraint.mix ?? 1)
+            : undefined
+        }
         onDragEnd={isAnim ? commitConstraint : undefined}
       />
       <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
         <span className="tabular-nums">
-          {editsPose ? 'Setup' : 'Pose'}: X {Number(referenceValues.targetX ?? 0).toFixed(1)}
-          {' · '}Y {Number(referenceValues.targetY ?? 0).toFixed(1)}
-          {' · '}Mix {Math.round((referenceValues.mix ?? 1) * 100)}%
+          {editsPose ? "Setup" : "Pose"}: X{" "}
+          {Number(referenceValues.targetX ?? 0).toFixed(1)}
+          {" · "}Y {Number(referenceValues.targetY ?? 0).toFixed(1)}
+          {" · "}Mix {Math.round((referenceValues.mix ?? 1) * 100)}%
         </span>
         {hasPoseOverride && (
           <button
@@ -115,12 +136,16 @@ export function IkConstraintInspector({ constraint, bones }) {
       </div>
       <SliderRow
         label="FK / IK"
-        value={Math.round(effectiveValue('fkIk', 1) * 100)}
+        value={Math.round(effectiveValue("fkIk", 1) * 100)}
         min={0}
         max={100}
         disabled={!editsPose && hasPoseOverride}
-        onChange={v => authorValue('fkIk', v / 100)}
-        onDragStart={isAnim ? () => previewConstraint('fkIk', constraint.fkIk ?? 1) : undefined}
+        onChange={(v) => authorValue("fkIk", v / 100)}
+        onDragStart={
+          isAnim
+            ? () => previewConstraint("fkIk", constraint.fkIk ?? 1)
+            : undefined
+        }
         onDragEnd={isAnim ? commitConstraint : undefined}
       />
       <InspectorRow label="Bend direction">
@@ -130,7 +155,7 @@ export function IkConstraintInspector({ constraint, bones }) {
           disabled={editsPose}
           onClick={toggleBendDirection}
         >
-          {constraint.bendPositive === false ? 'Negative' : 'Positive'}
+          {constraint.bendPositive === false ? "Negative" : "Positive"}
         </button>
       </InspectorRow>
       <Button
@@ -143,10 +168,14 @@ export function IkConstraintInspector({ constraint, bones }) {
       >
         Reassign bone chain
       </Button>
-      <Button type="button" variant="outline" size="sm"
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
         className="h-7 w-full border-destructive/50 text-[11px] text-destructive hover:bg-destructive/10"
         disabled={editsPose}
-        onClick={remove}>
+        onClick={remove}
+      >
         <Trash2 className="mr-1 h-3 w-3" /> Delete IK
       </Button>
     </div>

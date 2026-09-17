@@ -1,12 +1,11 @@
-import { createActorContext } from '@xstate/react';
+import { createActorContext } from "@xstate/react";
 
-import { useEditorStore } from '@/store/editorStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useEditorStore } from "@/store/editorStore.js";
+import { useProjectStore } from "@/store/projectStore.js";
 
-import { resolveEditorCommands } from '@/features/canvas/domain/resolveEditorCommands.js';
-
-import { editorWorkflowMachine } from './editorWorkflowMachine.js';
-import { executeCommandBatch } from './workflowCommandRuntime.js';
+import { editorWorkflowMachine } from "@/features/canvas/application/editorWorkflowMachine.js";
+import { executeCommandBatch } from "@/features/canvas/application/workflowCommandRuntime.js";
+import { resolveEditorCommands } from "@/features/canvas/domain/resolveEditorCommands.js";
 
 const editorWorkflowLogic = editorWorkflowMachine.provide({
   actions: {

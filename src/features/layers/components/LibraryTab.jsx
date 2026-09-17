@@ -1,9 +1,19 @@
-import { FolderPlus, Loader2, Settings, Sparkles, Upload } from 'lucide-react';
-import { useState } from 'react';
+import {
+  ChevronDown,
+  FolderPlus,
+  Loader2,
+  Settings,
+  Sparkles,
+  Upload,
+  WandSparkles,
+} from "lucide-react";
+import { useState } from "react";
 
-import { useImportSettingsStore } from '@/store/importSettingsStore';
+import { useImportSettingsStore } from "@/store/importSettingsStore.js";
 
-import { loadExampleProjectFile } from '@/features/projects';
+import { LibraryAssetRow } from "@/features/layers/components/rows/LibraryAssetRow.jsx";
+import { LibraryFolderRow } from "@/features/layers/components/rows/LibraryFolderRow.jsx";
+import { loadExampleProjectFile } from "@/features/projects/index.js";
 
 import {
   AlertDialog,
@@ -14,14 +24,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { BorderBeam } from '@/components/ui/border-beam';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Switch } from '@/components/ui/switch';
-
-import { LibraryAssetRow } from './rows/LibraryAssetRow.jsx';
-import { LibraryFolderRow } from './rows/LibraryFolderRow.jsx';
+} from "@/components/ui/alert-dialog.jsx";
+import { BorderBeam } from "@/components/ui/border-beam.jsx";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
+import { Switch } from "@/components/ui/switch.jsx";
 
 export function LibraryTab({
   tree,
@@ -34,7 +45,9 @@ export function LibraryTab({
   onRenameFolder,
   onRenameAsset,
   onRemoveFolder,
+  onRemoveFromPackage,
   onRemoveAsset,
+  onRegenerateModularSprite,
   onDragStartAsset,
   onDragStartFolder,
   onDragOverRow,
@@ -45,18 +58,23 @@ export function LibraryTab({
   onDropBackground,
   onSelect,
   onImportClick,
+  onImportModularSprite,
   onLoadExampleProject,
 }) {
   const isEmpty = tree.length === 0;
   const [isLoadingExample, setIsLoadingExample] = useState(false);
-  const [exampleError, setExampleError] = useState('');
+  const [exampleError, setExampleError] = useState("");
   const [removalTarget, setRemovalTarget] = useState(null);
-  const autoAddToCanvas = useImportSettingsStore(state => state.autoAddToCanvas);
-  const setAutoAddToCanvas = useImportSettingsStore(state => state.setAutoAddToCanvas);
+  const autoAddToCanvas = useImportSettingsStore(
+    (state) => state.autoAddToCanvas,
+  );
+  const setAutoAddToCanvas = useImportSettingsStore(
+    (state) => state.setAutoAddToCanvas,
+  );
 
   const handleLoadExample = async () => {
     setIsLoadingExample(true);
-    setExampleError('');
+    setExampleError("");
     try {
       const file = await loadExampleProjectFile();
       onLoadExampleProject?.(file);
@@ -72,17 +90,52 @@ export function LibraryTab({
     if (!target) return;
     setRemovalTarget(null);
     globalThis.setTimeout(() => {
-      if (target.kind === 'asset') onRemoveAsset?.(target.id);
-      else onRemoveFolder?.(target.id);
+      if (target.kind === "folder") onRemoveFolder?.(target.id);
+      else onRemoveAsset?.(target.id);
     }, 0);
   };
 
   function renderRows(rows, depth = 0) {
-    return rows.map(row => {
-      if (row.kind === 'folder') {
+    return rows.map((row) => {
+      if (row.kind === "folder") {
         const isExpanded = expandedFolderIds.has(row.id);
+        const isPackageDropActive =
+          row.isModularSpritePackage &&
+          dragSession?.targetKind === "folder" &&
+          dragSession?.targetId === row.id &&
+          dragSession?.sourceId !== row.id;
         return (
-          <div key={row.id}>
+          <div
+            key={row.id}
+            data-library-package-drop-target={
+              row.isModularSpritePackage ? row.id : undefined
+            }
+            data-drop-active={isPackageDropActive ? "true" : undefined}
+            className={
+              isPackageDropActive
+                ? "rounded bg-primary/5 ring-1 ring-inset ring-primary/50"
+                : undefined
+            }
+            onDragOverCapture={
+              row.isModularSpritePackage
+                ? (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.dataTransfer.dropEffect = "copy";
+                    onDragOverRow?.("folder", row.id, "inside");
+                  }
+                : undefined
+            }
+            onDropCapture={
+              row.isModularSpritePackage
+                ? (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onDropRow?.("folder", row.id);
+                  }
+                : undefined
+            }
+          >
             <LibraryFolderRow
               folder={row}
               isExpanded={isExpanded}
@@ -90,14 +143,23 @@ export function LibraryTab({
               depth={depth}
               onToggleExpand={onToggleFolderExpand}
               onRename={onRenameFolder}
-              onRemove={() => requestAnimationFrame(() => setRemovalTarget({ kind: 'folder', id: row.id, name: row.name }))}
+              onRemove={() =>
+                requestAnimationFrame(() =>
+                  setRemovalTarget({
+                    kind: "folder",
+                    id: row.id,
+                    name: row.name,
+                  }),
+                )
+              }
+              onRegenerateModularSprite={onRegenerateModularSprite}
               onDragStart={onDragStartFolder}
               onDragOver={onDragOverRow}
               onDrop={onDropRow}
               onSelect={onSelect}
             />
             {isExpanded && row.children && row.children.length > 0 && (
-              <div>{renderRows(row.children, depth + 1)}</div>
+              <div className="min-w-0">{renderRows(row.children, depth + 1)}</div>
             )}
           </div>
         );
@@ -111,7 +173,21 @@ export function LibraryTab({
           depth={depth}
           onSelect={onSelect}
           onRename={onRenameAsset}
-          onRemove={() => requestAnimationFrame(() => setRemovalTarget({ kind: 'asset', id: row.id, name: row.name }))}
+          onRemove={() =>
+            requestAnimationFrame(() =>
+              setRemovalTarget({
+                kind: row.modularKind === "source" ? "modular-source" : "asset",
+                id: row.id,
+                name: row.name,
+              }),
+            )
+          }
+          onRemoveFromPackage={
+            row.modularKind === "part"
+              ? () => onRemoveFromPackage?.(row.id)
+              : undefined
+          }
+          onRegenerateModularSprite={onRegenerateModularSprite}
           onDragStart={onDragStartAsset}
           onDragOver={onDragOverRow}
           onDrop={onDropRow}
@@ -122,24 +198,44 @@ export function LibraryTab({
 
   return (
     <>
-      <div className="flex h-8 items-center gap-1 border-b px-2 shrink-0">
-        <button
-          type="button"
-          onClick={onImportClick}
-          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          title="Import artwork"
-        >
-          <Upload className="h-3 w-3" />
-          Import
-        </button>
+      <div className="flex h-8 min-w-0 shrink-0 items-center gap-1 border-b px-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="layer-panel-toolbar-button inline-flex min-w-0 items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              title="Import"
+            >
+              <Upload className="h-3 w-3" />
+              <span className="layer-panel-toolbar-label truncate">Import</span>
+              <ChevronDown className="h-3 w-3" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" sideOffset={5} className="w-56 p-1">
+            <button
+              type="button"
+              onClick={onImportClick}
+              className="flex w-full rounded px-2 py-2 text-left text-xs hover:bg-muted"
+            >
+              Artwork…
+            </button>
+            <button
+              type="button"
+              onClick={onImportModularSprite}
+              className="flex w-full rounded px-2 py-2 text-left text-xs hover:bg-muted"
+            >
+              2D Modular Sprite…
+            </button>
+          </PopoverContent>
+        </Popover>
         <button
           type="button"
           onClick={onCreateFolder}
-          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="layer-panel-toolbar-button inline-flex min-w-0 items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           title="Add New Folder"
         >
           <FolderPlus className="h-3 w-3" />
-          New Folder
+          <span className="layer-panel-toolbar-label truncate">New Folder</span>
         </button>
         <Popover>
           <PopoverTrigger asChild>
@@ -155,7 +251,9 @@ export function LibraryTab({
           <PopoverContent align="end" sideOffset={6} className="w-72 p-3">
             <div className="mb-3">
               <p className="text-xs font-semibold">Import settings</p>
-              <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">Controls artwork imported with button or dropped into Library.</p>
+              <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">
+                Controls artwork imported with button or dropped into Library.
+              </p>
             </div>
             <div className="flex items-start gap-3 rounded border bg-muted/20 p-2.5">
               <Switch
@@ -165,12 +263,17 @@ export function LibraryTab({
                 aria-label="Automatically add imported artwork to canvas"
                 className="mt-0.5"
               />
-              <label htmlFor="library-auto-add-to-canvas" className="min-w-0 cursor-pointer">
-                <span className="block text-xs font-medium">Auto-add to canvas</span>
+              <label
+                htmlFor="library-auto-add-to-canvas"
+                className="min-w-0 cursor-pointer"
+              >
+                <span className="block text-xs font-medium">
+                  Auto-add to canvas
+                </span>
                 <span className="mt-0.5 block text-[10px] leading-relaxed text-muted-foreground">
                   {autoAddToCanvas
-                    ? 'Imported artwork appears in Library and on canvas.'
-                    : 'Imported artwork stays in Library until placed or used as replacement.'}
+                    ? "Imported artwork appears in Library and on canvas."
+                    : "Imported artwork stays in Library until placed or used as replacement."}
                 </span>
               </label>
             </div>
@@ -179,20 +282,22 @@ export function LibraryTab({
       </div>
 
       <ScrollArea
-        className={`flex-1 transition-colors ${dragActive ? 'bg-primary/5' : ''}`}
+        className={`min-h-0 min-w-0 flex-1 transition-colors ${dragActive ? "bg-primary/5" : ""}`}
         onDragEnter={onDragEnter}
         onDragOver={onDragOverBackground}
         onDragLeave={onDragLeave}
         onDrop={onDropBackground}
       >
-        <div className="p-1 space-y-0.5">
+        <div className="min-w-0 w-full space-y-0.5 p-1">
           {isEmpty ? (
             <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
               <div className="flex h-10 w-10 items-center justify-center rounded border border-border bg-background text-muted-foreground">
                 <Upload className="h-4 w-4" />
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-foreground">Import artwork</p>
+                <p className="text-xs font-semibold text-foreground">
+                  Import artwork
+                </p>
                 <p className="text-[11px] leading-relaxed text-muted-foreground">
                   Drop PNG or PSD files here.
                 </p>
@@ -212,13 +317,40 @@ export function LibraryTab({
                 className="relative inline-flex h-8 items-center gap-1.5 overflow-hidden rounded border border-primary/30 bg-background px-3 text-[11px] font-medium text-foreground hover:bg-muted disabled:pointer-events-none disabled:opacity-60"
               >
                 <BorderBeam duration={3.5} />
-                {isLoadingExample
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <Sparkles className="h-3.5 w-3.5 text-primary" />}
+                {isLoadingExample ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                )}
                 Load example project
               </button>
+              <div className="flex w-full items-center gap-2 px-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60">
+                <span className="h-px flex-1 bg-border" />
+                <span>OR</span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  onImportModularSprite?.({ highlightFirstExample: true })
+                }
+                className="relative inline-flex h-8 max-w-full items-center gap-1.5 overflow-hidden rounded border border-red-500/70 bg-background px-3 text-[11px] font-medium text-foreground hover:bg-muted"
+              >
+                <BorderBeam
+                  duration={3.5}
+                  color="hsl(0 84% 60%)"
+                  highlightColor="hsl(350 89% 72%)"
+                />
+                <WandSparkles className="h-3.5 w-3.5 shrink-0 text-red-400" />
+                Load example 2D modular sprite
+              </button>
               {exampleError && (
-                <p role="alert" className="max-w-48 text-[10px] text-destructive">{exampleError}</p>
+                <p
+                  role="alert"
+                  className="max-w-48 text-[10px] text-destructive"
+                >
+                  {exampleError}
+                </p>
               )}
             </div>
           ) : (
@@ -227,14 +359,21 @@ export function LibraryTab({
         </div>
       </ScrollArea>
 
-      <AlertDialog open={Boolean(removalTarget)} onOpenChange={(open) => { if (!open) setRemovalTarget(null); }}>
+      <AlertDialog
+        open={Boolean(removalTarget)}
+        onOpenChange={(open) => {
+          if (!open) setRemovalTarget(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove from library?</AlertDialogTitle>
             <AlertDialogDescription>
-              {removalTarget?.kind === 'folder'
+              {removalTarget?.kind === "folder"
                 ? `This will permanently delete “${removalTarget.name}”, its subfolders, and its assets. Any instances of those assets will also be removed from the canvas. This action cannot be undone.`
-                : `This will permanently delete “${removalTarget?.name}” from Library. Any instances of this asset will also be removed from the canvas. This action cannot be undone.`}
+                : removalTarget?.kind === "modular-source"
+                  ? `This will delete the entire modular sprite “${removalTarget.name}”: its protected source, all current parts, and every canvas instance using them. This action cannot be undone.`
+                  : `This will permanently delete “${removalTarget?.name}” from Library. Any instances of this asset will also be removed from the canvas. This action cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -243,7 +382,9 @@ export function LibraryTab({
               onClick={handleConfirmRemoval}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Remove from library
+              {removalTarget?.kind === "modular-source"
+                ? "Delete modular sprite"
+                : "Remove from library"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

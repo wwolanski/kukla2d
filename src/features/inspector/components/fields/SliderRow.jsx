@@ -1,9 +1,9 @@
-import { useProjectStore } from '@/store/projectStore';
-import { beginBatch, endBatch } from '@/store/undoHistory';
+import { useProjectStore } from '@/store/projectStore.js';
+import { beginBatch, endBatch } from '@/store/undoHistory.js';
 
-import { HelpIcon } from '@/components/ui/help-icon';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+import { HelpIcon } from '@/components/ui/help-icon.jsx';
+import { Label } from '@/components/ui/label.jsx';
+import { Slider } from '@/components/ui/slider.jsx';
 
 export function SliderRow({ label, value, min, max, step = 1, onChange, help, onDragStart, onDragEnd, disabled = false }) {
   const useBatch = !onDragStart && !onDragEnd;

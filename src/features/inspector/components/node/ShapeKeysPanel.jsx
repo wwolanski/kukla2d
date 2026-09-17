@@ -1,8 +1,10 @@
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
 
-import { useShapeKeysController } from '../../application/useNodeInspectorController.js';
-import { SectionTitle } from '../fields/InspectorRow.jsx';
+import { useShapeKeysController } from "@/features/inspector/application/useNodeInspectorController.js";
+import { SectionTitle } from "@/features/inspector/components/fields/InspectorRow.jsx";
+
+import { Button } from "@/components/ui/button.jsx";
+import { Slider } from "@/components/ui/slider.jsx";
 
 export function ShapeKeysPanel({ node }) {
   const {
@@ -21,13 +23,15 @@ export function ShapeKeysPanel({ node }) {
   const shapes = node.blendShapes;
 
   if (blendShapeEditMode && activeBlendShapeId) {
-    const editingShape = shapes.find(s => s.id === activeBlendShapeId);
+    const editingShape = shapes.find((s) => s.id === activeBlendShapeId);
     return (
       <div className="space-y-2">
-        <SectionTitle help="Blend shapes for facial expressions and morph targets. Edit mode enters vertex sculpting for the selected key.">Shape Keys</SectionTitle>
+        <SectionTitle help="Blend shapes for facial expressions and morph targets. Edit mode enters vertex sculpting for the selected key.">
+          Shape Keys
+        </SectionTitle>
         <div className="flex items-center justify-between rounded bg-primary/10 border border-primary/30 px-2 py-1.5 gap-2">
           <span className="text-xs text-primary font-medium">
-            Editing: {editingShape?.name ?? '...'}
+            Editing: {editingShape?.name ?? "..."}
           </span>
           <Button
             size="sm"
@@ -45,7 +49,9 @@ export function ShapeKeysPanel({ node }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <SectionTitle help="Blend shapes for facial expressions and morph targets. Edit mode enters vertex sculpting for the selected key.">Shape Keys</SectionTitle>
+        <SectionTitle help="Blend shapes for facial expressions and morph targets. Edit mode enters vertex sculpting for the selected key.">
+          Shape Keys
+        </SectionTitle>
         <Button
           size="sm"
           variant="ghost"
@@ -62,20 +68,21 @@ export function ShapeKeysPanel({ node }) {
         <span className="w-14"></span>
       </div>
 
-      {shapes.map(shape => {
+      {shapes.map((shape) => {
         const influence = node.blendShapeValues?.[shape.id] ?? 0;
         return (
           <div
             key={shape.id}
             className={`flex items-center gap-1.5 rounded px-1 py-0.5 transition-colors ${
-              activeBlendShapeId === shape.id ? 'bg-primary/10' : ''
+              activeBlendShapeId === shape.id ? "bg-primary/10" : ""
             }`}
           >
             <input
               className="flex-1 text-xs bg-transparent min-w-0 border-0 outline-none px-1"
               value={shape.name}
-              onChange={e => handleRenameShape(shape.id, e.target.value)}
-              style={{ color: 'inherit' }}
+              maxLength={MAX_NAME_LENGTH}
+              onChange={(e) => handleRenameShape(shape.id, e.target.value)}
+              style={{ color: "inherit" }}
             />
 
             <div className="w-16">

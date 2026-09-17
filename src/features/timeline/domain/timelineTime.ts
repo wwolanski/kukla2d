@@ -1,4 +1,10 @@
-import type { Animation } from '@kukla2d/contracts';
+import type { Animation } from "@kukla2d/contracts";
+
+interface AnimationTimingChange {
+  animationId: Animation["id"];
+  durationMs: number;
+  fps: number;
+}
 
 /** Frame number from time (ms) */
 export function msToFrame(ms: number, fps: number): number {
@@ -13,12 +19,6 @@ export function frameToMs(frame: number, fps: number): number {
 /** Format milliseconds as seconds string */
 export function formatMs(ms: number, decimals = 2): string {
   return (ms / 1000).toFixed(decimals);
-}
-
-export interface AnimationTimingChange {
-  animationId: Animation['id'];
-  durationMs: number;
-  fps: number;
 }
 
 export function buildFpsTimingChange(

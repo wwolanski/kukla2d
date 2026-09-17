@@ -1,13 +1,13 @@
-import { createEmptyProject } from '@/core/createEmptyProject';
-import type { Mesh, ProjectDocument } from '@kukla2d/contracts';
+import { createEmptyProject } from "@/core/createEmptyProject";
+import type { Mesh, ProjectDocument } from "@kukla2d/contracts";
 import type {
   LoadedProjectBundle,
   ProjectResourceOwner,
   AssetResolveError,
   ProjectArchiveManifest,
-} from '@kukla2d/contracts';
-import type { ValidatedProjectDocument } from '@/schema/projectSchema';
-import type { PortableProjectDocument } from '@/schema/projectSnapshot';
+} from "@kukla2d/contracts";
+import type { ValidatedProjectDocument } from "@/schema/projectSchema.types";
+import type { PortableProjectDocument } from "@/schema/projectSnapshot.types";
 
 declare const bundle: LoadedProjectBundle;
 declare const owner: ProjectResourceOwner;
@@ -38,20 +38,24 @@ const _runtimeArrayAccepted = meshWithArray;
 
 const _doc: ProjectDocument = empty;
 
-const validatedDoc: ValidatedProjectDocument = null as unknown as ValidatedProjectDocument;
+const validatedDoc: ValidatedProjectDocument =
+  null as unknown as ValidatedProjectDocument;
 
-const _validatedMeshUvs: number[] | undefined = validatedDoc.nodes[0]?.type === 'part'
-  ? validatedDoc.nodes[0]?.mesh?.uvs
-  : undefined;
+const _validatedMeshUvs: number[] | undefined =
+  validatedDoc.nodes[0]?.type === "part"
+    ? validatedDoc.nodes[0]?.mesh?.uvs
+    : undefined;
 
-const portableDoc: PortableProjectDocument = null as unknown as PortableProjectDocument;
+const portableDoc: PortableProjectDocument =
+  null as unknown as PortableProjectDocument;
 
-const _portableMeshUvs: number[] | undefined = portableDoc.nodes[0]?.type === 'part'
-  ? portableDoc.nodes[0]?.mesh?.uvs
-  : undefined;
+const _portableMeshUvs: number[] | undefined =
+  portableDoc.nodes[0]?.type === "part"
+    ? portableDoc.nodes[0]?.mesh?.uvs
+    : undefined;
 
-const _assetType1: AssetResolveError['assetType'] = 'texture';
-const _assetType2: AssetResolveError['assetType'] = 'audio';
+const _assetType1: AssetResolveError["assetType"] = "texture";
+const _assetType2: AssetResolveError["assetType"] = "audio";
 
 // @ts-expect-error - validated/portable doc mesh.uvs is number[], Float32Array not assignable
 const _badFloat32ForSchemaUvs: number[] = new Float32Array([0, 0]);

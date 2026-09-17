@@ -3,8 +3,8 @@ import { canNavigate } from '../src/domain/animationAuthoring.js';
 import { useAnimationStore } from '../src/store/animationStore.js';
 import { useProjectStore } from '../src/store/projectStore.js';
 import { clearHistory } from '../src/store/undoHistory.js';
-import { createAnimationAuthoringApi } from '../src/features/animation/application/createAnimationAuthoringApi.js';
-import { createTimelineCommandApi } from '../src/features/timeline/application/createTimelineCommandApi.js';
+import { createAnimationAuthoringApi } from '@/features/animation';
+import { createTimelineCommandApi } from '@/features/timeline';
 
 function resetStores() {
   clearHistory();

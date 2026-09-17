@@ -10,10 +10,10 @@
 <h3 align="center">🌐 &nbsp;<a href="https://wwolanski.github.io/kukla2d">TRY IT LIVE</a>&nbsp; 🚀</h3>
 
 
-Kukla2D is a local-first, browser-based editor for rigging and animating 2D characters. It combines an approachable workflow with mesh deformation, skeletal animation, constraints, physics, and game-ready export.
+Kukla2D is a local-first, browser-based editor for rigging and animating 2D characters. It combines an approachable workflow with mesh deformation, skeletal animation, constraints, physics, and game-ready export. It also works as a modular sprite processor and manager for building reusable character packages and AI-first asset workflows.
 
 >[!WARNING]
-> ***Version 0.9.2-beta** — Kukla2D's core editing workflow, project save/load, and primary export formats are functional and suitable for regular use. Some features remain experimental, and minor bugs or performance issues may still occur.*
+> ***Version 0.9.3-beta** — Kukla2D's core editing workflow, project save/load, and primary export formats are functional and suitable for regular use. Some features remain experimental, and minor bugs or performance issues may still occur.*
 
 ## Highlights
 
@@ -24,6 +24,11 @@ Kukla2D is a local-first, browser-based editor for rigging and animating 2D char
 - **Constraints:** IK (single/two-bone with FK blend), transform copy (per-channel, local/world), and path constraints (multi-point bezier) — all with mix control.
 - **Physics:** Verlet particle system with gravity, wind, damping, and distance constraints; pendulum chain generator; physics rules editor with tag filtering; offline baking to keyframes.
 - **Project management:** `.kk2d` format with schema migrations (v0.1→9), Zod validation, IndexedDB library, thumbnail gallery, and crash recovery.
+- **Modular sprite workflow:** guided sprite-sheet importing with region detection, review, grouping, semantic-role assignment, mask touch-up, and reusable modular character packages.
+- **Sprite processing:** automatic background detection for alpha and chroma-key sources, luminance-aware keying, silhouette-preserving mask cleanup, previews, caching, and persistent-worker progress/cancellation.
+- **Schemas & generation:** local Schema Library with comparison, metadata, previews, compatible asset lookup, schema publication, and modular character generation or regeneration from Library assets.
+- **Command line:** process modular sprites outside the editor and export the result, matte mask, and reusable recipe. Browser and CLI share the same processing configuration.
+
 - **Export:** PNG sequences, spritesheets, and GIFs; [Phaser 4.2.1](https://phaser.io) baked texture atlas with `.atlas.json`, `.animations.json`, and TypeScript example; export area with preset resolutions. Experimental: Spine 4.0 JSON and Live2D Cubism 5.0.
 
 
@@ -75,25 +80,9 @@ packages            contracts, engine experiments, and format adapters
 
 Start with the [documentation index](docs/README.md) and [architecture overview](docs/architecture/overview.md).
 
-## Origin and attribution
-
-Kukla2D began as a fork of [MangoLion/Stretchy Studio](https://github.com/MangoLion/stretchystudio). Its preserved MIT notice credits Nguyen Phan; the original copyright and license text remain in [LICENSE](LICENSE).
-
-The current project retains and adapts several parts of that foundation:
-
-- selected Radix/shadcn-style UI primitives, theme and preferences code, and parts of the original save/load screens;
-- PSD parsing and organization concepts, mesh generation algorithms (contour sampling and Delaunay triangulation), and portions of the original transform and animation math, now typed and extended;
-- portions of the Spine exporter and the experimental Live2D export toolchain, with both formats still treated as unsupported/experimental output.
-
-Most application-level systems have since been replaced or substantially rebuilt:
-
-- the custom WebGL renderer and DOM/SVG editing overlays were replaced by a [PixiJS 8](https://github.com/pixijs/pixijs) scene, interaction, picking, overlay, capture, and GPU-resource lifecycle;
-- the flat component/store structure became feature-first modules with explicit application, domain, infrastructure, and public API boundaries;
-- project state and file handling gained strict TypeScript contracts, Zod validation, a versioned migration chain, atomic workspace loading, IndexedDB autosave, and crash recovery;
-- animation authoring and evaluation were expanded into a separate runtime covering skeletal posing, mesh skinning and warps, constraints, physics, timeline drafts, easing, audio sync, and deterministic export;
-- the export pipeline now includes PNG sequences, spritesheets, GIF, and a [Phaser 4.2.1](https://phaser.io) atlas adapter verified by browser interoperability tests;
-- the engineering baseline—strict TypeScript, architecture guards, unit/integration coverage, production-build E2E tests, CI, dead-code checks, and bundle budgets—was added for Kukla2D.
-
 ## License
 
-[MIT](LICENSE)
+[AGPLv3](LICENSE)
+
+Third-party copyright and license notices are available in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

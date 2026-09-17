@@ -43,6 +43,23 @@ Composition root. `EditorLayout.jsx` assembles panels and lazy modals. Does not 
 
 Each feature owns its components, application hooks, domain logic, and infrastructure. Stable public APIs are exported via `index.js` where present. Modal-only features may expose exact component paths for `React.lazy()` chunk boundaries. Features do not import each other's internals.
 
+The mechanically enforced layer map uses `components/` and `overlays/` as the
+UI layer. Dependencies point inward according to this matrix:
+
+| FROM \\ TO | domain | application | infrastructure | UI (`components`, `overlays`) |
+| --- | --- | --- | --- | --- |
+| domain | YES | NO | NO | NO |
+| application | YES | YES | NO | NO |
+| infrastructure | YES | YES | YES | NO |
+| UI | YES | YES | NO | YES |
+
+Cross-feature access goes through `src/features/<target>/index.ts`; another
+feature must not import the target's internal layer paths. A feature's root
+`index.ts` is its business-facing public API and must not export
+`infrastructure/`. The application composition root at `src/app/**` and the
+feature-local wiring in `src/features/modular-sprite/composition/**` are
+explicit composition areas, not additional domain/application/UI layers.
+
 ### src/components/ui
 
 Shared UI primitives (Radix wrappers, Tailwind styled). No feature-specific logic.
@@ -61,7 +78,7 @@ Workspace contracts and adapters. Target for future extraction of `src/` layers.
 2. **feature components must not import legacy `@/components/<feature>`** — use the feature's own `components/` directory.
 3. **shared UI (`@/components/ui`) must not import feature internals** — shared UI is leaf-only, no upward dependencies.
 4. **domain (`domain/**`) must not import React, Zustand, DOM, WebGL, or Worker** — domain is pure functions only.
-5. **cross-feature imports must use `@/features/<owner>`** — direct imports of another feature's `application/`, `domain/`, `infrastructure/`, or `components/` internals are blocked by `npm run check:boundaries`.
+5. **cross-feature imports must use `@/features/<owner>`** — direct imports of another feature's `application/`, `domain/`, `infrastructure/`, or `components/` internals are blocked by ESLint (`npm run lint`).
 
 ## Key Decisions
 

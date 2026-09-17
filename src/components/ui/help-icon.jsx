@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@/components/ui/tooltip.jsx';
 
 export function HelpIcon({ tip, side = 'left', className = '' }) {
   if (!tip) return null;

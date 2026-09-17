@@ -1,22 +1,43 @@
-import type { LegacyMeshRequest, LegacyMeshResponse, MeshData, MeshImageData } from './mesh-worker/workerProtocol.js';
-import type { MeshGenerationOptions } from '../domain/mesh-generation/generate.js';
+import type { MeshGenerationOptions } from "@/features/canvas/domain/mesh-generation/generate.types.js";
+import meshWorkerUrl from "@/features/canvas/infrastructure/mesh-worker/worker.js?worker&url";
+import type {
+  MeshData,
+  MeshImageData,
+} from "@/features/canvas/infrastructure/mesh-worker/workerProtocol.types.js";
 
-export interface MeshWorkerClientOptions {
+interface MeshWorkerClientOptions {
   workerUrl?: string | URL;
   workerFactory?: (url: string | URL, options: WorkerOptions) => Worker;
 }
 
-export interface MeshWorkerClient {
-  generate(partId: string, imageData: MeshImageData, opts?: MeshGenerationOptions): Promise<MeshData>;
+interface MeshWorkerClient {
+  generate(
+    partId: string,
+    imageData: MeshImageData,
+    opts?: MeshGenerationOptions,
+  ): Promise<MeshData>;
   cancel(partId: string): void;
   dispose(): void;
   readonly _workers: ReadonlyMap<string, Worker>;
 }
 
-export function createMeshWorkerClient(options: MeshWorkerClientOptions = {}): MeshWorkerClient {
+interface LegacyMeshRequest {
+  partId?: string;
+  imageData: MeshImageData;
+  opts?: MeshGenerationOptions;
+}
+
+type LegacyMeshResponse = MeshData | { ok: false; error: string };
+
+export function createMeshWorkerClient(
+  options: MeshWorkerClientOptions = {},
+): MeshWorkerClient {
   const workers = new Map<string, Worker>();
-  const url = options.workerUrl ?? new URL('./mesh-worker/worker.js', import.meta.url);
-  const createWorker = options.workerFactory ?? ((workerUrl: string | URL, workerOptions: WorkerOptions) => new Worker(workerUrl, workerOptions));
+  const url = options.workerUrl ?? meshWorkerUrl;
+  const createWorker =
+    options.workerFactory ??
+    ((workerUrl: string | URL, workerOptions: WorkerOptions) =>
+      new Worker(workerUrl, workerOptions));
 
   function terminateFor(partId: string): void {
     const worker = workers.get(partId);
@@ -25,9 +46,13 @@ export function createMeshWorkerClient(options: MeshWorkerClientOptions = {}): M
     workers.delete(partId);
   }
 
-  function generate(partId: string, imageData: MeshImageData, opts?: MeshGenerationOptions): Promise<MeshData> {
+  function generate(
+    partId: string,
+    imageData: MeshImageData,
+    opts?: MeshGenerationOptions,
+  ): Promise<MeshData> {
     terminateFor(partId);
-    const worker = createWorker(url, { type: 'module' });
+    const worker = createWorker(url, { type: "module" });
     workers.set(partId, worker);
     return new Promise((resolve, reject) => {
       worker.onmessage = (event: MessageEvent<LegacyMeshResponse>) => {
@@ -40,14 +65,24 @@ export function createMeshWorkerClient(options: MeshWorkerClientOptions = {}): M
       };
       worker.onerror = (event: ErrorEvent) => {
         terminateFor(partId);
-        reject(event.error instanceof Error ? event.error : new Error(event.message || 'mesh worker error'));
+        reject(
+          event.error instanceof Error
+            ? event.error
+            : new Error(event.message || "mesh worker error"),
+        );
       };
-      const request: LegacyMeshRequest = { partId, imageData, ...(opts === undefined ? {} : { opts }) };
+      const request: LegacyMeshRequest = {
+        partId,
+        imageData,
+        ...(opts === undefined ? {} : { opts }),
+      };
       worker.postMessage(request);
     });
   }
 
-  function cancel(partId: string): void { terminateFor(partId); }
+  function cancel(partId: string): void {
+    terminateFor(partId);
+  }
   function dispose(): void {
     for (const worker of workers.values()) worker.terminate();
     workers.clear();

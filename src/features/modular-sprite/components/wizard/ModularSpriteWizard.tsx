@@ -1,0 +1,410 @@
+import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import {
+  resolveChromaRefinement,
+  type ModularSpriteMaskStrokeKind,
+  type NormalizedPoint,
+} from "@kukla2d/contracts";
+
+import { useModularSpriteWizardController } from "@/features/modular-sprite/application/useModularSpriteWizardController.js";
+import { ModularSpritePreviewCanvas } from "@/features/modular-sprite/components/preview/ModularSpritePreviewCanvas.js";
+import { BackgroundStep } from "@/features/modular-sprite/components/wizard/BackgroundStep.js";
+import type { ModularSpriteWizardProps } from "@/features/modular-sprite/components/wizard/ModularSpriteWizard.types.js";
+import { PartDetailsStep } from "@/features/modular-sprite/components/wizard/PartDetailsStep.js";
+import { RegionGroupingStep } from "@/features/modular-sprite/components/wizard/RegionGroupingStep.js";
+import { ReviewStep } from "@/features/modular-sprite/components/wizard/ReviewStep.js";
+import { SourceStep } from "@/features/modular-sprite/components/wizard/SourceStep.js";
+import { TouchupToolbar } from "@/features/modular-sprite/components/wizard/TouchupToolbar.js";
+import { WizardFooter } from "@/features/modular-sprite/components/wizard/WizardFooter.js";
+import { WizardHeader } from "@/features/modular-sprite/components/wizard/WizardHeader.js";
+import { SchemaComparisonSidebar } from "@/features/modular-sprite-schema/index.js";
+
+import { Button } from "@/components/ui/button.jsx";
+import { Dialog, DialogContent } from "@/components/ui/dialog.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
+
+const UiButton = Button as React.ComponentType<
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    variant?: string;
+    size?: string;
+  }
+>;
+const UiDialog = Dialog as React.ComponentType<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: React.ReactNode;
+}>;
+const UiDialogContent = DialogContent as React.ComponentType<{
+  className?: string;
+  children: React.ReactNode;
+}>;
+
+const MIN_PREVIEW_ZOOM = 0.25;
+const MAX_PREVIEW_ZOOM = 16;
+const PREVIEW_CONTENT_PADDING = 32;
+
+export function ModularSpriteWizard({
+  open,
+  highlightFirstExample = false,
+  onOpenChange,
+  onCommit,
+  ports,
+  semanticCatalog,
+  confirmDiscard,
+}: ModularSpriteWizardProps): React.ReactElement {
+  const controller = useModularSpriteWizardController({
+    open,
+    onOpenChange,
+    onCommit,
+    ports,
+    ...(confirmDiscard ? { confirmDiscard } : {}),
+  });
+  const { state, resultVersion, ui } = controller;
+  const result = state.processingResult;
+  const source = state.source;
+  const step = state.step;
+  const previewViewportRef = useRef<HTMLDivElement>(null);
+  const previewAutoFitAppliedRef = useRef(false);
+  const [hasPendingPartNameSuggestions, setHasPendingPartNameSuggestions] =
+    useState(false);
+  const sourceWidth = source?.preview.width ?? 0;
+  const sourceHeight = source?.preview.height ?? 0;
+  const hasPreviewResult = result !== null;
+  const setPreviewZoom = ui.setZoom;
+  const fitPreviewToViewport = useCallback(() => {
+    const viewport = previewViewportRef.current;
+    if (!viewport || sourceWidth <= 0 || sourceHeight <= 0) return;
+
+    const availableWidth = Math.max(
+      1,
+      viewport.clientWidth - PREVIEW_CONTENT_PADDING,
+    );
+    const availableHeight = Math.max(
+      1,
+      viewport.clientHeight - PREVIEW_CONTENT_PADDING,
+    );
+    const fitZoom = Math.min(
+      availableWidth / sourceWidth,
+      availableHeight / sourceHeight,
+    );
+    setPreviewZoom(
+      Math.min(MAX_PREVIEW_ZOOM, Math.max(MIN_PREVIEW_ZOOM, fitZoom)),
+    );
+  }, [setPreviewZoom, sourceHeight, sourceWidth]);
+
+  useEffect(() => {
+    if (!open || step === "source" || !hasPreviewResult) {
+      previewAutoFitAppliedRef.current = false;
+      return;
+    }
+    if (previewAutoFitAppliedRef.current) return;
+    const viewport = previewViewportRef.current;
+    if (!viewport) return;
+
+    let observer: ResizeObserver | undefined;
+    const applyInitialFit = (): void => {
+      if (
+        previewAutoFitAppliedRef.current ||
+        viewport.clientWidth <= 0 ||
+        viewport.clientHeight <= 0
+      )
+        return;
+      fitPreviewToViewport();
+      previewAutoFitAppliedRef.current = true;
+      observer?.disconnect();
+    };
+
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(applyInitialFit);
+      observer.observe(viewport);
+    }
+    applyInitialFit();
+    return () => observer?.disconnect();
+  }, [fitPreviewToViewport, hasPreviewResult, open, resultVersion, step]);
+
+  const refinement = resolveChromaRefinement(state.recipe.background);
+  const protectionAvailable =
+    state.recipe.background.mode === "chroma" &&
+    refinement.protectIslandInteriors;
+  const title = "Import 2D Modular Sprite";
+  const onStroke = (
+    kind: ModularSpriteMaskStrokeKind,
+    points: { x: number; y: number }[],
+  ): void =>
+    controller.changeRecipe((recipe) => {
+      recipe.strokes.push({ kind, radius: ui.brushRadius, points });
+    }, "discrete");
+  const onEnclosedChromaSeed = (point: NormalizedPoint): void =>
+    controller.changeRecipe((recipe) => {
+      recipe.background.enclosedChromaSeeds = [
+        ...(recipe.background.enclosedChromaSeeds ?? []),
+        point,
+      ];
+    }, "discrete");
+  const onClearEnclosedAreas = (): void =>
+    controller.changeRecipe((recipe) => {
+      recipe.background.enclosedChromaSeeds = [];
+    }, "discrete");
+
+  return (
+    <UiDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) controller.requestClose();
+      }}
+    >
+      <UiDialogContent className="flex h-[95vh] w-[95vw] max-w-none flex-col gap-0 overflow-hidden p-0">
+        <WizardHeader title={title} step={step} />
+        <div className="relative box-border min-h-0 h-full min-w-0 flex-1 overflow-hidden p-5">
+          {step === "source" && (
+            <SourceStep
+              highlightFirstExample={highlightFirstExample}
+              onFile={(file) => {
+                void controller.loadFile(file);
+              }}
+            />
+          )}
+
+          {(step === "background" || step === "regions") &&
+            source &&
+            result && (
+              <div
+                className={`grid h-full min-h-0 min-w-0 gap-5 ${step === "background" ? "grid-cols-[280px_minmax(0,1fr)_300px]" : "grid-cols-[280px_minmax(0,1fr)]"}`}
+              >
+                {step === "background" && (
+                  <BackgroundStep
+                    recipe={state.recipe}
+                    tool={ui.tool}
+                    warnings={result.warnings}
+                    onRecipeChange={(change, process = true) =>
+                      controller.changeRecipe(change, "recipe", process)
+                    }
+                    onRecipeCommit={controller.commitRecipeProcessing}
+                    onPickMode={() => {
+                      ui.setTool("eyedropper");
+                      ui.setPreviewMode("original");
+                    }}
+                  />
+                )}
+                {step === "regions" && (
+                  <RegionGroupingStep
+                    result={result}
+                    grouping={state.grouping!}
+                    resultRef={controller.resultRef}
+                    resultVersion={controller.resultVersion}
+                    selectedRegionIds={ui.selectedRegionIds}
+                    onMoveRegionsToPart={controller.moveRegionsToPart}
+                    onExcludeRegions={controller.excludeRegions}
+                    onCreatePart={controller.createPart}
+                    onSelectRegion={controller.toggleRegionSelection}
+                    onUpdatePart={controller.updatePart}
+                    semanticCatalog={semanticCatalog}
+                    onPendingNameSuggestionsChange={
+                      setHasPendingPartNameSuggestions
+                    }
+                  />
+                )}
+                <section className="flex min-h-0 min-w-0 flex-col rounded-lg border bg-black/40">
+                  <div className="flex items-center gap-1 border-b bg-background p-2">
+                    {(["original", "matte", "result"] as const).map((mode) => (
+                      <UiButton
+                        key={mode}
+                        size="sm"
+                        variant={ui.previewMode === mode ? "default" : "ghost"}
+                        onClick={() => ui.setPreviewMode(mode)}
+                      >
+                        {mode}
+                      </UiButton>
+                    ))}
+                    <span className="mx-1 h-5 w-px bg-border" />
+                    <label className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={ui.showOverlays}
+                        onChange={(event) =>
+                          ui.setShowOverlays(event.target.checked)
+                        }
+                      />
+                      Region outlines
+                    </label>
+                    <label
+                      className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground"
+                      title={
+                        protectionAvailable
+                          ? "Show the exact protected interior mask"
+                          : "Enable Protect island interiors to inspect its mask"
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        checked={
+                          ui.showProtectedInteriors && protectionAvailable
+                        }
+                        disabled={!protectionAvailable}
+                        aria-label="Protected area"
+                        onChange={(event) =>
+                          ui.setShowProtectedInteriors(event.target.checked)
+                        }
+                      />
+                      Protected area
+                    </label>
+                    <UiButton
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        ui.setZoom(Math.max(MIN_PREVIEW_ZOOM, ui.zoom - 0.25))
+                      }
+                    >
+                      −
+                    </UiButton>
+                    <span className="self-center text-xs text-muted-foreground">
+                      {Math.round(ui.zoom * 100)}%
+                    </span>
+                    <UiButton
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        ui.setZoom(Math.min(MAX_PREVIEW_ZOOM, ui.zoom + 0.25))
+                      }
+                    >
+                      +
+                    </UiButton>
+                    <span className="ml-auto self-center text-xs text-muted-foreground">
+                      {controller.busy
+                        ? `${state.progress.stage}… ${Math.round(state.progress.value * 100)}%`
+                        : `${result.regions.length} regions`}
+                    </span>
+                  </div>
+                  <div
+                    ref={previewViewportRef}
+                    className="relative min-h-0 min-w-0 flex-1"
+                  >
+                    <ScrollArea
+                      className="h-full min-h-0 min-w-0"
+                      scrollbars="both"
+                    >
+                      <div className="flex h-max min-h-full min-w-full w-max items-center justify-center p-4">
+                        <ModularSpritePreviewCanvas
+                          source={source.preview}
+                          resultRef={controller.resultRef}
+                          resultVersion={controller.resultVersion}
+                          mode={ui.previewMode}
+                          tool={step === "regions" ? "select" : ui.tool}
+                          zoom={ui.zoom}
+                          selectedRegionIds={ui.selectedRegionIds}
+                          assignments={controller.assignments}
+                          showOverlays={ui.showOverlays}
+                          showProtectedInteriors={
+                            ui.showProtectedInteriors && protectionAvailable
+                          }
+                          onSelectRegion={controller.toggleRegionSelection}
+                          onPickColor={(color) => {
+                            controller.changeRecipe((recipe) => {
+                              recipe.background.mode = "chroma";
+                              recipe.background.color = color;
+                            }, "discrete");
+                            ui.setTool("select");
+                          }}
+                          onStroke={onStroke}
+                          onEnclosedChromaSeed={onEnclosedChromaSeed}
+                        />
+                      </div>
+                    </ScrollArea>
+                    {step === "background" && (
+                      <div className="pointer-events-none absolute left-3 top-3 z-20">
+                        <div className="pointer-events-auto">
+                          <TouchupToolbar
+                            tool={ui.tool}
+                            brushRadius={ui.brushRadius}
+                            enclosedChromaSeedCount={
+                              refinement.enclosedChromaSeeds.length
+                            }
+                            onToolChange={ui.setTool}
+                            onBrushRadiusChange={ui.setBrushRadius}
+                            onClearEnclosedAreas={onClearEnclosedAreas}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
+                {step === "background" && (
+                  <SchemaComparisonSidebar
+                    enabled={state.schema.autoMatch}
+                    onEnabledChange={controller.setAutoMatch}
+                    analyzing={state.schema.matching}
+                    progress={state.schema.progress}
+                    matches={state.schema.matches}
+                    schemas={state.schema.schemas}
+                    {...(state.schema.applied
+                      ? {
+                          appliedSchemaId: state.schema.applied.schema.schemaId,
+                        }
+                      : {})}
+                    onApply={controller.applySchemaMatch}
+                  />
+                )}
+              </div>
+            )}
+
+          {step === "parts" && state.grouping && (
+            <PartDetailsStep
+              grouping={state.grouping}
+              resultRef={controller.resultRef}
+              resultVersion={controller.resultVersion}
+              onUpdatePart={controller.updatePart}
+            />
+          )}
+
+          {step === "review" && (
+            <ReviewStep
+              name={state.name}
+              addToCanvas={state.addToCanvas}
+              parts={state.grouping?.parts ?? []}
+              {...(source?.file.type ? { sourceType: source.file.type } : {})}
+              onNameChange={controller.setName}
+              onAddToCanvasChange={controller.setAddToCanvas}
+            />
+          )}
+
+          {state.error && (
+            <p
+              className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+              role="alert"
+            >
+              {state.error}
+            </p>
+          )}
+          {controller.busy && (
+            <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-lg bg-background/70 backdrop-blur-[2px]">
+              <Loader2
+                className="h-9 w-9 animate-spin text-primary"
+                aria-hidden
+              />
+              <span className="text-sm font-medium">
+                {state.progress.stage}…
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {Math.round(state.progress.value * 100)}%
+              </span>
+            </div>
+          )}
+        </div>
+        <WizardFooter
+          step={step}
+          busy={controller.busy}
+          canGoNext={controller.canGoNext && !hasPendingPartNameSuggestions}
+          onCancel={() => {
+            controller.requestClose();
+          }}
+          onBack={controller.back}
+          onNext={controller.next}
+          onFinalize={() => {
+            void controller.finalize();
+          }}
+        />
+      </UiDialogContent>
+    </UiDialog>
+  );
+}

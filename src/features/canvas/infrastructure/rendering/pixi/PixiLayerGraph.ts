@@ -1,9 +1,9 @@
-import { Container } from 'pixi.js';
+import { Container } from "pixi.js";
 
-import { PixiViewportBridge } from './PixiViewportBridge.js';
+import type { EditorView } from "@/features/canvas/application/canvasRenderer.types.js";
+import { PixiViewportBridge } from "@/features/canvas/infrastructure/rendering/pixi/PixiViewportBridge.js";
 
-import type { EditorView } from '../rendererTypes.js';
-import type { Application } from 'pixi.js';
+import type { Application } from "pixi.js";
 
 interface PixiLayerGraphOptions {
   app: Application;

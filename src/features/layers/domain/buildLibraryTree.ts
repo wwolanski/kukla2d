@@ -1,30 +1,39 @@
 import type {
   AssetPlacement,
   LibraryFolder,
+  ModularSpriteDocument,
   Node,
   Texture,
-} from '@kukla2d/contracts';
+} from "@kukla2d/contracts";
 
-import { buildUniqueTextureNameMap } from '@/domain/libraryAssetNames';
+import { buildUniqueTextureNameMap } from "@/domain/libraryAssetNames.js";
+import { limitFileName, limitName } from "@/domain/nameConstraints.js";
 
-export interface LibraryTreeInput {
+interface LibraryTreeInput {
   libraryFolders?: readonly LibraryFolder[];
   assetPlacements?: readonly AssetPlacement[];
   textures: readonly Texture[];
   nodes: readonly Node[];
+  modularSprites?: readonly ModularSpriteDocument[];
 }
 
 interface LibraryFolderRow {
-  kind: 'folder';
+  kind: "folder";
   id: string;
   name: string;
   sourceFileName: string | null;
-  origin: LibraryFolder['origin'] | null;
+  origin: LibraryFolder["origin"] | null;
+  modularSpriteId: string | null;
+  isModularSpritePackage: boolean;
+  schemaLink: {
+    name: string;
+    status: "reference" | "managed" | "dirty";
+  } | null;
   children: LibraryTreeRow[];
 }
 
 interface LibraryAssetRow {
-  kind: 'asset';
+  kind: "asset";
   id: string;
   name: string;
   sourceFileName: string | null;
@@ -32,29 +41,76 @@ interface LibraryAssetRow {
   node: Node | undefined;
   isInUse: boolean;
   size: number | null | undefined;
+  modularSpriteId: string | null;
+  modularKind: "source" | "part" | null;
+  partKey: string | null;
 }
 
-export type LibraryTreeRow = LibraryFolderRow | LibraryAssetRow;
+type LibraryTreeRow = LibraryFolderRow | LibraryAssetRow;
 
-type FolderEntry = { kind: 'folder'; folder: LibraryFolder };
+type FolderEntry = { kind: "folder"; folder: LibraryFolder };
 
 export function buildLibraryTree({
   libraryFolders,
   assetPlacements,
   textures,
   nodes,
+  modularSprites,
 }: LibraryTreeInput): LibraryTreeRow[] {
   const folders = libraryFolders ?? [];
   const placements = assetPlacements ?? [];
-  const texMap = new Map<string, Texture>(textures.map(t => [t.id, t]));
-  const nodeMap = new Map<string, Node>(nodes.map(n => [n.id, n]));
+  const texMap = new Map<string, Texture>(textures.map((t) => [t.id, t]));
+  const nodeMap = new Map<string, Node>(nodes.map((n) => [n.id, n]));
   const displayNames = buildUniqueTextureNameMap(textures, nodes);
+  const modularByAssetId = new Map<
+    string,
+    { id: string; kind: "source" | "part"; partKey: string | null }
+  >();
+  const modularPackageByFolderId = new Map<
+    string,
+    { id: string; schemaLink: LibraryFolderRow["schemaLink"] }
+  >();
+  for (const modularSprite of modularSprites ?? []) {
+    modularByAssetId.set(modularSprite.sourceAssetId, {
+      id: modularSprite.id,
+      kind: "source",
+      partKey: null,
+    });
+    const sourcePlacement = placements.find(
+      (placement) => placement.assetId === modularSprite.sourceAssetId,
+    );
+    const packageFolderId = sourcePlacement?.folderId ?? null;
+    if (packageFolderId) {
+      const binding = modularSprite.schemaBinding;
+      modularPackageByFolderId.set(packageFolderId, {
+        id: modularSprite.id,
+        schemaLink: binding
+          ? {
+              name: binding.snapshot.name,
+              status:
+                binding.syncState === "dirty"
+                  ? "dirty"
+                  : binding.relationship === "managed"
+                    ? "managed"
+                    : "reference",
+            }
+          : null,
+      });
+    }
+    for (const part of modularSprite.parts) {
+      modularByAssetId.set(part.assetId, {
+        id: modularSprite.id,
+        kind: "part",
+        partKey: part.partKey,
+      });
+    }
+  }
   const childrenByParent = new Map<string | null, FolderEntry[]>();
 
   for (const folder of folders) {
     const pid = folder.parentId ?? null;
     const entries = childrenByParent.get(pid) ?? [];
-    entries.push({ kind: 'folder', folder });
+    entries.push({ kind: "folder", folder });
     childrenByParent.set(pid, entries);
   }
 
@@ -66,18 +122,25 @@ export function buildLibraryTree({
     assetsByFolder.set(fid, assetIds);
   }
 
-  const assetIdsInFolder = new Set(placements.map(p => p.assetId));
+  const assetIdsInFolder = new Set(placements.map((p) => p.assetId));
 
   function buildChildren(parentId: string | null): LibraryTreeRow[] {
     const result: LibraryTreeRow[] = [];
     const foldersHere = childrenByParent.get(parentId) ?? [];
     for (const { folder } of foldersHere) {
       result.push({
-        kind: 'folder',
+        kind: "folder",
         id: folder.id,
-        name: folder.name,
-        sourceFileName: folder.sourceFileName ?? null,
+               name: limitName(folder.name),
+               sourceFileName: folder.sourceFileName
+                 ? limitFileName(folder.sourceFileName)
+                 : null,
         origin: folder.origin ?? null,
+        modularSpriteId:
+          modularPackageByFolderId.get(folder.id)?.id ?? null,
+        isModularSpritePackage: modularPackageByFolderId.has(folder.id),
+        schemaLink:
+          modularPackageByFolderId.get(folder.id)?.schemaLink ?? null,
         children: buildChildren(folder.id),
       });
     }
@@ -88,16 +151,24 @@ export function buildLibraryTree({
       if (!tex) continue;
       const localName = displayNames.get(assetId) ?? assetId;
       const sourceName = tex.fileName ?? null;
+      const modular = modularByAssetId.get(assetId);
       result.push({
-        kind: 'asset',
+        kind: "asset",
         id: assetId,
-        name: localName,
-        sourceFileName: sourceName,
+               name: limitName(localName),
+               sourceFileName: sourceName ? limitFileName(sourceName) : null,
         texture: tex,
         node,
-        isInUse: nodes.some(candidate => candidate.type === 'part'
-          && (String(candidate.id) === assetId || candidate.textureId === assetId)),
+        isInUse: nodes.some(
+          (candidate) =>
+            candidate.type === "part" &&
+            (String(candidate.id) === assetId ||
+              candidate.textureId === assetId),
+        ),
         size: tex.fileSize,
+        modularSpriteId: modular?.id ?? null,
+        modularKind: modular?.kind ?? null,
+        partKey: modular?.partKey ?? null,
       });
     }
     return result;
@@ -111,27 +182,37 @@ export function buildLibraryTree({
     const node = nodeMap.get(tex.id);
     const localName = displayNames.get(tex.id) ?? tex.id;
     const sourceName = tex.fileName ?? null;
+    const modular = modularByAssetId.get(tex.id);
     looseAssets.push({
-      kind: 'asset',
+      kind: "asset",
       id: tex.id,
-      name: localName,
-      sourceFileName: sourceName,
+      name: limitName(localName),
+      sourceFileName: sourceName ? limitFileName(sourceName) : null,
       texture: tex,
       node,
-      isInUse: nodes.some(candidate => candidate.type === 'part'
-          && (String(candidate.id) === String(tex.id) || candidate.textureId === tex.id)),
+      isInUse: nodes.some(
+        (candidate) =>
+          candidate.type === "part" &&
+          (String(candidate.id) === String(tex.id) ||
+            candidate.textureId === tex.id),
+      ),
       size: tex.fileSize,
+      modularSpriteId: modular?.id ?? null,
+      modularKind: modular?.kind ?? null,
+      partKey: modular?.partKey ?? null,
     });
   }
 
   return [...rootFolders, ...looseAssets];
 }
 
-export function flattenLibraryTree(rows: readonly LibraryTreeRow[]): LibraryTreeRow[] {
+export function flattenLibraryTree(
+  rows: readonly LibraryTreeRow[],
+): LibraryTreeRow[] {
   const result: LibraryTreeRow[] = [];
   for (const row of rows) {
     result.push(row);
-    if (row.kind === 'folder') {
+    if (row.kind === "folder") {
       result.push(...flattenLibraryTree(row.children));
     }
   }

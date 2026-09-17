@@ -5,8 +5,8 @@ import {
   useSelection,
   useView,
 } from '@/store/editorStore';
-import { CANVAS_DEFAULTS } from '@/features/canvas/domain/canvasDefaults.js';
-import { BONE_TOOL_DEFAULTS } from '@/features/rigging/domain/boneToolDefaults.js';
+import { CANVAS_DEFAULTS } from '@/features/canvas';
+import { BONE_TOOL_DEFAULTS } from '@/features/rigging';
 
 const WORKFLOW_FIELDS = [
   'activeTool',

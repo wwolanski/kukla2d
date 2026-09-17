@@ -1,14 +1,22 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from "react";
 
-import { validateRenameValue } from '../domain/inlineRename.js';
+import { limitName } from "@/domain/nameConstraints.js";
 
-import type { Dispatch, KeyboardEventHandler, RefObject, SetStateAction } from 'react';
+import { validateRenameValue } from "@/features/layers/domain/inlineRename.js";
+
+import type {
+  Dispatch,
+  KeyboardEventHandler,
+  RefObject,
+  SetStateAction,
+} from "react";
 
 interface InlineRenameOptions {
   currentName: string | null | undefined;
   onRename: (name: string) => void;
 }
-export interface InlineRenameController {
+
+interface InlineRenameController {
   isEditing: boolean;
   draft: string;
   setDraft: Dispatch<SetStateAction<string>>;
@@ -20,13 +28,16 @@ export interface InlineRenameController {
   inputRef: RefObject<HTMLInputElement | null>;
 }
 
-export function useInlineRename({ currentName, onRename }: InlineRenameOptions): InlineRenameController {
+export function useInlineRename({
+  currentName,
+  onRename,
+}: InlineRenameOptions): InlineRenameController {
   const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const startEdit = useCallback(() => {
-    setDraft(currentName ?? '');
+    setDraft(limitName(currentName ?? ""));
     setIsEditing(true);
   }, [currentName]);
 
@@ -40,13 +51,22 @@ export function useInlineRename({ currentName, onRename }: InlineRenameOptions):
 
   const cancel = useCallback(() => {
     setIsEditing(false);
-    setDraft(currentName ?? '');
+    setDraft(currentName ?? "");
   }, [currentName]);
 
-  const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
-    if (e.key === 'Enter') { e.preventDefault(); commit(); }
-    if (e.key === 'Escape') { e.preventDefault(); cancel(); }
-  }, [commit, cancel]);
+  const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commit();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        cancel();
+      }
+    },
+    [commit, cancel],
+  );
 
   const handleBlur = useCallback(() => {
     commit();

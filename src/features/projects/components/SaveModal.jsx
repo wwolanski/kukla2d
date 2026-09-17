@@ -1,6 +1,11 @@
-import { Loader2, Download, Library, AlertTriangle } from 'lucide-react';
+import { Loader2, Download, Library, AlertTriangle } from "lucide-react";
 
-import { formatProjectError } from '@/io/projectErrorMessages';
+import { formatProjectError } from "@/io/projectErrorMessages.js";
+
+import { MAX_NAME_LENGTH } from "@/domain/nameConstraints.js";
+
+import { useSaveProject } from "@/features/projects/application/useSaveProject.js";
+import { ProjectGallery } from "@/features/projects/components/ProjectGallery.jsx";
 
 import {
   AlertDialog,
@@ -11,24 +16,22 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/alert-dialog.jsx";
+import { Button } from "@/components/ui/button.jsx";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-import { ProjectGallery } from './ProjectGallery.jsx';
-import { useSaveProject } from '../application/useSaveProject.js';
+} from "@/components/ui/dialog.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label.jsx";
+import { ScrollArea } from "@/components/ui/scroll-area.js";
+import { Switch } from "@/components/ui/switch.jsx";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
 
 function formatIssues(issues) {
-  return issues.map((i) => `[${i.code}] ${i.path}: ${i.message}`).join('\n');
+  return issues.map((i) => `[${i.code}] ${i.path}: ${i.message}`).join("\n");
 }
 
 export function SaveModal({
@@ -40,12 +43,17 @@ export function SaveModal({
   currentDbProjectName,
   onSavedToDb,
   onSaveSuccess,
+  publishSchemas,
 }) {
   const {
     name,
     author,
     saveMode,
     isSaving,
+    saveToSchemaDatabase,
+    updateSchemasOnOverwrite,
+    schemaEligibility,
+    schemaUpdateEligibility,
     overwriteProject,
     preflightErrors,
     preflightWarnings,
@@ -53,6 +61,8 @@ export function SaveModal({
     setName,
     setAuthor,
     setSaveMode,
+    setSaveToSchemaDatabase,
+    setUpdateSchemasOnOverwrite,
     handleSaveNew,
     handleOverwrite,
     confirmOverwrite,
@@ -71,6 +81,7 @@ export function SaveModal({
     onSavedToDb,
     onSaveSuccess,
     onOpenChange,
+    publishSchemas,
   });
 
   return (
@@ -85,19 +96,29 @@ export function SaveModal({
             <div className="p-6 border-b bg-muted/20 shrink-0">
               <div className="flex flex-col gap-4 max-w-lg">
                 <div className="grid gap-2">
-                  <Label htmlFor="name" className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Label
+                    htmlFor="name"
+                    className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
                     Project Name
                   </Label>
                   <div className="flex gap-2">
                     <Input
                       id="name"
                       value={name}
+                      maxLength={MAX_NAME_LENGTH}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Enter project name..."
                       className="h-10"
                     />
-                    <Button onClick={handleSaveNew} disabled={isSaving || !name.trim()} className="shrink-0 h-10 px-6">
-                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button
+                      onClick={handleSaveNew}
+                      disabled={isSaving || !name.trim()}
+                      className="shrink-0 h-10 px-6"
+                    >
+                      {isSaving && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
                       Save
                     </Button>
                   </div>
@@ -113,18 +134,52 @@ export function SaveModal({
                   </div>
                 </div>
 
-                <Tabs value={saveMode} onValueChange={setSaveMode} className="w-full">
+                <Tabs
+                  value={saveMode}
+                  onValueChange={setSaveMode}
+                  className="w-full"
+                >
                   <TabsList className="grid w-full grid-cols-2 h-12">
-                    <TabsTrigger value="library" className="flex items-center gap-2 text-sm font-medium h-10">
+                    <TabsTrigger
+                      value="library"
+                      className="flex items-center gap-2 text-sm font-medium h-10"
+                    >
                       <Library className="h-4 w-4" />
                       Save to Library
                     </TabsTrigger>
-                    <TabsTrigger value="download" className="flex items-center gap-2 text-sm font-medium h-10">
+                    <TabsTrigger
+                      value="download"
+                      className="flex items-center gap-2 text-sm font-medium h-10"
+                    >
                       <Download className="h-4 w-4" />
                       Download File
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
+
+                <div className="flex items-start gap-3 rounded-md border bg-background p-3">
+                  <Switch
+                    id="save-project-schema-database"
+                    checked={saveToSchemaDatabase}
+                    disabled={!schemaEligibility.enabled || isSaving}
+                    onCheckedChange={setSaveToSchemaDatabase}
+                    aria-label="Publish new package schemas"
+                    className="mt-0.5"
+                  />
+                  <label
+                    htmlFor="save-project-schema-database"
+                    className={schemaEligibility.enabled ? "cursor-pointer" : "cursor-not-allowed opacity-60"}
+                  >
+                    <span className="block text-xs font-medium">
+                      Publish new package schemas
+                    </span>
+                    <span className="mt-0.5 block text-[10px] leading-relaxed text-muted-foreground">
+                      {schemaEligibility.enabled
+                        ? `${schemaEligibility.reason} Existing schema references are forked, never overwritten. Destination: local (indexedDB).`
+                        : schemaEligibility.reason}
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -150,10 +205,34 @@ export function SaveModal({
               Overwrite project?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to overwrite <strong>&quot;{overwriteProject?.name}&quot;</strong>? 
-              This will replace the project data and thumbnail in your library.
+              Are you sure you want to overwrite{" "}
+              <strong>&quot;{overwriteProject?.name}&quot;</strong>? This will
+              replace the project data and thumbnail in your library.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="flex items-start gap-3 rounded-md border bg-muted/20 p-3">
+            <Switch
+              id="update-schemas-on-overwrite"
+              checked={updateSchemasOnOverwrite}
+              disabled={!schemaUpdateEligibility.enabled || isSaving}
+              onCheckedChange={setUpdateSchemasOnOverwrite}
+              aria-label="Update linked schemas"
+              className="mt-0.5"
+            />
+            <label
+              htmlFor="update-schemas-on-overwrite"
+              className={schemaUpdateEligibility.enabled ? "cursor-pointer" : "cursor-not-allowed opacity-60"}
+            >
+              <span className="block text-xs font-medium">
+                Update linked schemas
+              </span>
+              <span className="mt-0.5 block text-[10px] leading-relaxed text-muted-foreground">
+                {schemaUpdateEligibility.enabled
+                  ? `${schemaUpdateEligibility.updateCount} managed schema update${schemaUpdateEligibility.updateCount === 1 ? "" : "s"} will be saved to local IndexedDB.`
+                  : schemaUpdateEligibility.reason}
+              </span>
+            </label>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
@@ -177,11 +256,15 @@ export function SaveModal({
               Cannot save — project has errors
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto text-destructive">{preflightErrors ? formatIssues(preflightErrors) : ''}</pre>
+              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto text-destructive">
+                {preflightErrors ? formatIssues(preflightErrors) : ""}
+              </pre>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setPreflightErrors(null)}>Close</AlertDialogAction>
+            <AlertDialogAction onClick={() => setPreflightErrors(null)}>
+              Close
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -197,12 +280,16 @@ export function SaveModal({
               Save warnings
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto">{preflightWarnings ? formatIssues(preflightWarnings) : ''}</pre>
+              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto">
+                {preflightWarnings ? formatIssues(preflightWarnings) : ""}
+              </pre>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={continueAfterWarnings}>Continue</AlertDialogAction>
+            <AlertDialogAction onClick={continueAfterWarnings}>
+              Continue
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -218,11 +305,15 @@ export function SaveModal({
               Save failed
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto text-destructive">{saveError ? formatProjectError(saveError) : ''}</pre>
+              <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto text-destructive">
+                {saveError ? formatProjectError(saveError) : ""}
+              </pre>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setSaveError(null)}>Close</AlertDialogAction>
+            <AlertDialogAction onClick={() => setSaveError(null)}>
+              Close
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

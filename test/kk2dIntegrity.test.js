@@ -403,6 +403,7 @@ function createExhaustiveProject() {
       { assetId: 'tex-a', folderId: 'folder-char' },
       { assetId: 'tex-b', folderId: 'folder-parts' },
     ],
+    modularSprites: [],
     controlHandles: [
       {
         id: 'ch-chest',

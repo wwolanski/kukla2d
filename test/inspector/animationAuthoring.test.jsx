@@ -38,7 +38,9 @@ describe('inspector animation authoring boundary', () => {
     });
 
     it('imports from @/features/animation', () => {
-      expect(NODE_INSPECTOR_CONTROLLER).toMatch(/from ['"]@\/features\/animation['"]/);
+      expect(NODE_INSPECTOR_CONTROLLER).toMatch(
+        /from ['"]@\/features\/animation(?:\/index)?(?:\.js)?['"]/
+      );
     });
   });
 

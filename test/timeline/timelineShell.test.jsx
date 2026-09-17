@@ -96,7 +96,9 @@ describe('TransportBar shell boundary', () => {
   });
 
   it('imports toast from use-toast', () => {
-    expect(transportBarSrc).toContain("import { toast } from '@/components/ui/use-toast'");
+    expect(transportBarSrc).toMatch(
+      /import \{ toast \} from ['"]@\/components\/ui\/use-toast(?:\.js)?['"]/
+    );
   });
 
   it('receives isPlaying via props', () => {

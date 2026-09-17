@@ -1,10 +1,17 @@
-export { AVAILABLE_FONTS } from './domain/availableFonts.js';
-export type { AvailableFont } from './domain/availableFonts.js';
+import { lazy } from "react";
+
+export const PreferencesModal = lazy(() =>
+  import("@/features/preferences/components/PreferencesModal.jsx").then(
+    ({ PreferencesModal: Component }) => ({ default: Component }),
+  ),
+);
+
+export { AVAILABLE_FONTS } from "@/features/preferences/domain/availableFonts.js";
+export type { AvailableFont } from "@/features/preferences/domain/availableFonts.types.js";
 export {
   darkThemePresets,
   lightThemePresets,
   modernMinimalDarkPreset,
   sunsetHorizonDarkPreset,
-} from './domain/themePresets.js';
-export type { ThemePreset } from './domain/themePresets.js';
-
+} from "@/features/preferences/domain/themePresets.js";
+export type { ThemePreset } from "@/features/preferences/domain/themePresets.types.js";

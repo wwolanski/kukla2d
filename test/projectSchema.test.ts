@@ -140,8 +140,8 @@ describe('projectSchema', () => {
     expect(parsed.bones![0]!.nodeId).toBe('p1');
   });
 
-  it('CURRENT_PROJECT_VERSION is 9', () => {
-    expect(CURRENT_PROJECT_VERSION).toBe(9);
+  it('CURRENT_PROJECT_VERSION is 10', () => {
+    expect(CURRENT_PROJECT_VERSION).toBe(10);
   });
 
   it('parseProject throws on invalid data', () => {

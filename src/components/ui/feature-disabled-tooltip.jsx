@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@/components/ui/tooltip.jsx';
 
 export function FeatureDisabledTooltip({ children, side = 'bottom' }) {
   return (

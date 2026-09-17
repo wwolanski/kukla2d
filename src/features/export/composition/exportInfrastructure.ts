@@ -1,0 +1,56 @@
+import type { ExportEncoder } from "@/features/export/application/exportApplicationTypes.types.js";
+import { resolveExportEncoder as resolveExportEncoderFromRegistry } from "@/features/export/application/resolveExportEncoder.js";
+import { browserExportSink as browserExportSinkAdapter } from "@/features/export/infrastructure/browserExportSink.js";
+import { encodeGif as encodeGifAdapter } from "@/features/export/infrastructure/encodeGif.js";
+import {
+  buildPngFilePath as buildPngFilePathAdapter,
+  dataUrlToBlob as dataUrlToBlobAdapter,
+  encodePngSequence as encodePngSequenceAdapter,
+} from "@/features/export/infrastructure/encodePngSequence.js";
+import { encodePngSpritesheet as encodePngSpritesheetAdapter } from "@/features/export/infrastructure/encodePngSpritesheet.js";
+
+const ENCODERS = {
+  gif: encodeGifAdapter,
+  png_sequence: encodePngSequenceAdapter,
+  png_spritesheet: encodePngSpritesheetAdapter,
+};
+
+export function resolveExportEncoder(variantId: string): ExportEncoder {
+  return resolveExportEncoderFromRegistry(variantId, ENCODERS);
+}
+
+export function browserExportSink(
+  ...args: Parameters<typeof browserExportSinkAdapter>
+): ReturnType<typeof browserExportSinkAdapter> {
+  return browserExportSinkAdapter(...args);
+}
+
+export function encodeGif(
+  ...args: Parameters<typeof encodeGifAdapter>
+): ReturnType<typeof encodeGifAdapter> {
+  return encodeGifAdapter(...args);
+}
+
+export function encodePngSequence(
+  ...args: Parameters<typeof encodePngSequenceAdapter>
+): ReturnType<typeof encodePngSequenceAdapter> {
+  return encodePngSequenceAdapter(...args);
+}
+
+export function encodePngSpritesheet(
+  ...args: Parameters<typeof encodePngSpritesheetAdapter>
+): ReturnType<typeof encodePngSpritesheetAdapter> {
+  return encodePngSpritesheetAdapter(...args);
+}
+
+export function dataUrlToBlob(
+  ...args: Parameters<typeof dataUrlToBlobAdapter>
+): ReturnType<typeof dataUrlToBlobAdapter> {
+  return dataUrlToBlobAdapter(...args);
+}
+
+export function buildPngFilePath(
+  ...args: Parameters<typeof buildPngFilePathAdapter>
+): ReturnType<typeof buildPngFilePathAdapter> {
+  return buildPngFilePathAdapter(...args);
+}

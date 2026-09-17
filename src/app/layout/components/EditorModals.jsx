@@ -1,5 +1,14 @@
-import PropTypes from 'prop-types';
-import { lazy, Suspense } from 'react';
+import PropTypes from "prop-types";
+import { lazy, Suspense } from "react";
+
+import { localSchemaLibrarySource } from "@/app/layout/schemaLibrarySources.js";
+
+import { useProjectStore } from "@/store/projectStore.js";
+
+import {
+  publishProjectSchemasToLocalDatabase,
+  SaveModal,
+} from "@/features/projects/index.js";
 
 import {
   AlertDialog,
@@ -10,39 +19,93 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog.jsx";
 
 function loadExportModal() {
-  return import('@/features/export/components/ExportModal').then(m => ({ default: m.ExportModal }));
+  return import("@/features/export/index.js").then((m) => ({ default: m.ExportModal }));
 }
 
 function loadPreferencesModal() {
-  return import('@/features/preferences/components/PreferencesModal').then(m => ({ default: m.PreferencesModal }));
-}
-
-function loadSaveModal() {
-  return import('@/features/projects/components/SaveModal').then(m => ({ default: m.SaveModal }));
+  return import("@/features/preferences/index.js").then(
+    (m) => ({ default: m.PreferencesModal }),
+  );
 }
 
 function loadLoadModal() {
-  return import('@/features/projects/components/LoadModal').then(m => ({ default: m.LoadModal }));
+  return import("@/features/projects/index.js").then((m) => ({ default: m.LoadModal }));
+}
+
+function loadModularSpriteWizard() {
+  return import("@/features/modular-sprite/index.js").then((m) => ({
+    default: m.ModularSpriteWizardComposition,
+  }));
+}
+
+function loadModularSpriteGenerator() {
+  return import("@/features/modular-sprite-generator/index.js").then((m) => ({
+    default: m.ModularSpriteGeneratorComposition,
+  }));
+}
+
+function loadSchemaLibraryModal() {
+  return import("@/features/schema-library/index.js").then((m) => ({
+    default: m.SchemaLibraryModal,
+  }));
 }
 
 const ExportModal = lazy(loadExportModal);
 const PreferencesModal = lazy(loadPreferencesModal);
-const SaveModal = lazy(loadSaveModal);
 const LoadModal = lazy(loadLoadModal);
+const ModularSpriteWizard = lazy(loadModularSpriteWizard);
+const ModularSpriteGenerator = lazy(loadModularSpriteGenerator);
+const SchemaLibraryModal = lazy(loadSchemaLibraryModal);
 
 export function EditorModals({
   exportModalOpen,
   setExportModalOpen,
   preferencesOpen,
   setPreferencesOpen,
+  schemaLibraryOpen,
+  setSchemaLibraryOpen,
   projectSession,
   project,
   exportCaptureRef,
   thumbCaptureRef,
+  importRef,
+  modularSpriteEditor,
+  setModularSpriteEditor,
+  modularSpriteGenerator,
+  setModularSpriteGenerator,
 }) {
+  const updateManagedSchema = async (modularSpriteId) => {
+    const store = useProjectStore.getState();
+    const publication = await publishProjectSchemasToLocalDatabase(
+      store.project,
+      {
+        spriteIds: [modularSpriteId],
+        publishUnmanaged: false,
+        updateManaged: true,
+      },
+    );
+    if (publication.updatedCount !== 1)
+      throw new Error("The linked schema did not require an update");
+    const updated = publication.project.modularSprites.find(
+      (sprite) => sprite.id === modularSpriteId,
+    );
+    if (!updated?.schemaBinding)
+      throw new Error("The updated schema binding is missing");
+    store.updateProject(
+      (draft) => {
+        const sprite = draft.modularSprites.find(
+          (candidate) => candidate.id === modularSpriteId,
+        );
+        if (sprite)
+          sprite.schemaBinding = structuredClone(updated.schemaBinding);
+      },
+      { skipHistory: true },
+    );
+  };
+
   return (
     <>
       {exportModalOpen && (
@@ -66,6 +129,16 @@ export function EditorModals({
         </Suspense>
       )}
 
+      {schemaLibraryOpen && (
+        <Suspense fallback={null}>
+          <SchemaLibraryModal
+            open={schemaLibraryOpen}
+            onOpenChange={setSchemaLibraryOpen}
+            source={localSchemaLibrarySource}
+          />
+        </Suspense>
+      )}
+
       {projectSession.saveModalOpen && (
         <Suspense fallback={null}>
           <SaveModal
@@ -77,6 +150,7 @@ export function EditorModals({
             currentDbProjectName={projectSession.currentDbProjectName}
             onSavedToDb={projectSession.handleSavedToDb}
             onSaveSuccess={projectSession.handleSaveSuccess}
+            publishSchemas={publishProjectSchemasToLocalDatabase}
           />
         </Suspense>
       )}
@@ -92,13 +166,52 @@ export function EditorModals({
         </Suspense>
       )}
 
-      <AlertDialog open={projectSession.confirmWipe.open} onOpenChange={(open) => !open && projectSession.closeConfirmWipe()}>
+      {modularSpriteEditor.open && (
+        <Suspense fallback={null}>
+          <ModularSpriteWizard
+            open={modularSpriteEditor.open}
+            highlightFirstExample={modularSpriteEditor.highlightFirstExample}
+            onOpenChange={(open) =>
+              setModularSpriteEditor((current) => ({ ...current, open }))
+            }
+            onCommit={(request) => {
+              if (!importRef.current?.commitModularSprite)
+                throw new Error("Canvas import service is not ready");
+              return importRef.current.commitModularSprite(request);
+            }}
+          />
+        </Suspense>
+      )}
+
+      {modularSpriteGenerator.intent && (
+        <Suspense fallback={null}>
+          <ModularSpriteGenerator
+            open={modularSpriteGenerator.open}
+            intent={modularSpriteGenerator.intent}
+            onOpenChange={(open) =>
+              setModularSpriteGenerator((current) => ({ ...current, open }))
+            }
+            onCommit={(request) => {
+              if (!importRef.current?.commitModularSprite)
+                throw new Error("Canvas import service is not ready");
+              return importRef.current.commitModularSprite(request);
+            }}
+            onUpdateSchema={updateManagedSchema}
+          />
+        </Suspense>
+      )}
+
+      <AlertDialog
+        open={projectSession.confirmWipe.open}
+        onOpenChange={(open) => !open && projectSession.closeConfirmWipe()}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Replace current project?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete all existing layers, meshes, and
-              animations in your current workspace. Unsaved changes will be lost.
+              animations in your current workspace. Unsaved changes will be
+              lost.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -113,19 +226,39 @@ export function EditorModals({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={projectSession.confirmStore.open} onOpenChange={(open) => !open && projectSession.closeConfirmStore()}>
+      <AlertDialog
+        open={projectSession.confirmStore.open}
+        onOpenChange={(open) => !open && projectSession.closeConfirmStore()}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Store imported project in Library?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Store imported project in Library?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Would you like to save this project to your library so you can access it easily later?
+              Would you like to save this project to your library so you can
+              access it easily later?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => projectSession.finalizeLoadFile(projectSession.confirmStore.file, false)}>
+            <AlertDialogCancel
+              onClick={() =>
+                projectSession.finalizeLoadFile(
+                  projectSession.confirmStore.file,
+                  false,
+                )
+              }
+            >
               Skip
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => projectSession.finalizeLoadFile(projectSession.confirmStore.file, true)}>
+            <AlertDialogAction
+              onClick={() =>
+                projectSession.finalizeLoadFile(
+                  projectSession.confirmStore.file,
+                  true,
+                )
+              }
+            >
               Save to Library
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -142,6 +275,8 @@ EditorModals.propTypes = {
   setExportModalOpen: PropTypes.func.isRequired,
   preferencesOpen: PropTypes.bool.isRequired,
   setPreferencesOpen: PropTypes.func.isRequired,
+  schemaLibraryOpen: PropTypes.bool.isRequired,
+  setSchemaLibraryOpen: PropTypes.func.isRequired,
   projectSession: PropTypes.shape({
     saveModalOpen: PropTypes.bool.isRequired,
     openSaveModal: PropTypes.func.isRequired,
@@ -161,7 +296,7 @@ EditorModals.propTypes = {
     handleNewProject: PropTypes.func.isRequired,
     confirmWipe: PropTypes.shape({
       open: PropTypes.bool.isRequired,
-      type: PropTypes.oneOf(['db', 'file', 'new']),
+      type: PropTypes.oneOf(["db", "file", "new"]),
       data: PropTypes.any,
     }).isRequired,
     confirmStore: PropTypes.shape({
@@ -175,4 +310,19 @@ EditorModals.propTypes = {
   project: PropTypes.object.isRequired,
   exportCaptureRef: refShape.isRequired,
   thumbCaptureRef: refShape.isRequired,
+  importRef: refShape.isRequired,
+  modularSpriteEditor: PropTypes.shape({
+    open: PropTypes.bool.isRequired,
+    highlightFirstExample: PropTypes.bool.isRequired,
+  }).isRequired,
+  setModularSpriteEditor: PropTypes.func.isRequired,
+  modularSpriteGenerator: PropTypes.shape({
+    open: PropTypes.bool.isRequired,
+    intent: PropTypes.shape({
+      existingId: PropTypes.string.isRequired,
+      includeAssetId: PropTypes.string,
+      removeAssetId: PropTypes.string,
+    }),
+  }).isRequired,
+  setModularSpriteGenerator: PropTypes.func.isRequired,
 };

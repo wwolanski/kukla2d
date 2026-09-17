@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
-import { useAnimationStore } from '@/store/animationStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useAnimationStore } from '@/store/animationStore.js';
+import { useProjectStore } from '@/store/projectStore.js';
 
 /**
  * Supervises Export Area move mode as a modal canvas tool.

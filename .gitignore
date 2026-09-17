@@ -37,6 +37,11 @@ AGENTS.md
 .kilocode/
 .plans/
 
+# Tools
+# .husky/_/
+.eslintcache
+
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -75,3 +80,4 @@ frames */
 
 # Other
 TODO.md
+_context/

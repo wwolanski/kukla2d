@@ -1,7 +1,1 @@
-export { TextureReplacementModal } from './components/TextureReplacementModal.jsx';
-export {
-  applyTextureReplacements,
-  autoPairTextures,
-  collectTextureReplacementCandidates,
-  collectTextureReplacementSources,
-} from './domain/textureReplacement.js';
+export { TextureReplacementModal } from "@/features/texture-replacement/components/TextureReplacementModal.jsx";

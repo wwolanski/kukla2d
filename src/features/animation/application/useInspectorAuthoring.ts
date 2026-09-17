@@ -1,11 +1,13 @@
-import type { AnimationTargetId } from '@kukla2d/contracts';
+import type { AnimationTargetId } from "@kukla2d/contracts";
 
-import { useAnimationStore } from '@/store/animationStore';
-import { useEditorStore } from '@/store/editorStore';
+import { useAnimationStore } from "@/store/animationStore.js";
+import { useEditorStore } from "@/store/editorStore.js";
 
-import { createAnimationAuthoringApi } from './createAnimationAuthoringApi.js';
-
-import type { AnimationAuthoringApi, AnimationCommitResult } from './createAnimationAuthoringApi.js';
+import { createAnimationAuthoringApi } from "@/features/animation/application/createAnimationAuthoringApi.js";
+import type {
+  AnimationAuthoringApi,
+  AnimationCommitResult,
+} from "@/features/animation/application/createAnimationAuthoringApi.types.js";
 
 const api = createAnimationAuthoringApi();
 
@@ -13,9 +15,9 @@ export function inspectorPreview(
   targetId: AnimationTargetId,
   property: string,
   value: unknown,
-): ReturnType<AnimationAuthoringApi['preview']> | null {
+): ReturnType<AnimationAuthoringApi["preview"]> | null {
   const { editorMode } = useEditorStore.getState();
-  if (editorMode !== 'animation') return null;
+  if (editorMode !== "animation") return null;
   const { activeAnimationId, currentTime } = useAnimationStore.getState();
   if (!activeAnimationId) return null;
   return api.preview({
@@ -24,8 +26,8 @@ export function inspectorPreview(
     property,
     value,
     timeMs: currentTime,
-    source: 'inspector',
-    phase: 'preview',
+    source: "inspector",
+    phase: "preview",
   });
 }
 
@@ -37,8 +39,8 @@ export function inspectorPosePreview(
   targetId: AnimationTargetId,
   property: string,
   value: unknown,
-): ReturnType<AnimationAuthoringApi['preview']> | null {
-  if (useEditorStore.getState().editorMode === 'animation') {
+): ReturnType<AnimationAuthoringApi["preview"]> | null {
+  if (useEditorStore.getState().editorMode === "animation") {
     return inspectorPreview(targetId, property, value);
   }
   useAnimationStore.getState().setDraftPose(targetId, { [property]: value });
@@ -50,9 +52,11 @@ export function inspectorClearPoseTarget(targetId: AnimationTargetId): void {
   useAnimationStore.getState().clearDraftAuthoringForNode(targetId);
 }
 
-export function inspectorCommit(source = 'gesture'): AnimationCommitResult | null {
+export function inspectorCommit(
+  source = "gesture",
+): AnimationCommitResult | null {
   const { editorMode, autoKeyframe } = useEditorStore.getState();
-  if (editorMode !== 'animation') return null;
+  if (editorMode !== "animation") return null;
   if (!autoKeyframe) {
     return { changed: false, affectedIds: [], committedAddresses: [] };
   }
@@ -60,5 +64,5 @@ export function inspectorCommit(source = 'gesture'): AnimationCommitResult | nul
 }
 
 export function isAnimationMode(): boolean {
-  return useEditorStore.getState().editorMode === 'animation';
+  return useEditorStore.getState().editorMode === "animation";
 }

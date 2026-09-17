@@ -1,23 +1,5 @@
-import type { ProjectDocument, Vertex } from '@kukla2d/contracts';
+import type { ProjectDocument, Vertex } from "@kukla2d/contracts";
 
-import type { PixiPerformanceCounters, PixiRuntimeStats } from '@/features/canvas/domain/pixiPerformanceMetrics.js';
-import {
-  createPerformanceCounters,
-  incrementCounter,
-  recordTiming,
-  resetCounters,
-  snapshotStats,
-} from '@/features/canvas/domain/pixiPerformanceMetrics.js';
-
-import { PixiAppLifecycle } from './PixiAppLifecycle.js';
-import { PixiCaptureService } from './PixiCaptureService.js';
-import { PixiFrameRenderer } from './PixiFrameRenderer.js';
-import { PixiInteractionSystem, type PixiInteractionSystemOptions } from './PixiInteractionSystem.js';
-import { PixiLayerGraph } from './PixiLayerGraph.js';
-import { PixiOverlayRenderer } from './PixiOverlayRenderer.js';
-import { PixiResourceRegistry } from './PixiResourceRegistry.js';
-
-import type { PixiViewportBridge } from './PixiViewportBridge.js';
 import type {
   CanvasFrame,
   CanvasMeshData,
@@ -26,20 +8,47 @@ import type {
   DrawFrameOptions,
   EditorView,
   RendererResourceRegistry,
-  StagedCanvasResources,
-} from '../rendererTypes.js';
-import type { Application, Container } from 'pixi.js';
+} from "@/features/canvas/application/canvasRenderer.types.js";
+import {
+  createPerformanceCounters,
+  incrementCounter,
+  recordTiming,
+  resetCounters,
+  snapshotStats,
+} from "@/features/canvas/domain/pixiPerformanceMetrics.js";
+import type {
+  PixiPerformanceCounters,
+  PixiRuntimeStats,
+} from "@/features/canvas/domain/pixiPerformanceMetrics.types.js";
+import { PixiAppLifecycle } from "@/features/canvas/infrastructure/rendering/pixi/PixiAppLifecycle.js";
+import { PixiCaptureService } from "@/features/canvas/infrastructure/rendering/pixi/PixiCaptureService.js";
+import { PixiFrameRenderer } from "@/features/canvas/infrastructure/rendering/pixi/PixiFrameRenderer.js";
+import type { PixiInteractionSystemOptions } from "@/features/canvas/infrastructure/rendering/pixi/pixiInteractionContracts.types.js";
+import { PixiInteractionSystem } from "@/features/canvas/infrastructure/rendering/pixi/PixiInteractionSystem.js";
+import { PixiLayerGraph } from "@/features/canvas/infrastructure/rendering/pixi/PixiLayerGraph.js";
+import { PixiOverlayRenderer } from "@/features/canvas/infrastructure/rendering/pixi/PixiOverlayRenderer.js";
+import { PixiResourceRegistry } from "@/features/canvas/infrastructure/rendering/pixi/PixiResourceRegistry.js";
+import type { PixiSceneGatewayOptions } from "@/features/canvas/infrastructure/rendering/pixi/PixiSceneGateway.types.js";
+import type { PixiViewportBridge } from "@/features/canvas/infrastructure/rendering/pixi/PixiViewportBridge.js";
 
+import type { Application, Container } from "pixi.js";
 
-export interface PixiSceneGatewayOptions {
-  canvas: HTMLCanvasElement;
-  onViewChange?: (view: EditorView) => void;
-  initialView?: EditorView;
+interface StagedCanvasResources {
+  readonly resources: RendererResourceRegistry;
+  uploadTexture(partId: string, image: CanvasTextureSource): void;
+  uploadMesh(partId: string, mesh: CanvasMeshData): void;
+  uploadQuadFallback(partId: string, width: number, height: number): void;
+  commit(): RendererResourceRegistry;
+  dispose(): void;
 }
 
 type InteractionSystemOptions = Omit<
   PixiInteractionSystemOptions,
-  'viewportBridge' | 'overlayLayer' | 'metrics' | 'uploadMesh' | 'uploadPositions'
+  | "viewportBridge"
+  | "overlayLayer"
+  | "metrics"
+  | "uploadMesh"
+  | "uploadPositions"
 >;
 
 export class PixiSceneGateway {
@@ -55,7 +64,8 @@ export class PixiSceneGateway {
   private layers: PixiLayerGraph | null = null;
   private frameRenderer: PixiFrameRenderer | null = null;
   private captureService: PixiCaptureService | null = null;
-  private readonly metrics: PixiPerformanceCounters = createPerformanceCounters();
+  private readonly metrics: PixiPerformanceCounters =
+    createPerformanceCounters();
   private disposed = false;
 
   constructor({ canvas, onViewChange, initialView }: PixiSceneGatewayOptions) {
@@ -63,7 +73,10 @@ export class PixiSceneGateway {
     this.onViewChange = onViewChange;
     this.initialView = initialView;
 
-    this.lifecycle = new PixiAppLifecycle({ canvas, ...(initialView ? { initialView } : {}) });
+    this.lifecycle = new PixiAppLifecycle({
+      canvas,
+      ...(initialView ? { initialView } : {}),
+    });
     this.ready = this._initialize();
   }
 
@@ -97,7 +110,9 @@ export class PixiSceneGateway {
       viewportBridge: this.layers.viewportBridge,
     });
 
-    this.overlayRenderer = new PixiOverlayRenderer({ overlayLayer: this.layers.overlayLayer });
+    this.overlayRenderer = new PixiOverlayRenderer({
+      overlayLayer: this.layers.overlayLayer,
+    });
 
     if (this.initialView) {
       this.layers.viewportBridge.applyEditorView(this.initialView);
@@ -121,10 +136,19 @@ export class PixiSceneGateway {
   }
 
   createInteractionSystem({
-    projectRef, editorRef, animationRef, updateProject, setSelection,
-    markDirty, workflowActor, imageDataByPartId, executeCommand,
+    projectRef,
+    editorRef,
+    animationRef,
+    updateProject,
+    setSelection,
+    markDirty,
+    workflowActor,
+    imageDataByPartId,
+    executeCommand,
     animationAuthoringAdapter,
-  }: InteractionSystemOptions): InstanceType<typeof PixiInteractionSystem> | null {
+  }: InteractionSystemOptions): InstanceType<
+    typeof PixiInteractionSystem
+  > | null {
     if (!this.viewportBridge || !this.overlayLayer) return null;
     this.markDirty = markDirty;
     this.interactionSystem = new PixiInteractionSystem({
@@ -140,15 +164,28 @@ export class PixiSceneGateway {
       metrics: this.metrics,
       ...(imageDataByPartId ? { imageDataByPartId } : {}),
       executeCommand,
-      uploadMesh: (partId: string, mesh: CanvasMeshData) => this.uploadMesh(partId, mesh),
-      uploadPositions: (partId: string, vertices: Vertex[], uvs?: ArrayLike<number>) => this.uploadPositions(partId, vertices, uvs),
-      ...(animationAuthoringAdapter !== undefined ? { animationAuthoringAdapter } : {}),
+      uploadMesh: (partId: string, mesh: CanvasMeshData) =>
+        this.uploadMesh(partId, mesh),
+      uploadPositions: (
+        partId: string,
+        vertices: Vertex[],
+        uvs?: ArrayLike<number>,
+      ) => this.uploadPositions(partId, vertices, uvs),
+      ...(animationAuthoringAdapter !== undefined
+        ? { animationAuthoringAdapter }
+        : {}),
     });
     this.interactionSystem.bind();
     return this.interactionSystem;
   }
 
-  draw(project: ProjectDocument, editor: object, isDark: boolean, poseOverrides: object, options?: object): void {
+  draw(
+    project: ProjectDocument,
+    editor: object,
+    isDark: boolean,
+    poseOverrides: object,
+    options?: object,
+  ): void {
     void project;
     void editor;
     void isDark;
@@ -161,8 +198,8 @@ export class PixiSceneGateway {
     if (!this.app) return;
     const start = performance.now();
     this.app.render();
-    incrementCounter(this.metrics, 'renderCount');
-    recordTiming(this.metrics, 'renderTotalMs', performance.now() - start);
+    incrementCounter(this.metrics, "renderCount");
+    recordTiming(this.metrics, "renderTotalMs", performance.now() - start);
   }
 
   drawFrame(frame: CanvasFrame, options: DrawFrameOptions = {}): void {
@@ -176,25 +213,29 @@ export class PixiSceneGateway {
   uploadTexture(partId: string, image: CanvasTextureSource): void {
     if (!this.resources) return;
     this.resources.uploadTexture(partId, image);
-    incrementCounter(this.metrics, 'gpuUploadCount');
+    incrementCounter(this.metrics, "gpuUploadCount");
   }
 
   uploadMesh(partId: string, mesh: CanvasMeshData): void {
     if (!this.resources) return;
     this.resources.uploadMesh(partId, mesh);
-    incrementCounter(this.metrics, 'gpuUploadCount');
+    incrementCounter(this.metrics, "gpuUploadCount");
   }
 
   uploadQuadFallback(partId: string, width: number, height: number): void {
     if (!this.resources) return;
     this.resources.uploadQuadFallback(partId, width, height);
-    incrementCounter(this.metrics, 'gpuUploadCount');
+    incrementCounter(this.metrics, "gpuUploadCount");
   }
 
-  uploadPositions(partId: string, vertices: Vertex[], uvs?: ArrayLike<number>): void {
+  uploadPositions(
+    partId: string,
+    vertices: Vertex[],
+    uvs?: ArrayLike<number>,
+  ): void {
     if (!this.resources) return;
     this.resources.uploadPositions(partId, vertices, uvs);
-    incrementCounter(this.metrics, 'gpuUploadCount');
+    incrementCounter(this.metrics, "gpuUploadCount");
   }
 
   createStagedResources(): StagedCanvasResources | null {
@@ -206,20 +247,24 @@ export class PixiSceneGateway {
     return {
       resources,
       uploadTexture(partId: string, image: CanvasTextureSource): void {
-        if (disposed || committed) throw new Error('Staged resources are closed');
+        if (disposed || committed)
+          throw new Error("Staged resources are closed");
         resources.uploadTexture(partId, image);
       },
       uploadMesh(partId: string, mesh: CanvasMeshData): void {
-        if (disposed || committed) throw new Error('Staged resources are closed');
+        if (disposed || committed)
+          throw new Error("Staged resources are closed");
         resources.uploadMesh(partId, mesh);
       },
       uploadQuadFallback(partId: string, width: number, height: number): void {
-        if (disposed || committed) throw new Error('Staged resources are closed');
+        if (disposed || committed)
+          throw new Error("Staged resources are closed");
         resources.uploadQuadFallback(partId, width, height);
       },
       commit: (): PixiResourceRegistry => {
-        if (disposed) throw new Error('Cannot commit disposed staged resources');
-        if (committed) throw new Error('Staged resources already committed');
+        if (disposed)
+          throw new Error("Cannot commit disposed staged resources");
+        if (committed) throw new Error("Staged resources already committed");
         committed = true;
         return this.swapResources(resources);
       },
@@ -232,9 +277,10 @@ export class PixiSceneGateway {
   }
 
   swapResources(nextResources: RendererResourceRegistry): PixiResourceRegistry {
-    if (!(nextResources instanceof PixiResourceRegistry)) throw new Error('Invalid Pixi resource registry');
+    if (!(nextResources instanceof PixiResourceRegistry))
+      throw new Error("Invalid Pixi resource registry");
     const previous = this.resources;
-    if (!previous) throw new Error('Pixi scene gateway is not ready');
+    if (!previous) throw new Error("Pixi scene gateway is not ready");
     this.resources = nextResources;
     if (this.frameRenderer) {
       this.frameRenderer.resources = nextResources;
@@ -272,7 +318,7 @@ export class PixiSceneGateway {
   }
 
   incrementOverlayRenderCount(): void {
-    incrementCounter(this.metrics, 'overlayRenderCount');
+    incrementCounter(this.metrics, "overlayRenderCount");
   }
 
   dispose(): void {

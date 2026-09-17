@@ -1,7 +1,9 @@
-export * from './errors.js';
-export * from './project.js';
-export * from './commands.js';
-export * from './engine.js';
-export * from './tasks.js';
-export * from './assets.js';
-export * from './io.js';
+export * from "./errors.js";
+export * from "./modularSpriteProcessing.config.js";
+export type * from "./errors.types.js";
+export type * from "./project.types.js";
+export type * from "./commands.types.js";
+export type * from "./engine.types.js";
+export type * from "./tasks.types.js";
+export type * from "./assets.types.js";
+export type * from "./io.types.js";

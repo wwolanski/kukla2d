@@ -1,21 +1,30 @@
-import PropTypes from 'prop-types';
-import { lazy, Suspense, useCallback } from 'react';
-
-import { AutoMotionPanel } from '@/features/auto-motion';
-import CanvasViewport from '@/features/canvas';
-import { Inspector } from '@/features/inspector';
-import { LayerPanel } from '@/features/layers';
-import { WorkspaceToolbar, PoseToolButton, ToolSettingsBar, WorkspaceStatus } from '@/features/projects';
-
-import { HelpIcon } from '@/components/ui/help-icon';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import PropTypes from "prop-types";
+import { lazy, Suspense, useCallback } from "react";
 
 import {
   loadAnimationListPanel,
   loadTimelinePanel,
-} from './editorWorkspaceLazyLoaders.js';
+} from "@/app/layout/components/editorWorkspaceLazyLoaders.js";
+
+import { AutoMotionPanel } from "@/features/auto-motion/index.js";
+import { CanvasViewport } from "@/features/canvas/index.js";
+import { Inspector } from "@/features/inspector/index.js";
+import { LayerPanel } from "@/features/layers/index.js";
+import {
+  WorkspaceToolbar,
+  PoseToolButton,
+  ToolSettingsBar,
+  WorkspaceStatus,
+} from "@/features/projects/index.js";
+
+import { HelpIcon } from "@/components/ui/help-icon.jsx";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable.jsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
+import { TooltipProvider } from "@/components/ui/tooltip.jsx";
 
 const TimelinePanel = lazy(loadTimelinePanel);
 const AnimationListPanel = lazy(loadAnimationListPanel);
@@ -34,27 +43,41 @@ export function EditorWorkspace({
   onRemesh,
   onDeleteMesh,
   onLoadExampleProject,
+  onImportModularSprite,
+  onRegenerateModularSprite,
 }) {
   const handleImportClick = useCallback(() => {
     importRef.current?.openFilePicker?.();
   }, [importRef]);
 
-  const handleImportFiles = useCallback((files) => {
-    importRef.current?.importFiles?.(files);
-  }, [importRef]);
+  const handleImportFiles = useCallback(
+    (files) => {
+      importRef.current?.importFiles?.(files);
+    },
+    [importRef],
+  );
 
   return (
     <div className="flex-1 overflow-hidden">
       <ResizablePanelGroup id="root-group" direction="horizontal">
         {editorStarted && (
           <>
-            <ResizablePanel id="layers-panel" order={1} defaultSize={18} minSize={12} maxSize={28}>
-              <div className="flex h-full flex-col border-r">
-                <div className="flex-1 overflow-hidden">
+            <ResizablePanel
+              id="layers-panel"
+              order={1}
+              defaultSize={18}
+              minSize={12}
+              maxSize={28}
+              className="min-w-0"
+            >
+              <div className="flex h-full min-h-0 min-w-0 flex-col border-r">
+                <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
                   <LayerPanel
                     onImportClick={handleImportClick}
                     onImportFiles={handleImportFiles}
                     onLoadExampleProject={onLoadExampleProject}
+                    onImportModularSprite={onImportModularSprite}
+                    onRegenerateModularSprite={onRegenerateModularSprite}
                   />
                 </div>
               </div>
@@ -63,9 +86,17 @@ export function EditorWorkspace({
           </>
         )}
 
-        <ResizablePanel id="center-panel" order={2} defaultSize={editorStarted ? 57 : 100}>
+        <ResizablePanel
+          id="center-panel"
+          order={2}
+          defaultSize={editorStarted ? 57 : 100}
+        >
           <ResizablePanelGroup id="center-group" direction="vertical">
-            <ResizablePanel id="canvas-panel" order={1} defaultSize={isAnimationMode ? 75 : 100}>
+            <ResizablePanel
+              id="canvas-panel"
+              order={1}
+              defaultSize={isAnimationMode ? 75 : 100}
+            >
               <div className="relative h-full w-full">
                 {editorStarted && (
                   <>
@@ -94,7 +125,13 @@ export function EditorWorkspace({
             {isAnimationMode && (
               <>
                 <ResizableHandle id="handle-timeline" />
-                <ResizablePanel id="timeline-panel" order={2} defaultSize={25} minSize={12} collapsible>
+                <ResizablePanel
+                  id="timeline-panel"
+                  order={2}
+                  defaultSize={25}
+                  minSize={12}
+                  collapsible
+                >
                   <div className="flex h-full min-h-0 min-w-0 flex-col border-t">
                     <Suspense fallback={null}>
                       <TimelinePanel />
@@ -118,31 +155,59 @@ export function EditorWorkspace({
               className="bg-card border-l transition-all duration-300"
             >
               <ResizablePanelGroup id="inspector-group" direction="vertical">
-                <ResizablePanel id="inspector-column" order={1} defaultSize={isAnimationMode ? 75 : 100} minSize={30}>
+                <ResizablePanel
+                  id="inspector-column"
+                  order={1}
+                  defaultSize={isAnimationMode ? 75 : 100}
+                  minSize={30}
+                >
                   <TooltipProvider delayDuration={200}>
-                    <Tabs defaultValue="main" className="flex h-full flex-col border-l overflow-hidden">
+                    <Tabs
+                      defaultValue="main"
+                      className="flex h-full flex-col border-l overflow-hidden"
+                    >
                       <TabsList className="grid h-9 w-full grid-cols-2 rounded-none border-b bg-muted/20 p-0">
-                        <TabsTrigger value="main" className="h-9 rounded-none text-[10px] font-semibold tracking-wider">
+                        <TabsTrigger
+                          value="main"
+                          className="h-9 rounded-none text-[10px] font-semibold tracking-wider"
+                        >
                           MAIN
                         </TabsTrigger>
-                        <TabsTrigger value="auto-motion" className="h-9 rounded-none text-[10px] font-semibold tracking-wider">
+                        <TabsTrigger
+                          value="auto-motion"
+                          className="h-9 rounded-none text-[10px] font-semibold tracking-wider"
+                        >
                           AUTO MOTION
                         </TabsTrigger>
                       </TabsList>
 
-                      <TabsContent value="main" className="m-0 flex min-h-0 flex-1 flex-col">
+                      <TabsContent
+                        value="main"
+                        className="m-0 flex min-h-0 flex-1 flex-col"
+                      >
                         <div className="px-3 py-2 border-b shrink-0 flex items-center justify-between">
                           <div className="flex items-center gap-1">
-                            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Inspector</h2>
-                            <HelpIcon tip="Properties of the active selection. Edit transform, mesh, texture, and bone settings here." side="left" />
+                            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                              Inspector
+                            </h2>
+                            <HelpIcon
+                              tip="Properties of the active selection. Edit transform, mesh, texture, and bone settings here."
+                              side="left"
+                            />
                           </div>
                         </div>
                         <div className="flex-1 overflow-hidden">
-                          <Inspector onRemesh={onRemesh} onDeleteMesh={onDeleteMesh} />
+                          <Inspector
+                            onRemesh={onRemesh}
+                            onDeleteMesh={onDeleteMesh}
+                          />
                         </div>
                       </TabsContent>
 
-                      <TabsContent value="auto-motion" className="m-0 min-h-0 flex-1 flex-col">
+                      <TabsContent
+                        value="auto-motion"
+                        className="m-0 min-h-0 flex-1 flex-col"
+                      >
                         <AutoMotionPanel />
                       </TabsContent>
                     </Tabs>
@@ -152,7 +217,12 @@ export function EditorWorkspace({
                 {isAnimationMode && (
                   <>
                     <ResizableHandle id="handle-animation-list" />
-                    <ResizablePanel id="animation-list-panel" order={2} defaultSize={25} minSize={10}>
+                    <ResizablePanel
+                      id="animation-list-panel"
+                      order={2}
+                      defaultSize={25}
+                      minSize={10}
+                    >
                       <Suspense fallback={null}>
                         <AnimationListPanel />
                       </Suspense>
@@ -184,4 +254,6 @@ EditorWorkspace.propTypes = {
   onRemesh: PropTypes.func.isRequired,
   onDeleteMesh: PropTypes.func.isRequired,
   onLoadExampleProject: PropTypes.func.isRequired,
+  onImportModularSprite: PropTypes.func.isRequired,
+  onRegenerateModularSprite: PropTypes.func.isRequired,
 };

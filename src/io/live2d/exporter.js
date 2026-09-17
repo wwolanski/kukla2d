@@ -7,14 +7,14 @@
  * @module io/live2d/exporter
  */
 
-import { generateModel3Json } from './model3json.js';
-import { generateCdi3Json } from './cdi3json.js';
-import { generateMotion3Json } from './motion3json.js';
-import { generateMoc3 } from './moc3writer.js';
-import { packTextureAtlas } from './textureAtlas.js';
-import { generateCmo3 } from './cmo3writer.js';
-import { generateCan3 } from './can3writer.js';
-import { matchTag } from '../psdOrganizer.js';
+import { generateModel3Json } from "@/io/live2d/model3json.js";
+import { generateCdi3Json } from "@/io/live2d/cdi3json.js";
+import { generateMotion3Json } from "@/io/live2d/motion3json.js";
+import { generateMoc3 } from "@/io/live2d/moc3writer.js";
+import { packTextureAtlas } from "@/io/live2d/textureAtlas.js";
+import { generateCmo3 } from "@/io/live2d/cmo3writer.js";
+import { generateCan3 } from "@/io/live2d/can3writer.js";
+import { matchTag } from "@/io/psdOrganizer.js";
 
 /**
  * @typedef {Object} ExportOptions
@@ -34,18 +34,20 @@ import { matchTag } from '../psdOrganizer.js';
  */
 export async function exportLive2D(project, images, opts = {}) {
   const {
-    modelName = 'model',
+    modelName = "model",
     atlasSize = 2048,
     exportMotions = true,
     onProgress = () => {},
   } = opts;
 
-  const { default: JSZip } = await import('jszip');
+  const { default: JSZip } = await import("jszip");
   const zip = new JSZip();
 
   // --- Step 1: Pack textures ---
-  onProgress('Packing texture atlas...');
-  const { atlases, regions } = await packTextureAtlas(project, images, { atlasSize });
+  onProgress("Packing texture atlas...");
+  const { atlases, regions } = await packTextureAtlas(project, images, {
+    atlasSize,
+  });
 
   // Write atlas PNGs
   const textureDir = `${modelName}.${atlasSize}`;
@@ -53,13 +55,13 @@ export async function exportLive2D(project, images, opts = {}) {
   const textureFolder = zip.folder(textureDir);
 
   for (let i = 0; i < atlases.length; i++) {
-    const filename = `texture_${String(i).padStart(2, '0')}.png`;
+    const filename = `texture_${String(i).padStart(2, "0")}.png`;
     textureFolder.file(filename, atlases[i].blob);
     textureFiles.push(`${textureDir}/${filename}`);
   }
 
   // --- Step 2: Generate .moc3 ---
-  onProgress('Generating .moc3 binary...');
+  onProgress("Generating .moc3 binary...");
   const moc3Buffer = generateMoc3({
     project,
     regions,
@@ -71,50 +73,53 @@ export async function exportLive2D(project, images, opts = {}) {
   // --- Step 3: Generate .motion3.json files ---
   // Build parameterMap from track targets using stable Live2D IDs.
   const parameterMap = new Map();
-  const allGroups = project.nodes.filter(n => n.type === 'group');
+  const allGroups = project.nodes.filter((n) => n.type === "group");
   for (const g of allGroups) {
-    const sanitized = (g.name || g.id).replace(/[^a-zA-Z0-9_]/g, '_');
+    const sanitized = (g.name || g.id).replace(/[^a-zA-Z0-9_]/g, "_");
     parameterMap.set(`${g.id}.rotation`, `ParamRotation_${sanitized}`);
   }
-  const meshPartsWithMesh = project.nodes.filter(n => n.type === 'part' && n.mesh);
+  const meshPartsWithMesh = project.nodes.filter(
+    (n) => n.type === "part" && n.mesh,
+  );
   for (const p of meshPartsWithMesh) {
-    const sanitized = (p.name || p.id).replace(/[^a-zA-Z0-9_]/g, '_');
+    const sanitized = (p.name || p.id).replace(/[^a-zA-Z0-9_]/g, "_");
     parameterMap.set(`${p.id}.mesh_verts`, `ParamDeform_${sanitized}`);
   }
 
   const motionFiles = [];
   if (exportMotions && project.animations?.length > 0) {
-    onProgress('Generating motion files...');
-    const motionFolder = zip.folder('motion');
+    onProgress("Generating motion files...");
+    const motionFolder = zip.folder("motion");
 
     for (const anim of project.animations) {
       const sanitized = sanitizeName(anim.name);
       const filename = `${sanitized}.motion3.json`;
       const motion = generateMotion3Json(anim, { parameterMap });
-      motionFolder.file(filename, JSON.stringify(motion, null, '\t'));
+      motionFolder.file(filename, JSON.stringify(motion, null, "\t"));
       motionFiles.push(`motion/${filename}`);
     }
   }
 
   // --- Step 4: Generate .cdi3.json ---
-  onProgress('Generating display info...');
-  const groups = project.nodes.filter(n => n.type === 'group');
-  const _meshParts = project.nodes.filter(n =>
-    n.type === 'part' && n.mesh && n.visible !== false && regions.has(n.id)
+  onProgress("Generating display info...");
+  const groups = project.nodes.filter((n) => n.type === "group");
+  const _meshParts = project.nodes.filter(
+    (n) =>
+      n.type === "part" && n.mesh && n.visible !== false && regions.has(n.id),
   );
 
   const cdi3 = generateCdi3Json({
-    parts: groups.map(g => ({
+    parts: groups.map((g) => ({
       id: g.id,
       name: g.name ?? g.id,
     })),
   });
 
   const cdi3File = `${modelName}.cdi3.json`;
-  zip.file(cdi3File, JSON.stringify(cdi3, null, '\t'));
+  zip.file(cdi3File, JSON.stringify(cdi3, null, "\t"));
 
   // --- Step 5: Generate .model3.json ---
-  onProgress('Generating model manifest...');
+  onProgress("Generating model manifest...");
   const model3 = generateModel3Json({
     modelName,
     textureFiles,
@@ -122,11 +127,11 @@ export async function exportLive2D(project, images, opts = {}) {
     displayInfoFile: cdi3File,
   });
 
-  zip.file(`${modelName}.model3.json`, JSON.stringify(model3, null, '\t'));
+  zip.file(`${modelName}.model3.json`, JSON.stringify(model3, null, "\t"));
 
   // --- Step 6: Package ZIP ---
-  onProgress('Creating ZIP...');
-  return zip.generateAsync({ type: 'blob' });
+  onProgress("Creating ZIP...");
+  return zip.generateAsync({ type: "blob" });
 }
 
 /**
@@ -148,7 +153,7 @@ export async function exportLive2D(project, images, opts = {}) {
  */
 export async function exportLive2DProject(project, images, opts = {}) {
   const {
-    modelName = 'model',
+    modelName = "model",
     generateRig = false,
     generatePhysics = generateRig,
     physicsDisabledCategories = null,
@@ -161,21 +166,29 @@ export async function exportLive2DProject(project, images, opts = {}) {
   // Collect visible parts with meshes.
   // Sort by draw_order (descending) to maintain correct depth ordering (upstream fix).
   const meshParts = project.nodes
-    .filter(n =>
-      n.type === 'part' && n.mesh && n.visible !== false
-    )
+    .filter((n) => n.type === "part" && n.mesh && n.visible !== false)
     .sort((a, b) => (b.draw_order ?? 0) - (a.draw_order ?? 0));
 
   onProgress(`Preparing ${meshParts.length} meshes...`);
 
   // Collect groups (for part hierarchy + deformers in .cmo3)
-  const groups = project.nodes.filter(n => n.type === 'group').map(g => ({
-    id: g.id,
-    name: g.name ?? g.id,
-    parent: g.parent ?? null,
-    boneRole: g.boneRole ?? null,
-    transform: g.transform ?? { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1, pivotX: 0, pivotY: 0 },
-  }));
+  const groups = project.nodes
+    .filter((n) => n.type === "group")
+    .map((g) => ({
+      id: g.id,
+      name: g.name ?? g.id,
+      parent: g.parent ?? null,
+      boneRole: g.boneRole ?? null,
+      transform: g.transform ?? {
+        x: 0,
+        y: 0,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+        pivotX: 0,
+        pivotY: 0,
+      },
+    }));
 
   const meshes = [];
   for (let i = 0; i < meshParts.length; i++) {
@@ -196,7 +209,13 @@ export async function exportLive2DProject(project, images, opts = {}) {
 
     // For .cmo3: render full canvas-sized PNG (CLayeredImage covers entire canvas)
     // Mesh vertices and textures are already in canvas space (PSD layers are canvas-sized)
-    const pngData = await renderPartToCanvasPng(img, fullW, fullH, canvasW, canvasH);
+    const pngData = await renderPartToCanvasPng(
+      img,
+      fullW,
+      fullH,
+      canvasW,
+      canvasH,
+    );
 
     // Flatten vertices: Array<{x,y}> → [x0,y0, x1,y1, ...]
     // CRITICAL: Use restX/restY (original positions) not x/y (possibly deformed by bone rotation).
@@ -228,9 +247,10 @@ export async function exportLive2DProject(project, images, opts = {}) {
     const boneWeights = mesh.boneWeights ?? null;
     const jointBoneId = mesh.jointBoneId ?? null;
     // Find the elbow pivot in canvas space (jointBone's transform.pivotX/Y)
-    let jointPivotX = null, jointPivotY = null;
+    let jointPivotX = null,
+      jointPivotY = null;
     if (jointBoneId && boneWeights) {
-      const jointBone = project.nodes.find(n => n.id === jointBoneId);
+      const jointBone = project.nodes.find((n) => n.id === jointBoneId);
       if (jointBone?.transform) {
         jointPivotX = jointBone.transform.pivotX ?? 0;
         jointPivotY = jointBone.transform.pivotY ?? 0;
@@ -240,11 +260,16 @@ export async function exportLive2DProject(project, images, opts = {}) {
     // Walk up the ancestor chain to find the nearest warpDeformer ancestor (if any).
     // This handles meshes nested inside groups that are children of a warpDeformer.
     let ancestorWarpDeformer = null;
-    let cursor = part.parent ? project.nodes.find(n => n.id === part.parent) : null;
+    let cursor = part.parent
+      ? project.nodes.find((n) => n.id === part.parent)
+      : null;
     while (cursor) {
-      if (cursor.type === 'warpDeformer') { ancestorWarpDeformer = cursor; break; }
+      if (cursor.type === "warpDeformer") {
+        ancestorWarpDeformer = cursor;
+        break;
+      }
       if (!cursor.parent) break;
-      cursor = project.nodes.find(n => n.id === cursor.parent) ?? null;
+      cursor = project.nodes.find((n) => n.id === cursor.parent) ?? null;
     }
     const warpDeformerParentId = ancestorWarpDeformer?.id ?? null;
 
@@ -273,14 +298,16 @@ export async function exportLive2DProject(project, images, opts = {}) {
     const texCount = images.size;
     throw new Error(
       partCount === 0
-        ? 'No visible parts with meshes found. Generate meshes before exporting.'
-        : `Found ${partCount} parts but no matching textures (${texCount} textures loaded). Check that parts have textureId matching a texture.`
+        ? "No visible parts with meshes found. Generate meshes before exporting."
+        : `Found ${partCount} parts but no matching textures (${texCount} textures loaded). Check that parts have textureId matching a texture.`,
     );
   }
 
   onProgress(`Generating .cmo3 (${meshes.length} meshes)...`);
 
-  const warpDeformerNodes = project.nodes.filter(n => n.type === 'warpDeformer');
+  const warpDeformerNodes = project.nodes.filter(
+    (n) => n.type === "warpDeformer",
+  );
 
   const { cmo3, deformerParamMap, rigDebugLog } = await generateCmo3({
     canvasW,
@@ -304,26 +331,34 @@ export async function exportLive2DProject(project, images, opts = {}) {
   // Bundle into ZIP if we have animations OR a rig debug log (Phase 0 diagnostic).
   if (hasAnimations || hasRigDebug) {
     const cmo3FileName = `${modelName}.cmo3`;
-    const { default: JSZip } = await import('jszip');
+    const { default: JSZip } = await import("jszip");
     const zip = new JSZip();
     zip.file(cmo3FileName, cmo3);
 
     if (hasAnimations) {
-      onProgress('Generating .can3 animation...');
+      onProgress("Generating .can3 animation...");
       const can3 = await generateCan3({
-        animations, deformerParamMap, cmo3FileName, canvasW, canvasH, modelName,
+        animations,
+        deformerParamMap,
+        cmo3FileName,
+        canvasW,
+        canvasH,
+        modelName,
       });
       zip.file(`${modelName}.can3`, can3);
     }
 
     if (hasRigDebug) {
-      zip.file(`${modelName}.rig.log.json`, JSON.stringify(rigDebugLog, null, 2));
+      zip.file(
+        `${modelName}.rig.log.json`,
+        JSON.stringify(rigDebugLog, null, 2),
+      );
     }
 
-    return zip.generateAsync({ type: 'blob' });
+    return zip.generateAsync({ type: "blob" });
   }
 
-  return new Blob([cmo3], { type: 'application/octet-stream' });
+  return new Blob([cmo3], { type: "application/octet-stream" });
 }
 
 /**
@@ -338,15 +373,23 @@ export async function exportLive2DProject(project, images, opts = {}) {
  * @param {number} canvasH - Canvas height
  * @param {number[]} wm - 3x3 column-major world matrix [m0,m1,0, m3,m4,0, m6,m7,1]
  */
-async function renderPartToCanvasPngTransformed(img, srcW, srcH, canvasW, canvasH, wm) {
-  const canvas = typeof OffscreenCanvas !== 'undefined'
-    ? new OffscreenCanvas(canvasW, canvasH)
-    : document.createElement('canvas');
+async function renderPartToCanvasPngTransformed(
+  img,
+  srcW,
+  srcH,
+  canvasW,
+  canvasH,
+  wm,
+) {
+  const canvas =
+    typeof OffscreenCanvas !== "undefined"
+      ? new OffscreenCanvas(canvasW, canvasH)
+      : document.createElement("canvas");
   if (!(canvas instanceof OffscreenCanvas)) {
     canvas.width = canvasW;
     canvas.height = canvasH;
   }
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   // Apply world transform: canvas 2D setTransform(a, b, c, d, e, f)
   // maps from column-major [m0,m1,0, m3,m4,0, m6,m7,1]
   ctx.setTransform(wm[0], wm[1], wm[3], wm[4], wm[6], wm[7]);
@@ -355,9 +398,9 @@ async function renderPartToCanvasPngTransformed(img, srcW, srcH, canvasW, canvas
 
   let blob;
   if (canvas instanceof OffscreenCanvas) {
-    blob = await canvas.convertToBlob({ type: 'image/png' });
+    blob = await canvas.convertToBlob({ type: "image/png" });
   } else {
-    blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
   }
   return new Uint8Array(await blob.arrayBuffer());
 }
@@ -367,7 +410,14 @@ async function renderPartToCanvasPngTransformed(img, srcW, srcH, canvasW, canvas
  * Legacy — kept for backward compatibility.
  */
 async function renderPartToCanvasPng(img, srcW, srcH, canvasW, canvasH) {
-  return renderPartToCanvasPngTransformed(img, srcW, srcH, canvasW, canvasH, [1,0,0, 0,1,0, 0,0,1]);
+  return renderPartToCanvasPngTransformed(
+    img,
+    srcW,
+    srcH,
+    canvasW,
+    canvasH,
+    [1, 0, 0, 0, 1, 0, 0, 0, 1],
+  );
 }
 
 /**
@@ -377,8 +427,8 @@ async function renderPartToCanvasPng(img, srcW, srcH, canvasW, canvasH) {
  * @returns {string}
  */
 function sanitizeName(name) {
-  return (name ?? 'animation')
-    .replace(/[^a-zA-Z0-9_-]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_+|_+$/g, '');
+  return (name ?? "animation")
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }

@@ -1,19 +1,20 @@
-import { usePendingDraftController } from '../application/usePendingDraftController.js';
+import { usePendingDraftController } from "@/features/timeline/application/usePendingDraftController.js";
 
 export function PendingDraftBanner() {
-  const { visible, autoKeyframe, frame, clipName, commit, discard } = usePendingDraftController();
+  const { visible, autoKeyframe, frame, clipName, commit, discard } =
+    usePendingDraftController();
   if (!visible) return null;
 
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border-b border-amber-500/30 text-[11px] shrink-0">
       <span className="text-amber-600 font-medium">
-        {autoKeyframe ? 'Auto-key preview' : 'Pending draft'}
+        {autoKeyframe ? "Auto-key preview" : "Pending draft"}
       </span>
       <span className="text-muted-foreground">
         {clipName} @ f{frame}
         {autoKeyframe
-          ? ' · release to save keyframe · press I to drop one now'
-          : ' · press I to drop keyframe · release keeps draft'}
+          ? " · release to save keyframe · press I to drop one now"
+          : " · press I to drop keyframe · release keeps draft"}
       </span>
       <span className="flex-1" />
       {!autoKeyframe && (

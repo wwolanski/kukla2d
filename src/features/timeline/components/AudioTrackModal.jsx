@@ -2,16 +2,18 @@
 import { Music } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+import { MAX_NAME_LENGTH } from '@/domain/nameConstraints.js';
+
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+} from '@/components/ui/dialog.jsx';
+import { Input } from '@/components/ui/input.jsx';
+import { Label } from '@/components/ui/label.jsx';
+import { Slider } from '@/components/ui/slider.jsx';
 
 export function buildAudioTrackPatch({ name, startOffset, audioStartMs, duration }) {
   return {
@@ -71,6 +73,7 @@ export function AudioTrackModal({
             <Label className="text-sm font-semibold tracking-tight">Track Name</Label>
             <Input
               value={name}
+              maxLength={MAX_NAME_LENGTH}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Background Music"
               className="h-9 font-medium"
