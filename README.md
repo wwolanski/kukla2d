@@ -10,7 +10,7 @@
 <h3 align="center">🌐 &nbsp;<a href="https://wwolanski.github.io/kukla2d">TRY IT LIVE</a>&nbsp; 🚀</h3>
 
 
-Kukla2D is a local-first, browser-based editor for rigging and animating 2D characters. It combines an approachable workflow with mesh deformation, skeletal animation, constraints, physics, and game-ready export.
+Kukla2D is a local-first, browser-based editor for rigging and animating 2D characters. It combines an approachable workflow with mesh deformation, skeletal animation, constraints, physics, and game-ready export. It also works as a modular sprite processor and manager for building reusable character packages and AI-first asset workflows.
 
 >[!WARNING]
 > ***Version 0.9.3-beta** — Kukla2D's core editing workflow, project save/load, and primary export formats are functional and suitable for regular use. Some features remain experimental, and minor bugs or performance issues may still occur.*
@@ -24,6 +24,11 @@ Kukla2D is a local-first, browser-based editor for rigging and animating 2D char
 - **Constraints:** IK (single/two-bone with FK blend), transform copy (per-channel, local/world), and path constraints (multi-point bezier) — all with mix control.
 - **Physics:** Verlet particle system with gravity, wind, damping, and distance constraints; pendulum chain generator; physics rules editor with tag filtering; offline baking to keyframes.
 - **Project management:** `.kk2d` format with schema migrations (v0.1→9), Zod validation, IndexedDB library, thumbnail gallery, and crash recovery.
+- **Modular sprite workflow:** guided sprite-sheet importing with region detection, review, grouping, semantic-role assignment, mask touch-up, and reusable modular character packages.
+- **Sprite processing:** automatic background detection for alpha and chroma-key sources, luminance-aware keying, silhouette-preserving mask cleanup, previews, caching, and persistent-worker progress/cancellation.
+- **Schemas & generation:** local Schema Library with comparison, metadata, previews, compatible asset lookup, schema publication, and modular character generation or regeneration from Library assets.
+- **Command line:** process modular sprites outside the editor and export the result, matte mask, and reusable recipe. Browser and CLI share the same processing configuration.
+
 - **Export:** PNG sequences, spritesheets, and GIFs; [Phaser 4.2.1](https://phaser.io) baked texture atlas with `.atlas.json`, `.animations.json`, and TypeScript example; export area with preset resolutions. Experimental: Spine 4.0 JSON and Live2D Cubism 5.0.
 
 
