@@ -175,6 +175,35 @@ describe("library sidebar rows", () => {
     view.unmount();
   });
 
+  it("does not repeat the source filename on a modular package row", () => {
+    const view = mount(
+      <LibraryFolderRow
+        folder={{
+          id: "package-folder",
+          name: "Hero",
+          sourceFileName: "hero.png",
+          isModularSpritePackage: true,
+          modularSpriteId: "sprite-1",
+          children: [],
+        }}
+        isExpanded
+        dragSession={null}
+        depth={0}
+        onToggleExpand={vi.fn()}
+        onRename={vi.fn()}
+        onRemove={vi.fn()}
+        onDragStart={vi.fn()}
+        onDragOver={vi.fn()}
+        onDrop={vi.fn()}
+      />,
+    );
+
+    expect(view.container.textContent).toContain("Hero");
+    expect(view.container.textContent).not.toContain("hero.png");
+
+    view.unmount();
+  });
+
   it("keeps package regeneration available from the modular source context menu", async () => {
     const onRegenerateModularSprite = vi.fn();
     const view = mount(

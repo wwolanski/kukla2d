@@ -97,7 +97,7 @@ export function DepthRow({
         />
       ) : (
         <span
-          className="min-w-0 flex-1 truncate font-mono text-xs"
+          className="w-0 min-w-0 flex-1 truncate font-mono text-xs"
           title={node.name || node.id}
         >
           {truncateDisplayName(node.name || node.id)}

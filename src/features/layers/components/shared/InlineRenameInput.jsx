@@ -21,7 +21,7 @@ export function InlineRenameInput({ value, onChange, onBlur, onKeyDown, classNam
       onChange={(e) => onChange(e.target.value)}
       onBlur={onBlur}
       onKeyDown={onKeyDown}
-      className={className ?? 'min-w-0 flex-1 bg-transparent border border-primary/40 rounded px-1 py-0 text-xs font-mono outline-none'}
+      className={className ?? 'w-0 min-w-0 flex-1 bg-transparent border border-primary/40 rounded px-1 py-0 text-xs font-mono outline-none'}
       onClick={(e) => e.stopPropagation()}
     />
   );

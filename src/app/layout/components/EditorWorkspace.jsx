@@ -28,6 +28,8 @@ import { TooltipProvider } from "@/components/ui/tooltip.jsx";
 
 const TimelinePanel = lazy(loadTimelinePanel);
 const AnimationListPanel = lazy(loadAnimationListPanel);
+const DEFAULT_SIDE_PANEL_SIZE = 22;
+const DEFAULT_CENTER_PANEL_SIZE = 100 - DEFAULT_SIDE_PANEL_SIZE * 2;
 
 export function EditorWorkspace({
   editorStarted,
@@ -65,7 +67,7 @@ export function EditorWorkspace({
             <ResizablePanel
               id="layers-panel"
               order={1}
-              defaultSize={18}
+              defaultSize={DEFAULT_SIDE_PANEL_SIZE}
               minSize={12}
               maxSize={28}
               className="min-w-0"
@@ -89,7 +91,7 @@ export function EditorWorkspace({
         <ResizablePanel
           id="center-panel"
           order={2}
-          defaultSize={editorStarted ? 57 : 100}
+          defaultSize={editorStarted ? DEFAULT_CENTER_PANEL_SIZE : 100}
         >
           <ResizablePanelGroup id="center-group" direction="vertical">
             <ResizablePanel
@@ -149,7 +151,7 @@ export function EditorWorkspace({
             <ResizablePanel
               id="inspector-panel"
               order={3}
-              defaultSize={25}
+              defaultSize={DEFAULT_SIDE_PANEL_SIZE}
               minSize={20}
               maxSize={40}
               className="bg-card border-l transition-all duration-300"

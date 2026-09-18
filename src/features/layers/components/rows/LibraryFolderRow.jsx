@@ -128,14 +128,14 @@ export function LibraryFolderRow({
             />
           ) : (
             <span
-              className="min-w-0 flex-1 truncate font-mono text-xs"
+              className="w-0 min-w-0 flex-1 basis-0 overflow-hidden truncate font-mono text-xs"
               title={folder.name}
             >
               {truncateDisplayName(folder.name)}
             </span>
           )}
 
-          {folder.sourceFileName && (
+          {folder.sourceFileName && !folder.isModularSpritePackage && (
             <span
               className="layer-panel-source-name max-w-[80px] shrink-0 truncate text-[9px] text-muted-foreground/50"
               title={folder.sourceFileName}

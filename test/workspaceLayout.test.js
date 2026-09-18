@@ -1,17 +1,18 @@
 import { describe, it, expect } from 'vitest';
 
 function getLayoutConfig({ editorStarted, isAnimationMode }) {
+  const defaultSidePanelSize = 22;
   const rootPanels = [];
   if (editorStarted) {
-    rootPanels.push({ id: 'layers-panel', order: 1, defaultSize: 18 });
+    rootPanels.push({ id: 'layers-panel', order: 1, defaultSize: defaultSidePanelSize });
   }
   rootPanels.push({
     id: 'center-panel',
     order: 2,
-    defaultSize: editorStarted ? 57 : 100,
+    defaultSize: editorStarted ? 100 - defaultSidePanelSize * 2 : 100,
   });
   if (editorStarted) {
-    rootPanels.push({ id: 'inspector-panel', order: 3, defaultSize: 25 });
+    rootPanels.push({ id: 'inspector-panel', order: 3, defaultSize: defaultSidePanelSize });
   }
 
   const centerPanels = [

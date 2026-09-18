@@ -34,7 +34,7 @@ export function LayerPanelView({
         {["library", "depth", "groups"].map((tab) => (
           <button
             key={tab}
-            className={`min-w-0 flex-1 truncate py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
+            className={`w-0 min-w-0 flex-1 truncate py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
               tabs.active === tab
                 ? "text-foreground border-b-2 border-primary"
                 : "text-muted-foreground hover:text-foreground"

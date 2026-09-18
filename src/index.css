@@ -131,7 +131,6 @@
 
 @container layer-panel (max-width: 360px) {
   .layer-panel-source-name,
-  .layer-panel-file-size,
   .layer-panel-meta-label,
   .layer-panel-optional-label,
   .layer-panel-bone-constraint-label {

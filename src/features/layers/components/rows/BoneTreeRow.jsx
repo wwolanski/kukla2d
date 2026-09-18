@@ -181,11 +181,11 @@ export function BoneTreeRow({
         ) : (
           <FileImage className="h-3 w-3" />
         )}
-        <span className="min-w-0 truncate">
+        <span className="w-0 min-w-0 flex-1 truncate">
           {isRoot ? "Root bones" : "Unassigned images"}
         </span>
         {isDragOver && acceptsDrop && (
-          <span className="ml-auto rounded bg-destructive/15 px-1 py-0.5 text-[9px] normal-case tracking-normal text-destructive">
+            <span className="ml-auto shrink-0 rounded bg-destructive/15 px-1 py-0.5 text-[9px] normal-case tracking-normal text-destructive">
             {isRoot ? "Detach" : "Unassign"}
           </span>
         )}
@@ -268,7 +268,7 @@ export function BoneTreeRow({
             />
           ) : (
             <span
-              className="min-w-0 flex-1 truncate font-mono text-xs"
+              className="w-0 min-w-0 flex-1 truncate font-mono text-xs"
               title={bone.name}
             >
               {truncateDisplayName(bone.name)}
@@ -378,7 +378,7 @@ export function BoneTreeRow({
               onKeyDown={nodeRename.handleKeyDown}
             />
           ) : (
-            <span className="min-w-0 truncate font-mono">
+            <span className="w-0 min-w-0 flex-1 truncate font-mono">
               {truncateDisplayName(node.name || node.id)}
             </span>
           )}
@@ -442,7 +442,7 @@ export function BoneTreeRow({
           />
         ) : (
           <span
-            className="min-w-0 flex-1 truncate font-mono text-xs"
+            className="w-0 min-w-0 flex-1 truncate font-mono text-xs"
             title={node.name || node.id}
           >
             {truncateDisplayName(node.name || node.id)}

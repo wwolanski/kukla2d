@@ -92,7 +92,7 @@ export function LibraryAssetRow({
             fallback={<FileImage className="h-3.5 w-3.5" />}
           />
 
-          <div className="min-w-0 flex-1 flex flex-col">
+          <div className="w-0 min-w-0 flex-1 basis-0 flex flex-col overflow-hidden">
             {isEditing ? (
               <InlineRenameInput
                 value={draft}
@@ -101,13 +101,16 @@ export function LibraryAssetRow({
                 onKeyDown={handleKeyDown}
               />
             ) : (
-              <span className="block min-w-0 truncate font-mono text-xs" title={asset.name}>
+              <span
+                className="block w-full min-w-0 overflow-hidden truncate font-mono text-xs"
+                title={asset.name}
+              >
                 {truncateDisplayName(asset.name)}
               </span>
             )}
             {asset.sourceFileName && asset.sourceFileName !== asset.name && (
               <span
-                className="layer-panel-source-name block min-w-0 truncate text-[9px] text-muted-foreground/50"
+                className="layer-panel-source-name block w-full min-w-0 overflow-hidden truncate text-[9px] text-muted-foreground/50"
                 title={asset.sourceFileName}
               >
                 {truncateDisplayName(asset.sourceFileName)}
@@ -118,7 +121,7 @@ export function LibraryAssetRow({
           <span className="layer-panel-row-meta flex shrink-0 items-center gap-1 tabular-nums text-muted-foreground">
             {asset.isInUse && (
               <Check
-                className="h-3.5 w-3.5 text-emerald-500"
+                className="h-3.5 w-3.5 shrink-0 text-emerald-500"
                 aria-label="Used on canvas"
               />
             )}
@@ -141,7 +144,7 @@ export function LibraryAssetRow({
                 <Boxes className="h-2.5 w-2.5" aria-hidden="true" />
               </span>
             )}
-            <span className="layer-panel-file-size whitespace-nowrap">
+            <span className="layer-panel-file-size shrink-0 whitespace-nowrap">
               {formatFileSize(asset.size)}
             </span>
           </span>
